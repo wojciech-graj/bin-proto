@@ -1,8 +1,6 @@
 use crate::{hint, BitRead, BitWrite, Error, Parcel, Settings};
 
 impl<T: Parcel> Parcel for Option<T> {
-    const TYPE_NAME: &'static str = "Option<T>";
-
     fn read_field(
         read: &mut dyn BitRead,
         settings: &Settings,

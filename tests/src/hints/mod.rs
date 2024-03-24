@@ -30,8 +30,6 @@ impl<T> Parcel for SaveHints<T>
 where
     T: Parcel,
 {
-    const TYPE_NAME: &'static str = "SaveHints";
-
     fn read_field(
         read: &mut dyn BitRead,
         settings: &Settings,

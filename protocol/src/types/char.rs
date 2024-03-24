@@ -2,8 +2,6 @@ use crate::{hint, BitRead, BitWrite, CharTryFromError, Error, Parcel, Settings};
 use std::char;
 
 impl Parcel for char {
-    const TYPE_NAME: &'static str = "char";
-
     fn read_field(
         read: &mut dyn BitRead,
         settings: &Settings,

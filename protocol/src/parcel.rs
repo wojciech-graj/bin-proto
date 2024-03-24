@@ -41,9 +41,6 @@ use std::io;
 ///       * `HashMap<T: Parcel>`
 ///       * `BTreeMap<T: Parcel>`
 pub trait Parcel: Sized {
-    /// The textual name of the type.
-    const TYPE_NAME: &'static str;
-
     /// Reads a new item with a fresh set of hints.
     ///
     /// Blocks until a value is received.
@@ -120,10 +117,5 @@ pub trait Parcel: Sized {
         buffer.byte_align()?;
 
         Ok(data.into_inner())
-    }
-
-    /// Gets the name of the type; `Parcel::TYPE_NAME`.
-    fn type_name(&self) -> &'static str {
-        Self::TYPE_NAME
     }
 }

@@ -3,8 +3,6 @@ use crate::{hint, BitRead, BitWrite, Error, Parcel, Settings};
 use uuid::Uuid;
 
 impl Parcel for Uuid {
-    const TYPE_NAME: &'static str = "Uuid";
-
     fn read_field(
         read: &mut dyn BitRead,
         settings: &Settings,

@@ -89,8 +89,6 @@ fn impl_parcel_for_struct(
         ast,
         quote!(protocol::Parcel),
         quote! {
-            const TYPE_NAME: &'static str = stringify!(#strukt_name);
-
             #[allow(unused_variables)]
             fn read_field(__io_reader: &mut protocol::BitRead,
                           __settings: &protocol::Settings,
@@ -119,7 +117,6 @@ fn impl_parcel_for_struct(
 
 /// Generates a `Parcel` trait implementation for an enum.
 fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro2::TokenStream {
-    let enum_name = &plan.ident;
     let discriminator_ty = plan.discriminant();
 
     let read_variant = codegen::enums::read_variant(
@@ -140,8 +137,6 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
         ast,
         quote!(protocol::Parcel),
         quote! {
-            const TYPE_NAME: &'static str = stringify!(#enum_name);
-
             #[allow(unused_variables)]
             fn read_field(__io_reader: &mut protocol::BitRead,
                           __settings: &protocol::Settings,

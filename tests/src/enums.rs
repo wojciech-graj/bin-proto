@@ -1,5 +1,3 @@
-use protocol::Parcel;
-
 #[derive(protocol::Protocol, Clone, Debug, PartialEq)]
 pub enum WithGenerics<A, B> {
     Foo(A, B),
@@ -148,8 +146,6 @@ mod generics {
 }
 
 mod integer_discriminants {
-    use protocol::Protocol;
-    #[allow(unused_imports)]
     use protocol::{Parcel, Settings};
 
     #[derive(protocol::Protocol, Debug, PartialEq, Eq)]
@@ -303,10 +299,4 @@ enum OneVariant {
 #[derive(protocol::Protocol)]
 enum BuzzyBee {
     B(u32, u32),
-}
-
-#[test]
-fn type_name_is_correct() {
-    assert_eq!("OneVariant", OneVariant::A.type_name());
-    assert_eq!("BuzzyBee", BuzzyBee::B(2, 1).type_name());
 }

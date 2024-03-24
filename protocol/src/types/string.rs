@@ -3,8 +3,6 @@ use std;
 
 // The default implementation treats the string as a normal char array.
 impl Parcel for std::string::String {
-    const TYPE_NAME: &'static str = "String";
-
     fn read_field(
         read: &mut dyn BitRead,
         settings: &Settings,
@@ -44,8 +42,6 @@ impl<S: types::Integer> String<S> {
 }
 
 impl<S: types::Integer> Parcel for String<S> {
-    const TYPE_NAME: &'static str = "protocol::String<S>";
-
     fn read_field(
         read: &mut dyn BitRead,
         settings: &Settings,

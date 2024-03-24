@@ -2,8 +2,6 @@ use crate::{hint, util, BitRead, BitWrite, Error, Parcel, Settings};
 use std::ffi::CString;
 
 impl Parcel for CString {
-    const TYPE_NAME: &'static str = "CString";
-
     fn read_field(
         read: &mut dyn BitRead,
         settings: &Settings,

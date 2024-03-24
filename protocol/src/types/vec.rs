@@ -20,8 +20,6 @@ impl<S: types::Integer, T: Parcel> Vec<S, T> {
 }
 
 impl<S: types::Integer, T: Parcel> Parcel for Vec<S, T> {
-    const TYPE_NAME: &'static str = "protocol::Vec<S,T>";
-
     fn read_field(
         read: &mut dyn BitRead,
         settings: &Settings,
@@ -98,8 +96,6 @@ mod std_vec {
     use crate::{hint, util, BitRead, BitWrite, Error, Parcel, Settings};
 
     impl<T: Parcel> Parcel for Vec<T> {
-        const TYPE_NAME: &'static str = "Vec<T>";
-
         fn read_field(
             read: &mut dyn BitRead,
             settings: &Settings,

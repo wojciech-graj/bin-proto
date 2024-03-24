@@ -1,12 +1,11 @@
-use std::{self, fmt, error};
+use std::{self, error, fmt};
 
 pub type Result<T> = std::result::Result<T, Error>;
-
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 /// Copy of [TryFromIntError](https://doc.rust-lang.org/std/num/struct.TryFromIntError.html)
 /// that works in stable rust
-pub struct TryFromIntError { }
+pub struct TryFromIntError {}
 
 impl TryFromIntError {
     fn description(&self) -> &str {
@@ -29,17 +28,17 @@ impl error::Error for TryFromIntError {
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 /// Copy of [CharTryFromError](https://doc.rust-lang.org/std/char/struct.CharTryFromError.html)
 /// that works in stable rust
-pub struct CharTryFromError { }
+pub struct CharTryFromError {}
 
 impl CharTryFromError {
     fn description(&self) -> &str {
-         "converted integer out of range for `char`"
+        "converted integer out of range for `char`"
     }
 }
 
 impl fmt::Display for CharTryFromError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-       self.description().fmt(f)
+        self.description().fmt(f)
     }
 }
 
@@ -74,12 +73,5 @@ error_chain! {
             description("received unknown enum discriminator")
             display("received unknown enum discriminator '{}' for type '{}'", discriminator, type_name)
         }
-
-        /// A parcel type was read that has not been implemented yet.
-        UnimplementedParcel(type_name: &'static str) {
-            description("unimplemented parcel")
-            display("unimplemented parcel type '{}'", type_name)
-        }
     }
 }
-

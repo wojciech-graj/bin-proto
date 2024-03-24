@@ -4,8 +4,6 @@ impl<T> Parcel for std::ops::Range<T>
 where
     T: Parcel,
 {
-    const TYPE_NAME: &'static str = "Range";
-
     fn read_field(
         read: &mut dyn BitRead,
         settings: &Settings,

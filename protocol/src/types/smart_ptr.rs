@@ -7,8 +7,6 @@ use std::sync::Arc;
 macro_rules! impl_smart_ptr_type {
     ($ty:ident) => {
         impl<T: Parcel> Parcel for $ty<T> {
-            const TYPE_NAME: &'static str = stringify!($ty<T>);
-
             fn read_field(
                 read: &mut dyn BitRead,
                 settings: &Settings,

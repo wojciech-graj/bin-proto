@@ -3,8 +3,6 @@ macro_rules! impl_list_type {
         impl<T> $crate::Parcel for ::std::collections::$ty<T>
             where T: $crate::Parcel $( + $ty_pred )*
         {
-            const TYPE_NAME: &'static str = stringify!($ty<T>);
-
             fn read_field(read: &mut dyn crate::BitRead,
                           settings: &crate::Settings,
                           hints: &mut crate::hint::Hints) -> Result<Self, $crate::Error> {

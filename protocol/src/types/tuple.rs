@@ -5,8 +5,6 @@ where
     T0: Parcel,
     T1: Parcel,
 {
-    const TYPE_NAME: &'static str = "(T0, T1)";
-
     fn read_field(
         read: &mut dyn BitRead,
         settings: &Settings,
@@ -36,8 +34,6 @@ where
     T1: Parcel,
     T2: Parcel,
 {
-    const TYPE_NAME: &'static str = "(T0, T1, T2)";
-
     fn read_field(
         read: &mut dyn BitRead,
         settings: &Settings,
@@ -70,8 +66,6 @@ where
     T2: Parcel,
     T3: Parcel,
 {
-    const TYPE_NAME: &'static str = "(T0, T1, T2, T3)";
-
     fn read_field(
         read: &mut dyn BitRead,
         settings: &Settings,
@@ -107,8 +101,6 @@ where
     T3: Parcel,
     T4: Parcel,
 {
-    const TYPE_NAME: &'static str = "(T0, T1, T2, T3, T4)";
-
     fn read_field(
         read: &mut dyn BitRead,
         settings: &Settings,
@@ -147,8 +139,6 @@ where
     T4: Parcel,
     T5: Parcel,
 {
-    const TYPE_NAME: &'static str = "(T0, T1, T2, T3, T4, T5)";
-
     fn read_field(
         read: &mut dyn BitRead,
         settings: &Settings,
@@ -190,8 +180,6 @@ where
     T5: Parcel,
     T6: Parcel,
 {
-    const TYPE_NAME: &'static str = "(T0, T1, T2, T3, T4, T5, T6)";
-
     fn read_field(
         read: &mut dyn BitRead,
         settings: &Settings,
@@ -236,8 +224,6 @@ where
     T6: Parcel,
     T7: Parcel,
 {
-    const TYPE_NAME: &'static str = "(T0, T1, T2, T3, T4, T5, T6, T7)";
-
     fn read_field(
         read: &mut dyn BitRead,
         settings: &Settings,
@@ -285,8 +271,6 @@ where
     T7: Parcel,
     T8: Parcel,
 {
-    const TYPE_NAME: &'static str = "(T0, T1, T2, T3, T4, T5, T6, T7, T8)";
-
     fn read_field(
         read: &mut dyn BitRead,
         settings: &Settings,
@@ -337,8 +321,6 @@ where
     T8: Parcel,
     T9: Parcel,
 {
-    const TYPE_NAME: &'static str = "(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9)";
-
     fn read_field(
         read: &mut dyn BitRead,
         settings: &Settings,
@@ -393,8 +375,6 @@ where
     T9: Parcel,
     T10: Parcel,
 {
-    const TYPE_NAME: &'static str = "(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)";
-
     fn read_field(
         read: &mut dyn BitRead,
         settings: &Settings,

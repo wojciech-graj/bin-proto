@@ -6,8 +6,6 @@ macro_rules! impl_parcel_for_array {
         where
             T: Copy,
         {
-            const TYPE_NAME: &'static str = stringify!([T; $n]);
-
             fn read_field(
                 read: &mut dyn BitRead,
                 settings: &Settings,

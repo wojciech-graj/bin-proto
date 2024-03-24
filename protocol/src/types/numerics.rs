@@ -76,8 +76,6 @@ impl BitField for i8 {
 }
 
 impl Parcel for bool {
-    const TYPE_NAME: &'static str = "bool";
-
     fn read_field(
         read: &mut dyn BitRead,
         _: &Settings,
@@ -102,8 +100,6 @@ impl Parcel for bool {
 }
 
 impl Parcel for u8 {
-    const TYPE_NAME: &'static str = "u8";
-
     fn read_field(
         read: &mut dyn BitRead,
         _: &Settings,
@@ -124,8 +120,6 @@ impl Parcel for u8 {
 }
 
 impl Parcel for i8 {
-    const TYPE_NAME: &'static str = "i8";
-
     fn read_field(
         read: &mut dyn BitRead,
         _: &Settings,
@@ -148,8 +142,6 @@ impl Parcel for i8 {
 macro_rules! impl_parcel_for_numeric {
     ($ty:ident => [$read_fn:ident : $write_fn:ident]) => {
         impl Parcel for $ty {
-            const TYPE_NAME: &'static str = stringify!($ty);
-
             fn read_field(
                 read: &mut dyn BitRead,
                 settings: &Settings,

@@ -86,8 +86,6 @@ where
     T: Parcel,
     ToSizeOfType: Sized,
 {
-    const TYPE_NAME: &'static str = "Aligned";
-
     fn read_field(
         read: &mut dyn BitRead,
         settings: &Settings,

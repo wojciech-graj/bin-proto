@@ -11,8 +11,6 @@ macro_rules! impl_map_type {
             where K: Parcel + $( $k_pred +)+,
                   V: Parcel
         {
-            const TYPE_NAME: &'static str = stringify!($ty<K,V>);
-
             fn read_field(read: &mut dyn BitRead,
                           settings: &Settings,
                           _: &mut hint::Hints) -> Result<Self, Error> {
