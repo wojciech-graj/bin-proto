@@ -20,60 +20,23 @@ pub struct Settings {
 ///
 /// The `NativeEndian` byte order will successfully match against
 /// one of the two real-life byte orders.
-#[derive(Copy, Clone, Debug, Eq, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ByteOrder {
     /// Least significant byte first.
     LittleEndian,
     /// Most significant byte first.
+    #[default]
     BigEndian,
-    /// Whatever the byte ordering of the current machine is.
-    NativeEndian,
-}
-
-#[cfg(target_endian = "little")]
-const NATIVE_BYTE_ORDER: ByteOrder = ByteOrder::LittleEndian;
-#[cfg(target_endian = "big")]
-const NATIVE_BYTE_ORDER: ByteOrder = ByteOrder::BigEndian;
-
-impl ByteOrder {
-    /// Resolves the byte order into either little or big endian.
-    fn realize(self) -> Self {
-        match self {
-            ByteOrder::NativeEndian => NATIVE_BYTE_ORDER,
-            b => b,
-        }
-    }
-}
-
-impl Default for ByteOrder {
-    fn default() -> Self {
-        ByteOrder::BigEndian
-    }
-}
-
-impl ::std::cmp::PartialEq for ByteOrder {
-    fn eq(&self, other: &Self) -> bool {
-        use ByteOrder::*;
-
-        match (self.realize(), other.realize()) {
-            (LittleEndian, LittleEndian) => true,
-            (BigEndian, BigEndian) => true,
-            _ => false,
-        }
-    }
 }
 
 macro_rules! impl_byte_order_helpers {
-    ( $( $ty:ty => [ $read_name:ident : $write_name:ident ] )* ) => {
+    ( $( $ty:ty => [ $read_name:ident : [$read_le:ident, $read_be:ident]] [$write_name:ident ] )* ) => {
         impl ByteOrder {
             $(
-                pub fn $read_name(&self, read: &mut dyn Read) -> Result<$ty, crate::Error> {
-                    use byteorder as bo;
-
+                pub fn $read_name(&self, read: &mut dyn crate::BitRead) -> Result<$ty, crate::Error> {
                     Ok(match *self {
-                        ByteOrder::LittleEndian => bo::ReadBytesExt::$read_name::<bo::LittleEndian>(read),
-                        ByteOrder::BigEndian => bo::ReadBytesExt::$read_name::<bo::BigEndian>(read),
-                        ByteOrder::NativeEndian => bo::ReadBytesExt::$read_name::<bo::NativeEndian>(read),
+                        ByteOrder::LittleEndian => crate::BitRead::$read_le(read),
+                        ByteOrder::BigEndian => crate::BitRead::$read_be(read),
                     }?)
                 }
 
@@ -84,7 +47,6 @@ macro_rules! impl_byte_order_helpers {
                     Ok(match *self {
                         ByteOrder::LittleEndian => bo::WriteBytesExt::$write_name::<bo::LittleEndian>(write, value),
                         ByteOrder::BigEndian => bo::WriteBytesExt::$write_name::<bo::BigEndian>(write, value),
-                        ByteOrder::NativeEndian => bo::WriteBytesExt::$write_name::<bo::NativeEndian>(write, value),
                     }?)
                 }
             )*
@@ -93,13 +55,12 @@ macro_rules! impl_byte_order_helpers {
 }
 
 impl_byte_order_helpers!(
-    u16 => [read_u16 : write_u16]
-    i16 => [read_i16 : write_i16]
-    u32 => [read_u32 : write_u32]
-    i32 => [read_i32 : write_i32]
-    u64 => [read_u64 : write_u64]
-    i64 => [read_i64 : write_i64]
-    f32 => [read_f32 : write_f32]
-    f64 => [read_f64 : write_f64]
+    u16 => [read_u16 : [read_u16_le, read_u16_be]] [write_u16]
+    i16 => [read_i16 : [read_i16_le, read_i16_be]] [write_i16]
+    u32 => [read_u32 : [read_u32_le, read_u32_be]] [write_u32]
+    i32 => [read_i32 : [read_i32_le, read_i32_be]] [write_i32]
+    u64 => [read_u64 : [read_u64_le, read_u64_be]] [write_u64]
+    i64 => [read_i64 : [read_i64_le, read_i64_be]] [write_i64]
+    f32 => [read_f32 : [read_f32_le, read_f32_be]] [write_f32]
+    f64 => [read_f64 : [read_f64_le, read_f64_be]] [write_f64]
 );
-

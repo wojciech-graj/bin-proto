@@ -1,4 +1,4 @@
-use crate::{hint, Error, Parcel, Settings};
+use crate::{hint, BitRead, Error, Parcel, Settings};
 use std::io::prelude::*;
 use std::{marker, mem};
 
@@ -54,19 +54,26 @@ use std::{marker, mem};
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Aligned<T, ToSizeOfType>
-    where T: Parcel,
-          ToSizeOfType: Sized {
+where
+    T: Parcel,
+    ToSizeOfType: Sized,
+{
     /// The inner value.
     pub value: T,
     _phantom: marker::PhantomData<ToSizeOfType>,
 }
 
 impl<T, ToSizeOfType> Aligned<T, ToSizeOfType>
-    where T: Parcel,
-          ToSizeOfType: Sized {
+where
+    T: Parcel,
+    ToSizeOfType: Sized,
+{
     /// Creates a new aligned value.
     pub fn new(value: T) -> Self {
-        Aligned { value, _phantom: marker::PhantomData }
+        Aligned {
+            value,
+            _phantom: marker::PhantomData,
+        }
     }
 
     /// Gets the number of bytes of the alignment.
@@ -76,13 +83,17 @@ impl<T, ToSizeOfType> Aligned<T, ToSizeOfType>
 }
 
 impl<T, ToSizeOfType> Parcel for Aligned<T, ToSizeOfType>
-    where T: Parcel,
-          ToSizeOfType: Sized {
+where
+    T: Parcel,
+    ToSizeOfType: Sized,
+{
     const TYPE_NAME: &'static str = "Aligned";
 
-    fn read_field(read: &mut dyn Read,
-                  settings: &Settings,
-                  hints: &mut hint::Hints) -> Result<Self, Error> {
+    fn read_field(
+        read: &mut dyn BitRead,
+        settings: &Settings,
+        hints: &mut hint::Hints,
+    ) -> Result<Self, Error> {
         let inner_value = T::read_field(read, settings, hints)?;
         let value_size = inner_value.raw_bytes_field(settings, hints).unwrap().len();
         let padding_size = calculate_padding(Self::align_to_bytes(), value_size);
@@ -94,13 +105,18 @@ impl<T, ToSizeOfType> Parcel for Aligned<T, ToSizeOfType>
             assert_eq!(0x00, padding_byte, "padding bytes should be zero");
         }
 
-        Ok(Aligned { value: inner_value, _phantom: marker::PhantomData })
+        Ok(Aligned {
+            value: inner_value,
+            _phantom: marker::PhantomData,
+        })
     }
 
-    fn write_field(&self,
-                   write: &mut dyn Write,
-                   settings: &Settings,
-                   hints: &mut hint::Hints) -> Result<(), Error> {
+    fn write_field(
+        &self,
+        write: &mut dyn Write,
+        settings: &Settings,
+        hints: &mut hint::Hints,
+    ) -> Result<(), Error> {
         let unaligned_bytes = self.value.raw_bytes_field(settings, hints)?;
         let aligned_bytes = align_to(Self::align_to_bytes(), 0x00, unaligned_bytes);
         write.write(&aligned_bytes)?;
@@ -109,31 +125,35 @@ impl<T, ToSizeOfType> Parcel for Aligned<T, ToSizeOfType>
 }
 
 impl<T, ToSizeOfType> From<T> for Aligned<T, ToSizeOfType>
-    where T: Parcel,
-          ToSizeOfType: Sized {
+where
+    T: Parcel,
+    ToSizeOfType: Sized,
+{
     fn from(value: T) -> Self {
-        Aligned { value, _phantom: marker::PhantomData }
+        Aligned {
+            value,
+            _phantom: marker::PhantomData,
+        }
     }
 }
 
 /// Aligns a set of bytes to a multiple of the specified alignment.
-fn align_to(align_to: usize,
-            padding_byte: u8,
-            bytes: Vec<u8>) -> Vec<u8> {
+fn align_to(align_to: usize, padding_byte: u8, bytes: Vec<u8>) -> Vec<u8> {
     // Thanks for the formula Ned!
     // https://stackoverflow.com/a/11642218
     let extra_padding_needed = calculate_padding(align_to, bytes.len());
 
-    let extra_padding = (0..).into_iter().take(extra_padding_needed).map(|_| padding_byte);
+    let extra_padding = (0..)
+        .into_iter()
+        .take(extra_padding_needed)
+        .map(|_| padding_byte);
 
     let bytes: Vec<_> = bytes.into_iter().chain(extra_padding).collect();
-    assert_eq!(0, bytes.len() % align_to,
-            "failed to align");
+    assert_eq!(0, bytes.len() % align_to, "failed to align");
     bytes
 }
 
-fn calculate_padding(align_to: usize,
-                     unaligned_size: usize) -> usize {
+fn calculate_padding(align_to: usize, unaligned_size: usize) -> usize {
     // Thanks for the formula Ned!
     // https://stackoverflow.com/a/11642218
     (align_to - (unaligned_size % align_to)) % align_to
@@ -164,7 +184,10 @@ mod test {
 
         #[test]
         fn test_align_to_3_with_size_5() {
-            assert_eq!(vec![1, 2, 3, 4, 5, 0], align_to(3, 0x00, vec![1, 2, 3, 4, 5]));
+            assert_eq!(
+                vec![1, 2, 3, 4, 5, 0],
+                align_to(3, 0x00, vec![1, 2, 3, 4, 5])
+            );
         }
 
         #[test]
@@ -180,4 +203,3 @@ mod test {
         }
     }
 }
-

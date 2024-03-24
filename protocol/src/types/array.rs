@@ -1,22 +1,32 @@
-use crate::{hint, util, Parcel, Error, Settings};
+use crate::{hint, util, BitRead, Error, Parcel, Settings};
 use std::io::prelude::*;
 
 macro_rules! impl_parcel_for_array {
     ($n:expr) => {
-        impl<T: Parcel> Parcel for [T; $n] where T: Copy {
+        impl<T: Parcel> Parcel for [T; $n]
+        where
+            T: Copy,
+        {
             const TYPE_NAME: &'static str = stringify!([T; $n]);
 
-            fn read_field(read: &mut dyn Read,
-                          settings: &Settings,
-                          _: &mut hint::Hints) -> Result<Self, Error> {
+            fn read_field(
+                read: &mut dyn BitRead,
+                settings: &Settings,
+                _: &mut hint::Hints,
+            ) -> Result<Self, Error> {
                 use std::mem;
 
                 let elements: Vec<_> = util::read_items($n, read, settings)?.collect();
-                assert_eq!(elements.len(), $n, "fixed size array did not read the expected number of elements");
+                assert_eq!(
+                    elements.len(),
+                    $n,
+                    "fixed size array did not read the expected number of elements"
+                );
 
                 // N.B. We could potentially leave this array uninitialized
                 // as an optimization.
-                let mut uninit_array: [mem::MaybeUninit<T>; $n] = unsafe { mem::MaybeUninit::uninit().assume_init() };
+                let mut uninit_array: [mem::MaybeUninit<T>; $n] =
+                    unsafe { mem::MaybeUninit::uninit().assume_init() };
                 for (i, element) in elements.into_iter().enumerate() {
                     uninit_array[i] = mem::MaybeUninit::new(element);
                 }
@@ -26,13 +36,16 @@ macro_rules! impl_parcel_for_array {
                 Ok(*array)
             }
 
-            fn write_field(&self, write: &mut dyn Write,
-                           settings: &Settings,
-                           _: &mut hint::Hints) -> Result<(), Error> {
+            fn write_field(
+                &self,
+                write: &mut dyn Write,
+                settings: &Settings,
+                _: &mut hint::Hints,
+            ) -> Result<(), Error> {
                 util::write_items(self.iter(), write, settings)
             }
         }
-    }
+    };
 }
 
 impl_parcel_for_array!(1);
@@ -84,12 +97,14 @@ impl_parcel_for_array!(0xffff);
 
 #[cfg(test)]
 mod test {
+    use bitstream_io::{BigEndian, BitReader};
+
     use crate::{Parcel, Settings};
     use std::io::Cursor;
 
     #[test]
     fn can_read_array() {
-        let mut data = Cursor::new([0u8, 1, 2, 3]);
+        let mut data = BitReader::endian(Cursor::new([0u8, 1, 2, 3]), BigEndian);
         let read_back: [u8; 4] = Parcel::read(&mut data, &Settings::default()).unwrap();
         assert_eq!(read_back, [0, 1, 2, 3]);
     }
@@ -98,7 +113,9 @@ mod test {
     fn can_write_array() {
         let mut buffer = Cursor::new(Vec::new());
 
-        [5u8, 7, 9, 11].write(&mut buffer, &Settings::default()).unwrap();
+        [5u8, 7, 9, 11]
+            .write(&mut buffer, &Settings::default())
+            .unwrap();
         assert_eq!(buffer.into_inner(), vec![5, 7, 9, 11]);
     }
 }

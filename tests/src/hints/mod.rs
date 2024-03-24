@@ -1,44 +1,62 @@
 //! Tests the derived `Parcel` implementations and ensures
 //! various invariants are followed.
 
-use protocol::{Error, Parcel, Settings};
+use bitstream_io::{BigEndian, BitReader};
 use protocol::hint;
+use protocol::{BitRead, Error, Parcel, Settings};
 use std::io;
 
 /// Wraps another Parcel and saves the hints at read time.
 #[derive(Debug, PartialEq)]
-pub struct SaveHints<T> where T: Parcel {
+pub struct SaveHints<T>
+where
+    T: Parcel,
+{
     pub inner: T,
     saved_hints: Option<hint::Hints>,
 }
 
 impl<T> SaveHints<T>
-    where T: Parcel {
+where
+    T: Parcel,
+{
     pub fn hints(&self) -> &hint::Hints {
-        self.saved_hints.as_ref()
+        self.saved_hints
+            .as_ref()
             .expect("there are no saved hints for manually built values")
     }
 }
 
 impl<T> Parcel for SaveHints<T>
-    where T: Parcel {
+where
+    T: Parcel,
+{
     const TYPE_NAME: &'static str = "SaveHints";
 
-    fn read_field(read: &mut dyn io::Read, settings: &Settings,
-                  hints: &mut hint::Hints) -> Result<Self, Error> {
+    fn read_field(
+        read: &mut dyn BitRead,
+        settings: &Settings,
+        hints: &mut hint::Hints,
+    ) -> Result<Self, Error> {
         let saved_hints = Some(hints.clone());
         let inner = T::read_field(read, settings, hints)?;
         Ok(SaveHints { inner, saved_hints })
     }
 
-    fn write_field(&self, write: &mut dyn io::Write,
-                   settings: &Settings,
-                   _: &mut hint::Hints) -> Result<(), Error> {
+    fn write_field(
+        &self,
+        write: &mut dyn io::Write,
+        settings: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<(), Error> {
         self.inner.write(write, settings)
     }
 }
 
-impl<T> From<T> for SaveHints<T> where T: Parcel {
+impl<T> From<T> for SaveHints<T>
+where
+    T: Parcel,
+{
     fn from(v: T) -> Self {
         SaveHints {
             inner: v,
@@ -53,11 +71,14 @@ trait HasSavedHints: Parcel {
 
 /// Writes a value to a stream, reads it back with the given hints,
 /// and returns the hint state after the read.
-fn get_hints_after_read<P>(mut input_hints: hint::Hints,
-                           input_value: P)
-    -> hint::Hints
-    where P: HasSavedHints + Default {
-    let mut parcel_stream = input_value.into_stream(&Settings::default()).unwrap();
+fn get_hints_after_read<P>(mut input_hints: hint::Hints, input_value: P) -> hint::Hints
+where
+    P: HasSavedHints + Default,
+{
+    let mut parcel_stream = BitReader::endian(
+        input_value.into_stream(&Settings::default()).unwrap(),
+        BigEndian,
+    );
     let v = P::read_field(&mut parcel_stream, &Settings::default(), &mut input_hints).unwrap();
 
     v.saved_hints_after_reading().clone()
@@ -93,20 +114,29 @@ macro_rules! define_common_hint_invariant_tests {
             /// Whenever any automatically derived type is read,
             #[test]
             fn all_prior_hints_are_ignored_when_reading() {
-
                 let mut hints = hint::Hints::default();
 
                 force_contributor_to_acknowledge_new_hints!(
-                    current_field_index, known_field_lengths
+                    current_field_index,
+                    known_field_lengths
                 );
 
                 // Set current field index to its maximum value, so that
                 // if the system is actually incremented, it'll panic.
                 hints.current_field_index = Some(usize::max_value());
                 // Insert three bullshit field lengths.
-                hints.known_field_lengths = (0..PRETTY_LARGE_NUMBER).into_iter().map(|i| {
-                    (i, protocol::hint::FieldLength { length: i+i/2, kind: protocol::hint::LengthPrefixKind::Bytes })
-                }).collect();
+                hints.known_field_lengths = (0..PRETTY_LARGE_NUMBER)
+                    .into_iter()
+                    .map(|i| {
+                        (
+                            i,
+                            protocol::hint::FieldLength {
+                                length: i + i / 2,
+                                kind: protocol::hint::LengthPrefixKind::Bytes,
+                            },
+                        )
+                    })
+                    .collect();
 
                 let hints_afterwards = get_hints_after_read::<$parcel_ty>(hints, $parcel_value);
 
@@ -119,4 +149,3 @@ macro_rules! define_common_hint_invariant_tests {
 
 pub mod enums;
 pub mod strukt;
-

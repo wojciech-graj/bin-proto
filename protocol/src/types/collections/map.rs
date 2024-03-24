@@ -1,6 +1,6 @@
-use crate::{hint, Parcel, Error, Settings};
+use crate::{hint, BitRead, Error, Parcel, Settings};
 
-use std::collections::{HashMap, BTreeMap};
+use std::collections::{BTreeMap, HashMap};
 use std::hash::Hash;
 
 use std::io::prelude::*;
@@ -15,7 +15,7 @@ macro_rules! impl_map_type {
         {
             const TYPE_NAME: &'static str = stringify!($ty<K,V>);
 
-            fn read_field(read: &mut dyn Read,
+            fn read_field(read: &mut dyn BitRead,
                           settings: &Settings,
                           _: &mut hint::Hints) -> Result<Self, Error> {
                 let mut map = $ty::new();
@@ -50,4 +50,3 @@ macro_rules! impl_map_type {
 
 impl_map_type!(HashMap => K: Hash, Eq);
 impl_map_type!(BTreeMap => K: Ord);
-

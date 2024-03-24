@@ -1,23 +1,30 @@
-use crate::{hint, Parcel, Error, Settings};
+use crate::{hint, BitRead, Error, Parcel, Settings};
 
 use std::io::prelude::*;
 
 impl<T0, T1> Parcel for (T0, T1)
-    where T0: Parcel, T1: Parcel
+where
+    T0: Parcel,
+    T1: Parcel,
 {
     const TYPE_NAME: &'static str = "(T0, T1)";
 
-    fn read_field(read: &mut dyn Read,
-                  settings: &Settings,
-                  _: &mut hint::Hints) -> Result<Self, Error> {
+    fn read_field(
+        read: &mut dyn BitRead,
+        settings: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<Self, Error> {
         let v0 = T0::read(read, settings)?;
         let v1 = T1::read(read, settings)?;
         Ok((v0, v1))
     }
 
-    fn write_field(&self, write: &mut dyn Write,
-                   settings: &Settings,
-                   _: &mut hint::Hints) -> Result<(), Error> {
+    fn write_field(
+        &self,
+        write: &mut dyn Write,
+        settings: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<(), Error> {
         self.0.write(write, settings)?;
         self.1.write(write, settings)?;
 
@@ -26,22 +33,30 @@ impl<T0, T1> Parcel for (T0, T1)
 }
 
 impl<T0, T1, T2> Parcel for (T0, T1, T2)
-    where T0: Parcel, T1: Parcel, T2: Parcel
+where
+    T0: Parcel,
+    T1: Parcel,
+    T2: Parcel,
 {
     const TYPE_NAME: &'static str = "(T0, T1, T2)";
 
-    fn read_field(read: &mut dyn Read,
-                  settings: &Settings,
-                  _: &mut hint::Hints) -> Result<Self, Error> {
+    fn read_field(
+        read: &mut dyn BitRead,
+        settings: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<Self, Error> {
         let v0 = T0::read(read, settings)?;
         let v1 = T1::read(read, settings)?;
         let v2 = T2::read(read, settings)?;
         Ok((v0, v1, v2))
     }
 
-    fn write_field(&self, write: &mut dyn Write,
-                   settings: &Settings,
-                   _: &mut hint::Hints) -> Result<(), Error> {
+    fn write_field(
+        &self,
+        write: &mut dyn Write,
+        settings: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<(), Error> {
         self.0.write(write, settings)?;
         self.1.write(write, settings)?;
         self.2.write(write, settings)?;
@@ -51,13 +66,19 @@ impl<T0, T1, T2> Parcel for (T0, T1, T2)
 }
 
 impl<T0, T1, T2, T3> Parcel for (T0, T1, T2, T3)
-    where T0: Parcel, T1: Parcel, T2: Parcel, T3: Parcel
+where
+    T0: Parcel,
+    T1: Parcel,
+    T2: Parcel,
+    T3: Parcel,
 {
     const TYPE_NAME: &'static str = "(T0, T1, T2, T3)";
 
-    fn read_field(read: &mut dyn Read,
-                  settings: &Settings,
-                  _: &mut hint::Hints) -> Result<Self, Error> {
+    fn read_field(
+        read: &mut dyn BitRead,
+        settings: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<Self, Error> {
         let v0 = T0::read(read, settings)?;
         let v1 = T1::read(read, settings)?;
         let v2 = T2::read(read, settings)?;
@@ -65,9 +86,12 @@ impl<T0, T1, T2, T3> Parcel for (T0, T1, T2, T3)
         Ok((v0, v1, v2, v3))
     }
 
-    fn write_field(&self, write: &mut dyn Write,
-                   settings: &Settings,
-                   _: &mut hint::Hints) -> Result<(), Error> {
+    fn write_field(
+        &self,
+        write: &mut dyn Write,
+        settings: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<(), Error> {
         self.0.write(write, settings)?;
         self.1.write(write, settings)?;
         self.2.write(write, settings)?;
@@ -78,13 +102,20 @@ impl<T0, T1, T2, T3> Parcel for (T0, T1, T2, T3)
 }
 
 impl<T0, T1, T2, T3, T4> Parcel for (T0, T1, T2, T3, T4)
-    where T0: Parcel, T1: Parcel, T2: Parcel, T3: Parcel, T4: Parcel
+where
+    T0: Parcel,
+    T1: Parcel,
+    T2: Parcel,
+    T3: Parcel,
+    T4: Parcel,
 {
     const TYPE_NAME: &'static str = "(T0, T1, T2, T3, T4)";
 
-    fn read_field(read: &mut dyn Read,
-                  settings: &Settings,
-                  _: &mut hint::Hints) -> Result<Self, Error> {
+    fn read_field(
+        read: &mut dyn BitRead,
+        settings: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<Self, Error> {
         let v0 = T0::read(read, settings)?;
         let v1 = T1::read(read, settings)?;
         let v2 = T2::read(read, settings)?;
@@ -93,9 +124,12 @@ impl<T0, T1, T2, T3, T4> Parcel for (T0, T1, T2, T3, T4)
         Ok((v0, v1, v2, v3, v4))
     }
 
-    fn write_field(&self, write: &mut dyn Write,
-                   settings: &Settings,
-                   _: &mut hint::Hints) -> Result<(), Error> {
+    fn write_field(
+        &self,
+        write: &mut dyn Write,
+        settings: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<(), Error> {
         self.0.write(write, settings)?;
         self.1.write(write, settings)?;
         self.2.write(write, settings)?;
@@ -107,14 +141,21 @@ impl<T0, T1, T2, T3, T4> Parcel for (T0, T1, T2, T3, T4)
 }
 
 impl<T0, T1, T2, T3, T4, T5> Parcel for (T0, T1, T2, T3, T4, T5)
-    where T0: Parcel, T1: Parcel, T2: Parcel, T3: Parcel, T4: Parcel,
-          T5: Parcel,
+where
+    T0: Parcel,
+    T1: Parcel,
+    T2: Parcel,
+    T3: Parcel,
+    T4: Parcel,
+    T5: Parcel,
 {
     const TYPE_NAME: &'static str = "(T0, T1, T2, T3, T4, T5)";
 
-    fn read_field(read: &mut dyn Read,
-                  settings: &Settings,
-                  _: &mut hint::Hints) -> Result<Self, Error> {
+    fn read_field(
+        read: &mut dyn BitRead,
+        settings: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<Self, Error> {
         let v0 = T0::read(read, settings)?;
         let v1 = T1::read(read, settings)?;
         let v2 = T2::read(read, settings)?;
@@ -124,9 +165,12 @@ impl<T0, T1, T2, T3, T4, T5> Parcel for (T0, T1, T2, T3, T4, T5)
         Ok((v0, v1, v2, v3, v4, v5))
     }
 
-    fn write_field(&self, write: &mut dyn Write,
-                   settings: &Settings,
-                   _: &mut hint::Hints) -> Result<(), Error> {
+    fn write_field(
+        &self,
+        write: &mut dyn Write,
+        settings: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<(), Error> {
         self.0.write(write, settings)?;
         self.1.write(write, settings)?;
         self.2.write(write, settings)?;
@@ -139,14 +183,22 @@ impl<T0, T1, T2, T3, T4, T5> Parcel for (T0, T1, T2, T3, T4, T5)
 }
 
 impl<T0, T1, T2, T3, T4, T5, T6> Parcel for (T0, T1, T2, T3, T4, T5, T6)
-    where T0: Parcel, T1: Parcel, T2: Parcel, T3: Parcel, T4: Parcel,
-          T5: Parcel, T6: Parcel,
+where
+    T0: Parcel,
+    T1: Parcel,
+    T2: Parcel,
+    T3: Parcel,
+    T4: Parcel,
+    T5: Parcel,
+    T6: Parcel,
 {
     const TYPE_NAME: &'static str = "(T0, T1, T2, T3, T4, T5, T6)";
 
-    fn read_field(read: &mut dyn Read,
-                  settings: &Settings,
-                  _: &mut hint::Hints) -> Result<Self, Error> {
+    fn read_field(
+        read: &mut dyn BitRead,
+        settings: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<Self, Error> {
         let v0 = T0::read(read, settings)?;
         let v1 = T1::read(read, settings)?;
         let v2 = T2::read(read, settings)?;
@@ -157,9 +209,12 @@ impl<T0, T1, T2, T3, T4, T5, T6> Parcel for (T0, T1, T2, T3, T4, T5, T6)
         Ok((v0, v1, v2, v3, v4, v5, v6))
     }
 
-    fn write_field(&self, write: &mut dyn Write,
-                   settings: &Settings,
-                   _: &mut hint::Hints) -> Result<(), Error> {
+    fn write_field(
+        &self,
+        write: &mut dyn Write,
+        settings: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<(), Error> {
         self.0.write(write, settings)?;
         self.1.write(write, settings)?;
         self.2.write(write, settings)?;
@@ -173,14 +228,23 @@ impl<T0, T1, T2, T3, T4, T5, T6> Parcel for (T0, T1, T2, T3, T4, T5, T6)
 }
 
 impl<T0, T1, T2, T3, T4, T5, T6, T7> Parcel for (T0, T1, T2, T3, T4, T5, T6, T7)
-    where T0: Parcel, T1: Parcel, T2: Parcel, T3: Parcel, T4: Parcel,
-          T5: Parcel, T6: Parcel, T7: Parcel,
+where
+    T0: Parcel,
+    T1: Parcel,
+    T2: Parcel,
+    T3: Parcel,
+    T4: Parcel,
+    T5: Parcel,
+    T6: Parcel,
+    T7: Parcel,
 {
     const TYPE_NAME: &'static str = "(T0, T1, T2, T3, T4, T5, T6, T7)";
 
-    fn read_field(read: &mut dyn Read,
-                  settings: &Settings,
-                  _: &mut hint::Hints) -> Result<Self, Error> {
+    fn read_field(
+        read: &mut dyn BitRead,
+        settings: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<Self, Error> {
         let v0 = T0::read(read, settings)?;
         let v1 = T1::read(read, settings)?;
         let v2 = T2::read(read, settings)?;
@@ -192,9 +256,12 @@ impl<T0, T1, T2, T3, T4, T5, T6, T7> Parcel for (T0, T1, T2, T3, T4, T5, T6, T7)
         Ok((v0, v1, v2, v3, v4, v5, v6, v7))
     }
 
-    fn write_field(&self, write: &mut dyn Write,
-                   settings: &Settings,
-                   _: &mut hint::Hints) -> Result<(), Error> {
+    fn write_field(
+        &self,
+        write: &mut dyn Write,
+        settings: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<(), Error> {
         self.0.write(write, settings)?;
         self.1.write(write, settings)?;
         self.2.write(write, settings)?;
@@ -209,14 +276,24 @@ impl<T0, T1, T2, T3, T4, T5, T6, T7> Parcel for (T0, T1, T2, T3, T4, T5, T6, T7)
 }
 
 impl<T0, T1, T2, T3, T4, T5, T6, T7, T8> Parcel for (T0, T1, T2, T3, T4, T5, T6, T7, T8)
-    where T0: Parcel, T1: Parcel, T2: Parcel, T3: Parcel, T4: Parcel,
-          T5: Parcel, T6: Parcel, T7: Parcel, T8: Parcel,
+where
+    T0: Parcel,
+    T1: Parcel,
+    T2: Parcel,
+    T3: Parcel,
+    T4: Parcel,
+    T5: Parcel,
+    T6: Parcel,
+    T7: Parcel,
+    T8: Parcel,
 {
     const TYPE_NAME: &'static str = "(T0, T1, T2, T3, T4, T5, T6, T7, T8)";
 
-    fn read_field(read: &mut dyn Read,
-                  settings: &Settings,
-                  _: &mut hint::Hints) -> Result<Self, Error> {
+    fn read_field(
+        read: &mut dyn BitRead,
+        settings: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<Self, Error> {
         let v0 = T0::read(read, settings)?;
         let v1 = T1::read(read, settings)?;
         let v2 = T2::read(read, settings)?;
@@ -229,9 +306,12 @@ impl<T0, T1, T2, T3, T4, T5, T6, T7, T8> Parcel for (T0, T1, T2, T3, T4, T5, T6,
         Ok((v0, v1, v2, v3, v4, v5, v6, v7, v8))
     }
 
-    fn write_field(&self, write: &mut dyn Write,
-                   settings: &Settings,
-                   _: &mut hint::Hints) -> Result<(), Error> {
+    fn write_field(
+        &self,
+        write: &mut dyn Write,
+        settings: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<(), Error> {
         self.0.write(write, settings)?;
         self.1.write(write, settings)?;
         self.2.write(write, settings)?;
@@ -247,14 +327,25 @@ impl<T0, T1, T2, T3, T4, T5, T6, T7, T8> Parcel for (T0, T1, T2, T3, T4, T5, T6,
 }
 
 impl<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> Parcel for (T0, T1, T2, T3, T4, T5, T6, T7, T8, T9)
-    where T0: Parcel, T1: Parcel, T2: Parcel, T3: Parcel, T4: Parcel,
-          T5: Parcel, T6: Parcel, T7: Parcel, T8: Parcel, T9: Parcel,
+where
+    T0: Parcel,
+    T1: Parcel,
+    T2: Parcel,
+    T3: Parcel,
+    T4: Parcel,
+    T5: Parcel,
+    T6: Parcel,
+    T7: Parcel,
+    T8: Parcel,
+    T9: Parcel,
 {
     const TYPE_NAME: &'static str = "(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9)";
 
-    fn read_field(read: &mut dyn Read,
-                  settings: &Settings,
-                  _: &mut hint::Hints) -> Result<Self, Error> {
+    fn read_field(
+        read: &mut dyn BitRead,
+        settings: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<Self, Error> {
         let v0 = T0::read(read, settings)?;
         let v1 = T1::read(read, settings)?;
         let v2 = T2::read(read, settings)?;
@@ -268,9 +359,12 @@ impl<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> Parcel for (T0, T1, T2, T3, T4, T5,
         Ok((v0, v1, v2, v3, v4, v5, v6, v7, v8, v9))
     }
 
-    fn write_field(&self, write: &mut dyn Write,
-                   settings: &Settings,
-                   _: &mut hint::Hints) -> Result<(), Error> {
+    fn write_field(
+        &self,
+        write: &mut dyn Write,
+        settings: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<(), Error> {
         self.0.write(write, settings)?;
         self.1.write(write, settings)?;
         self.2.write(write, settings)?;
@@ -286,16 +380,28 @@ impl<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> Parcel for (T0, T1, T2, T3, T4, T5,
     }
 }
 
-impl<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> Parcel for (T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)
-    where T0: Parcel, T1: Parcel, T2: Parcel, T3: Parcel, T4: Parcel,
-          T5: Parcel, T6: Parcel, T7: Parcel, T8: Parcel, T9: Parcel,
-          T10: Parcel,
+impl<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> Parcel
+    for (T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)
+where
+    T0: Parcel,
+    T1: Parcel,
+    T2: Parcel,
+    T3: Parcel,
+    T4: Parcel,
+    T5: Parcel,
+    T6: Parcel,
+    T7: Parcel,
+    T8: Parcel,
+    T9: Parcel,
+    T10: Parcel,
 {
     const TYPE_NAME: &'static str = "(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)";
 
-    fn read_field(read: &mut dyn Read,
-                  settings: &Settings,
-                  _: &mut hint::Hints) -> Result<Self, Error> {
+    fn read_field(
+        read: &mut dyn BitRead,
+        settings: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<Self, Error> {
         let v0 = T0::read(read, settings)?;
         let v1 = T1::read(read, settings)?;
         let v2 = T2::read(read, settings)?;
@@ -310,9 +416,12 @@ impl<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> Parcel for (T0, T1, T2, T3, T4
         Ok((v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10))
     }
 
-    fn write_field(&self, write: &mut dyn Write,
-                   settings: &Settings,
-                   _: &mut hint::Hints) -> Result<(), Error> {
+    fn write_field(
+        &self,
+        write: &mut dyn Write,
+        settings: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<(), Error> {
         self.0.write(write, settings)?;
         self.1.write(write, settings)?;
         self.2.write(write, settings)?;

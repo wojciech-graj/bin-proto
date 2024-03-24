@@ -1,14 +1,15 @@
-use crate::{hint, Parcel, Error, Settings};
+use crate::{hint, BitRead, Error, Parcel, Settings};
 
 use std::io::prelude::*;
 
-impl<T: Parcel> Parcel for Option<T>
-{
+impl<T: Parcel> Parcel for Option<T> {
     const TYPE_NAME: &'static str = "Option<T>";
 
-    fn read_field(read: &mut dyn Read,
-                  settings: &Settings,
-                  _: &mut hint::Hints) -> Result<Self, Error> {
+    fn read_field(
+        read: &mut dyn BitRead,
+        settings: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<Self, Error> {
         let is_some = bool::read(read, settings)?;
 
         if is_some {
@@ -19,9 +20,12 @@ impl<T: Parcel> Parcel for Option<T>
         }
     }
 
-    fn write_field(&self, write: &mut dyn Write,
-             settings: &Settings,
-             _: &mut hint::Hints) -> Result<(), Error> {
+    fn write_field(
+        &self,
+        write: &mut dyn Write,
+        settings: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<(), Error> {
         self.is_some().write(write, settings)?;
 
         if let Some(ref value) = *self {
@@ -31,4 +35,3 @@ impl<T: Parcel> Parcel for Option<T>
         Ok(())
     }
 }
-

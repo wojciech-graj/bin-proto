@@ -1,55 +1,79 @@
-use crate::{hint, Parcel, Error, Settings};
+use crate::{hint, BitRead, Error, Parcel, Settings};
 
 use std::io::prelude::*;
 
+use byteorder::WriteBytesExt;
 use num_traits::{FromPrimitive, ToPrimitive};
-use byteorder::{ReadBytesExt, WriteBytesExt};
 
 /// An integer value that can be serialized and deserialized.
-pub trait Integer : Parcel + FromPrimitive + ToPrimitive { }
+pub trait Integer: Parcel + FromPrimitive + ToPrimitive {}
 
-impl Parcel for bool
-{
+impl Parcel for bool {
     const TYPE_NAME: &'static str = "bool";
 
-    fn read_field(read: &mut dyn Read,
-                  _: &Settings,
-                  _: &mut hint::Hints) -> Result<Self, Error> {
-        if read.read_u8()? == 0 { Ok(false) } else { Ok(true) }
+    fn read_field(
+        read: &mut dyn BitRead,
+        _: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<Self, Error> {
+        if read.read_u8()? == 0 {
+            Ok(false)
+        } else {
+            Ok(true)
+        }
     }
 
-    fn write_field(&self, write: &mut dyn Write,
-                   _: &Settings,
-                   _: &mut hint::Hints) -> Result<(), Error> {
+    fn write_field(
+        &self,
+        write: &mut dyn Write,
+        _: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<(), Error> {
         write.write_u8(if *self { 1 } else { 0 })?;
         Ok(())
     }
 }
 
-impl Parcel for u8
-{
+impl Parcel for u8 {
     const TYPE_NAME: &'static str = "u8";
 
-    fn read_field(read: &mut dyn Read,
-                  _: &Settings,
-                  _: &mut hint::Hints) -> Result<Self, Error> { Ok(read.read_u8()?) }
-    fn write_field(&self, write: &mut dyn Write,
-                   _: &Settings,
-                   _: &mut hint::Hints)
-        -> Result<(), Error> { write.write_u8(*self)?; Ok(()) }
+    fn read_field(
+        read: &mut dyn BitRead,
+        _: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<Self, Error> {
+        Ok(read.read_u8()?)
+    }
+    fn write_field(
+        &self,
+        write: &mut dyn Write,
+        _: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<(), Error> {
+        write.write_u8(*self)?;
+        Ok(())
+    }
 }
 
-impl Parcel for i8
-{
+impl Parcel for i8 {
     const TYPE_NAME: &'static str = "i8";
 
-    fn read_field(read: &mut dyn Read,
-                  _: &Settings,
-                  _: &mut hint::Hints) -> Result<Self, Error> { Ok(read.read_i8()?) }
-    fn write_field(&self, write: &mut dyn Write,
-                   _: &Settings,
-                   _: &mut hint::Hints)
-        -> Result<(), Error> { write.write_i8(*self)?; Ok(()) }
+    fn read_field(
+        read: &mut dyn BitRead,
+        _: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<Self, Error> {
+        Ok(read.read_i8()?)
+    }
+    fn write_field(
+        &self,
+        write: &mut dyn Write,
+        _: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<(), Error> {
+        write.write_i8(*self)?;
+        Ok(())
+    }
 }
 
 macro_rules! impl_parcel_for_numeric {
@@ -57,16 +81,22 @@ macro_rules! impl_parcel_for_numeric {
         impl Parcel for $ty {
             const TYPE_NAME: &'static str = stringify!($ty);
 
-            fn read_field(read: &mut dyn Read,
-                          settings: &Settings,
-                          _: &mut hint::Hints) -> Result<Self, Error> {
+            fn read_field(
+                read: &mut dyn BitRead,
+                settings: &Settings,
+                _: &mut hint::Hints,
+            ) -> Result<Self, Error> {
                 Ok(settings.byte_order.$read_fn(read)?)
             }
 
-            fn write_field(&self, write: &mut dyn Write,
-                           settings: &Settings,
-                           _: &mut hint::Hints) -> Result<(), Error> {
-                settings.byte_order.$write_fn(*self, write)?; Ok(())
+            fn write_field(
+                &self,
+                write: &mut dyn Write,
+                settings: &Settings,
+                _: &mut hint::Hints,
+            ) -> Result<(), Error> {
+                settings.byte_order.$write_fn(*self, write)?;
+                Ok(())
             }
         }
     };
@@ -81,12 +111,11 @@ impl_parcel_for_numeric!(i64 => [read_i64 : write_i64]);
 impl_parcel_for_numeric!(f32 => [read_f32 : write_f32]);
 impl_parcel_for_numeric!(f64 => [read_f64 : write_f64]);
 
-impl Integer for u8 { }
-impl Integer for i8 { }
-impl Integer for u16 { }
-impl Integer for i16 { }
-impl Integer for u32 { }
-impl Integer for i32 { }
-impl Integer for u64 { }
-impl Integer for i64 { }
-
+impl Integer for u8 {}
+impl Integer for i8 {}
+impl Integer for u16 {}
+impl Integer for i16 {}
+impl Integer for u32 {}
+impl Integer for i32 {}
+impl Integer for u64 {}
+impl Integer for i64 {}

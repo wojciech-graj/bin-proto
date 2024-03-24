@@ -5,7 +5,7 @@ macro_rules! impl_list_type {
         {
             const TYPE_NAME: &'static str = stringify!($ty<T>);
 
-            fn read_field(read: &mut dyn std::io::Read,
+            fn read_field(read: &mut dyn crate::BitRead,
                           settings: &crate::Settings,
                           hints: &mut crate::hint::Hints) -> Result<Self, $crate::Error> {
                 let elements = crate::util::read_list(read, settings, hints)?;
@@ -40,13 +40,18 @@ macro_rules! impl_list_type {
     }
 }
 
-pub mod linked_list { impl_list_type!(LinkedList => T: ); }
-pub mod vec_deque   { impl_list_type!(VecDeque   => T: ); }
+pub mod linked_list {
+    impl_list_type!(LinkedList => T: );
+}
+pub mod vec_deque {
+    impl_list_type!(VecDeque   => T: );
+}
 
-pub mod btree_set   { impl_list_type!(BTreeSet   => T: Ord); }
+pub mod btree_set {
+    impl_list_type!(BTreeSet   => T: Ord);
+}
 
 pub mod hash_set {
     use std::hash::Hash;
     impl_list_type!(HashSet => T: Hash, Eq);
 }
-

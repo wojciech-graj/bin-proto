@@ -1,5 +1,5 @@
+use super::{HasSavedHints, SaveHints};
 use protocol::{hint, Settings};
-use super::{SaveHints, HasSavedHints};
 
 #[derive(protocol::Protocol, Debug, PartialEq)]
 pub struct WithNamedFields {
@@ -28,15 +28,20 @@ define_common_hint_invariant_tests!(with_named_fields => WithNamedFields : WithN
 define_common_hint_invariant_tests!(with_unnamed_fields => WithUnnamedFields : WithUnnamedFields::default());
 
 mod named_fields {
-    use protocol::Parcel;
     use super::*;
+    use bitstream_io::{BigEndian, BitReader};
+    use protocol::Parcel;
 
     #[test]
     fn current_field_index_is_incremented() {
         let settings = Settings::default();
 
         let test_struct = WithNamedFields::default();
-        let read_back = WithNamedFields::read(&mut test_struct.into_stream(&settings).unwrap(), &settings).unwrap();
+        let read_back = WithNamedFields::read(
+            &mut BitReader::endian(test_struct.into_stream(&settings).unwrap(), BigEndian),
+            &settings,
+        )
+        .unwrap();
 
         assert_eq!(Some(0), read_back.f0.hints().current_field_index);
         assert_eq!(Some(1), read_back.f1.hints().current_field_index);
@@ -48,15 +53,20 @@ mod named_fields {
 }
 
 mod unnamed_fields {
-    use protocol::Parcel;
     use super::*;
+    use bitstream_io::{BigEndian, BitReader};
+    use protocol::Parcel;
 
     #[test]
     fn current_field_index_is_incremented() {
         let settings = Settings::default();
 
         let test_struct = WithUnnamedFields::default();
-        let read_back = WithUnnamedFields::read(&mut test_struct.into_stream(&settings).unwrap(), &settings).unwrap();
+        let read_back = WithUnnamedFields::read(
+            &mut BitReader::endian(test_struct.into_stream(&settings).unwrap(), BigEndian),
+            &settings,
+        )
+        .unwrap();
 
         let WithUnnamedFields(f0, f1, f2, f3, f4, f5) = read_back;
 
@@ -85,8 +95,12 @@ impl Default for WithNamedFields {
 impl Default for WithUnnamedFields {
     fn default() -> Self {
         WithUnnamedFields(
-            99.into(), "hello".to_owned().into(), true.into(),
-            127.into(), vec![9,8,7].into(), vec!['a', 'p'].into(),
+            99.into(),
+            "hello".to_owned().into(),
+            true.into(),
+            127.into(),
+            vec![9, 8, 7].into(),
+            vec!['a', 'p'].into(),
         )
     }
 }
@@ -103,4 +117,3 @@ impl HasSavedHints for WithUnnamedFields {
         last.hints()
     }
 }
-

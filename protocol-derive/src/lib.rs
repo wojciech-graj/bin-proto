@@ -3,7 +3,8 @@
 extern crate proc_macro;
 extern crate proc_macro2;
 extern crate syn;
-#[macro_use] extern crate quote;
+#[macro_use]
+extern crate quote;
 
 mod attr;
 mod codegen;
@@ -21,7 +22,9 @@ pub fn protocol(input: TokenStream) -> TokenStream {
     let gen = impl_parcel(&ast);
 
     // Return the generated impl
-    gen.to_string().parse().expect("Could not parse generated parcel impl")
+    gen.to_string()
+        .parse()
+        .expect("Could not parse generated parcel impl")
 }
 
 // The `Parcel` trait is used for data that can be sent/received.
@@ -34,7 +37,7 @@ fn impl_parcel(ast: &syn::DeriveInput) -> proc_macro2::TokenStream {
             let mut stream = impl_parcel_for_enum(&plan, ast);
             stream.extend(impl_enum_for_enum(&plan, ast));
             stream
-        },
+        }
         syn::Data::Union(..) => unimplemented!(),
     }
 }
@@ -42,7 +45,9 @@ fn impl_parcel(ast: &syn::DeriveInput) -> proc_macro2::TokenStream {
 /// Builds generics for a new impl.
 ///
 /// Returns `(generics, where_predicates)`
-fn build_generics(ast: &syn::DeriveInput) -> (Vec<proc_macro2::TokenStream>, Vec<proc_macro2::TokenStream>) {
+fn build_generics(
+    ast: &syn::DeriveInput,
+) -> (Vec<proc_macro2::TokenStream>, Vec<proc_macro2::TokenStream>) {
     use quote::ToTokens;
 
     let mut where_predicates = Vec::new();
@@ -63,91 +68,98 @@ fn build_generics(ast: &syn::DeriveInput) -> (Vec<proc_macro2::TokenStream>, Vec
         where_predicates.push(where_clause.predicates.into_token_stream());
     }
 
-    assert!(ast.generics.const_params().next().is_none(),
-            "constant parameters are not supported yet");
+    assert!(
+        ast.generics.const_params().next().is_none(),
+        "constant parameters are not supported yet"
+    );
 
     (generics, where_predicates)
 }
 
-fn impl_parcel_for_struct(ast: &syn::DeriveInput,
-                          strukt: &syn::DataStruct) -> proc_macro2::TokenStream {
+fn impl_parcel_for_struct(
+    ast: &syn::DeriveInput,
+    strukt: &syn::DataStruct,
+) -> proc_macro2::TokenStream {
     let strukt_name = &ast.ident;
     let read_fields = codegen::read_fields(&strukt.fields);
     let write_fields = codegen::write_fields(&strukt.fields);
 
-    impl_trait_for(ast, quote!(protocol::Parcel), quote! {
-        const TYPE_NAME: &'static str = stringify!(#strukt_name);
+    impl_trait_for(
+        ast,
+        quote!(protocol::Parcel),
+        quote! {
+            const TYPE_NAME: &'static str = stringify!(#strukt_name);
 
-        #[allow(unused_variables)]
-        fn read_field(__io_reader: &mut io::Read,
-                      __settings: &protocol::Settings,
-                      _: &mut protocol::hint::Hints)
-            -> protocol::Result<Self> {
-            // Each type gets its own hints.
-            let mut __hints = protocol::hint::Hints::default();
-            __hints.begin_fields();
+            #[allow(unused_variables)]
+            fn read_field(__io_reader: &mut protocol::BitRead,
+                          __settings: &protocol::Settings,
+                          _: &mut protocol::hint::Hints)
+                -> protocol::Result<Self> {
+                // Each type gets its own hints.
+                let mut __hints = protocol::hint::Hints::default();
+                __hints.begin_fields();
 
-            Ok(#strukt_name # read_fields)
-        }
+                Ok(#strukt_name # read_fields)
+            }
 
-        #[allow(unused_variables)]
-        fn write_field(&self, __io_writer: &mut io::Write,
-                       __settings: &protocol::Settings,
-                       _: &mut protocol::hint::Hints)
-            -> protocol::Result<()> {
-            // Each type gets its own hints.
-            let mut __hints = protocol::hint::Hints::default();
-            __hints.begin_fields();
+            #[allow(unused_variables)]
+            fn write_field(&self, __io_writer: &mut io::Write,
+                           __settings: &protocol::Settings,
+                           _: &mut protocol::hint::Hints)
+                -> protocol::Result<()> {
+                // Each type gets its own hints.
+                let mut __hints = protocol::hint::Hints::default();
+                __hints.begin_fields();
 
-            #write_fields
-            Ok(())
-        }
-    })
+                #write_fields
+                Ok(())
+            }
+        },
+    )
 }
 
 /// Generates a `Parcel` trait implementation for an enum.
-fn impl_parcel_for_enum(plan: &plan::Enum,
-                        ast: &syn::DeriveInput)
-    -> proc_macro2::TokenStream {
-
+fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro2::TokenStream {
     let enum_name = &plan.ident;
     let read_variant = codegen::enums::read_variant(plan);
     let write_variant = codegen::enums::write_variant(plan);
 
-    impl_trait_for(ast, quote!(protocol::Parcel), quote! {
-        const TYPE_NAME: &'static str = stringify!(#enum_name);
+    impl_trait_for(
+        ast,
+        quote!(protocol::Parcel),
+        quote! {
+            const TYPE_NAME: &'static str = stringify!(#enum_name);
 
-        #[allow(unused_variables)]
-        fn read_field(__io_reader: &mut io::Read,
-                      __settings: &protocol::Settings,
-                      _: &mut protocol::hint::Hints)
-            -> protocol::Result<Self> {
-            // Each type gets its own hints.
-            let mut __hints = protocol::hint::Hints::default();
-            __hints.begin_fields();
+            #[allow(unused_variables)]
+            fn read_field(__io_reader: &mut protocol::BitRead,
+                          __settings: &protocol::Settings,
+                          _: &mut protocol::hint::Hints)
+                -> protocol::Result<Self> {
+                // Each type gets its own hints.
+                let mut __hints = protocol::hint::Hints::default();
+                __hints.begin_fields();
 
-            Ok(#read_variant)
-        }
+                Ok(#read_variant)
+            }
 
-        #[allow(unused_variables)]
-        fn write_field(&self, __io_writer: &mut io::Write,
-                       __settings: &protocol::Settings,
-                       _: &mut protocol::hint::Hints)
-            -> protocol::Result<()> {
-            // Each type gets its own hints.
-            let mut __hints = protocol::hint::Hints::default();
-            __hints.begin_fields();
+            #[allow(unused_variables)]
+            fn write_field(&self, __io_writer: &mut io::Write,
+                           __settings: &protocol::Settings,
+                           _: &mut protocol::hint::Hints)
+                -> protocol::Result<()> {
+                // Each type gets its own hints.
+                let mut __hints = protocol::hint::Hints::default();
+                __hints.begin_fields();
 
-            #write_variant
+                #write_variant
 
-            Ok(())
-        }
-    })
+                Ok(())
+            }
+        },
+    )
 }
 
-fn impl_enum_for_enum(plan: &plan::Enum,
-                      ast: &syn::DeriveInput)
-    -> proc_macro2::TokenStream {
+fn impl_enum_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro2::TokenStream {
     let enum_ident = &plan.ident;
     let discriminant = plan.discriminant();
 
@@ -161,28 +173,37 @@ fn impl_enum_for_enum(plan: &plan::Enum,
         })
     });
 
-    impl_trait_for(ast, quote!(protocol::Enum), quote!(
-        type Discriminant = #discriminant;
+    impl_trait_for(
+        ast,
+        quote!(protocol::Enum),
+        quote!(
+            type Discriminant = #discriminant;
 
-        fn discriminator(&self) -> Self::Discriminant {
-            match *self {
-                #(#variant_matchers)*
+            fn discriminator(&self) -> Self::Discriminant {
+                match *self {
+                    #(#variant_matchers)*
+                }
             }
-        }
-    ))
+        ),
+    )
 }
 
 /// Wraps a stream of tokens in an anonymous constant block.
 ///
 /// Inside this block, the protocol crate accessible.
-fn anonymous_constant_block(description: &str,
-                            item_name: &syn::Ident,
-                            body: proc_macro2::TokenStream)
-    -> proc_macro2::TokenStream {
-    let anon_const_name = syn::Ident::new(&format!("__{}_FOR_{}",
-                                                   description.replace(" ", "_").replace("::", "_"),
-                                                   item_name.to_owned()),
-                                          proc_macro2::Span::call_site());
+fn anonymous_constant_block(
+    description: &str,
+    item_name: &syn::Ident,
+    body: proc_macro2::TokenStream,
+) -> proc_macro2::TokenStream {
+    let anon_const_name = syn::Ident::new(
+        &format!(
+            "__{}_FOR_{}",
+            description.replace(" ", "_").replace("::", "_"),
+            item_name.to_owned()
+        ),
+        proc_macro2::Span::call_site(),
+    );
 
     quote! {
         #[allow(non_upper_case_globals)]
@@ -195,21 +216,25 @@ fn anonymous_constant_block(description: &str,
     }
 }
 
-fn impl_trait_for(ast: &syn::DeriveInput,
-                  trait_name: proc_macro2::TokenStream,
-                  impl_body: proc_macro2::TokenStream)
-    -> proc_macro2::TokenStream {
+fn impl_trait_for(
+    ast: &syn::DeriveInput,
+    trait_name: proc_macro2::TokenStream,
+    impl_body: proc_macro2::TokenStream,
+) -> proc_macro2::TokenStream {
     let item_name = &ast.ident;
     let description = format!("impl {}", trait_name);
 
     let (generics, where_predicates) = build_generics(ast);
     let (generics, where_predicates) = (&generics, where_predicates);
 
-    anonymous_constant_block(&description, item_name, quote! {
-        impl < #(#generics),* > #trait_name for #item_name < #(#generics),* >
-            where #(#where_predicates),* {
-            #impl_body
-        }
-    })
+    anonymous_constant_block(
+        &description,
+        item_name,
+        quote! {
+            impl < #(#generics),* > #trait_name for #item_name < #(#generics),* >
+                where #(#where_predicates),* {
+                #impl_body
+            }
+        },
+    )
 }
-

@@ -145,10 +145,10 @@
 //!
 //! ```
 
+pub use self::bit_read::BitRead;
 pub use self::enum_ty::Enum;
+pub use self::errors::{CharTryFromError, Error, ErrorKind, Result, ResultExt, TryFromIntError};
 pub use self::parcel::Parcel;
-pub use self::errors::{Error, ErrorKind, Result, ResultExt, CharTryFromError, TryFromIntError};
-#[cfg(feature = "high-level-trait")] #[allow(deprecated)] pub use self::high_level::HighLevel;
 pub use self::settings::*;
 
 /// Custom derive  to implement `Parcel` for a type that contains other `Parcel`able types.
@@ -162,29 +162,31 @@ pub use self::settings::*;
 ///   bar: String,
 /// }
 /// ```
-#[cfg(feature = "derive")] pub use protocol_derive::Protocol;
+#[cfg(feature = "derive")]
+pub use protocol_derive::Protocol;
 
+mod bit_read;
 mod settings;
-#[macro_use] pub mod types;
-#[macro_use] pub mod wire;
+#[macro_use]
+pub mod types;
+// #[macro_use]
+// pub mod wire;
 
 pub mod attributes;
 mod enum_ty;
 mod errors;
-#[cfg(feature = "high-level-trait")] mod high_level;
 pub mod hint;
 pub mod logic;
 mod parcel;
 pub mod util;
 
-
 extern crate byteorder;
-#[macro_use] extern crate error_chain;
+#[macro_use]
+extern crate error_chain;
 
+extern crate num_traits;
 #[cfg(feature = "uuid")]
 extern crate uuid;
-extern crate num_traits;
 
 /// The default byte ordering.
 pub type DefaultByteOrder = ::byteorder::BigEndian;
-

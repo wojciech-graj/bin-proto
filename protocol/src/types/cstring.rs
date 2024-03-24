@@ -1,12 +1,12 @@
-use crate::{hint, util, Error, Parcel, Settings};
+use crate::{hint, util, BitRead, Error, Parcel, Settings};
 use std::ffi::CString;
-use std::io::prelude::{Read, Write};
+use std::io::prelude::*;
 
 impl Parcel for CString {
     const TYPE_NAME: &'static str = "CString";
 
     fn read_field(
-        read: &mut dyn Read,
+        read: &mut dyn BitRead,
         settings: &Settings,
         _hints: &mut hint::Hints,
     ) -> Result<Self, Error> {
@@ -35,13 +35,15 @@ impl Parcel for CString {
 
 #[cfg(test)]
 mod test {
+    use bitstream_io::{BigEndian, BitReader};
+
     use crate::{Parcel, Settings};
     use std::ffi::CString;
     use std::io::Cursor;
 
     #[test]
     fn can_read_cstring() {
-        let mut data = Cursor::new([0x41, 0x42, 0x43, 0]);
+        let mut data = BitReader::endian(Cursor::new([0x41, 0x42, 0x43, 0]), BigEndian);
         let read_back: CString = Parcel::read(&mut data, &Settings::default()).unwrap();
         assert_eq!(read_back, CString::new("ABC").unwrap());
     }

@@ -1,4 +1,4 @@
-use crate::{hint, Parcel, Error, ErrorKind, Settings};
+use crate::{hint, BitRead, Error, ErrorKind, Parcel, Settings};
 use std::io::prelude::*;
 
 /// A type that does not have any protocol serialization implemented.
@@ -16,21 +16,19 @@ use std::io::prelude::*;
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Unimplemented;
 
-impl Parcel for Unimplemented
-{
+impl Parcel for Unimplemented {
     const TYPE_NAME: &'static str = "Unimplemented";
 
-    fn read_field(_: &mut dyn Read,
-                  _: &Settings,
-                  _: &mut hint::Hints) -> Result<Self, Error> {
+    fn read_field(_: &mut dyn BitRead, _: &Settings, _: &mut hint::Hints) -> Result<Self, Error> {
         Err(ErrorKind::UnimplementedParcel(Self::TYPE_NAME).into())
     }
 
-    fn write_field(&self,
-                   _: &mut dyn Write,
-                   _: &Settings,
-                   _: &mut hint::Hints) -> Result<(), Error> {
+    fn write_field(
+        &self,
+        _: &mut dyn Write,
+        _: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<(), Error> {
         unimplemented!();
     }
 }
-

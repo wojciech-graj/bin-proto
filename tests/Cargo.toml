@@ -8,3 +8,4 @@ publish = false
 
 [dependencies]
 protocol = { path = "../protocol", default-features = false, features = ["impl-box", "derive"] } # TODO: remove default-features=false when impl-box is a default
+bitstream-io = "2.2.0"
