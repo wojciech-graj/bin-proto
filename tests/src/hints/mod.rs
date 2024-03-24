@@ -2,7 +2,7 @@
 //! various invariants are followed.
 
 use bitstream_io::{BigEndian, BitReader};
-use protocol::hint;
+use protocol::{hint, BitWrite};
 use protocol::{BitRead, Error, Parcel, Settings};
 use std::io;
 
@@ -45,7 +45,7 @@ where
 
     fn write_field(
         &self,
-        write: &mut dyn io::Write,
+        write: &mut dyn BitWrite,
         settings: &Settings,
         _: &mut hint::Hints,
     ) -> Result<(), Error> {

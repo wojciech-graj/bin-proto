@@ -1,5 +1,4 @@
-use crate::{hint, util, BitRead, Error, Parcel, Settings};
-use std::io::prelude::*;
+use crate::{hint, util, BitRead, BitWrite, Error, Parcel, Settings};
 
 macro_rules! impl_parcel_for_array {
     ($n:expr) => {
@@ -38,7 +37,7 @@ macro_rules! impl_parcel_for_array {
 
             fn write_field(
                 &self,
-                write: &mut dyn Write,
+                write: &mut dyn BitWrite,
                 settings: &Settings,
                 _: &mut hint::Hints,
             ) -> Result<(), Error> {
@@ -97,7 +96,7 @@ impl_parcel_for_array!(0xffff);
 
 #[cfg(test)]
 mod test {
-    use bitstream_io::{BigEndian, BitReader};
+    use bitstream_io::{BigEndian, BitReader, BitWriter};
 
     use crate::{Parcel, Settings};
     use std::io::Cursor;
@@ -111,11 +110,12 @@ mod test {
 
     #[test]
     fn can_write_array() {
-        let mut buffer = Cursor::new(Vec::new());
+        let mut data = Cursor::new(Vec::new());
+        let mut buffer = BitWriter::endian(&mut data, BigEndian);
 
         [5u8, 7, 9, 11]
             .write(&mut buffer, &Settings::default())
             .unwrap();
-        assert_eq!(buffer.into_inner(), vec![5, 7, 9, 11]);
+        assert_eq!(data.into_inner(), vec![5, 7, 9, 11]);
     }
 }

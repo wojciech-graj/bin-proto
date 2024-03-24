@@ -1,8 +1,7 @@
-use bitstream_io::{BigEndian, BitReader};
+use bitstream_io::{BigEndian, BitReader, BitWriter};
 
-use crate::{hint, BitRead, Error, Settings};
+use crate::{hint, BitRead, BitWrite, Error, Settings};
 use std::io;
-use std::io::prelude::*;
 
 /// A value which can be read and written.
 ///
@@ -66,15 +65,15 @@ pub trait Parcel: Sized {
         hints: &mut hint::Hints,
     ) -> Result<Self, Error>;
 
-    /// Writes a value to a stream.
-    fn write(&self, write: &mut dyn Write, settings: &Settings) -> Result<(), Error> {
+    /// BitWrites a value to a stream.
+    fn write(&self, write: &mut dyn BitWrite, settings: &Settings) -> Result<(), Error> {
         self.write_field(write, settings, &mut hint::Hints::default())
     }
 
-    /// Writes a value to a stream.
+    /// BitWrites a value to a stream.
     fn write_field(
         &self,
-        write: &mut dyn Write,
+        write: &mut dyn BitWrite,
         settings: &Settings,
         hints: &mut hint::Hints,
     ) -> Result<(), Error>;
@@ -115,10 +114,11 @@ pub trait Parcel: Sized {
         settings: &Settings,
         hints: &mut hint::Hints,
     ) -> Result<Vec<u8>, Error> {
-        let mut buffer = io::Cursor::new(Vec::new());
+        let mut data = io::Cursor::new(Vec::new());
+        let mut buffer = BitWriter::endian(&mut data, BigEndian);
         self.write_field(&mut buffer, settings, hints)?;
 
-        Ok(buffer.into_inner())
+        Ok(data.into_inner())
     }
 
     /// Gets the name of the type; `Parcel::TYPE_NAME`.

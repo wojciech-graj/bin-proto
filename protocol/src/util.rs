@@ -3,10 +3,9 @@
 use bitstream_io::{BigEndian, BitReader};
 
 use crate::types::Integer;
-use crate::{hint, BitRead, Error, ErrorKind, Parcel, Settings, TryFromIntError};
+use crate::{hint, BitRead, BitWrite, Error, ErrorKind, Parcel, Settings, TryFromIntError};
 
 use std::io;
-use std::io::prelude::*;
 
 /// The integer type that we will use to send length prefixes.
 pub type SizeType = u32;
@@ -39,12 +38,12 @@ where
     Ok(elements.into_iter())
 }
 
-/// Writes an iterator of parcels to the stream.
+/// BitWrites an iterator of parcels to the stream.
 ///
 /// Does not include a length prefix.
 pub fn write_items<'a, T>(
     items: impl IntoIterator<Item = &'a T>,
-    write: &mut dyn Write,
+    write: &mut dyn BitWrite,
     settings: &Settings,
 ) -> Result<(), Error>
 where
@@ -68,10 +67,10 @@ where
     self::read_list_ext::<SizeType, T>(read, settings, hints)
 }
 
-/// Writes a length-prefixed list to a stream.
+/// BitWrites a length-prefixed list to a stream.
 pub fn write_list<'a, T, I>(
     elements: I,
-    write: &mut dyn Write,
+    write: &mut dyn BitWrite,
     settings: &Settings,
     hints: &mut hint::Hints,
 ) -> Result<(), Error>
@@ -137,10 +136,10 @@ where
     }
 }
 
-/// Writes a length-prefixed list to a stream.
+/// BitWrites a length-prefixed list to a stream.
 pub fn write_list_ext<'a, S, T, I>(
     elements: I,
-    write: &mut dyn Write,
+    write: &mut dyn BitWrite,
     settings: &Settings,
     hints: &mut hint::Hints,
 ) -> Result<(), Error>

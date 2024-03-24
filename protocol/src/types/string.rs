@@ -1,6 +1,5 @@
-use crate::{hint, types, util, BitRead, Error, Parcel, Settings};
+use crate::{hint, types, util, BitRead, BitWrite, Error, Parcel, Settings};
 use std;
-use std::io::prelude::*;
 
 // The default implementation treats the string as a normal char array.
 impl Parcel for std::string::String {
@@ -18,7 +17,7 @@ impl Parcel for std::string::String {
 
     fn write_field(
         &self,
-        write: &mut dyn Write,
+        write: &mut dyn BitWrite,
         settings: &Settings,
         hints: &mut hint::Hints,
     ) -> Result<(), Error> {
@@ -59,7 +58,7 @@ impl<S: types::Integer> Parcel for String<S> {
 
     fn write_field(
         &self,
-        write: &mut dyn Write,
+        write: &mut dyn BitWrite,
         settings: &Settings,
         hints: &mut hint::Hints,
     ) -> Result<(), Error> {

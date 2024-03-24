@@ -1,6 +1,5 @@
-use crate::{hint, BitRead, CharTryFromError, Error, Parcel, Settings};
+use crate::{hint, BitRead, BitWrite, CharTryFromError, Error, Parcel, Settings};
 use std::char;
-use std::io::prelude::*;
 
 impl Parcel for char {
     const TYPE_NAME: &'static str = "char";
@@ -16,7 +15,7 @@ impl Parcel for char {
 
     fn write_field(
         &self,
-        write: &mut dyn Write,
+        write: &mut dyn BitWrite,
         settings: &Settings,
         _: &mut hint::Hints,
     ) -> Result<(), Error> {

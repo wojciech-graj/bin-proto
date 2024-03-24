@@ -1,6 +1,5 @@
-use crate::{hint, BitRead, Error, Parcel, Settings};
+use crate::{hint, BitRead, BitWrite, Error, Parcel, Settings};
 
-use std::io::prelude::*;
 use std::ops::Deref;
 use std::rc::Rc;
 use std::sync::Arc;
@@ -21,7 +20,7 @@ macro_rules! impl_smart_ptr_type {
 
             fn write_field(
                 &self,
-                write: &mut dyn Write,
+                write: &mut dyn BitWrite,
                 settings: &Settings,
                 _: &mut hint::Hints,
             ) -> Result<(), Error> {

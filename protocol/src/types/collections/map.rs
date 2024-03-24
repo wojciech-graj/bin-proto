@@ -1,9 +1,7 @@
-use crate::{hint, BitRead, Error, Parcel, Settings};
+use crate::{hint, BitRead, BitWrite, Error, Parcel, Settings};
 
 use std::collections::{BTreeMap, HashMap};
 use std::hash::Hash;
-
-use std::io::prelude::*;
 
 pub type SizeType = u32;
 
@@ -32,7 +30,7 @@ macro_rules! impl_map_type {
                 Ok(map)
             }
 
-            fn write_field(&self, write: &mut dyn Write,
+            fn write_field(&self, write: &mut dyn BitWrite,
                            settings: &Settings,
                            _: &mut hint::Hints) -> Result<(), Error> {
                 (self.len() as SizeType).write(write, settings)?;

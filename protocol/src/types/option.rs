@@ -1,6 +1,4 @@
-use crate::{hint, BitRead, Error, Parcel, Settings};
-
-use std::io::prelude::*;
+use crate::{hint, BitRead, BitWrite, Error, Parcel, Settings};
 
 impl<T: Parcel> Parcel for Option<T> {
     const TYPE_NAME: &'static str = "Option<T>";
@@ -22,7 +20,7 @@ impl<T: Parcel> Parcel for Option<T> {
 
     fn write_field(
         &self,
-        write: &mut dyn Write,
+        write: &mut dyn BitWrite,
         settings: &Settings,
         _: &mut hint::Hints,
     ) -> Result<(), Error> {

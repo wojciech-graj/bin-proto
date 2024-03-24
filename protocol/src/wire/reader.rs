@@ -11,7 +11,7 @@ use std::io::prelude::*;
 ///
 /// # Adding data to the receive buffer
 ///
-/// `Reader` implements `std::io::Write`. Any bytes written
+/// `Reader` implements `std::io::BitWrite`. Any bytes written
 /// to the reader are added to the receive queue for future
 /// processing.
 ///
@@ -22,7 +22,7 @@ use std::io::prelude::*;
 ///
 /// ```
 /// use protocol;
-/// use std::io::Write;
+/// use std::io::BitWrite;
 ///
 /// let mut reader = protocol::wire::Reader::new();
 /// let settings = protocol::Settings::default();
@@ -99,7 +99,7 @@ impl Reader {
     }
 }
 
-impl Write for Reader {
+impl BitWrite for Reader {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         self.receive_buffer.extend(buf);
         Ok(buf.len())

@@ -1,8 +1,5 @@
-use crate::{hint, BitRead, Error, Parcel, Settings};
+use crate::{hint, BitRead, BitWrite, Error, Parcel, Settings};
 
-use std::io::prelude::*;
-
-use byteorder::WriteBytesExt;
 use num_traits::{FromPrimitive, ToPrimitive};
 
 /// An integer value that can be serialized and deserialized.
@@ -25,7 +22,7 @@ impl Parcel for bool {
 
     fn write_field(
         &self,
-        write: &mut dyn Write,
+        write: &mut dyn BitWrite,
         _: &Settings,
         _: &mut hint::Hints,
     ) -> Result<(), Error> {
@@ -46,7 +43,7 @@ impl Parcel for u8 {
     }
     fn write_field(
         &self,
-        write: &mut dyn Write,
+        write: &mut dyn BitWrite,
         _: &Settings,
         _: &mut hint::Hints,
     ) -> Result<(), Error> {
@@ -67,7 +64,7 @@ impl Parcel for i8 {
     }
     fn write_field(
         &self,
-        write: &mut dyn Write,
+        write: &mut dyn BitWrite,
         _: &Settings,
         _: &mut hint::Hints,
     ) -> Result<(), Error> {
@@ -91,7 +88,7 @@ macro_rules! impl_parcel_for_numeric {
 
             fn write_field(
                 &self,
-                write: &mut dyn Write,
+                write: &mut dyn BitWrite,
                 settings: &Settings,
                 _: &mut hint::Hints,
             ) -> Result<(), Error> {

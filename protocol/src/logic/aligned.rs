@@ -1,5 +1,4 @@
-use crate::{hint, BitRead, Error, Parcel, Settings};
-use std::io::prelude::*;
+use crate::{hint, BitRead, BitWrite, Error, Parcel, Settings};
 use std::{marker, mem};
 
 /// A value that is aligned to a specified number of bytes.
@@ -113,13 +112,13 @@ where
 
     fn write_field(
         &self,
-        write: &mut dyn Write,
+        write: &mut dyn BitWrite,
         settings: &Settings,
         hints: &mut hint::Hints,
     ) -> Result<(), Error> {
         let unaligned_bytes = self.value.raw_bytes_field(settings, hints)?;
         let aligned_bytes = align_to(Self::align_to_bytes(), 0x00, unaligned_bytes);
-        write.write(&aligned_bytes)?;
+        write.write_bytes(&aligned_bytes)?;
         Ok(())
     }
 }

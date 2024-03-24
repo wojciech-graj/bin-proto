@@ -1,5 +1,4 @@
-use crate::{hint, BitRead, Error, ErrorKind, Parcel, Settings};
-use std::io::prelude::*;
+use crate::{hint, BitRead, BitWrite, Error, ErrorKind, Parcel, Settings};
 
 /// A type that does not have any protocol serialization implemented.
 ///
@@ -25,7 +24,7 @@ impl Parcel for Unimplemented {
 
     fn write_field(
         &self,
-        _: &mut dyn Write,
+        _: &mut dyn BitWrite,
         _: &Settings,
         _: &mut hint::Hints,
     ) -> Result<(), Error> {

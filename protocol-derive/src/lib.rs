@@ -103,7 +103,7 @@ fn impl_parcel_for_struct(
             }
 
             #[allow(unused_variables)]
-            fn write_field(&self, __io_writer: &mut io::Write,
+            fn write_field(&self, __io_writer: &mut protocol::BitWrite,
                            __settings: &protocol::Settings,
                            _: &mut protocol::hint::Hints)
                 -> protocol::Result<()> {
@@ -143,7 +143,7 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
             }
 
             #[allow(unused_variables)]
-            fn write_field(&self, __io_writer: &mut io::Write,
+            fn write_field(&self, __io_writer: &mut protocol::BitWrite,
                            __settings: &protocol::Settings,
                            _: &mut protocol::hint::Hints)
                 -> protocol::Result<()> {

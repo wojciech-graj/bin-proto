@@ -1,5 +1,4 @@
-use crate::{hint, BitRead, Error, Parcel, Settings};
-use std::io::prelude::*;
+use crate::{hint, BitRead, BitWrite, Error, Parcel, Settings};
 
 use uuid::Uuid;
 
@@ -18,11 +17,11 @@ impl Parcel for Uuid {
 
     fn write_field(
         &self,
-        write: &mut dyn Write,
+        write: &mut dyn BitWrite,
         _: &Settings,
         _: &mut hint::Hints,
     ) -> Result<(), Error> {
-        write.write(self.as_bytes())?;
+        write.write_bytes(self.as_bytes())?;
         Ok(())
     }
 }

@@ -1,6 +1,5 @@
-use crate::{hint, types, util, BitRead, Error, Parcel, Settings};
+use crate::{hint, types, util, BitRead, BitWrite, Error, Parcel, Settings};
 use std;
-use std::io::prelude::*;
 
 /// A newtype wrapping `Vec<T>` but with a custom length prefix type.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -14,7 +13,7 @@ impl<S: types::Integer, T: Parcel> Vec<S, T> {
     /// Creates a new `Vec` from a list of elements.
     pub fn new(elements: std::vec::Vec<T>) -> Self {
         Vec {
-            elements: elements,
+            elements,
             _a: std::marker::PhantomData,
         }
     }
@@ -34,7 +33,7 @@ impl<S: types::Integer, T: Parcel> Parcel for Vec<S, T> {
 
     fn write_field(
         &self,
-        write: &mut dyn Write,
+        write: &mut dyn BitWrite,
         settings: &Settings,
         hints: &mut hint::Hints,
     ) -> Result<(), Error> {
@@ -96,8 +95,7 @@ where
 
 /// Stuff relating to `std::vec::Vec<T>`.
 mod std_vec {
-    use crate::{hint, util, BitRead, Error, Parcel, Settings};
-    use std::io::prelude::*;
+    use crate::{hint, util, BitRead, BitWrite, Error, Parcel, Settings};
 
     impl<T: Parcel> Parcel for Vec<T> {
         const TYPE_NAME: &'static str = "Vec<T>";
@@ -112,7 +110,7 @@ mod std_vec {
 
         fn write_field(
             &self,
-            write: &mut dyn Write,
+            write: &mut dyn BitWrite,
             settings: &Settings,
             hints: &mut hint::Hints,
         ) -> Result<(), Error> {

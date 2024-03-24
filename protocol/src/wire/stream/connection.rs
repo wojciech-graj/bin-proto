@@ -1,6 +1,6 @@
-use crate::{Parcel, Error, Settings};
-use crate::wire::stream::{Transport, transport};
 use crate::wire::middleware;
+use crate::wire::stream::{transport, Transport};
+use crate::{Error, Parcel, Settings};
 
 use std::io::prelude::*;
 use std::io::Cursor;
@@ -8,8 +8,11 @@ use std::io::Cursor;
 /// A stream-based connection.
 // TODO: Allow custom transports.
 #[derive(Debug)]
-pub struct Connection<P: Parcel, S: Read + Write, M: middleware::Pipeline = middleware::pipeline::Default>
-{
+pub struct Connection<
+    P: Parcel,
+    S: Read + BitWrite,
+    M: middleware::Pipeline = middleware::pipeline::Default,
+> {
     pub stream: S,
     pub transport: transport::Simple,
     pub middleware: M,
@@ -18,13 +21,14 @@ pub struct Connection<P: Parcel, S: Read + Write, M: middleware::Pipeline = midd
     pub _a: ::std::marker::PhantomData<P>,
 }
 
-impl<P,S,M> Connection<P,S,M>
-    where P: Parcel, S: Read + Write, M: middleware::Pipeline
+impl<P, S, M> Connection<P, S, M>
+where
+    P: Parcel,
+    S: Read + BitWrite,
+    M: middleware::Pipeline,
 {
     /// Creates a new connection.
-    pub fn new(stream: S,
-               middleware: M,
-               settings: Settings) -> Self {
+    pub fn new(stream: S, middleware: M, settings: Settings) -> Self {
         Connection {
             stream: stream,
             transport: transport::Simple::new(),
@@ -36,7 +40,8 @@ impl<P,S,M> Connection<P,S,M>
 
     /// Processes any incoming data in the stream.
     pub fn process_incoming_data(&mut self) -> Result<(), Error> {
-        self.transport.process_data(&mut self.stream, &self.settings)
+        self.transport
+            .process_data(&mut self.stream, &self.settings)
     }
 
     /// Attempts to receive a packet.
@@ -56,10 +61,14 @@ impl<P,S,M> Connection<P,S,M>
 
     /// Sends a packet.
     pub fn send_packet(&mut self, packet: &P) -> Result<(), Error> {
-        let raw_packet = self.middleware.encode_data(packet.raw_bytes(&self.settings)?)?;
-        self.transport.send_raw_packet(&mut self.stream, &raw_packet, &self.settings)
+        let raw_packet = self
+            .middleware
+            .encode_data(packet.raw_bytes(&self.settings)?)?;
+        self.transport
+            .send_raw_packet(&mut self.stream, &raw_packet, &self.settings)
     }
 
-    pub fn into_inner(self) -> S { self.stream }
+    pub fn into_inner(self) -> S {
+        self.stream
+    }
 }
-

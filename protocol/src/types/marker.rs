@@ -1,7 +1,5 @@
-use crate::{hint, BitRead, Error, Parcel, Settings};
+use crate::{hint, BitRead, BitWrite, Error, Parcel, Settings};
 use std::marker::PhantomData;
-
-use std::io::prelude::*;
 
 impl<T> Parcel for PhantomData<T> {
     const TYPE_NAME: &'static str = "PhantomData<T>";
@@ -12,7 +10,7 @@ impl<T> Parcel for PhantomData<T> {
 
     fn write_field(
         &self,
-        _: &mut dyn Write,
+        _: &mut dyn BitWrite,
         _: &Settings,
         _: &mut hint::Hints,
     ) -> Result<(), Error> {

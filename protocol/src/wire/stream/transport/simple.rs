@@ -134,13 +134,13 @@ impl Transport for Simple {
 
     fn send_raw_packet(
         &mut self,
-        write: &mut dyn Write,
+        write: &mut dyn BitWrite,
         packet: &[u8],
         settings: &Settings,
     ) -> Result<(), Error> {
         // Prefix the packet size.
         (packet.len() as PacketSize).write(write, settings)?;
-        // Write the packet data.
+        // BitWrite the packet data.
         write.write(&packet)?;
 
         Ok(())

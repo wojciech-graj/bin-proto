@@ -12,7 +12,7 @@ macro_rules! impl_list_type {
                 Ok(elements.into_iter().collect())
             }
 
-            fn write_field(&self, write: &mut dyn std::io::Write,
+            fn write_field(&self, write: &mut dyn crate::BitWrite,
                            settings: &crate::Settings,
                            hints: &mut crate::hint::Hints)
                 -> Result<(), $crate::Error> {

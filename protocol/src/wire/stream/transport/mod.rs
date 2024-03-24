@@ -12,7 +12,7 @@ pub trait Transport {
 
     fn send_raw_packet(
         &mut self,
-        write: &mut dyn Write,
+        write: &mut dyn BitWrite,
         packet: &[u8],
         settings: &Settings,
     ) -> Result<(), Error>;

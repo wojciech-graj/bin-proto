@@ -1,6 +1,5 @@
-use crate::{hint, util, BitRead, Error, Parcel, Settings};
+use crate::{hint, util, BitRead, BitWrite, Error, Parcel, Settings};
 use std::ffi::CString;
-use std::io::prelude::*;
 
 impl Parcel for CString {
     const TYPE_NAME: &'static str = "CString";
@@ -25,7 +24,7 @@ impl Parcel for CString {
 
     fn write_field(
         &self,
-        write: &mut dyn Write,
+        write: &mut dyn BitWrite,
         settings: &Settings,
         _hints: &mut hint::Hints,
     ) -> Result<(), Error> {
@@ -35,7 +34,7 @@ impl Parcel for CString {
 
 #[cfg(test)]
 mod test {
-    use bitstream_io::{BigEndian, BitReader};
+    use bitstream_io::{BigEndian, BitReader, BitWriter};
 
     use crate::{Parcel, Settings};
     use std::ffi::CString;
@@ -50,12 +49,13 @@ mod test {
 
     #[test]
     fn can_write_cstring() {
-        let mut buffer = Cursor::new(Vec::new());
+        let mut data = Cursor::new(Vec::new());
+        let mut buffer = BitWriter::endian(&mut data, BigEndian);
 
         CString::new("ABC")
             .unwrap()
             .write(&mut buffer, &Settings::default())
             .unwrap();
-        assert_eq!(buffer.into_inner(), vec![0x41, 0x42, 0x43, 0]);
+        assert_eq!(data.into_inner(), vec![0x41, 0x42, 0x43, 0]);
     }
 }

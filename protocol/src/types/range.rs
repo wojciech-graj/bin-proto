@@ -1,5 +1,4 @@
-use crate::{hint, BitRead, Error, Parcel, Settings};
-use std::io::prelude::*;
+use crate::{hint, BitRead, BitWrite, Error, Parcel, Settings};
 
 impl<T> Parcel for std::ops::Range<T>
 where
@@ -20,7 +19,7 @@ where
 
     fn write_field(
         &self,
-        write: &mut dyn Write,
+        write: &mut dyn BitWrite,
         settings: &Settings,
         _: &mut hint::Hints,
     ) -> Result<(), Error> {

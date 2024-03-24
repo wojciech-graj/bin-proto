@@ -36,8 +36,8 @@ where
         P::read(&mut bytes, &self.settings)
     }
 
-    /// Writes a packet into a buffer.
-    pub fn send_to(&mut self, buffer: &mut dyn Write, packet: &P) -> Result<(), Error> {
+    /// BitWrites a packet into a buffer.
+    pub fn send_to(&mut self, buffer: &mut dyn BitWrite, packet: &P) -> Result<(), Error> {
         let bytes = self
             .middleware
             .encode_data(packet.raw_bytes(&self.settings)?)?;

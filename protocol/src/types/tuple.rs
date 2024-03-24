@@ -1,6 +1,4 @@
-use crate::{hint, BitRead, Error, Parcel, Settings};
-
-use std::io::prelude::*;
+use crate::{hint, BitRead, BitWrite, Error, Parcel, Settings};
 
 impl<T0, T1> Parcel for (T0, T1)
 where
@@ -21,7 +19,7 @@ where
 
     fn write_field(
         &self,
-        write: &mut dyn Write,
+        write: &mut dyn BitWrite,
         settings: &Settings,
         _: &mut hint::Hints,
     ) -> Result<(), Error> {
@@ -53,7 +51,7 @@ where
 
     fn write_field(
         &self,
-        write: &mut dyn Write,
+        write: &mut dyn BitWrite,
         settings: &Settings,
         _: &mut hint::Hints,
     ) -> Result<(), Error> {
@@ -88,7 +86,7 @@ where
 
     fn write_field(
         &self,
-        write: &mut dyn Write,
+        write: &mut dyn BitWrite,
         settings: &Settings,
         _: &mut hint::Hints,
     ) -> Result<(), Error> {
@@ -126,7 +124,7 @@ where
 
     fn write_field(
         &self,
-        write: &mut dyn Write,
+        write: &mut dyn BitWrite,
         settings: &Settings,
         _: &mut hint::Hints,
     ) -> Result<(), Error> {
@@ -167,7 +165,7 @@ where
 
     fn write_field(
         &self,
-        write: &mut dyn Write,
+        write: &mut dyn BitWrite,
         settings: &Settings,
         _: &mut hint::Hints,
     ) -> Result<(), Error> {
@@ -211,7 +209,7 @@ where
 
     fn write_field(
         &self,
-        write: &mut dyn Write,
+        write: &mut dyn BitWrite,
         settings: &Settings,
         _: &mut hint::Hints,
     ) -> Result<(), Error> {
@@ -258,7 +256,7 @@ where
 
     fn write_field(
         &self,
-        write: &mut dyn Write,
+        write: &mut dyn BitWrite,
         settings: &Settings,
         _: &mut hint::Hints,
     ) -> Result<(), Error> {
@@ -308,7 +306,7 @@ where
 
     fn write_field(
         &self,
-        write: &mut dyn Write,
+        write: &mut dyn BitWrite,
         settings: &Settings,
         _: &mut hint::Hints,
     ) -> Result<(), Error> {
@@ -361,7 +359,7 @@ where
 
     fn write_field(
         &self,
-        write: &mut dyn Write,
+        write: &mut dyn BitWrite,
         settings: &Settings,
         _: &mut hint::Hints,
     ) -> Result<(), Error> {
@@ -418,7 +416,7 @@ where
 
     fn write_field(
         &self,
-        write: &mut dyn Write,
+        write: &mut dyn BitWrite,
         settings: &Settings,
         _: &mut hint::Hints,
     ) -> Result<(), Error> {
