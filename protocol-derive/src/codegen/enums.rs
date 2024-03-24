@@ -1,6 +1,5 @@
 use crate::{codegen, plan};
 use proc_macro2::{Span, TokenStream};
-use syn;
 
 /// Generates code that reads one of a set of
 /// parcel variants and returns an expression
@@ -100,7 +99,6 @@ pub fn bind_fields_pattern(
         }
         syn::Fields::Unnamed(ref fields_unnamed) => {
             let binding_names: Vec<_> = (0..fields_unnamed.unnamed.len())
-                .into_iter()
                 .map(|i| syn::Ident::new(&format!("field_{}", i), proc_macro2::Span::call_site()))
                 .collect();
 

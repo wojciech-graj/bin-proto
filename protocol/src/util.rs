@@ -93,35 +93,55 @@ where
 {
     match hints.current_field_length() {
         Some(length) => {
-            match length.kind {
-                hint::LengthPrefixKind::Bytes => {
-                    let byte_count = length.length;
+            match length {
+                hint::FieldLength::Fixed { length, kind } => match kind {
+                    hint::LengthPrefixKind::Bytes => {
+                        let byte_count = length;
 
-                    // First, read all bytes of the list without processing them.
-                    let bytes: Vec<u8> = read_items(byte_count, read, settings)?.collect();
-                    let mut read_back_bytes = BitReader::endian(io::Cursor::new(bytes), BigEndian);
+                        // First, read all bytes of the list without processing them.
+                        let bytes: Vec<u8> = read_items(byte_count, read, settings)?.collect();
+                        let mut read_back_bytes =
+                            BitReader::endian(io::Cursor::new(bytes), BigEndian);
 
-                    // Then, parse the items until we reach the end of the buffer stream.
+                        // Then, parse the items until we reach the end of the buffer stream.
+                        let mut items = Vec::new();
+                        // FIXME: potential DoS vector, should timeout.
+                        while read_back_bytes.position_in_bits().unwrap() < (byte_count as u64) * 8
+                        {
+                            let item =
+                                match T::read(&mut read_back_bytes, settings).map_err(|e| e.0) {
+                                    Ok(item) => item,
+                                    Err(ErrorKind::Io(ref io))
+                                        if io.kind() == io::ErrorKind::UnexpectedEof =>
+                                    {
+                                        // FIXME: make this a client error.
+                                        panic!("length prefix in bytes does not match actual size");
+                                    }
+                                    Err(e) => return Err(e.into()),
+                                };
+                            items.push(item);
+                        }
+
+                        Ok(items)
+                    }
+                    hint::LengthPrefixKind::Elements => {
+                        read_items(length, read, settings).map(|i| i.collect())
+                    }
+                },
+                hint::FieldLength::Flexible => {
                     let mut items = Vec::new();
-                    // FIXME: potential DoS vector, should timeout.
-                    while read_back_bytes.position_in_bits().unwrap() < (byte_count as u64) * 8 {
-                        let item = match T::read(&mut read_back_bytes, settings).map_err(|e| e.0) {
+                    loop {
+                        let item = match T::read(read, settings).map_err(|e| e.0) {
                             Ok(item) => item,
                             Err(ErrorKind::Io(ref io))
                                 if io.kind() == io::ErrorKind::UnexpectedEof =>
                             {
-                                // FIXME: make this a client error.
-                                panic!("length prefix in bytes does not match actual size");
+                                return Ok(items)
                             }
                             Err(e) => return Err(e.into()),
                         };
                         items.push(item);
                     }
-
-                    Ok(items)
-                }
-                hint::LengthPrefixKind::Elements => {
-                    read_items(length.length, read, settings).map(|i| i.collect())
                 }
             }
         }

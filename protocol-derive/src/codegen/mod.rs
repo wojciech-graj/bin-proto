@@ -2,7 +2,6 @@ pub mod enums;
 
 use crate::attr;
 use proc_macro2::TokenStream;
-use syn;
 
 pub fn read_fields(fields: &syn::Fields) -> TokenStream {
     match *fields {
@@ -51,26 +50,30 @@ fn read_named_fields(fields_named: &syn::FieldsNamed) -> TokenStream {
 }
 
 fn read_field(field: &syn::Field) -> TokenStream {
-    if let Some(attr::Protocol::BitField(i)) = attr::protocol(&field.attrs) {
-        quote! {
+    match attr::protocol(&field.attrs) {
+        Some(attr::Protocol::BitField(i)) => quote! {
             protocol::BitField::read_field(__io_reader, #i, __settings, &mut __hints)
-        }
-    } else {
-        quote! {
+        },
+        Some(attr::Protocol::FlexibleArrayMember) => quote! {
+            protocol::FlexibleArrayMember::read_field(__io_reader, __settings, &mut __hints)
+        },
+        _ => quote! {
             protocol::Parcel::read_field(__io_reader, __settings, &mut __hints)
-        }
+        },
     }
 }
 
 fn write_field<T: quote::ToTokens>(field: &syn::Field, field_name: &T) -> TokenStream {
-    if let Some(attr::Protocol::BitField(i)) = attr::protocol(&field.attrs) {
-        quote! {
+    match attr::protocol(&field.attrs) {
+        Some(attr::Protocol::BitField(i)) => quote! {
             protocol::BitField::write_field(&self. #field_name, __io_writer, #i, __settings, &mut __hints)
-        }
-    } else {
-        quote! {
+        },
+        Some(attr::Protocol::FlexibleArrayMember) => quote! {
+            protocol::FlexibleArrayMember::write_field(&self. #field_name, __io_writer, __settings, &mut __hints)
+        },
+        _ => quote! {
             protocol::Parcel::write_field(&self. #field_name, __io_writer, __settings, &mut __hints)
-        }
+        },
     }
 }
 
@@ -163,7 +166,7 @@ fn length_prefix_of<'a>(
                 kind,
                 prefix_subfield_names,
                 ..
-            } => Some((prefix_of_index, kind.clone(), prefix_subfield_names)),
+            } => Some((prefix_of_index, kind, prefix_subfield_names)),
             _ => unreachable!(),
         }
     } else {

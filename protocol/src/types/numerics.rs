@@ -147,7 +147,7 @@ macro_rules! impl_parcel_for_numeric {
                 settings: &Settings,
                 _: &mut hint::Hints,
             ) -> Result<Self, Error> {
-                Ok(settings.byte_order.$read_fn(read)?)
+                settings.byte_order.$read_fn(read)
             }
 
             fn write_field(

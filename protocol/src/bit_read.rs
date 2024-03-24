@@ -35,7 +35,6 @@ pub trait BitRead {
     fn read_i(&mut self, bits: u32) -> io::Result<i8>;
 }
 
-// TODO(wgraj): MACROFY THIS
 impl<T: bitstream_io::BitRead> BitRead for T {
     fn read_bit(&mut self) -> io::Result<bool> {
         bitstream_io::BitRead::read_bit(self)

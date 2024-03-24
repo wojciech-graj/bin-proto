@@ -140,10 +140,7 @@ fn align_to(align_to: usize, padding_byte: u8, bytes: Vec<u8>) -> Vec<u8> {
     // https://stackoverflow.com/a/11642218
     let extra_padding_needed = calculate_padding(align_to, bytes.len());
 
-    let extra_padding = (0..)
-        .into_iter()
-        .take(extra_padding_needed)
-        .map(|_| padding_byte);
+    let extra_padding = (0..).take(extra_padding_needed).map(|_| padding_byte);
 
     let bytes: Vec<_> = bytes.into_iter().chain(extra_padding).collect();
     assert_eq!(0, bytes.len() % align_to, "failed to align");

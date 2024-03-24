@@ -61,7 +61,7 @@ fn build_generics(
     }));
 
     generics.extend(ast.generics.lifetimes().enumerate().map(|(i, _)| {
-        let letter = ('a' as u8 + i as u8) as char;
+        let letter = (b'a' + i as u8) as char;
         quote!(#letter)
     }));
 
@@ -261,7 +261,7 @@ fn anonymous_constant_block(
     let anon_const_name = syn::Ident::new(
         &format!(
             "__{}_FOR_{}",
-            description.replace(" ", "_").replace("::", "_"),
+            description.replace(' ', "_").replace("::", "_"),
             item_name.to_owned()
         ),
         proc_macro2::Span::call_site(),

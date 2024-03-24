@@ -6,18 +6,6 @@ pub struct Settings {
 }
 
 /// Specifies the byte order of data transfer.
-///
-/// # `Eq` implementation
-///
-/// Here is a list of rules the `Eq` implementation satisfies.
-///
-///   * `LittleEndian == LittleEndian`
-///   * `LittleEndian != BigEndian`
-///   * `NativeEndian == LittleEndian` (but only on little endian machines)
-///   * `NativeEndian == BigEndian` (but only on big endian machines)
-///
-/// The `NativeEndian` byte order will successfully match against
-/// one of the two real-life byte orders.
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ByteOrder {
     /// Least significant byte first.
@@ -28,7 +16,7 @@ pub enum ByteOrder {
 }
 
 macro_rules! impl_byte_order_helpers {
-    ( $( $ty:ty => [ $read_name:ident : [$read_le:ident, $read_be:ident]] [$write_name:ident : [$write_le:ident, $write_be:ident]] )* ) => {
+    ( $( $ty:ty => [ $read_name:ident : [ $read_le:ident, $read_be:ident ], $write_name:ident : [ $write_le:ident, $write_be:ident ] ] )* ) => {
         impl ByteOrder {
             $(
                 pub fn $read_name(&self, read: &mut dyn crate::BitRead) -> Result<$ty, crate::Error> {
@@ -51,12 +39,12 @@ macro_rules! impl_byte_order_helpers {
 }
 
 impl_byte_order_helpers!(
-    u16 => [read_u16 : [read_u16_le, read_u16_be]] [write_u16 : [write_u16_le, write_u16_be]]
-    i16 => [read_i16 : [read_i16_le, read_i16_be]] [write_i16 : [write_i16_le, write_i16_be]]
-    u32 => [read_u32 : [read_u32_le, read_u32_be]] [write_u32 : [write_u32_le, write_u32_be]]
-    i32 => [read_i32 : [read_i32_le, read_i32_be]] [write_i32 : [write_i32_le, write_i32_be]]
-    u64 => [read_u64 : [read_u64_le, read_u64_be]] [write_u64 : [write_u64_le, write_u64_be]]
-    i64 => [read_i64 : [read_i64_le, read_i64_be]] [write_i64 : [write_i64_le, write_i64_be]]
-    f32 => [read_f32 : [read_f32_le, read_f32_be]] [write_f32 : [write_f32_le, write_f32_be]]
-    f64 => [read_f64 : [read_f64_le, read_f64_be]] [write_f64 : [write_f64_le, write_f64_be]]
+    u16 => [read_u16 : [read_u16_le, read_u16_be], write_u16 : [write_u16_le, write_u16_be]]
+    i16 => [read_i16 : [read_i16_le, read_i16_be], write_i16 : [write_i16_le, write_i16_be]]
+    u32 => [read_u32 : [read_u32_le, read_u32_be], write_u32 : [write_u32_le, write_u32_be]]
+    i32 => [read_i32 : [read_i32_le, read_i32_be], write_i32 : [write_i32_le, write_i32_be]]
+    u64 => [read_u64 : [read_u64_le, read_u64_be], write_u64 : [write_u64_le, write_u64_be]]
+    i64 => [read_i64 : [read_i64_le, read_i64_be], write_i64 : [write_i64_le, write_i64_be]]
+    f32 => [read_f32 : [read_f32_le, read_f32_be], write_f32 : [write_f32_le, write_f32_be]]
+    f64 => [read_f64 : [read_f64_le, read_f64_be], write_f64 : [write_f64_le, write_f64_be]]
 );

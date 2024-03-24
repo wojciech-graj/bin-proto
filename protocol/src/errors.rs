@@ -1,4 +1,4 @@
-use std::{self, error, fmt};
+use std::{error, fmt};
 
 pub type Result<T> = std::result::Result<T, Error>;
 

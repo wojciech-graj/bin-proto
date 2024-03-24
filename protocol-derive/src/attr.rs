@@ -1,7 +1,6 @@
 use crate::format::{self, Format};
 
 use proc_macro2::{Span, TokenStream};
-use syn;
 
 #[derive(Debug)]
 pub enum Protocol {
@@ -55,11 +54,7 @@ pub fn protocol(attrs: &[syn::Attribute]) -> Option<Protocol> {
         })
         .next();
 
-    let meta_list: syn::MetaList = if let Some(meta_list) = meta_list {
-        meta_list
-    } else {
-        return None;
-    };
+    let meta_list: syn::MetaList = meta_list?;
     let mut nested_metas = meta_list.nested.into_iter();
 
     match nested_metas.next() {
@@ -93,11 +88,11 @@ pub fn protocol(attrs: &[syn::Attribute]) -> Option<Protocol> {
                         syn::NestedMeta::Lit(syn::Lit::Str(s)) => {
                             let mut parts: Vec<_> = s
                                 .value()
-                                .split(".")
+                                .split('.')
                                 .map(|s| syn::Ident::new(s, Span::call_site()))
                                 .collect();
 
-                            if parts.len() < 1 {
+                            if parts.is_empty() {
                                 panic!("there must be at least one field mentioned");
                             }
 

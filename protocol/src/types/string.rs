@@ -1,5 +1,4 @@
 use crate::{hint, types, util, BitRead, BitWrite, Error, Parcel, Settings};
-use std;
 
 // The default implementation treats the string as a normal char array.
 impl Parcel for std::string::String {

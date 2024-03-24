@@ -1,5 +1,4 @@
 use crate::{hint, types, util, BitRead, BitWrite, Error, Parcel, Settings};
-use std;
 
 /// A newtype wrapping `Vec<T>` but with a custom length prefix type.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -93,7 +92,7 @@ where
 
 /// Stuff relating to `std::vec::Vec<T>`.
 mod std_vec {
-    use crate::{hint, util, BitRead, BitWrite, Error, Parcel, Settings};
+    use crate::{hint, util, BitRead, BitWrite, Error, FlexibleArrayMember, Parcel, Settings};
 
     impl<T: Parcel> Parcel for Vec<T> {
         fn read_field(
@@ -113,4 +112,6 @@ mod std_vec {
             util::write_list(self.iter(), write, settings, hints)
         }
     }
+
+    impl<T: Parcel> FlexibleArrayMember for Vec<T> {}
 }

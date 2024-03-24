@@ -120,14 +120,14 @@ macro_rules! define_common_hint_invariant_tests {
 
                 // Set current field index to its maximum value, so that
                 // if the system is actually incremented, it'll panic.
-                hints.current_field_index = Some(usize::max_value());
+                hints.current_field_index = usize::max_value();
                 // Insert three bullshit field lengths.
                 hints.known_field_lengths = (0..PRETTY_LARGE_NUMBER)
                     .into_iter()
                     .map(|i| {
                         (
                             i,
-                            protocol::hint::FieldLength {
+                            protocol::hint::FieldLength::Fixed {
                                 length: i + i / 2,
                                 kind: protocol::hint::LengthPrefixKind::Bytes,
                             },
@@ -137,7 +137,7 @@ macro_rules! define_common_hint_invariant_tests {
 
                 let hints_afterwards = get_hints_after_read::<$parcel_ty>(hints, $parcel_value);
 
-                assert!(hints_afterwards.current_field_index.unwrap() < PRETTY_LARGE_NUMBER);
+                assert!(hints_afterwards.current_field_index < PRETTY_LARGE_NUMBER);
                 assert!(hints_afterwards.known_field_lengths.len() < PRETTY_LARGE_NUMBER);
             }
         }

@@ -149,6 +149,7 @@ pub use self::bit_read::BitRead;
 pub use self::bit_write::BitWrite;
 pub use self::enum_ty::Enum;
 pub use self::errors::{CharTryFromError, Error, ErrorKind, Result, ResultExt, TryFromIntError};
+pub use self::flexible_array_member::FlexibleArrayMember;
 pub use self::parcel::Parcel;
 pub use self::settings::*;
 
@@ -169,6 +170,7 @@ pub use protocol_derive::Protocol;
 mod bit_field;
 mod bit_read;
 mod bit_write;
+mod flexible_array_member;
 mod settings;
 #[macro_use]
 pub mod types;

@@ -43,12 +43,12 @@ mod named_fields {
         )
         .unwrap();
 
-        assert_eq!(Some(0), read_back.f0.hints().current_field_index);
-        assert_eq!(Some(1), read_back.f1.hints().current_field_index);
-        assert_eq!(Some(2), read_back.f2.hints().current_field_index);
-        assert_eq!(Some(3), read_back.f3.hints().current_field_index);
-        assert_eq!(Some(4), read_back.f4.hints().current_field_index);
-        assert_eq!(Some(5), read_back.f5.hints().current_field_index);
+        assert_eq!(0, read_back.f0.hints().current_field_index);
+        assert_eq!(1, read_back.f1.hints().current_field_index);
+        assert_eq!(2, read_back.f2.hints().current_field_index);
+        assert_eq!(3, read_back.f3.hints().current_field_index);
+        assert_eq!(4, read_back.f4.hints().current_field_index);
+        assert_eq!(5, read_back.f5.hints().current_field_index);
     }
 }
 
@@ -70,12 +70,12 @@ mod unnamed_fields {
 
         let WithUnnamedFields(f0, f1, f2, f3, f4, f5) = read_back;
 
-        assert_eq!(Some(0), f0.hints().current_field_index);
-        assert_eq!(Some(1), f1.hints().current_field_index);
-        assert_eq!(Some(2), f2.hints().current_field_index);
-        assert_eq!(Some(3), f3.hints().current_field_index);
-        assert_eq!(Some(4), f4.hints().current_field_index);
-        assert_eq!(Some(5), f5.hints().current_field_index);
+        assert_eq!(0, f0.hints().current_field_index);
+        assert_eq!(1, f1.hints().current_field_index);
+        assert_eq!(2, f2.hints().current_field_index);
+        assert_eq!(3, f3.hints().current_field_index);
+        assert_eq!(4, f4.hints().current_field_index);
+        assert_eq!(5, f5.hints().current_field_index);
     }
 }
 

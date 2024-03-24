@@ -1,27 +1,19 @@
 //! Different protocol formats.
 
 /// Represents a format.
-pub trait Format : Clone {
+pub trait Format: Clone {
     /// From a string.
     fn from_str(s: &str) -> Result<Self, ()>;
 }
 
 /// The enum protocol format.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Default, Debug, PartialEq)]
 pub enum Enum {
     /// The enum is transmitted by using the 1-based index of the enum variant.
     IntegerDiscriminator,
     /// The enum is transmitted by using the name of the variant.
+    #[default]
     StringDiscriminator,
-}
-
-impl Default for Enum {
-    fn default() -> Self {
-        // Always use string discriminators by default.
-        //
-        // This is less restricting to API changes.
-        Enum::StringDiscriminator
-    }
 }
 
 impl Format for Enum {
@@ -33,4 +25,3 @@ impl Format for Enum {
         }
     }
 }
-

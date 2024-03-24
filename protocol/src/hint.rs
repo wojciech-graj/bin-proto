@@ -5,7 +5,7 @@ pub type FieldIndex = usize;
 /// Hints given when reading parcels.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Hints {
-    pub current_field_index: Option<FieldIndex>,
+    pub current_field_index: FieldIndex,
     /// The fields for which a length prefix
     /// was already present earlier in the layout.
     pub known_field_lengths: HashMap<FieldIndex, FieldLength>,
@@ -13,9 +13,12 @@ pub struct Hints {
 
 /// Information about the length of a field.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub struct FieldLength {
-    pub length: usize,
-    pub kind: LengthPrefixKind,
+pub enum FieldLength {
+    Fixed {
+        length: usize,
+        kind: LengthPrefixKind,
+    },
+    Flexible,
 }
 
 /// Specifies what kind of data the length prefix captures.
@@ -31,8 +34,8 @@ impl Hints {
     /// Gets the length of the field currently being
     /// read, if known.
     pub fn current_field_length(&self) -> Option<FieldLength> {
-        self.current_field_index
-            .and_then(|index| self.known_field_lengths.get(&index))
+        self.known_field_lengths
+            .get(&self.current_field_index)
             .cloned()
     }
 }
@@ -45,16 +48,13 @@ mod protocol_derive_helpers {
         // Updates the hints to indicate a field was just read.
         #[doc(hidden)]
         pub fn next_field(&mut self) {
-            *self
-                .current_field_index
-                .as_mut()
-                .expect("cannot increment next field when not in a struct") += 1;
+            self.current_field_index += 1;
         }
 
         #[doc(hidden)]
         pub fn new_nested(&self) -> Self {
             Self {
-                current_field_index: Some(0),
+                current_field_index: 0,
                 ..Default::default()
             }
         }
@@ -68,7 +68,7 @@ mod protocol_derive_helpers {
             kind: LengthPrefixKind,
         ) {
             self.known_field_lengths
-                .insert(field_index, FieldLength { kind, length });
+                .insert(field_index, FieldLength::Fixed { kind, length });
         }
     }
 }
