@@ -84,3 +84,17 @@ fn unit_structs_are_correctly_read() {
         PartyInTheFront::from_raw_bytes(&[], &Settings::default()).unwrap()
     );
 }
+
+#[test]
+fn ipv4() {
+    #[derive(Debug, protocol::Protocol, PartialEq, Eq)]
+    struct IPv4Header {
+        #[protocol(bits = 4)]
+        version: u8,
+    }
+
+    assert_eq!(
+        IPv4Header::from_raw_bytes(&[0x45], &Settings::default()).unwrap(),
+        IPv4Header { version: 4 }
+    )
+}

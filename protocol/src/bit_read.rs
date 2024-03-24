@@ -14,6 +14,7 @@ pub trait BitRead {
 
     fn read_u8(&mut self) -> io::Result<u8>;
     fn read_i8(&mut self) -> io::Result<i8>;
+
     fn read_u16_le(&mut self) -> io::Result<u16>;
     fn read_u16_be(&mut self) -> io::Result<u16>;
     fn read_i16_le(&mut self) -> io::Result<i16>;
@@ -31,8 +32,12 @@ pub trait BitRead {
     fn read_f64_le(&mut self) -> io::Result<f64>;
     fn read_f64_be(&mut self) -> io::Result<f64>;
 
-    fn read_u(&mut self, bits: u32) -> io::Result<u8>;
-    fn read_i(&mut self, bits: u32) -> io::Result<i8>;
+    fn read_u8_bf(&mut self, bits: u32) -> io::Result<u8>;
+    fn read_i8_bf(&mut self, bits: u32) -> io::Result<i8>;
+    fn read_u16_bf(&mut self, bits: u32) -> io::Result<u16>;
+    fn read_i16_bf(&mut self, bits: u32) -> io::Result<i16>;
+    fn read_u32_bf(&mut self, bits: u32) -> io::Result<u32>;
+    fn read_i32_bf(&mut self, bits: u32) -> io::Result<i32>;
 }
 
 impl<T: bitstream_io::BitRead> BitRead for T {
@@ -140,25 +145,27 @@ impl<T: bitstream_io::BitRead> BitRead for T {
         bitstream_io::BitRead::read_as_to::<BE, f64>(self)
     }
 
-    fn read_u(&mut self, bits: u32) -> io::Result<u8> {
-        if bits <= 8 {
-            bitstream_io::BitRead::read(self, bits)
-        } else {
-            Err(io::Error::new(
-                io::ErrorKind::InvalidInput,
-                "Cannot read > 8 bits.",
-            ))
-        }
+    fn read_u8_bf(&mut self, bits: u32) -> io::Result<u8> {
+        bitstream_io::BitRead::read(self, bits)
     }
 
-    fn read_i(&mut self, bits: u32) -> io::Result<i8> {
-        if bits <= 8 {
-            bitstream_io::BitRead::read_signed(self, bits)
-        } else {
-            Err(io::Error::new(
-                io::ErrorKind::InvalidInput,
-                "Cannot read > 8 bits.",
-            ))
-        }
+    fn read_i8_bf(&mut self, bits: u32) -> io::Result<i8> {
+        bitstream_io::BitRead::read_signed(self, bits)
+    }
+
+    fn read_u16_bf(&mut self, bits: u32) -> io::Result<u16> {
+        bitstream_io::BitRead::read(self, bits)
+    }
+
+    fn read_i16_bf(&mut self, bits: u32) -> io::Result<i16> {
+        bitstream_io::BitRead::read_signed(self, bits)
+    }
+
+    fn read_u32_bf(&mut self, bits: u32) -> io::Result<u32> {
+        bitstream_io::BitRead::read(self, bits)
+    }
+
+    fn read_i32_bf(&mut self, bits: u32) -> io::Result<i32> {
+        bitstream_io::BitRead::read_signed(self, bits)
     }
 }

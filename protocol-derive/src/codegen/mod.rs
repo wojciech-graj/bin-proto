@@ -1,6 +1,6 @@
 pub mod enums;
 
-use crate::attr;
+use crate::attr::{self, LengthPrefix};
 use proc_macro2::TokenStream;
 
 pub fn read_fields(fields: &syn::Fields) -> TokenStream {
@@ -50,30 +50,38 @@ fn read_named_fields(fields_named: &syn::FieldsNamed) -> TokenStream {
 }
 
 fn read_field(field: &syn::Field) -> TokenStream {
-    match attr::protocol(&field.attrs) {
-        Some(attr::Protocol::BitField(i)) => quote! {
+    let attribs = attr::protocol(&field.attrs);
+    if let Some(i) = attribs.bit_field {
+        return quote! {
             protocol::BitField::read_field(__io_reader, #i, __settings, &mut __hints)
-        },
-        Some(attr::Protocol::FlexibleArrayMember) => quote! {
+        };
+    }
+    if attribs.flexible_array_member {
+        quote! {
             protocol::FlexibleArrayMember::read_field(__io_reader, __settings, &mut __hints)
-        },
-        _ => quote! {
+        }
+    } else {
+        quote! {
             protocol::Parcel::read_field(__io_reader, __settings, &mut __hints)
-        },
+        }
     }
 }
 
 fn write_field<T: quote::ToTokens>(field: &syn::Field, field_name: &T) -> TokenStream {
-    match attr::protocol(&field.attrs) {
-        Some(attr::Protocol::BitField(i)) => quote! {
+    let attribs = attr::protocol(&field.attrs);
+    if let Some(i) = attribs.bit_field {
+        return quote! {
             protocol::BitField::write_field(&self. #field_name, __io_writer, #i, __settings, &mut __hints)
-        },
-        Some(attr::Protocol::FlexibleArrayMember) => quote! {
+        };
+    }
+    if attribs.flexible_array_member {
+        quote! {
             protocol::FlexibleArrayMember::write_field(&self. #field_name, __io_writer, __settings, &mut __hints)
-        },
-        _ => quote! {
+        }
+    } else {
+        quote! {
             protocol::Parcel::write_field(&self. #field_name, __io_writer, __settings, &mut __hints)
-        },
+        }
     }
 }
 
@@ -133,25 +141,25 @@ fn length_prefix_of<'a>(
     let potential_prefix = field.ident.as_ref();
 
     let prefix_of = fields.clone().into_iter().find(|potential_prefix_of| {
-        match attr::protocol(&potential_prefix_of.attrs) {
-            Some(attr::Protocol::LengthPrefix {
-                ref prefix_field_name,
-                ..
-            }) => {
-                if !fields
-                    .clone()
-                    .into_iter()
-                    .any(|f| f.ident.as_ref() == Some(prefix_field_name))
-                {
-                    panic!(
-                        "length prefix is invalid: there is no sibling field named '{}",
-                        prefix_field_name
-                    );
-                }
-
-                potential_prefix == Some(prefix_field_name)
+        if let Some(LengthPrefix {
+            ref prefix_field_name,
+            ..
+        }) = attr::protocol(&potential_prefix_of.attrs).length_prefix
+        {
+            if !fields
+                .clone()
+                .into_iter()
+                .any(|f| f.ident.as_ref() == Some(prefix_field_name))
+            {
+                panic!(
+                    "length prefix is invalid: there is no sibling field named '{}",
+                    prefix_field_name
+                );
             }
-            _ => false,
+
+            potential_prefix == Some(prefix_field_name)
+        } else {
+            false
         }
     });
 
@@ -161,13 +169,15 @@ fn length_prefix_of<'a>(
             .into_iter()
             .position(|f| f == prefix_of)
             .unwrap();
-        match attr::protocol(&prefix_of.attrs).unwrap() {
-            attr::Protocol::LengthPrefix {
-                kind,
-                prefix_subfield_names,
-                ..
-            } => Some((prefix_of_index, kind, prefix_subfield_names)),
-            _ => unreachable!(),
+        if let Some(LengthPrefix {
+            kind,
+            prefix_subfield_names,
+            ..
+        }) = attr::protocol(&prefix_of.attrs).length_prefix
+        {
+            Some((prefix_of_index, kind, prefix_subfield_names))
+        } else {
+            unreachable!()
         }
     } else {
         None

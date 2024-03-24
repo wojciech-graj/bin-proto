@@ -12,6 +12,7 @@ pub trait BitWrite {
 
     fn write_u8(&mut self, value: u8) -> io::Result<()>;
     fn write_i8(&mut self, value: i8) -> io::Result<()>;
+
     fn write_u16_le(&mut self, value: u16) -> io::Result<()>;
     fn write_u16_be(&mut self, value: u16) -> io::Result<()>;
     fn write_i16_le(&mut self, value: i16) -> io::Result<()>;
@@ -29,8 +30,12 @@ pub trait BitWrite {
     fn write_f64_le(&mut self, value: f64) -> io::Result<()>;
     fn write_f64_be(&mut self, value: f64) -> io::Result<()>;
 
-    fn write_u(&mut self, bits: u32, value: u8) -> io::Result<()>;
-    fn write_i(&mut self, bits: u32, value: i8) -> io::Result<()>;
+    fn write_u8_bf(&mut self, bits: u32, value: u8) -> io::Result<()>;
+    fn write_i8_bf(&mut self, bits: u32, value: i8) -> io::Result<()>;
+    fn write_u16_bf(&mut self, bits: u32, value: u16) -> io::Result<()>;
+    fn write_i16_bf(&mut self, bits: u32, value: i16) -> io::Result<()>;
+    fn write_u32_bf(&mut self, bits: u32, value: u32) -> io::Result<()>;
+    fn write_i32_bf(&mut self, bits: u32, value: i32) -> io::Result<()>;
 }
 
 impl<T: bitstream_io::BitWrite> BitWrite for T {
@@ -130,25 +135,27 @@ impl<T: bitstream_io::BitWrite> BitWrite for T {
         bitstream_io::BitWrite::write_as_from::<BE, _>(self, value)
     }
 
-    fn write_u(&mut self, bits: u32, value: u8) -> io::Result<()> {
-        if bits <= 8 {
-            bitstream_io::BitWrite::write(self, bits, value)
-        } else {
-            Err(io::Error::new(
-                io::ErrorKind::InvalidInput,
-                "Cannot write > 8 bits.",
-            ))
-        }
+    fn write_u8_bf(&mut self, bits: u32, value: u8) -> io::Result<()> {
+        bitstream_io::BitWrite::write(self, bits, value)
     }
 
-    fn write_i(&mut self, bits: u32, value: i8) -> io::Result<()> {
-        if bits <= 8 {
-            bitstream_io::BitWrite::write_signed(self, bits, value)
-        } else {
-            Err(io::Error::new(
-                io::ErrorKind::InvalidInput,
-                "Cannot write > 8 bits.",
-            ))
-        }
+    fn write_i8_bf(&mut self, bits: u32, value: i8) -> io::Result<()> {
+        bitstream_io::BitWrite::write_signed(self, bits, value)
+    }
+
+    fn write_u16_bf(&mut self, bits: u32, value: u16) -> io::Result<()> {
+        bitstream_io::BitWrite::write(self, bits, value)
+    }
+
+    fn write_i16_bf(&mut self, bits: u32, value: i16) -> io::Result<()> {
+        bitstream_io::BitWrite::write_signed(self, bits, value)
+    }
+
+    fn write_u32_bf(&mut self, bits: u32, value: u32) -> io::Result<()> {
+        bitstream_io::BitWrite::write(self, bits, value)
+    }
+
+    fn write_i32_bf(&mut self, bits: u32, value: i32) -> io::Result<()> {
+        bitstream_io::BitWrite::write_signed(self, bits, value)
     }
 }

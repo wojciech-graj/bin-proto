@@ -3,16 +3,19 @@ use crate::format::{self, Format};
 use proc_macro2::{Span, TokenStream};
 
 #[derive(Debug)]
-pub enum Protocol {
-    DiscriminantFormat(format::Enum),
-    Discriminant(syn::Lit),
-    BitField(u32),
-    FlexibleArrayMember,
-    LengthPrefix {
-        kind: LengthPrefixKind,
-        prefix_field_name: syn::Ident,
-        prefix_subfield_names: Vec<syn::Ident>,
-    },
+pub struct LengthPrefix {
+    pub kind: LengthPrefixKind,
+    pub prefix_field_name: syn::Ident,
+    pub prefix_subfield_names: Vec<syn::Ident>,
+}
+
+#[derive(Debug, Default)]
+pub struct Attribs {
+    pub discriminant_format: Option<format::Enum>,
+    pub discriminant: Option<syn::Lit>,
+    pub bit_field: Option<u32>,
+    pub flexible_array_member: bool,
+    pub length_prefix: Option<LengthPrefix>,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -36,143 +39,147 @@ pub fn repr(attrs: &[syn::Attribute]) -> Option<syn::Ident> {
     attribute::with_ident("repr", attrs)
 }
 
-pub fn protocol(attrs: &[syn::Attribute]) -> Option<Protocol> {
-    let meta_list = attrs
-        .iter()
-        .filter_map(|attr| match attr.parse_meta() {
-            Ok(syn::Meta::List(meta_list)) => {
-                if meta_list.path.get_ident()
-                    == Some(&syn::Ident::new("protocol", proc_macro2::Span::call_site()))
-                {
-                    Some(meta_list)
-                } else {
-                    // Unrelated attribute.
-                    None
-                }
-            }
-            _ => None,
-        })
-        .next();
-
-    let meta_list: syn::MetaList = meta_list?;
-    let mut nested_metas = meta_list.nested.into_iter();
-
-    match nested_metas.next() {
-        Some(syn::NestedMeta::Meta(syn::Meta::List(nested_list))) => {
-            match &nested_list
-                .path
-                .get_ident()
-                .expect("meta is not an ident")
-                .to_string()[..]
+pub fn protocol(attrs: &[syn::Attribute]) -> Attribs {
+    let meta_lists = attrs.iter().filter_map(|attr| match attr.parse_meta() {
+        Ok(syn::Meta::List(meta_list)) => {
+            if meta_list.path.get_ident()
+                == Some(&syn::Ident::new("protocol", proc_macro2::Span::call_site()))
             {
-                // #[protocol(length_prefix(<kind>(<prefix field name>)))]
-                "length_prefix" => {
-                    let nested_list = expect::meta_list::nested_list(nested_list)
-                        .expect("expected a nested list");
-                    let prefix_kind = match &nested_list
+                Some(meta_list)
+            } else {
+                // Unrelated attribute.
+                None
+            }
+        }
+        _ => None,
+    });
+
+    let mut attribs = Attribs::default();
+    for meta_list in meta_lists {
+        for meta in meta_list.nested {
+            match meta {
+                syn::NestedMeta::Meta(syn::Meta::List(nested_list)) => {
+                    match &nested_list
                         .path
                         .get_ident()
-                        .expect("nested list is not an ident")
+                        .expect("meta is not an ident")
                         .to_string()[..]
                     {
-                        "bytes" => LengthPrefixKind::Bytes,
-                        "elements" => LengthPrefixKind::Elements,
-                        invalid_prefix => {
-                            panic!("invalid length prefix type: '{}'", invalid_prefix)
-                        }
-                    };
-
-                    let length_prefix_expr =
-                        expect::meta_list::single_element(nested_list).unwrap();
-                    let (prefix_field_name, prefix_subfield_names) = match length_prefix_expr {
-                        syn::NestedMeta::Lit(syn::Lit::Str(s)) => {
-                            let mut parts: Vec<_> = s
-                                .value()
-                                .split('.')
-                                .map(|s| syn::Ident::new(s, Span::call_site()))
-                                .collect();
-
-                            if parts.is_empty() {
-                                panic!("there must be at least one field mentioned");
-                            }
-
-                            let field_ident = parts.remove(0);
-                            let subfield_idents = parts.into_iter().collect();
-
-                            (field_ident, subfield_idents)
-                        }
-                        syn::NestedMeta::Meta(syn::Meta::Path(path)) => match path.get_ident() {
-                            Some(field_ident) => (field_ident.clone(), Vec::new()),
-                            None => panic!("path is not an ident"),
-                        },
-                        _ => panic!("unexpected format for length prefix attribute"),
-                    };
-
-                    Some(Protocol::LengthPrefix {
-                        kind: prefix_kind,
-                        prefix_field_name,
-                        prefix_subfield_names,
-                    })
-                }
-                "discriminant" => {
-                    let literal = expect::meta_list::single_literal(nested_list)
-                        .expect("expected a single literal");
-                    Some(Protocol::Discriminant(literal))
-                }
-                name => panic!("#[protocol({})] is not valid", name),
-            }
-        }
-        Some(syn::NestedMeta::Meta(syn::Meta::NameValue(name_value))) => {
-            match name_value.path.get_ident() {
-                Some(ident) => {
-                    match &ident.to_string()[..] {
-                        // #[protocol(discriminant = "<format_name>")]
-                        "discriminant" => {
-                            let format_kind = match name_value.lit {
-                                syn::Lit::Str(s) => match format::Enum::from_str(&s.value()) {
-                                    Ok(f) => f,
-                                    Err(()) => {
-                                        panic!("invalid enum discriminant format: '{}", s.value())
-                                    }
-                                },
-                                _ => panic!("discriminant format mut be string"),
+                        // #[protocol(length_prefix(<kind>(<prefix field name>)))]
+                        "length_prefix" => {
+                            let nested_list = expect::meta_list::nested_list(nested_list)
+                                .expect("expected a nested list");
+                            let prefix_kind = match &nested_list
+                                .path
+                                .get_ident()
+                                .expect("nested list is not an ident")
+                                .to_string()[..]
+                            {
+                                "bytes" => LengthPrefixKind::Bytes,
+                                "elements" => LengthPrefixKind::Elements,
+                                invalid_prefix => {
+                                    panic!("invalid length prefix type: '{}'", invalid_prefix)
+                                }
                             };
 
-                            Some(Protocol::DiscriminantFormat(format_kind))
-                        }
-                        "bits" => {
-                            let field_width = match name_value.lit {
-                                syn::Lit::Int(i) => match i.base10_parse() {
-                                    Ok(i) => {
-                                        if i <= 8 {
-                                            i
-                                        } else {
-                                            panic!("bitfield size cannot exceed 8 bits.")
+                            let length_prefix_expr =
+                                expect::meta_list::single_element(nested_list).unwrap();
+                            let (prefix_field_name, prefix_subfield_names) =
+                                match length_prefix_expr {
+                                    syn::NestedMeta::Lit(syn::Lit::Str(s)) => {
+                                        let mut parts: Vec<_> = s
+                                            .value()
+                                            .split('.')
+                                            .map(|s| syn::Ident::new(s, Span::call_site()))
+                                            .collect();
+
+                                        if parts.is_empty() {
+                                            panic!("there must be at least one field mentioned");
+                                        }
+
+                                        let field_ident = parts.remove(0);
+                                        let subfield_idents = parts.into_iter().collect();
+
+                                        (field_ident, subfield_idents)
+                                    }
+                                    syn::NestedMeta::Meta(syn::Meta::Path(path)) => {
+                                        match path.get_ident() {
+                                            Some(field_ident) => (field_ident.clone(), Vec::new()),
+                                            None => panic!("path is not an ident"),
                                         }
                                     }
-                                    Err(_) => panic!("bitfield must have constant unsigned size."),
-                                },
-                                _ => panic!("bitfield size must be an integer"),
-                            };
-                            Some(Protocol::BitField(field_width))
+                                    _ => panic!("unexpected format for length prefix attribute"),
+                                };
+
+                            attribs.length_prefix = Some(LengthPrefix {
+                                kind: prefix_kind,
+                                prefix_field_name,
+                                prefix_subfield_names,
+                            })
                         }
-                        ident => panic!("got unexpected '{}'", ident),
+                        "discriminant" => {
+                            let literal = expect::meta_list::single_literal(nested_list)
+                                .expect("expected a single literal");
+                            attribs.discriminant = Some(literal)
+                        }
+                        name => panic!("#[protocol({})] is not valid", name),
                     }
                 }
-                None => panic!("parsed string was not an identifier"),
-            }
-        }
-        Some(syn::NestedMeta::Meta(syn::Meta::Path(path))) => match path.get_ident() {
-            Some(ident) => match ident.to_string().as_str() {
-                "flexible_array_member" => Some(Protocol::FlexibleArrayMember),
-                _ => panic!("got unexpected '{}'", ident),
-            },
-            None => panic!("parsed string was not an identifier"),
-        },
-        _ => {
-            panic!("#[protocol(..)] attributes cannot be empty")
+                syn::NestedMeta::Meta(syn::Meta::NameValue(name_value)) => {
+                    match name_value.path.get_ident() {
+                        Some(ident) => {
+                            match &ident.to_string()[..] {
+                                // #[protocol(discriminant = "<format_name>")]
+                                "discriminant" => {
+                                    let format_kind = match name_value.lit {
+                                        syn::Lit::Str(s) => {
+                                            match format::Enum::from_str(&s.value()) {
+                                                Ok(f) => f,
+                                                Err(()) => {
+                                                    panic!(
+                                                        "invalid enum discriminant format: '{}",
+                                                        s.value()
+                                                    )
+                                                }
+                                            }
+                                        }
+                                        _ => panic!("discriminant format mut be string"),
+                                    };
+
+                                    attribs.discriminant_format = Some(format_kind)
+                                }
+                                "bits" => {
+                                    let field_width = match name_value.lit {
+                                        syn::Lit::Int(i) => match i.base10_parse() {
+                                            Ok(i) => i,
+                                            Err(_) => {
+                                                panic!("bitfield must have constant unsigned size.")
+                                            }
+                                        },
+                                        _ => panic!("bitfield size must be an integer"),
+                                    };
+                                    attribs.bit_field = Some(field_width)
+                                }
+                                ident => panic!("got unexpected '{}'", ident),
+                            }
+                        }
+                        None => panic!("parsed string was not an identifier"),
+                    }
+                }
+                syn::NestedMeta::Meta(syn::Meta::Path(path)) => match path.get_ident() {
+                    Some(ident) => match ident.to_string().as_str() {
+                        "flexible_array_member" => attribs.flexible_array_member = true,
+                        _ => panic!("got unexpected '{}'", ident),
+                    },
+                    None => panic!("parsed string was not an identifier"),
+                },
+                _ => {
+                    panic!("#[protocol(..)] attributes cannot be empty")
+                }
+            };
         }
     }
+    attribs
 }
 
 mod expect {

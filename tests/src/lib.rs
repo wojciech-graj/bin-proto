@@ -49,6 +49,8 @@ mod enums;
 #[cfg(test)]
 mod hints;
 #[cfg(test)]
+mod ipv4;
+#[cfg(test)]
 mod length_prefix;
 #[cfg(test)]
 mod logic;

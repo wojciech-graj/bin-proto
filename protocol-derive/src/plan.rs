@@ -44,10 +44,7 @@ impl Enum {
         let mut plan = Enum {
             ident: ast.ident.clone(),
             repr_attr: attr::repr(&ast.attrs),
-            explicit_format: attr::protocol(&ast.attrs).map(|p| match p {
-                attr::Protocol::DiscriminantFormat(format) => format,
-                _ => panic!("expected a discriminant format but got {:?}", p),
-            }),
+            explicit_format: attr::protocol(&ast.attrs).discriminant_format,
             variants: e
                 .variants
                 .iter()
@@ -60,13 +57,7 @@ impl Enum {
 
                     EnumVariant {
                         ident: variant.ident.clone(),
-                        // explicit_discriminant_attr: attr::protocol_variant_discriminant(&variant.attrs),
-                        explicit_discriminant_attr: attr::protocol(&variant.attrs).map(
-                            |protocol| match protocol {
-                                attr::Protocol::Discriminant(value) => value,
-                                _ => panic!("expected a discriminant but got {:?}", protocol),
-                            },
-                        ),
+                        explicit_discriminant_attr: attr::protocol(&variant.attrs).discriminant,
                         explicit_int_discriminant_equals: equals_discriminant,
                         actual_discriminant: None,
                         fields: variant.fields.clone(),
