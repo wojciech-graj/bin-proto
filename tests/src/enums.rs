@@ -146,6 +146,7 @@ mod generics {
 }
 
 mod integer_discriminants {
+    #[allow(unused_imports)]
     use protocol::{Parcel, Settings};
 
     #[derive(protocol::Protocol, Debug, PartialEq, Eq)]

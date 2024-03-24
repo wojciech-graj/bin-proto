@@ -2,7 +2,6 @@
 //!
 //! * The [Parcel] trait defines any type that can be serialized
 //!   to a connection.
-//! * The [wire] module deals with transmission of [Parcel] objects.
 //!
 //! # Examples
 //!
@@ -173,8 +172,6 @@ mod bit_write;
 mod settings;
 #[macro_use]
 pub mod types;
-// #[macro_use]
-// pub mod wire;
 
 pub mod attributes;
 mod enum_ty;

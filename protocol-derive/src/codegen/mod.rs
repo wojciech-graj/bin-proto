@@ -33,7 +33,7 @@ fn read_named_fields(fields_named: &syn::FieldsNamed) -> TokenStream {
             let field_name = &field.ident;
             let field_ty = &field.ty;
 
-            let read_field = read_field_fn(field);
+            let read_field = read_field(field);
             let post = update_hints_after_read(field, &fields_named.named);
 
             quote! {
@@ -50,8 +50,8 @@ fn read_named_fields(fields_named: &syn::FieldsNamed) -> TokenStream {
     quote! { { #( #field_initializers ),* } }
 }
 
-fn read_field_fn(field: &syn::Field) -> TokenStream {
-    if let Some(attr::Protocol::Bitfield(i)) = attr::protocol(&field.attrs) {
+fn read_field(field: &syn::Field) -> TokenStream {
+    if let Some(attr::Protocol::BitField(i)) = attr::protocol(&field.attrs) {
         quote! {
             protocol::BitField::read_field(__io_reader, #i, __settings, &mut __hints)
         }
@@ -62,8 +62,8 @@ fn read_field_fn(field: &syn::Field) -> TokenStream {
     }
 }
 
-fn write_field_fn<T: quote::ToTokens>(field: &syn::Field, field_name: &T) -> TokenStream {
-    if let Some(attr::Protocol::Bitfield(i)) = attr::protocol(&field.attrs) {
+fn write_field<T: quote::ToTokens>(field: &syn::Field, field_name: &T) -> TokenStream {
+    if let Some(attr::Protocol::BitField(i)) = attr::protocol(&field.attrs) {
         quote! {
             protocol::BitField::write_field(&self. #field_name, __io_writer, #i, __settings, &mut __hints)
         }
@@ -178,7 +178,7 @@ fn write_named_fields(fields_named: &syn::FieldsNamed) -> TokenStream {
         .map(|field| {
             let field_name = &field.ident;
 
-            let write_field = write_field_fn(field, field_name);
+            let write_field = write_field(field, field_name);
             let post = update_hints_after_write(field, &fields_named.named);
 
             quote! {
@@ -201,7 +201,7 @@ fn read_unnamed_fields(fields_unnamed: &syn::FieldsUnnamed) -> TokenStream {
         .iter()
         .map(|field| {
             let field_ty = &field.ty;
-            let read_field = read_field_fn(field);
+            let read_field = read_field(field);
 
             quote! {
                 {
@@ -223,7 +223,7 @@ fn write_unnamed_fields(fields_unnamed: &syn::FieldsUnnamed) -> TokenStream {
         .enumerate()
         .map(|(field_index, field)| {
             let field_index = syn::Index::from(field_index);
-            let write_field = write_field_fn(field, &field_index);
+            let write_field = write_field(field, &field_index);
 
             quote! {
                 {

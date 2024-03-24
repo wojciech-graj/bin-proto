@@ -7,7 +7,7 @@ use syn;
 pub enum Protocol {
     DiscriminantFormat(format::Enum),
     Discriminator(syn::Lit),
-    Bitfield(u32),
+    BitField(u32),
     FlexibleArrayMember,
     LengthPrefix {
         kind: LengthPrefixKind,
@@ -152,29 +152,27 @@ pub fn protocol(attrs: &[syn::Attribute]) -> Option<Protocol> {
                                         if i <= 8 {
                                             i
                                         } else {
-                                            panic!("Bitfield cannot be larger than 8 bits.")
+                                            panic!("bitfield size cannot exceed 8 bits.")
                                         }
                                     }
-                                    Err(_) => panic!("Bitfield must have constant unsigned size."),
+                                    Err(_) => panic!("bitfield must have constant unsigned size."),
                                 },
-                                _ => panic!("Bitfield size must be integer"),
+                                _ => panic!("bitfield size must be an integer"),
                             };
-                            Some(Protocol::Bitfield(field_width))
+                            Some(Protocol::BitField(field_width))
                         }
-                        ident => panic!("expected 'discriminant' but got '{}", ident),
+                        ident => panic!("got unexpected '{}'", ident),
                     }
                 }
-                None => panic!(
-                    "expected 'discriminant' but the parsed string was not even an identifier"
-                ),
+                None => panic!("parsed string was not an identifier"),
             }
         }
         Some(syn::NestedMeta::Meta(syn::Meta::Path(path))) => match path.get_ident() {
             Some(ident) => match ident.to_string().as_str() {
                 "flexible_array_member" => Some(Protocol::FlexibleArrayMember),
-                _ => panic!("TODO"),
+                _ => panic!("got unexpected '{}'", ident),
             },
-            None => panic!("TODO"),
+            None => panic!("parsed string was not an identifier"),
         },
         _ => {
             panic!("#[protocol(..)] attributes cannot be empty")

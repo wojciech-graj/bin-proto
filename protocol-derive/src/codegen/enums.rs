@@ -7,7 +7,7 @@ use syn;
 /// of the same type as the enum.
 pub fn write_variant(
     plan: &plan::Enum,
-    write_discriminator_fn: &dyn Fn(TokenStream) -> TokenStream,
+    write_discriminator: &dyn Fn(TokenStream) -> TokenStream,
 ) -> TokenStream {
     let enum_name = &plan.ident;
 
@@ -15,7 +15,7 @@ pub fn write_variant(
         let variant_name = &variant.ident;
         let discriminator_ref_expr = variant.discriminator_ref_expr();
 
-        let write_discriminator = write_discriminator_fn(discriminator_ref_expr);
+        let write_discriminator = write_discriminator(discriminator_ref_expr);
 
         let (binding_names, fields_pattern) = bind_fields_pattern(variant_name, &variant.fields);
 
@@ -36,7 +36,7 @@ pub fn write_variant(
     }
 }
 
-pub fn read_variant(plan: &plan::Enum, read_discriminator_fn: TokenStream) -> TokenStream {
+pub fn read_variant(plan: &plan::Enum, read_discriminator: TokenStream) -> TokenStream {
     let enum_name = &plan.ident;
     let discriminator_ty = plan.discriminant();
     let discriminator_var = syn::Ident::new("discriminator", Span::call_site());
@@ -57,7 +57,7 @@ pub fn read_variant(plan: &plan::Enum, read_discriminator_fn: TokenStream) -> To
 
     quote! {
         {
-            let discriminator: #discriminator_ty = #read_discriminator_fn;
+            let discriminator: #discriminator_ty = #read_discriminator;
 
             match #discriminator_for_pattern_matching {
                 #(#discriminator_match_branches,)*
