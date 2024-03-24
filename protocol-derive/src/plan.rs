@@ -2,14 +2,14 @@ use crate::{attr, format};
 use proc_macro2::{Span, TokenStream};
 
 /// The default type used to represent
-/// integer discriminators unless explicitly
+/// integer discriminants unless explicitly
 /// overriden.
 const DEFAULT_INT_DISCRIMINANT: &str = "u32";
 
-/// The first integer discriminator assigned,
-/// unless an explicit discriminator is given
+/// The first integer discriminant assigned,
+/// unless an explicit discriminant is given
 /// in the first variant.
-const DEFAULT_FIRST_INT_DISCRIMINATOR: usize = 1;
+const DEFAULT_FIRST_INT_DISCRIMINANT: usize = 1;
 
 /// A plan for a Parcel implementation for an enum.
 pub struct Enum {
@@ -26,14 +26,14 @@ pub struct Enum {
 pub struct EnumVariant {
     /// The name of this variant.
     pub ident: syn::Ident,
-    /// The optional `#[protocol(discriminator(<type>))]` attribute of this variant.
-    pub explicit_discriminator_attr: Option<syn::Lit>,
+    /// The optional `#[protocol(discriminant(<type>))]` attribute of this variant.
+    pub explicit_discriminant_attr: Option<syn::Lit>,
     /// The optional `Variant = <int value>` value.
-    pub explicit_int_discriminator_equals: Option<syn::Lit>,
-    /// The actual discriminator value used by this variant.
+    pub explicit_int_discriminant_equals: Option<syn::Lit>,
+    /// The actual discriminant value used by this variant.
     ///
     /// Filled in by the `resolve` function.
-    pub actual_discriminator: Option<syn::Lit>,
+    pub actual_discriminant: Option<syn::Lit>,
     /// The fields of the enum.
     pub fields: syn::Fields,
 }
@@ -60,15 +60,15 @@ impl Enum {
 
                     EnumVariant {
                         ident: variant.ident.clone(),
-                        // explicit_discriminator_attr: attr::protocol_variant_discriminator(&variant.attrs),
-                        explicit_discriminator_attr: attr::protocol(&variant.attrs).map(
+                        // explicit_discriminant_attr: attr::protocol_variant_discriminant(&variant.attrs),
+                        explicit_discriminant_attr: attr::protocol(&variant.attrs).map(
                             |protocol| match protocol {
-                                attr::Protocol::Discriminator(value) => value,
-                                _ => panic!("expected a discriminator but got {:?}", protocol),
+                                attr::Protocol::Discriminant(value) => value,
+                                _ => panic!("expected a discriminant but got {:?}", protocol),
                             },
                         ),
-                        explicit_int_discriminator_equals: equals_discriminant,
-                        actual_discriminator: None,
+                        explicit_int_discriminant_equals: equals_discriminant,
+                        actual_discriminant: None,
                         fields: variant.fields.clone(),
                     }
                 })
@@ -94,8 +94,8 @@ impl Enum {
             Some(ty) => ty,
             // Use the default discriminant.
             None => match self.format() {
-                format::Enum::StringDiscriminator => syn::Ident::new("String", Span::call_site()),
-                format::Enum::IntegerDiscriminator => {
+                format::Enum::StringDiscriminant => syn::Ident::new("String", Span::call_site()),
+                format::Enum::IntegerDiscriminant => {
                     syn::Ident::new(DEFAULT_INT_DISCRIMINANT, Span::call_site())
                 }
             },
@@ -103,31 +103,31 @@ impl Enum {
     }
 
     /// Gets an expression that can be used in as the RHS in pattern matching.
-    pub fn matchable_discriminator_expr(&self, variable_ident: syn::Ident) -> TokenStream {
+    pub fn matchable_discriminant_expr(&self, variable_ident: syn::Ident) -> TokenStream {
         match self.format() {
-            format::Enum::IntegerDiscriminator => quote!(#variable_ident),
-            format::Enum::StringDiscriminator => quote!(&#variable_ident[..]),
+            format::Enum::IntegerDiscriminant => quote!(#variable_ident),
+            format::Enum::StringDiscriminant => quote!(&#variable_ident[..]),
         }
     }
 
     pub fn resolve(&mut self) {
-        let mut current_default_int_discriminator = DEFAULT_FIRST_INT_DISCRIMINATOR;
+        let mut current_default_int_discriminant = DEFAULT_FIRST_INT_DISCRIMINANT;
         let format = self.format().clone();
 
         for variant in self.variants.iter_mut() {
-            let actual_discriminator: syn::Lit = match variant.explicit_discriminator() {
-                Some(explicit_discriminator) => explicit_discriminator.clone(),
+            let actual_discriminant: syn::Lit = match variant.explicit_discriminant() {
+                Some(explicit_discriminant) => explicit_discriminant.clone(),
                 None => match format {
-                    format::Enum::StringDiscriminator => {
-                        // By default, assign string discriminators as the name of
+                    format::Enum::StringDiscriminant => {
+                        // By default, assign string discriminants as the name of
                         // the variant itself.
                         syn::LitStr::new(&variant.ident.to_string(), Span::call_site()).into()
                     }
-                    format::Enum::IntegerDiscriminator => {
-                        // By default, assign integer discriminators the value of the
-                        // last discriminator plus one.
+                    format::Enum::IntegerDiscriminant => {
+                        // By default, assign integer discriminants the value of the
+                        // last discriminant plus one.
                         syn::LitInt::new(
-                            &current_default_int_discriminator.to_string(),
+                            &current_default_int_discriminant.to_string(),
                             Span::call_site(),
                         )
                         .into()
@@ -135,33 +135,33 @@ impl Enum {
                 },
             };
 
-            // Change the default int discriminator value if relevant.
-            if let syn::Lit::Int(ref discriminator_value) = actual_discriminator {
-                current_default_int_discriminator =
-                    discriminator_value.base10_parse::<usize>().unwrap() + 1;
+            // Change the default int discriminant value if relevant.
+            if let syn::Lit::Int(ref discriminant_value) = actual_discriminant {
+                current_default_int_discriminant =
+                    discriminant_value.base10_parse::<usize>().unwrap() + 1;
             }
 
-            // Store the actual discriminator in memory for later use.
-            variant.actual_discriminator = Some(actual_discriminator);
+            // Store the actual discriminant in memory for later use.
+            variant.actual_discriminant = Some(actual_discriminant);
         }
     }
 }
 
 impl EnumVariant {
-    /// Gets the discriminator of the variant.
-    pub fn discriminator_literal(&self) -> &syn::Lit {
-        self.actual_discriminator
+    /// Gets the discriminant of the variant.
+    pub fn discriminant_literal(&self) -> &syn::Lit {
+        self.actual_discriminant
             .as_ref()
-            .expect("discriminator has not been resolved yet")
+            .expect("discriminant has not been resolved yet")
     }
 
-    /// Gets the discriminator explicitly specified in the code, if any.
+    /// Gets the discriminant explicitly specified in the code, if any.
     ///
-    /// Handles all possible ways of explicitly setting discriminators.
-    pub fn explicit_discriminator(&self) -> Option<&syn::Lit> {
+    /// Handles all possible ways of explicitly setting discriminants.
+    pub fn explicit_discriminant(&self) -> Option<&syn::Lit> {
         match (
-            self.explicit_discriminator_attr.as_ref(),
-            self.explicit_int_discriminator_equals.as_ref(),
+            self.explicit_discriminant_attr.as_ref(),
+            self.explicit_int_discriminant_equals.as_ref(),
         ) {
             // When both are specified, prefer the #[protocol] attribute
             (Some(attr), Some(_)) => Some(attr),
@@ -171,9 +171,9 @@ impl EnumVariant {
         }
     }
 
-    /// Gets an expression representing the discriminator.
-    pub fn discriminator_expr(&self) -> TokenStream {
-        match self.discriminator_literal() {
+    /// Gets an expression representing the discriminant.
+    pub fn discriminant_expr(&self) -> TokenStream {
+        match self.discriminant_literal() {
             s @ syn::Lit::Str(..) => quote!(#s.to_owned()),
             i @ syn::Lit::Int(..) => quote!(#i),
             _ => unreachable!(),
@@ -181,9 +181,9 @@ impl EnumVariant {
     }
 
     /// Gets an expression representing a reference to
-    /// the discriminator.
-    pub fn discriminator_ref_expr(&self) -> TokenStream {
-        match self.discriminator_literal() {
+    /// the discriminant.
+    pub fn discriminant_ref_expr(&self) -> TokenStream {
+        match self.discriminant_literal() {
             s @ syn::Lit::Str(..) => quote!(&#s.to_owned()),
             i @ syn::Lit::Int(..) => quote!(&#i),
             _ => unreachable!(),

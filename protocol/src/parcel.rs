@@ -96,7 +96,7 @@ pub trait Parcel: Sized {
         settings: &Settings,
         hints: &mut hint::Hints,
     ) -> Result<Self, Error> {
-        let mut buffer = BitReader::endian(::std::io::Cursor::new(bytes), BigEndian);
+        let mut buffer = BitReader::endian(io::Cursor::new(bytes), BigEndian);
         Self::read_field(&mut buffer, settings, hints)
     }
 
@@ -111,11 +111,11 @@ pub trait Parcel: Sized {
         settings: &Settings,
         hints: &mut hint::Hints,
     ) -> Result<Vec<u8>, Error> {
-        let mut data = io::Cursor::new(Vec::new());
-        let mut buffer = BitWriter::endian(&mut data, BigEndian);
-        self.write_field(&mut buffer, settings, hints)?;
-        buffer.byte_align()?;
+        let mut data = Vec::new();
+        let mut writer = BitWriter::endian(&mut data, BigEndian);
+        self.write_field(&mut writer, settings, hints)?;
+        writer.byte_align()?;
 
-        Ok(data.into_inner())
+        Ok(data)
     }
 }

@@ -19,15 +19,15 @@ pub struct Goodbye {
 #[protocol(discriminant = "integer")]
 #[repr(u16)]
 pub enum PacketKind {
-    #[protocol(discriminator(0x00))]
+    #[protocol(discriminant(0x00))]
     Handshake(Handshake),
-    #[protocol(discriminator(0xaa))]
+    #[protocol(discriminant(0xaa))]
     Hello(Hello),
-    #[protocol(discriminator(0xaf))]
+    #[protocol(discriminant(0xaf))]
     Goodbye(Goodbye),
 }
 
 fn main() {
-    println!("enum discriminant 1: {}", PacketKind::Handshake(Handshake).discriminator());
-    println!("enum discriminant 2: {}", PacketKind::Goodbye(Goodbye { id: 22, reason: "hello".to_string() }).discriminator());
+    println!("enum discriminant 1: {}", PacketKind::Handshake(Handshake).discriminant());
+    println!("enum discriminant 2: {}", PacketKind::Goodbye(Goodbye { id: 22, reason: "hello".to_string() }).discriminant());
 }

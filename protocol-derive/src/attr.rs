@@ -5,7 +5,7 @@ use proc_macro2::{Span, TokenStream};
 #[derive(Debug)]
 pub enum Protocol {
     DiscriminantFormat(format::Enum),
-    Discriminator(syn::Lit),
+    Discriminant(syn::Lit),
     BitField(u32),
     FlexibleArrayMember,
     LengthPrefix {
@@ -114,10 +114,10 @@ pub fn protocol(attrs: &[syn::Attribute]) -> Option<Protocol> {
                         prefix_subfield_names,
                     })
                 }
-                "discriminator" => {
+                "discriminant" => {
                     let literal = expect::meta_list::single_literal(nested_list)
                         .expect("expected a single literal");
-                    Some(Protocol::Discriminator(literal))
+                    Some(Protocol::Discriminant(literal))
                 }
                 name => panic!("#[protocol({})] is not valid", name),
             }

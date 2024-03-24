@@ -50,9 +50,9 @@ pub struct Ping {
 
 #[derive(protocol::Protocol, Clone, Debug, PartialEq)]
 #[protocol(discriminant = "integer")]
-#[protocol(discriminator(u8))]
+#[protocol(discriminant(u8))]
 pub enum Packet {
-    #[protocol(discriminator(0))]
+    #[protocol(discriminant(0))]
     Ping(Ping),
 }
 

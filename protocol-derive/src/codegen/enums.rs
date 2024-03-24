@@ -6,20 +6,20 @@ use proc_macro2::{Span, TokenStream};
 /// of the same type as the enum.
 pub fn write_variant(
     plan: &plan::Enum,
-    write_discriminator: &dyn Fn(TokenStream) -> TokenStream,
+    write_discriminant: &dyn Fn(TokenStream) -> TokenStream,
 ) -> TokenStream {
     let enum_name = &plan.ident;
 
     let variant_match_branches: Vec<_> = plan.variants.iter().map(|variant| {
         let variant_name = &variant.ident;
-        let discriminator_ref_expr = variant.discriminator_ref_expr();
+        let discriminant_ref_expr = variant.discriminant_ref_expr();
 
-        let write_discriminator = write_discriminator(discriminator_ref_expr);
+        let write_discriminant = write_discriminant(discriminant_ref_expr);
 
         let (binding_names, fields_pattern) = bind_fields_pattern(variant_name, &variant.fields);
 
         quote!(#enum_name :: #fields_pattern => {
-            #write_discriminator
+            #write_discriminant
 
             #(
                 protocol::Parcel::write_field(#binding_names, __io_writer, __settings, &mut __hints)?;
@@ -30,25 +30,25 @@ pub fn write_variant(
     quote! {
         match *self {
             #(#variant_match_branches,)*
-            _ => panic!("unknown discriminator"), // FIXME: this should not be a panic
+            _ => panic!("unknown discriminant"), // FIXME: this should not be a panic
         }
     }
 }
 
-pub fn read_variant(plan: &plan::Enum, read_discriminator: TokenStream) -> TokenStream {
+pub fn read_variant(plan: &plan::Enum, read_discriminant: TokenStream) -> TokenStream {
     let enum_name = &plan.ident;
-    let discriminator_ty = plan.discriminant();
-    let discriminator_var = syn::Ident::new("discriminator", Span::call_site());
-    let discriminator_for_pattern_matching =
-        plan.matchable_discriminator_expr(discriminator_var.clone());
+    let discriminant_ty = plan.discriminant();
+    let discriminant_var = syn::Ident::new("discriminant", Span::call_site());
+    let discriminant_for_pattern_matching =
+        plan.matchable_discriminant_expr(discriminant_var.clone());
 
-    let discriminator_match_branches = plan.variants.iter().map(|variant| {
+    let discriminant_match_branches = plan.variants.iter().map(|variant| {
         let variant_name = &variant.ident;
-        let discriminator_literal = variant.discriminator_literal();
+        let discriminant_literal = variant.discriminant_literal();
         let initializer = codegen::read_fields(&variant.fields);
 
         quote! {
-            #discriminator_literal => {
+            #discriminant_literal => {
                 #enum_name::#variant_name # initializer
             }
         }
@@ -56,13 +56,13 @@ pub fn read_variant(plan: &plan::Enum, read_discriminator: TokenStream) -> Token
 
     quote! {
         {
-            let discriminator: #discriminator_ty = #read_discriminator;
+            let discriminant: #discriminant_ty = #read_discriminant;
 
-            match #discriminator_for_pattern_matching {
-                #(#discriminator_match_branches,)*
-                unknown_discriminator => {
-                    return Err(protocol::ErrorKind::UnknownEnumDiscriminator(
-                        stringify!(#enum_name), format!("{:?}", unknown_discriminator),
+            match #discriminant_for_pattern_matching {
+                #(#discriminant_match_branches,)*
+                unknown_discriminant => {
+                    return Err(protocol::ErrorKind::UnknownEnumDiscriminant(
+                        stringify!(#enum_name), format!("{:?}", unknown_discriminant),
                     ).into());
                 },
             }

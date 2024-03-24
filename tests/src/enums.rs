@@ -30,19 +30,19 @@ mod string_discriminants {
     #[protocol(discriminant = "string")]
     pub enum RenamedVariant {
         Hello,
-        #[protocol(discriminator("Universe"))]
+        #[protocol(discriminant("Universe"))]
         World,
     }
 
     #[derive(protocol::Protocol, Debug, PartialEq)]
     #[protocol(discriminant = "string")]
-    pub enum WithDiscriminatorAttrs {
-        #[protocol(discriminator("FooBar"))]
+    pub enum WithDiscriminantAttrs {
+        #[protocol(discriminant("FooBar"))]
         Foo,
     }
 
     #[test]
-    fn variant_names_are_discriminators() {
+    fn variant_names_are_discriminants() {
         let settings = Settings::default();
         assert_eq!(
             vec![0, 0, 0, 1, 'X' as _],
@@ -168,43 +168,39 @@ mod integer_discriminants {
     #[derive(protocol::Protocol, Debug, PartialEq)]
     #[protocol(discriminant = "integer")]
     #[repr(u8)]
-    pub enum CustomDiscriminatorAttrs {
-        #[protocol(discriminator(255))]
+    pub enum CustomDiscriminantAttrs {
+        #[protocol(discriminant(255))]
         Hello,
-        #[protocol(discriminator(122))]
+        #[protocol(discriminant(122))]
         World,
     }
 
     #[derive(protocol::Protocol, Debug, PartialEq, Eq)]
     #[protocol(discriminant = "integer")]
     #[repr(i8)]
-    enum WithoutExplicitDiscriminators {
+    enum WithoutExplicitDiscriminants {
         Only,
     }
 
     #[test]
-    fn custom_discriminators_are_transmitted() {
+    fn custom_discriminants_are_transmitted() {
         let settings = Settings::default();
 
         assert_eq!(
             vec![255],
-            CustomDiscriminatorAttrs::Hello
-                .raw_bytes(&settings)
-                .unwrap()
+            CustomDiscriminantAttrs::Hello.raw_bytes(&settings).unwrap()
         );
         assert_eq!(
             vec![122],
-            CustomDiscriminatorAttrs::World
-                .raw_bytes(&settings)
-                .unwrap()
+            CustomDiscriminantAttrs::World.raw_bytes(&settings).unwrap()
         );
     }
 
     #[test]
-    fn discriminator_zero_is_reserved() {
+    fn discriminant_zero_is_reserved() {
         assert_eq!(
             vec![1],
-            WithoutExplicitDiscriminators::Only
+            WithoutExplicitDiscriminants::Only
                 .raw_bytes(&protocol::Settings::default())
                 .unwrap()
         );
@@ -226,7 +222,7 @@ mod integer_discriminants {
     fn unnamed_fields_are_correctly_written() {
         assert_eq!(
             vec![
-                0, 0, 0, 2, // discriminator
+                0, 0, 0, 2, // discriminant
                 0xf1, 0xed
             ],
             BoatKind::Dingy(0xf1, 0xed)
@@ -238,7 +234,7 @@ mod integer_discriminants {
     #[test]
     fn unit_variants_are_correctly_written() {
         assert_eq!(
-            vec![0, 0, 0, 3], // discriminator
+            vec![0, 0, 0, 3], // discriminant
             BoatKind::Fart.raw_bytes(&Settings::default()).unwrap()
         );
     }
@@ -270,10 +266,10 @@ mod integer_discriminants {
     }
 
     #[test]
-    fn returns_error_on_unexpected_discriminator() {
+    fn returns_error_on_unexpected_discriminant() {
         let result = BoatKind::from_raw_bytes(&[99, 99, 88, 11, 13], &Settings::default());
         match result.as_ref().map_err(|e| e.kind()) {
-            Err(&protocol::ErrorKind::UnknownEnumDiscriminator(..)) => (), // pass
+            Err(&protocol::ErrorKind::UnknownEnumDiscriminant(..)) => (), // pass
             Err(unexpected_error) => {
                 panic!("expected a different error but got: {}", unexpected_error)
             }
@@ -282,7 +278,7 @@ mod integer_discriminants {
     }
 
     #[test]
-    fn custom_int_discriminator_repr_is_respected() {
+    fn custom_int_discriminant_repr_is_respected() {
         assert_eq!(
             vec![1],
             WithCustomRepr::First

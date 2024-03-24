@@ -39,12 +39,12 @@
 //!
 //! Every enum has a value for each variant used to distinguish
 //! between each variant. This can be as simple as a 32-bit integer
-//! representing the variant's index. This is called the discriminator.
+//! representing the variant's index. This is called the discriminant.
 //!
-//! ### String discriminators
+//! ### String discriminants
 //!
 //! ```
-//! // This enum, like all enums, defaults to using String discriminators.
+//! // This enum, like all enums, defaults to using String discriminants.
 //! #[derive(protocol::Protocol, Debug, PartialEq)]
 //! enum Foo { A, B, C }
 //!
@@ -57,37 +57,37 @@
 //! enum Bar { A, B, C }
 //! ```
 //!
-//! By default, enums have `String` discriminators. This means that
+//! By default, enums have `String` discriminants. This means that
 //! when serializing enum values to and from bytes, unless otherwise
 //! specified the variant's full name will be transmitted as a string.
 //!
 //! This allows variants to be added, modified, or reordered in
 //! a backwards-compatible way.
 //!
-//! ### Integer discriminators
+//! ### Integer discriminants
 //!
 //! ```
-//! // An enum with integer discriminators.
+//! // An enum with integer discriminants.
 //! #[derive(protocol::Protocol, Debug, PartialEq)]
 //! #[protocol(discriminant = "integer")]
 //! enum Baz {
-//!     Fizz = 0, // override the default first discriminator of 1
-//!     Buzz, // defaults to `prior discriminator + 1`, therefore has a discriminator of 1.
-//!     Bing, // defaults to `prior discriminator + 1`, therefore has a discriminator of 2.
+//!     Fizz = 0, // override the default first discriminant of 1
+//!     Buzz, // defaults to `prior discriminant + 1`, therefore has a discriminant of 1.
+//!     Bing, // defaults to `prior discriminant + 1`, therefore has a discriminant of 2.
 //!     Boo = 1234,
-//!     Beez, // defaults to `prior discriminator + 1`, therefore has a discriminator of 1235.
+//!     Beez, // defaults to `prior discriminant + 1`, therefore has a discriminant of 1235.
 //! }
 //!
 //! use protocol::{Enum, Parcel};
 //!
-//! // By default, integer discriminators are 32-bits.
-//! assert_eq!([0u8, 0, 0, 2], &Baz::Bing.discriminator().raw_bytes(&protocol::Settings::default()).unwrap()[..]);
+//! // By default, integer discriminants are 32-bits.
+//! assert_eq!([0u8, 0, 0, 2], &Baz::Bing.discriminant().raw_bytes(&protocol::Settings::default()).unwrap()[..]);
 //!
-//! assert_eq!(0, Baz::Fizz.discriminator());
-//! assert_eq!(1, Baz::Buzz.discriminator());
-//! assert_eq!(2, Baz::Bing.discriminator());
-//! assert_eq!(1234, Baz::Boo.discriminator());
-//! assert_eq!(1235, Baz::Beez.discriminator());
+//! assert_eq!(0, Baz::Fizz.discriminant());
+//! assert_eq!(1, Baz::Buzz.discriminant());
+//! assert_eq!(2, Baz::Bing.discriminant());
+//! assert_eq!(1234, Baz::Boo.discriminant());
+//! assert_eq!(1235, Baz::Beez.discriminant());
 //! ```
 //!
 //! It is possible to set the underlying integer type via the `#[repr(<type>)]` attribute.
@@ -95,7 +95,7 @@
 //! ```
 //! #[derive(protocol::Protocol, Debug, PartialEq)]
 //! #[protocol(discriminant = "integer")]
-//! #[repr(u8)] // Force discriminators to be 8-bit.
+//! #[repr(u8)] // Force discriminants to be 8-bit.
 //! pub enum Hello {
 //!     World(String), SolarSystem(String), LocalGroup(String),
 //!     Universe(String), Everything(String),
@@ -103,44 +103,44 @@
 //!
 //! use protocol::{Enum, Parcel};
 //!
-//! assert_eq!([2, // 1-byte discriminator
+//! assert_eq!([2, // 1-byte discriminant
 //!             0, 0, 0, 3, // string length
 //!             b'f', b'o', b'o', // the string
 //!             ], &Hello::SolarSystem("foo".to_owned()).raw_bytes(&protocol::Settings::default()).unwrap()[..]);
 //! ```
 //!
-//! Discriminators can be overriden on a per-variant basis via
-//! the `#[protocol(discriminator(<value>))]` attribute.
+//! Discriminants can be overriden on a per-variant basis via
+//! the `#[protocol(discriminant(<value>))]` attribute.
 //!
 //! In the case of trivial enums with no fields,
-//! the `Variant = <discriminator>` syntax may be used.
+//! the `Variant = <discriminant>` syntax may be used.
 //!
 //! ```
 //! #[derive(protocol::Protocol, Debug, PartialEq)]
 //! #[protocol(discriminant = "integer")]
-//! #[repr(u8)] // Force discriminators to be 8-bit.
+//! #[repr(u8)] // Force discriminants to be 8-bit.
 //! enum Numbered {
 //!     A = 1, B = 2, C = 111, D = 67,
 //! }
 //!
 //! #[derive(protocol::Protocol, Debug, PartialEq)]
 //! #[protocol(discriminant = "integer")]
-//! #[repr(u8)] // Force discriminators to be 8-bit.
+//! #[repr(u8)] // Force discriminants to be 8-bit.
 //! pub enum Hello {
 //!     World(String), SolarSystem(String), LocalGroup(String),
-//!     #[protocol(discriminator(100))]
+//!     #[protocol(discriminant(100))]
 //!     Universe(String),
 //!     Everything(String),
 //! }
 //!
 //! use protocol::{Enum, Parcel};
 //!
-//! assert_eq!(111, Numbered::C.discriminator());
-//! assert_eq!(67, Numbered::D.discriminator());
+//! assert_eq!(111, Numbered::C.discriminant());
+//! assert_eq!(67, Numbered::D.discriminant());
 //!
-//! assert_eq!(1, Hello::World("foo".to_owned()).discriminator());
-//! assert_eq!(100, Hello::Universe("foo".to_owned()).discriminator());
-//! assert_eq!(101, Hello::Everything("foo".to_owned()).discriminator());
+//! assert_eq!(1, Hello::World("foo".to_owned()).discriminant());
+//! assert_eq!(100, Hello::Universe("foo".to_owned()).discriminant());
+//! assert_eq!(101, Hello::Everything("foo".to_owned()).discriminant());
 //!
 //! ```
 

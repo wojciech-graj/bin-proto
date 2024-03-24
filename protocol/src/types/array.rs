@@ -107,12 +107,12 @@ mod test {
 
     #[test]
     fn can_write_array() {
-        let mut data = Cursor::new(Vec::new());
-        let mut buffer = BitWriter::endian(&mut data, BigEndian);
+        let mut data = Vec::new();
+        let mut writer = BitWriter::endian(&mut data, BigEndian);
 
         [5u8, 7, 9, 11]
-            .write(&mut buffer, &Settings::default())
+            .write(&mut writer, &Settings::default())
             .unwrap();
-        assert_eq!(data.into_inner(), vec![5, 7, 9, 11]);
+        assert_eq!(data, vec![5, 7, 9, 11]);
     }
 }

@@ -69,9 +69,9 @@ error_chain! {
             display("unknown packet identifier")
         }
 
-        UnknownEnumDiscriminator(type_name: &'static str, discriminator: String) {
-            description("received unknown enum discriminator")
-            display("received unknown enum discriminator '{}' for type '{}'", discriminator, type_name)
+        UnknownEnumDiscriminant(type_name: &'static str, discriminant: String) {
+            description("received unknown enum discriminant")
+            display("received unknown enum discriminant '{}' for type '{}'", discriminant, type_name)
         }
     }
 }

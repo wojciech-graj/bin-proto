@@ -23,11 +23,11 @@ pub struct Node {
 #[derive(protocol::Protocol, Clone, Debug, PartialEq)]
 #[protocol(discriminant = "integer")]
 pub enum Packet {
-    #[protocol(discriminator(0x00))]
+    #[protocol(discriminant(0x00))]
     Handshake(Handshake),
-    #[protocol(discriminator(0x01))]
+    #[protocol(discriminant(0x01))]
     Hello(Hello),
-    #[protocol(discriminator(0x02))]
+    #[protocol(discriminant(0x02))]
     Goodbye(Goodbye),
 }
 

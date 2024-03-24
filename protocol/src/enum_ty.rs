@@ -5,6 +5,6 @@ pub trait Enum: Parcel {
     /// The type used to store the enum discriminant
     type Discriminant: Parcel;
 
-    /// Gets the discriminator of the current variant.
-    fn discriminator(&self) -> Self::Discriminant;
+    /// Gets the discriminant of the current variant.
+    fn discriminant(&self) -> Self::Discriminant;
 }

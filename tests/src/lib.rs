@@ -54,4 +54,3 @@ mod length_prefix;
 mod logic;
 #[cfg(test)]
 mod structs;
-// #[cfg(test)] mod wire;

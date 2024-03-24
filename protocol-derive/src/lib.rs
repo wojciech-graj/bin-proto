@@ -117,7 +117,7 @@ fn impl_parcel_for_struct(
 
 /// Generates a `Parcel` trait implementation for an enum.
 fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro2::TokenStream {
-    let discriminator_ty = plan.discriminant();
+    let discriminant_ty = plan.discriminant();
 
     let read_variant = codegen::enums::read_variant(
         plan,
@@ -130,7 +130,7 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
 
     let write_variant = codegen::enums::write_variant(
         plan,
-        &|discriminator_ref_expr| quote! { <#discriminator_ty as protocol::Parcel>::write_field(#discriminator_ref_expr, __io_writer, __settings, &mut __hints)?; },
+        &|discriminant_ref_expr| quote! { <#discriminant_ty as protocol::Parcel>::write_field(#discriminant_ref_expr, __io_writer, __settings, &mut __hints)?; },
     );
 
     impl_trait_for(
@@ -169,7 +169,7 @@ fn impl_bit_field_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_ma
 
     // This is bad, but I don't know how else to implement this
     if matches!(discriminant.to_string().as_str(), "bool" | "u8" | "i8") {
-        let discriminator_ty = plan.discriminant();
+        let discriminant_ty = plan.discriminant();
 
         let read_variant = codegen::enums::read_variant(
             plan,
@@ -182,7 +182,7 @@ fn impl_bit_field_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_ma
         );
         let write_variant = codegen::enums::write_variant(
             plan,
-            &|discriminator_ref_expr| quote! { <#discriminator_ty as protocol::BitField>::write_field(#discriminator_ref_expr, __io_writer, __bits, __settings, &mut __hints)?; },
+            &|discriminant_ref_expr| quote! { <#discriminant_ty as protocol::BitField>::write_field(#discriminant_ref_expr, __io_writer, __bits, __settings, &mut __hints)?; },
         );
 
         impl_trait_for(
@@ -227,11 +227,11 @@ fn impl_enum_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro2:
 
     let variant_matchers = plan.variants.iter().map(|variant| {
         let variant_ident = &variant.ident;
-        let discriminator = variant.discriminator_expr();
+        let discriminant = variant.discriminant_expr();
         let fields_expr = variant.ignore_fields_pattern_expr();
 
         quote!(#enum_ident::#variant_ident #fields_expr => {
-            #discriminator
+            #discriminant
         })
     });
 
@@ -241,7 +241,7 @@ fn impl_enum_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro2:
         quote!(
             type Discriminant = #discriminant;
 
-            fn discriminator(&self) -> Self::Discriminant {
+            fn discriminant(&self) -> Self::Discriminant {
                 match *self {
                     #(#variant_matchers)*
                 }
