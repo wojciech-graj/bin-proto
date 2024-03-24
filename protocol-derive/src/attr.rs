@@ -8,6 +8,7 @@ pub enum Protocol {
     DiscriminantFormat(format::Enum),
     Discriminator(syn::Lit),
     Bitfield(u32),
+    FlexibleArrayMember,
     LengthPrefix {
         kind: LengthPrefixKind,
         prefix_field_name: syn::Ident,
@@ -154,7 +155,7 @@ pub fn protocol(attrs: &[syn::Attribute]) -> Option<Protocol> {
                                             panic!("Bitfield cannot be larger than 8 bits.")
                                         }
                                     }
-                                    Err(i) => panic!("Bitfield must have constant unsigned size."),
+                                    Err(_) => panic!("Bitfield must have constant unsigned size."),
                                 },
                                 _ => panic!("Bitfield size must be integer"),
                             };
@@ -168,12 +169,13 @@ pub fn protocol(attrs: &[syn::Attribute]) -> Option<Protocol> {
                 ),
             }
         }
-        // Some(syn::NestedMeta::Meta(syn::Meta::Path(path))) => match path.get_ident() {
-        //     Some(ident) => match ident.to_string().as_str() {
-        //         _ => panic!("TODO"),
-        //     },
-        //     None => panic!("TODO"),
-        // },
+        Some(syn::NestedMeta::Meta(syn::Meta::Path(path))) => match path.get_ident() {
+            Some(ident) => match ident.to_string().as_str() {
+                "flexible_array_member" => Some(Protocol::FlexibleArrayMember),
+                _ => panic!("TODO"),
+            },
+            None => panic!("TODO"),
+        },
         _ => {
             panic!("#[protocol(..)] attributes cannot be empty")
         }

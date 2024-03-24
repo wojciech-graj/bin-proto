@@ -35,6 +35,7 @@ fn impl_parcel(ast: &syn::DeriveInput) -> proc_macro2::TokenStream {
             let plan = plan::Enum::new(ast, e);
 
             let mut stream = impl_parcel_for_enum(&plan, ast);
+            stream.extend(impl_bit_field_for_enum(&plan, ast));
             stream.extend(impl_enum_for_enum(&plan, ast));
             stream
         }
@@ -119,8 +120,21 @@ fn impl_parcel_for_struct(
 /// Generates a `Parcel` trait implementation for an enum.
 fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro2::TokenStream {
     let enum_name = &plan.ident;
-    let read_variant = codegen::enums::read_variant(plan);
-    let write_variant = codegen::enums::write_variant(plan);
+    let discriminator_ty = plan.discriminant();
+
+    let read_variant = codegen::enums::read_variant(
+        plan,
+        quote!(protocol::Parcel::read_field(
+            __io_reader,
+            __settings,
+            &mut __hints,
+        )?),
+    );
+
+    let write_variant = codegen::enums::write_variant(
+        plan,
+        &|discriminator_ref_expr| quote! { <#discriminator_ty as protocol::Parcel>::write_field(#discriminator_ref_expr, __io_writer, __settings, &mut __hints)?; },
+    );
 
     impl_trait_for(
         ast,
@@ -153,6 +167,63 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
             }
         },
     )
+}
+
+fn impl_bit_field_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro2::TokenStream {
+    let discriminant = plan.discriminant();
+
+    // This is bad, but I don't know how else to implement this
+    if matches!(discriminant.to_string().as_str(), "bool" | "u8" | "i8") {
+        let discriminator_ty = plan.discriminant();
+
+        let read_variant = codegen::enums::read_variant(
+            plan,
+            quote!(protocol::BitField::read_field(
+                __io_reader,
+                __bits,
+                __settings,
+                &mut __hints,
+            )?),
+        );
+        let write_variant = codegen::enums::write_variant(
+            plan,
+            &|discriminator_ref_expr| quote! { <#discriminator_ty as protocol::BitField>::write_field(#discriminator_ref_expr, __io_writer, __bits, __settings, &mut __hints)?; },
+        );
+
+        impl_trait_for(
+            ast,
+            quote!(protocol::BitField),
+            quote! {
+                #[allow(unused_variables)]
+                fn read_field(__io_reader: &mut protocol::BitRead,
+                              __bits: u32,
+                              __settings: &protocol::Settings,
+                              __hints: &mut protocol::hint::Hints)
+                    -> protocol::Result<Self> {
+                    // Each type gets its own hints.
+                    let mut __hints = __hints.new_nested();
+
+                    Ok(#read_variant)
+                }
+
+                #[allow(unused_variables)]
+                fn write_field(&self, __io_writer: &mut protocol::BitWrite,
+                               __bits: u32,
+                               __settings: &protocol::Settings,
+                               __hints: &mut protocol::hint::Hints)
+                    -> protocol::Result<()> {
+                    // Each type gets its own hints.
+                    let mut __hints = __hints.new_nested();
+
+                    #write_variant
+
+                    Ok(())
+                }
+            },
+        )
+    } else {
+        quote!()
+    }
 }
 
 fn impl_enum_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro2::TokenStream {

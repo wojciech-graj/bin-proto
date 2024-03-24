@@ -5,20 +5,22 @@ use syn;
 /// Generates code that reads one of a set of
 /// parcel variants and returns an expression
 /// of the same type as the enum.
-pub fn write_variant(plan: &plan::Enum) -> TokenStream {
+pub fn write_variant(
+    plan: &plan::Enum,
+    write_discriminator_fn: &dyn Fn(TokenStream) -> TokenStream,
+) -> TokenStream {
     let enum_name = &plan.ident;
-    let discriminator_ty = plan.discriminant();
 
     let variant_match_branches: Vec<_> = plan.variants.iter().map(|variant| {
         let variant_name = &variant.ident;
         let discriminator_ref_expr = variant.discriminator_ref_expr();
 
-        let write_discriminator_stmt = quote! { <#discriminator_ty as protocol::Parcel>::write_field(#discriminator_ref_expr, __io_writer, __settings, &mut __hints)?; };
+        let write_discriminator = write_discriminator_fn(discriminator_ref_expr);
 
         let (binding_names, fields_pattern) = bind_fields_pattern(variant_name, &variant.fields);
 
         quote!(#enum_name :: #fields_pattern => {
-            #write_discriminator_stmt
+            #write_discriminator
 
             #(
                 protocol::Parcel::write_field(#binding_names, __io_writer, __settings, &mut __hints)?;
@@ -34,7 +36,7 @@ pub fn write_variant(plan: &plan::Enum) -> TokenStream {
     }
 }
 
-pub fn read_variant(plan: &plan::Enum) -> TokenStream {
+pub fn read_variant(plan: &plan::Enum, read_discriminator_fn: TokenStream) -> TokenStream {
     let enum_name = &plan.ident;
     let discriminator_ty = plan.discriminant();
     let discriminator_var = syn::Ident::new("discriminator", Span::call_site());
@@ -55,7 +57,7 @@ pub fn read_variant(plan: &plan::Enum) -> TokenStream {
 
     quote! {
         {
-            let discriminator: #discriminator_ty = protocol::Parcel::read_field(__io_reader, __settings, &mut __hints)?;
+            let discriminator: #discriminator_ty = #read_discriminator_fn;
 
             match #discriminator_for_pattern_matching {
                 #(#discriminator_match_branches,)*

@@ -1,9 +1,79 @@
-use crate::{hint, BitRead, BitWrite, Error, Parcel, Settings};
+use crate::{hint, BitField, BitRead, BitWrite, Error, Parcel, Settings};
 
 use num_traits::{FromPrimitive, ToPrimitive};
 
 /// An integer value that can be serialized and deserialized.
 pub trait Integer: Parcel + FromPrimitive + ToPrimitive {}
+
+impl BitField for bool {
+    fn read_field(
+        read: &mut dyn BitRead,
+        bits: u32,
+        _: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<Self, Error> {
+        if read.read_u(bits)? == 0 {
+            Ok(false)
+        } else {
+            Ok(true)
+        }
+    }
+
+    fn write_field(
+        &self,
+        write: &mut dyn BitWrite,
+        bits: u32,
+        _: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<(), Error> {
+        write.write_u(bits, if *self { 1 } else { 0 })?;
+        Ok(())
+    }
+}
+
+impl BitField for u8 {
+    fn read_field(
+        read: &mut dyn BitRead,
+        bits: u32,
+        _: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<Self, Error> {
+        Ok(read.read_u(bits)?)
+    }
+
+    fn write_field(
+        &self,
+        write: &mut dyn BitWrite,
+        bits: u32,
+        _: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<(), Error> {
+        write.write_u(bits, *self)?;
+        Ok(())
+    }
+}
+
+impl BitField for i8 {
+    fn read_field(
+        read: &mut dyn BitRead,
+        bits: u32,
+        _: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<Self, Error> {
+        Ok(read.read_i(bits)?)
+    }
+
+    fn write_field(
+        &self,
+        write: &mut dyn BitWrite,
+        bits: u32,
+        _: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<(), Error> {
+        write.write_i(bits, *self)?;
+        Ok(())
+    }
+}
 
 impl Parcel for bool {
     const TYPE_NAME: &'static str = "bool";
@@ -11,14 +81,9 @@ impl Parcel for bool {
     fn read_field(
         read: &mut dyn BitRead,
         _: &Settings,
-        hints: &mut hint::Hints,
+        _: &mut hint::Hints,
     ) -> Result<Self, Error> {
-        let result = if let Some(field_width) = hints.field_width {
-            read.read_u(field_width)
-        } else {
-            read.read_u8()
-        }?;
-        if result == 0 {
+        if read.read_u8()? == 0 {
             Ok(false)
         } else {
             Ok(true)
@@ -29,14 +94,9 @@ impl Parcel for bool {
         &self,
         write: &mut dyn BitWrite,
         _: &Settings,
-        hints: &mut hint::Hints,
+        _: &mut hint::Hints,
     ) -> Result<(), Error> {
-        let value = if *self { 1 } else { 0 };
-        if let Some(field_width) = hints.field_width {
-            write.write_u(field_width, value)
-        } else {
-            write.write_u8(value)
-        }?;
+        write.write_u8(if *self { 1 } else { 0 })?;
         Ok(())
     }
 }
@@ -47,27 +107,18 @@ impl Parcel for u8 {
     fn read_field(
         read: &mut dyn BitRead,
         _: &Settings,
-        hints: &mut hint::Hints,
+        _: &mut hint::Hints,
     ) -> Result<Self, Error> {
-        Ok(if let Some(field_width) = hints.field_width {
-            read.read_u(field_width)
-        } else {
-            read.read_u8()
-        }?)
+        Ok(read.read_u8()?)
     }
 
     fn write_field(
         &self,
         write: &mut dyn BitWrite,
         _: &Settings,
-        hints: &mut hint::Hints,
+        _: &mut hint::Hints,
     ) -> Result<(), Error> {
-        println!("{:?}", hints);
-        if let Some(field_width) = hints.field_width {
-            write.write_u(field_width, *self)
-        } else {
-            write.write_u8(*self)
-        }?;
+        write.write_u8(*self)?;
         Ok(())
     }
 }
@@ -78,26 +129,18 @@ impl Parcel for i8 {
     fn read_field(
         read: &mut dyn BitRead,
         _: &Settings,
-        hints: &mut hint::Hints,
+        _: &mut hint::Hints,
     ) -> Result<Self, Error> {
-        Ok(if let Some(field_width) = hints.field_width {
-            read.read_i(field_width)
-        } else {
-            read.read_i8()
-        }?)
+        Ok(read.read_i8()?)
     }
 
     fn write_field(
         &self,
         write: &mut dyn BitWrite,
         _: &Settings,
-        hints: &mut hint::Hints,
+        _: &mut hint::Hints,
     ) -> Result<(), Error> {
-        if let Some(field_width) = hints.field_width {
-            write.write_i(field_width, *self)
-        } else {
-            write.write_i8(*self)
-        }?;
+        write.write_i8(*self)?;
         Ok(())
     }
 }

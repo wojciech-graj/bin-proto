@@ -6,7 +6,6 @@ pub type FieldIndex = usize;
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Hints {
     pub current_field_index: Option<FieldIndex>,
-    pub field_width: Option<u32>,
     /// The fields for which a length prefix
     /// was already present earlier in the layout.
     pub known_field_lengths: HashMap<FieldIndex, FieldLength>,
@@ -56,7 +55,6 @@ mod protocol_derive_helpers {
         pub fn new_nested(&self) -> Self {
             Self {
                 current_field_index: Some(0),
-                field_width: self.field_width,
                 ..Default::default()
             }
         }

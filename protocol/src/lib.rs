@@ -145,6 +145,7 @@
 //!
 //! ```
 
+pub use self::bit_field::BitField;
 pub use self::bit_read::BitRead;
 pub use self::bit_write::BitWrite;
 pub use self::enum_ty::Enum;
@@ -166,6 +167,7 @@ pub use self::settings::*;
 #[cfg(feature = "derive")]
 pub use protocol_derive::Protocol;
 
+mod bit_field;
 mod bit_read;
 mod bit_write;
 mod settings;

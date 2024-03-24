@@ -26,25 +26,52 @@ pub fn write_fields(fields: &syn::Fields) -> TokenStream {
 ///
 /// Returns  `{ ..field initializers.. }`.
 fn read_named_fields(fields_named: &syn::FieldsNamed) -> TokenStream {
-    let field_initializers: Vec<_> = fields_named.named.iter().map(|field| {
-        let field_name = &field.ident;
-        let field_ty = &field.ty;
-        
-        let pre = update_hints_before(field);
-        let post = update_hints_after_read(field, &fields_named.named);
+    let field_initializers: Vec<_> = fields_named
+        .named
+        .iter()
+        .map(|field| {
+            let field_name = &field.ident;
+            let field_ty = &field.ty;
 
-        quote! {
-            #field_name : {
-                #pre
-                let res: protocol::Result<#field_ty> = protocol::Parcel::read_field(__io_reader, __settings, &mut __hints);
-                #post
-                __hints.next_field();
-                res?
+            let read_field = read_field_fn(field);
+            let post = update_hints_after_read(field, &fields_named.named);
+
+            quote! {
+                #field_name : {
+                    let res: protocol::Result<#field_ty> = #read_field;
+                    #post
+                    __hints.next_field();
+                    res?
+                }
             }
-        }
-    }).collect();
+        })
+        .collect();
 
     quote! { { #( #field_initializers ),* } }
+}
+
+fn read_field_fn(field: &syn::Field) -> TokenStream {
+    if let Some(attr::Protocol::Bitfield(i)) = attr::protocol(&field.attrs) {
+        quote! {
+            protocol::BitField::read_field(__io_reader, #i, __settings, &mut __hints)
+        }
+    } else {
+        quote! {
+            protocol::Parcel::read_field(__io_reader, __settings, &mut __hints)
+        }
+    }
+}
+
+fn write_field_fn<T: quote::ToTokens>(field: &syn::Field, field_name: &T) -> TokenStream {
+    if let Some(attr::Protocol::Bitfield(i)) = attr::protocol(&field.attrs) {
+        quote! {
+            protocol::BitField::write_field(&self. #field_name, __io_writer, #i, __settings, &mut __hints)
+        }
+    } else {
+        quote! {
+            protocol::Parcel::write_field(&self. #field_name, __io_writer, __settings, &mut __hints)
+        }
+    }
 }
 
 fn update_hints_after_read<'a>(
@@ -65,18 +92,6 @@ fn update_hints_after_read<'a>(
         }
     } else {
         quote! {}
-    }
-}
-
-fn update_hints_before(field: &syn::Field) -> TokenStream {
-    if let Some(attr::Protocol::Bitfield(i)) = attr::protocol(&field.attrs) {
-        quote! {
-            __hints.field_width = Some(#i);
-        }
-    } else {
-        quote! {
-            __hints.field_width = None;
-        }
     }
 }
 
@@ -157,58 +172,68 @@ fn length_prefix_of<'a>(
 }
 
 fn write_named_fields(fields_named: &syn::FieldsNamed) -> TokenStream {
-    let field_writers: Vec<_> = fields_named.named.iter().map(|field| {
-        let field_name = &field.ident;
-        
-        let pre = update_hints_before(field);
-        let post = update_hints_after_write(field, &fields_named.named);
+    let field_writers: Vec<_> = fields_named
+        .named
+        .iter()
+        .map(|field| {
+            let field_name = &field.ident;
 
-        quote! {
-            {
-                #pre
-                let res = protocol::Parcel::write_field(&self. #field_name, __io_writer, __settings, &mut __hints);
-                #post
-                __hints.next_field();
-                res?
+            let write_field = write_field_fn(field, field_name);
+            let post = update_hints_after_write(field, &fields_named.named);
+
+            quote! {
+                {
+                    let res = #write_field;
+                    #post
+                    __hints.next_field();
+                    res?
+                }
             }
-        }
-    }).collect();
+        })
+        .collect();
 
     quote! { #( #field_writers );* }
 }
 
 fn read_unnamed_fields(fields_unnamed: &syn::FieldsUnnamed) -> TokenStream {
-    let field_initializers: Vec<_> = fields_unnamed.unnamed.iter().map(|field| {
-        let field_ty = &field.ty;
-        let pre = update_hints_before(field);
+    let field_initializers: Vec<_> = fields_unnamed
+        .unnamed
+        .iter()
+        .map(|field| {
+            let field_ty = &field.ty;
+            let read_field = read_field_fn(field);
 
-        quote! {
-            {
-                #pre
-                let res: protocol::Result<#field_ty> = protocol::Parcel::read_field(__io_reader, __settings, &mut __hints);
-                __hints.next_field();
-                res?
+            quote! {
+                {
+                    let res: protocol::Result<#field_ty> = #read_field;
+                    __hints.next_field();
+                    res?
+                }
             }
-        }
-    }).collect();
+        })
+        .collect();
 
     quote! { ( #( #field_initializers ),* ) }
 }
 
 fn write_unnamed_fields(fields_unnamed: &syn::FieldsUnnamed) -> TokenStream {
-    let field_writers: Vec<_> = fields_unnamed.unnamed.iter().enumerate().map(|(field_index, field)| {
-        let pre = update_hints_before(field);
-        let field_index = syn::Index::from(field_index);
-        
-        quote! {
-            {
-                #pre;
-                let res = protocol::Parcel::write_field(&self. #field_index, __io_writer, __settings, &mut __hints);
-                __hints.next_field();
-                res?
+    let field_writers: Vec<_> = fields_unnamed
+        .unnamed
+        .iter()
+        .enumerate()
+        .map(|(field_index, field)| {
+            let field_index = syn::Index::from(field_index);
+            let write_field = write_field_fn(field, &field_index);
+
+            quote! {
+                {
+                    let res = #write_field;
+                    __hints.next_field();
+                    res?
+                }
             }
-        }
-    }).collect();
+        })
+        .collect();
 
     quote! { #( #field_writers );* }
 }
