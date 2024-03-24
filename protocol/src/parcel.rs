@@ -117,6 +117,7 @@ pub trait Parcel: Sized {
         let mut data = io::Cursor::new(Vec::new());
         let mut buffer = BitWriter::endian(&mut data, BigEndian);
         self.write_field(&mut buffer, settings, hints)?;
+        buffer.byte_align()?;
 
         Ok(data.into_inner())
     }

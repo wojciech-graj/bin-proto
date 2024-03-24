@@ -31,7 +31,6 @@ macro_rules! impl_parcel_for_array {
                 }
 
                 let array: &[T; $n] = unsafe { mem::transmute(&uninit_array) };
-                mem::forget(uninit_array);
                 Ok(*array)
             }
 

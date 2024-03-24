@@ -93,11 +93,10 @@ fn impl_parcel_for_struct(
             #[allow(unused_variables)]
             fn read_field(__io_reader: &mut protocol::BitRead,
                           __settings: &protocol::Settings,
-                          _: &mut protocol::hint::Hints)
+                          __hints: &mut protocol::hint::Hints)
                 -> protocol::Result<Self> {
                 // Each type gets its own hints.
-                let mut __hints = protocol::hint::Hints::default();
-                __hints.begin_fields();
+                let mut __hints = __hints.new_nested();
 
                 Ok(#strukt_name # read_fields)
             }
@@ -105,11 +104,10 @@ fn impl_parcel_for_struct(
             #[allow(unused_variables)]
             fn write_field(&self, __io_writer: &mut protocol::BitWrite,
                            __settings: &protocol::Settings,
-                           _: &mut protocol::hint::Hints)
+                           __hints: &mut protocol::hint::Hints)
                 -> protocol::Result<()> {
                 // Each type gets its own hints.
-                let mut __hints = protocol::hint::Hints::default();
-                __hints.begin_fields();
+                let mut __hints = __hints.new_nested();
 
                 #write_fields
                 Ok(())
@@ -133,11 +131,10 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
             #[allow(unused_variables)]
             fn read_field(__io_reader: &mut protocol::BitRead,
                           __settings: &protocol::Settings,
-                          _: &mut protocol::hint::Hints)
+                          __hints: &mut protocol::hint::Hints)
                 -> protocol::Result<Self> {
                 // Each type gets its own hints.
-                let mut __hints = protocol::hint::Hints::default();
-                __hints.begin_fields();
+                let mut __hints = __hints.new_nested();
 
                 Ok(#read_variant)
             }
@@ -145,11 +142,10 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
             #[allow(unused_variables)]
             fn write_field(&self, __io_writer: &mut protocol::BitWrite,
                            __settings: &protocol::Settings,
-                           _: &mut protocol::hint::Hints)
+                           __hints: &mut protocol::hint::Hints)
                 -> protocol::Result<()> {
                 // Each type gets its own hints.
-                let mut __hints = protocol::hint::Hints::default();
-                __hints.begin_fields();
+                let mut __hints = __hints.new_nested();
 
                 #write_variant
 

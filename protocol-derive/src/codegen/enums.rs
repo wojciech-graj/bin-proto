@@ -5,8 +5,7 @@ use syn;
 /// Generates code that reads one of a set of
 /// parcel variants and returns an expression
 /// of the same type as the enum.
-pub fn write_variant(plan: &plan::Enum)
-    -> TokenStream {
+pub fn write_variant(plan: &plan::Enum) -> TokenStream {
     let enum_name = &plan.ident;
     let discriminator_ty = plan.discriminant();
 
@@ -14,7 +13,7 @@ pub fn write_variant(plan: &plan::Enum)
         let variant_name = &variant.ident;
         let discriminator_ref_expr = variant.discriminator_ref_expr();
 
-        let write_discriminator_stmt = quote! { <#discriminator_ty as protocol::Parcel>::write(#discriminator_ref_expr, __io_writer, __settings)?; };
+        let write_discriminator_stmt = quote! { <#discriminator_ty as protocol::Parcel>::write_field(#discriminator_ref_expr, __io_writer, __settings, &mut __hints)?; };
 
         let (binding_names, fields_pattern) = bind_fields_pattern(variant_name, &variant.fields);
 
@@ -35,14 +34,12 @@ pub fn write_variant(plan: &plan::Enum)
     }
 }
 
-// TODO: write a read_variant function.
-
-pub fn read_variant(plan: &plan::Enum)
-    -> TokenStream {
+pub fn read_variant(plan: &plan::Enum) -> TokenStream {
     let enum_name = &plan.ident;
     let discriminator_ty = plan.discriminant();
     let discriminator_var = syn::Ident::new("discriminator", Span::call_site());
-    let discriminator_for_pattern_matching = plan.matchable_discriminator_expr(discriminator_var.clone());
+    let discriminator_for_pattern_matching =
+        plan.matchable_discriminator_expr(discriminator_var.clone());
 
     let discriminator_match_branches = plan.variants.iter().map(|variant| {
         let variant_name = &variant.ident;
@@ -54,7 +51,6 @@ pub fn read_variant(plan: &plan::Enum)
                 #enum_name::#variant_name # initializer
             }
         }
-
     });
 
     quote! {
@@ -76,30 +72,45 @@ pub fn read_variant(plan: &plan::Enum)
 /// Generates code for a pattern that binds a set of fields by reference.
 ///
 /// Returns a tuple of the pattern tokens and the field binding names.
-pub fn bind_fields_pattern(parent_name: &syn::Ident,
-                           fields: &syn::Fields)
-    -> (Vec<syn::Ident>, TokenStream) {
+pub fn bind_fields_pattern(
+    parent_name: &syn::Ident,
+    fields: &syn::Fields,
+) -> (Vec<syn::Ident>, TokenStream) {
     match *fields {
         syn::Fields::Named(ref fields_named) => {
-            let field_names: Vec<_> = fields_named.named.iter().map(|f| f.ident.clone().unwrap()).collect();
-            let field_name_refs = fields_named.named.iter().map(|f| &f.ident).map(|n| quote! { ref #n });
+            let field_names: Vec<_> = fields_named
+                .named
+                .iter()
+                .map(|f| f.ident.clone().unwrap())
+                .collect();
+            let field_name_refs = fields_named
+                .named
+                .iter()
+                .map(|f| &f.ident)
+                .map(|n| quote! { ref #n });
 
-            (field_names, quote! {
-                #parent_name { #( #field_name_refs ),* }
-            })
-        },
+            (
+                field_names,
+                quote! {
+                    #parent_name { #( #field_name_refs ),* }
+                },
+            )
+        }
         syn::Fields::Unnamed(ref fields_unnamed) => {
-            let binding_names: Vec<_> = (0..fields_unnamed.unnamed.len()).into_iter()
+            let binding_names: Vec<_> = (0..fields_unnamed.unnamed.len())
+                .into_iter()
                 .map(|i| syn::Ident::new(&format!("field_{}", i), proc_macro2::Span::call_site()))
                 .collect();
 
             let field_refs: Vec<_> = binding_names.iter().map(|i| quote! { ref #i }).collect();
 
-            (binding_names, quote! {
-                #parent_name ( #( #field_refs ),* )
-            })
-        },
+            (
+                binding_names,
+                quote! {
+                    #parent_name ( #( #field_refs ),* )
+                },
+            )
+        }
         syn::Fields::Unit => (Vec::new(), quote!(#parent_name)),
     }
 }
-

@@ -1,6 +1,5 @@
 use protocol::{Parcel, Settings};
 
-
 #[derive(protocol::Protocol, Debug, PartialEq, Eq)]
 struct WithLengthPrefixSeparateType {
     pub prefix: Prefix,
@@ -31,35 +30,54 @@ pub struct WithElementsLength {
 
 #[test]
 fn can_read_length_prefix_5_bytes_string() {
-    assert_eq!(Foo {
-        reason_length: 5,
-        other: 123,
-        reason: "hello".to_owned(),
-    }, Foo::from_raw_bytes(&[0, 5, 123, b'h', b'e', b'l', b'l', b'o'], &Settings::default()).unwrap());
+    assert_eq!(
+        Foo {
+            reason_length: 5,
+            other: 123,
+            reason: "hello".to_owned(),
+        },
+        Foo::from_raw_bytes(
+            &[0, 5, 123, b'h', b'e', b'l', b'l', b'o'],
+            &Settings::default()
+        )
+        .unwrap()
+    );
 }
 
 #[test]
 fn can_read_length_prefix_8_bytes_u32_array() {
-    assert_eq!(Foo {
-        reason_length: 8,
-        other: 123,
-        reason: vec![0x00ff00ff, 0x00ff00ff],
-    }, Foo::from_raw_bytes(&[0, 8, 123, 0, !0, 0, !0, 0, !0, 0, !0], &Settings::default()).unwrap());
+    assert_eq!(
+        Foo {
+            reason_length: 8,
+            other: 123,
+            reason: vec![0x00ff00ff, 0x00ff00ff],
+        },
+        Foo::from_raw_bytes(
+            &[0, 8, 123, 0, !0, 0, !0, 0, !0, 0, !0],
+            &Settings::default()
+        )
+        .unwrap()
+    );
 }
-
 
 #[test]
 fn can_read_length_prefix_3_elements() {
-    assert_eq!(WithElementsLength {
-        count: 3,
-        foo: true,
-        data: vec![1, 2, 3],
-    }, WithElementsLength::from_raw_bytes(
-                           &[0, 0, 0, 3, // disjoint length prefix
-                             1, // boolean true
-                             0, 0, 0, 1, // 1
-                             0, 0, 0, 2, // 2
-                             0, 0, 0, 3], // 3
-                             &Settings::default()).unwrap());
+    assert_eq!(
+        WithElementsLength {
+            count: 3,
+            foo: true,
+            data: vec![1, 2, 3],
+        },
+        WithElementsLength::from_raw_bytes(
+            &[
+                0, 0, 0, 3, // disjoint length prefix
+                1, // boolean true
+                0, 0, 0, 1, // 1
+                0, 0, 0, 2, // 2
+                0, 0, 0, 3
+            ], // 3
+            &Settings::default()
+        )
+        .unwrap()
+    );
 }
-

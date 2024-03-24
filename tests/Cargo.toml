@@ -7,5 +7,5 @@ edition = "2018"
 publish = false
 
 [dependencies]
-protocol = { path = "../protocol", default-features = false, features = ["impl-box", "derive"] } # TODO: remove default-features=false when impl-box is a default
+protocol = { path = "../protocol" }
 bitstream-io = "2.2.0"

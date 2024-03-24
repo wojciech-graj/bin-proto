@@ -182,13 +182,9 @@ pub mod logic;
 mod parcel;
 pub mod util;
 
-extern crate byteorder;
 #[macro_use]
 extern crate error_chain;
 
 extern crate num_traits;
 #[cfg(feature = "uuid")]
 extern crate uuid;
-
-/// The default byte ordering.
-pub type DefaultByteOrder = ::byteorder::BigEndian;

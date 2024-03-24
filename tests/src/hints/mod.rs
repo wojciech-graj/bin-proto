@@ -4,7 +4,6 @@
 use bitstream_io::{BigEndian, BitReader};
 use protocol::{hint, BitWrite};
 use protocol::{BitRead, Error, Parcel, Settings};
-use std::io;
 
 /// Wraps another Parcel and saves the hints at read time.
 #[derive(Debug, PartialEq)]
@@ -118,6 +117,7 @@ macro_rules! define_common_hint_invariant_tests {
 
                 force_contributor_to_acknowledge_new_hints!(
                     current_field_index,
+                    field_width,
                     known_field_lengths
                 );
 

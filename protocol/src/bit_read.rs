@@ -30,6 +30,9 @@ pub trait BitRead {
     fn read_f32_be(&mut self) -> io::Result<f32>;
     fn read_f64_le(&mut self) -> io::Result<f64>;
     fn read_f64_be(&mut self) -> io::Result<f64>;
+
+    fn read_u(&mut self, bits: u32) -> io::Result<u8>;
+    fn read_i(&mut self, bits: u32) -> io::Result<i8>;
 }
 
 // TODO(wgraj): MACROFY THIS
@@ -136,5 +139,27 @@ impl<T: bitstream_io::BitRead> BitRead for T {
 
     fn read_f64_be(&mut self) -> io::Result<f64> {
         bitstream_io::BitRead::read_as_to::<BE, f64>(self)
+    }
+
+    fn read_u(&mut self, bits: u32) -> io::Result<u8> {
+        if bits <= 8 {
+            bitstream_io::BitRead::read(self, bits)
+        } else {
+            Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "Cannot read > 8 bits.",
+            ))
+        }
+    }
+
+    fn read_i(&mut self, bits: u32) -> io::Result<i8> {
+        if bits <= 8 {
+            bitstream_io::BitRead::read_signed(self, bits)
+        } else {
+            Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "Cannot read > 8 bits.",
+            ))
+        }
     }
 }
