@@ -5,16 +5,16 @@ macro_rules! impl_list_type {
         {
             fn read_field(read: &mut dyn crate::BitRead,
                           settings: &crate::Settings,
-                          _: &mut crate::hint::Hints) -> Result<Self, $crate::Error> {
-                let elements = crate::util::read_list_nohint(read, settings)?;
+                          ) -> Result<Self, $crate::Error> {
+                let elements = crate::util::read_list(read, settings)?;
                 Ok(elements.into_iter().collect())
             }
 
             fn write_field(&self, write: &mut dyn crate::BitWrite,
                            settings: &crate::Settings,
-                           _: &mut crate::hint::Hints)
+                           )
                 -> Result<(), $crate::Error> {
-                crate::util::write_list_nohint(self.iter(), write, settings)
+                crate::util::write_list_length_prefixed(self.iter(), write, settings)
             }
         }
 

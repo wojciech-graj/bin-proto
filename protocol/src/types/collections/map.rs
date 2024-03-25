@@ -1,4 +1,4 @@
-use crate::{hint, BitRead, BitWrite, Error, Parcel, Settings};
+use crate::{BitRead, BitWrite, Error, Parcel, Settings};
 
 use std::collections::{BTreeMap, HashMap};
 use std::hash::Hash;
@@ -13,7 +13,7 @@ macro_rules! impl_map_type {
         {
             fn read_field(read: &mut dyn BitRead,
                           settings: &Settings,
-                          _: &mut hint::Hints) -> Result<Self, Error> {
+                          ) -> Result<Self, Error> {
                 let mut map = $ty::new();
 
                 let length = SizeType::read(read, settings)?;
@@ -30,7 +30,7 @@ macro_rules! impl_map_type {
 
             fn write_field(&self, write: &mut dyn BitWrite,
                            settings: &Settings,
-                           _: &mut hint::Hints) -> Result<(), Error> {
+                           ) -> Result<(), Error> {
                 (self.len() as SizeType).write(write, settings)?;
 
                 for (key, value) in self.iter() {

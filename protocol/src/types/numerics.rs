@@ -1,12 +1,7 @@
-use crate::{hint, BitField, BitRead, BitWrite, Error, Parcel, Settings};
+use crate::{BitField, BitRead, BitWrite, Error, Parcel, Settings};
 
 impl BitField for bool {
-    fn read_field(
-        read: &mut dyn BitRead,
-        _: &Settings,
-        _: &mut hint::Hints,
-        bits: u32,
-    ) -> Result<Self, Error> {
+    fn read_field(read: &mut dyn BitRead, _: &Settings, bits: u32) -> Result<Self, Error> {
         if read.read_u8_bf(bits)? == 0 {
             Ok(false)
         } else {
@@ -14,24 +9,14 @@ impl BitField for bool {
         }
     }
 
-    fn write_field(
-        &self,
-        write: &mut dyn BitWrite,
-        _: &Settings,
-        _: &mut hint::Hints,
-        bits: u32,
-    ) -> Result<(), Error> {
+    fn write_field(&self, write: &mut dyn BitWrite, _: &Settings, bits: u32) -> Result<(), Error> {
         write.write_u8_bf(bits, if *self { 1 } else { 0 })?;
         Ok(())
     }
 }
 
 impl Parcel for bool {
-    fn read_field(
-        read: &mut dyn BitRead,
-        _: &Settings,
-        _: &mut hint::Hints,
-    ) -> Result<Self, Error> {
+    fn read_field(read: &mut dyn BitRead, _: &Settings) -> Result<Self, Error> {
         if read.read_u8()? == 0 {
             Ok(false)
         } else {
@@ -39,52 +24,29 @@ impl Parcel for bool {
         }
     }
 
-    fn write_field(
-        &self,
-        write: &mut dyn BitWrite,
-        _: &Settings,
-        _: &mut hint::Hints,
-    ) -> Result<(), Error> {
+    fn write_field(&self, write: &mut dyn BitWrite, _: &Settings) -> Result<(), Error> {
         write.write_u8(if *self { 1 } else { 0 })?;
         Ok(())
     }
 }
 
 impl Parcel for u8 {
-    fn read_field(
-        read: &mut dyn BitRead,
-        _: &Settings,
-        _: &mut hint::Hints,
-    ) -> Result<Self, Error> {
+    fn read_field(read: &mut dyn BitRead, _: &Settings) -> Result<Self, Error> {
         Ok(read.read_u8()?)
     }
 
-    fn write_field(
-        &self,
-        write: &mut dyn BitWrite,
-        _: &Settings,
-        _: &mut hint::Hints,
-    ) -> Result<(), Error> {
+    fn write_field(&self, write: &mut dyn BitWrite, _: &Settings) -> Result<(), Error> {
         write.write_u8(*self)?;
         Ok(())
     }
 }
 
 impl Parcel for i8 {
-    fn read_field(
-        read: &mut dyn BitRead,
-        _: &Settings,
-        _: &mut hint::Hints,
-    ) -> Result<Self, Error> {
+    fn read_field(read: &mut dyn BitRead, _: &Settings) -> Result<Self, Error> {
         Ok(read.read_i8()?)
     }
 
-    fn write_field(
-        &self,
-        write: &mut dyn BitWrite,
-        _: &Settings,
-        _: &mut hint::Hints,
-    ) -> Result<(), Error> {
+    fn write_field(&self, write: &mut dyn BitWrite, _: &Settings) -> Result<(), Error> {
         write.write_i8(*self)?;
         Ok(())
     }
@@ -93,11 +55,7 @@ impl Parcel for i8 {
 macro_rules! impl_parcel_for_numeric {
     ($ty:ident => [$read_fn:ident : $write_fn:ident]) => {
         impl Parcel for $ty {
-            fn read_field(
-                read: &mut dyn BitRead,
-                settings: &Settings,
-                _: &mut hint::Hints,
-            ) -> Result<Self, Error> {
+            fn read_field(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
                 settings.byte_order.$read_fn(read)
             }
 
@@ -105,7 +63,6 @@ macro_rules! impl_parcel_for_numeric {
                 &self,
                 write: &mut dyn BitWrite,
                 settings: &Settings,
-                _: &mut hint::Hints,
             ) -> Result<(), Error> {
                 settings.byte_order.$write_fn(*self, write)?;
                 Ok(())
@@ -117,12 +74,7 @@ macro_rules! impl_parcel_for_numeric {
 macro_rules! impl_bitfield_for_numeric {
     ($ty:ident => [$read_fn:ident : $write_fn:ident]) => {
         impl BitField for $ty {
-            fn read_field(
-                read: &mut dyn BitRead,
-                _: &Settings,
-                _: &mut hint::Hints,
-                bits: u32,
-            ) -> Result<Self, Error> {
+            fn read_field(read: &mut dyn BitRead, _: &Settings, bits: u32) -> Result<Self, Error> {
                 Ok(BitRead::$read_fn(read, bits)?)
             }
 
@@ -130,7 +82,6 @@ macro_rules! impl_bitfield_for_numeric {
                 &self,
                 write: &mut dyn BitWrite,
                 _: &Settings,
-                _: &mut hint::Hints,
                 bits: u32,
             ) -> Result<(), Error> {
                 BitWrite::$write_fn(write, bits, *self)?;

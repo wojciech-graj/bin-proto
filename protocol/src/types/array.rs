@@ -1,4 +1,4 @@
-use crate::{hint, util, BitRead, BitWrite, Error, Parcel, Settings};
+use crate::{util, BitRead, BitWrite, Error, Parcel, Settings};
 
 macro_rules! impl_parcel_for_array {
     ($n:expr) => {
@@ -6,11 +6,7 @@ macro_rules! impl_parcel_for_array {
         where
             T: Copy,
         {
-            fn read_field(
-                read: &mut dyn BitRead,
-                settings: &Settings,
-                _: &mut hint::Hints,
-            ) -> Result<Self, Error> {
+            fn read_field(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
                 use std::mem;
 
                 let elements: Vec<_> = util::read_items($n, read, settings)?.collect();
@@ -36,7 +32,6 @@ macro_rules! impl_parcel_for_array {
                 &self,
                 write: &mut dyn BitWrite,
                 settings: &Settings,
-                _: &mut hint::Hints,
             ) -> Result<(), Error> {
                 util::write_items(self.iter(), write, settings)
             }

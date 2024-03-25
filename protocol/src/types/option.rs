@@ -1,11 +1,7 @@
-use crate::{hint, BitField, BitRead, BitWrite, Error, Parcel, Settings};
+use crate::{BitField, BitRead, BitWrite, Error, Parcel, Settings};
 
 impl<T: Parcel> Parcel for Option<T> {
-    fn read_field(
-        read: &mut dyn BitRead,
-        settings: &Settings,
-        _: &mut hint::Hints,
-    ) -> Result<Self, Error> {
+    fn read_field(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
         let is_some = bool::read(read, settings)?;
 
         if is_some {
@@ -16,12 +12,7 @@ impl<T: Parcel> Parcel for Option<T> {
         }
     }
 
-    fn write_field(
-        &self,
-        write: &mut dyn BitWrite,
-        settings: &Settings,
-        _: &mut hint::Hints,
-    ) -> Result<(), Error> {
+    fn write_field(&self, write: &mut dyn BitWrite, settings: &Settings) -> Result<(), Error> {
         self.is_some().write(write, settings)?;
 
         if let Some(ref value) = *self {
@@ -32,13 +23,8 @@ impl<T: Parcel> Parcel for Option<T> {
 }
 
 impl<T: Parcel> BitField for Option<T> {
-    fn read_field(
-        read: &mut dyn BitRead,
-        settings: &Settings,
-        hints: &mut hint::Hints,
-        bits: u32,
-    ) -> Result<Self, Error> {
-        let is_some = <bool as BitField>::read_field(read, settings, hints, bits)?;
+    fn read_field(read: &mut dyn BitRead, settings: &Settings, bits: u32) -> Result<Self, Error> {
+        let is_some = <bool as BitField>::read_field(read, settings, bits)?;
 
         if is_some {
             let value = T::read(read, settings)?;
@@ -52,10 +38,9 @@ impl<T: Parcel> BitField for Option<T> {
         &self,
         write: &mut dyn BitWrite,
         settings: &Settings,
-        hints: &mut hint::Hints,
         bits: u32,
     ) -> Result<(), Error> {
-        BitField::write_field(&self.is_some(), write, settings, hints, bits)?;
+        BitField::write_field(&self.is_some(), write, settings, bits)?;
 
         if let Some(ref value) = *self {
             value.write(write, settings)?;
@@ -69,8 +54,6 @@ mod test {
     use std::io::Cursor;
 
     use bitstream_io::{BigEndian, BitReader, BitWriter};
-
-    use crate::hint::Hints;
 
     use super::*;
 
@@ -106,7 +89,6 @@ mod test {
             <Option::<u8> as BitField>::read_field(
                 &mut BitReader::endian(Cursor::new([0x82u8, 0x80]), BigEndian),
                 &Settings::default(),
-                &mut Hints::default(),
                 1,
             )
             .unwrap(),
@@ -120,7 +102,6 @@ mod test {
             <Option::<u8> as BitField>::read_field(
                 &mut BitReader::endian(Cursor::new([0x00]), BigEndian),
                 &Settings::default(),
-                &mut Hints::default(),
                 1,
             )
             .unwrap(),
@@ -132,14 +113,7 @@ mod test {
     fn can_write_some_bitfield() {
         let mut buffer: Vec<u8> = Vec::new();
         let mut writer = BitWriter::endian(&mut buffer, BigEndian);
-        BitField::write_field(
-            &Some(5u8),
-            &mut writer,
-            &Settings::default(),
-            &mut Hints::default(),
-            1,
-        )
-        .unwrap();
+        BitField::write_field(&Some(5u8), &mut writer, &Settings::default(), 1).unwrap();
         writer.byte_align().unwrap();
         assert_eq!(vec![0x82, 0x80], buffer)
     }
@@ -148,14 +122,7 @@ mod test {
     fn can_write_none_bitfield() {
         let mut buffer: Vec<u8> = Vec::new();
         let mut writer = BitWriter::endian(&mut buffer, BigEndian);
-        BitField::write_field(
-            &None::<u8>,
-            &mut writer,
-            &Settings::default(),
-            &mut Hints::default(),
-            1,
-        )
-        .unwrap();
+        BitField::write_field(&None::<u8>, &mut writer, &Settings::default(), 1).unwrap();
         writer.byte_align().unwrap();
         assert_eq!(vec![0x00], buffer)
     }

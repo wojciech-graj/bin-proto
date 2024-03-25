@@ -39,7 +39,6 @@ fn read_named_fields(fields_named: &syn::FieldsNamed) -> TokenStream {
                 #field_name : {
                     let res: protocol::Result<#field_ty> = #read_field;
                     #post
-                    __hints.next_field();
                     res?
                 }
             }
@@ -53,21 +52,21 @@ fn read_field(field: &syn::Field) -> TokenStream {
     let attribs = attr::protocol(&field.attrs);
     if let Some(field_width) = attribs.bit_field {
         return quote! {
-            protocol::BitField::read_field(__io_reader, __settings, &mut __hints, #field_width)
+            protocol::BitField::read_field(__io_reader, __settings, #field_width)
         };
     }
     if attribs.flexible_array_member {
         return quote! {
-            protocol::FlexibleArrayMember::read_field(__io_reader, __settings, &mut __hints)
+            protocol::FlexibleArrayMember::read_field(__io_reader, __settings)
         };
     }
     if attribs.length_prefix.is_some() {
         quote! {
-            protocol::WithLengthPrefix::read_field(__io_reader, __settings, &mut __hints)
+            protocol::ExternallyLengthPrefixed::read_field(__io_reader, __settings, &mut __hints)
         }
     } else {
         quote! {
-            protocol::Parcel::read_field(__io_reader, __settings, &mut __hints)
+            protocol::Parcel::read_field(__io_reader, __settings)
         }
     }
 }
@@ -76,21 +75,21 @@ fn write_field<T: quote::ToTokens>(field: &syn::Field, field_name: &T) -> TokenS
     let attribs = attr::protocol(&field.attrs);
     if let Some(field_width) = attribs.bit_field {
         return quote! {
-            protocol::BitField::write_field(&self. #field_name, __io_writer, __settings, &mut __hints, #field_width)
+            protocol::BitField::write_field(&self. #field_name, __io_writer, __settings, #field_width)
         };
     }
     if attribs.flexible_array_member {
         return quote! {
-            protocol::FlexibleArrayMember::write_field(&self. #field_name, __io_writer, __settings, &mut __hints)
+            protocol::FlexibleArrayMember::write_field(&self. #field_name, __io_writer, __settings)
         };
     }
     if attribs.length_prefix.is_some() {
         quote! {
-            protocol::WithLengthPrefix::write_field(&self. #field_name, __io_writer, __settings, &mut __hints)
+            protocol::ExternallyLengthPrefixed::write_field(&self. #field_name, __io_writer, __settings, &mut __hints)
         }
     } else {
         quote! {
-            protocol::Parcel::write_field(&self. #field_name, __io_writer, __settings, &mut __hints)
+            protocol::Parcel::write_field(&self. #field_name, __io_writer, __settings)
         }
     }
 }
@@ -110,9 +109,12 @@ fn update_hints_after_read<'a>(
                                          (parcel #(.#prefix_subfield_names)* ).clone() as usize,
                                          #kind);
             }
+            __hints.next_field();
         }
     } else {
-        quote! {}
+        quote! {
+            __hints.next_field();
+        }
     }
 }
 
@@ -132,9 +134,12 @@ fn update_hints_after_write<'a>(
                                          (self.#field_name #(.#prefix_subfield_names)* ).clone() as usize,
                                          #kind);
             }
+            __hints.next_field();
         }
     } else {
-        quote! {}
+        quote! {
+            __hints.next_field();
+        }
     }
 }
 
@@ -208,7 +213,6 @@ fn write_named_fields(fields_named: &syn::FieldsNamed) -> TokenStream {
                 {
                     let res = #write_field;
                     #post
-                    __hints.next_field();
                     res?
                 }
             }

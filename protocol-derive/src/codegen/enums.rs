@@ -13,21 +13,26 @@ pub fn write_variant(
 ) -> TokenStream {
     let enum_name = &plan.ident;
 
-    let variant_match_branches: Vec<_> = plan.variants.iter().map(|variant| {
-        let variant_name = &variant.ident;
+    let variant_match_branches: Vec<_> = plan
+        .variants
+        .iter()
+        .map(|variant| {
+            let variant_name = &variant.ident;
 
-        let write_discriminant = write_discriminant(variant);
+            let write_discriminant = write_discriminant(variant);
 
-        let (binding_names, fields_pattern) = bind_fields_pattern(variant_name, &variant.fields);
+            let (binding_names, fields_pattern) =
+                bind_fields_pattern(variant_name, &variant.fields);
 
-        quote!(#enum_name :: #fields_pattern => {
-            #write_discriminant
+            quote!(#enum_name :: #fields_pattern => {
+                #write_discriminant
 
-            #(
-                protocol::Parcel::write_field(#binding_names, __io_writer, __settings, &mut __hints)?;
-            )*
+                #(
+                    protocol::Parcel::write_field(#binding_names, __io_writer, __settings)?;
+                )*
+            })
         })
-    }).collect();
+        .collect();
 
     quote! {
         match *self {

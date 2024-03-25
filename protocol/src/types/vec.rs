@@ -1,60 +1,43 @@
 use crate::{
-    hint, util, BitRead, BitWrite, Error, FlexibleArrayMember, Parcel, Settings, WithLengthPrefix,
+    externally_length_prefixed, util, BitRead, BitWrite, Error, ExternallyLengthPrefixed,
+    FlexibleArrayMember, Parcel, Settings,
 };
 
 impl<T: Parcel> Parcel for Vec<T> {
-    fn read_field(
-        read: &mut dyn BitRead,
-        settings: &Settings,
-        _: &mut hint::Hints,
-    ) -> Result<Self, Error> {
-        util::read_list_nohint(read, settings)
+    fn read_field(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
+        util::read_list(read, settings)
     }
 
-    fn write_field(
-        &self,
-        write: &mut dyn BitWrite,
-        settings: &Settings,
-        _: &mut hint::Hints,
-    ) -> Result<(), Error> {
-        util::write_list_nohint(self.iter(), write, settings)
+    fn write_field(&self, write: &mut dyn BitWrite, settings: &Settings) -> Result<(), Error> {
+        util::write_list_length_prefixed(self.iter(), write, settings)
     }
 }
 
-impl<T: Parcel> WithLengthPrefix for Vec<T> {
+impl<T: Parcel> ExternallyLengthPrefixed for Vec<T> {
     fn read_field(
         read: &mut dyn BitRead,
         settings: &Settings,
-        hints: &mut hint::Hints,
+        hints: &mut externally_length_prefixed::Hints,
     ) -> Result<Self, Error> {
-        util::read_list(read, settings, hints)
+        util::read_list_with_hints(read, settings, hints)
     }
 
     fn write_field(
         &self,
         write: &mut dyn BitWrite,
         settings: &Settings,
-        _: &mut hint::Hints,
+        _: &mut externally_length_prefixed::Hints,
     ) -> Result<(), Error> {
         util::write_list(self.iter(), write, settings)
     }
 }
 
 impl<T: Parcel> FlexibleArrayMember for Vec<T> {
-    fn read_field(
-        read: &mut dyn BitRead,
-        settings: &Settings,
-        _: &mut hint::Hints,
-    ) -> Result<Self, Error> {
-        util::read_list_flexible(read, settings)
+    fn read_field(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
+        util::read_list_to_eof(read, settings)
     }
 
-    fn write_field(
-        &self,
-        write: &mut dyn BitWrite,
-        settings: &Settings,
-        _: &mut hint::Hints,
-    ) -> Result<(), Error> {
+    fn write_field(&self, write: &mut dyn BitWrite, settings: &Settings) -> Result<(), Error> {
         util::write_list(self.iter(), write, settings)
     }
 }

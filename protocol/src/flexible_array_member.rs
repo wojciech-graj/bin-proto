@@ -1,16 +1,7 @@
-use crate::{hint, BitRead, BitWrite, Error, Parcel, Settings};
+use crate::{BitRead, BitWrite, Error, Settings};
 
-pub trait FlexibleArrayMember: Parcel {
-    fn read_field(
-        read: &mut dyn BitRead,
-        settings: &Settings,
-        hints: &mut hint::Hints,
-    ) -> Result<Self, Error>;
+pub trait FlexibleArrayMember: Sized {
+    fn read_field(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error>;
 
-    fn write_field(
-        &self,
-        write: &mut dyn BitWrite,
-        settings: &Settings,
-        hints: &mut hint::Hints,
-    ) -> Result<(), Error>;
+    fn write_field(&self, write: &mut dyn BitWrite, settings: &Settings) -> Result<(), Error>;
 }

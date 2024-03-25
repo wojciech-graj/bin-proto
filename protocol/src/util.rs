@@ -2,24 +2,14 @@
 
 use bitstream_io::{BigEndian, BitReader};
 
-use crate::hint::FieldLength;
-use crate::{hint, BitRead, BitWrite, Error, Parcel, Settings};
+use crate::externally_length_prefixed::{FieldLength, LengthPrefixKind};
+use crate::{externally_length_prefixed, BitRead, BitWrite, Error, Parcel, Settings};
 
 use std::convert::TryFrom;
 use std::io;
 
 /// The integer type that we will use to send length prefixes.
 pub type SizeType = u32;
-
-/// Reads a string of specified length from a stream.
-pub fn read_string(
-    byte_count: usize,
-    read: &mut dyn BitRead,
-    settings: &Settings,
-) -> Result<String, Error> {
-    let bytes: Vec<u8> = read_items(byte_count, read, settings)?.collect();
-    String::from_utf8(bytes).map_err(Into::into)
-}
 
 /// Reads a specified number of items from a stream.
 pub fn read_items<T>(
@@ -56,7 +46,7 @@ where
     Ok(())
 }
 
-pub fn read_list_nohint<T>(read: &mut dyn BitRead, settings: &Settings) -> Result<Vec<T>, Error>
+pub fn read_list<T>(read: &mut dyn BitRead, settings: &Settings) -> Result<Vec<T>, Error>
 where
     T: Parcel,
 {
@@ -66,7 +56,7 @@ where
     read_items(size, read, settings).map(|i| i.collect())
 }
 
-pub fn read_list_flexible<T>(read: &mut dyn BitRead, settings: &Settings) -> Result<Vec<T>, Error>
+pub fn read_list_to_eof<T>(read: &mut dyn BitRead, settings: &Settings) -> Result<Vec<T>, Error>
 where
     T: Parcel,
 {
@@ -81,17 +71,17 @@ where
                     Err(e.into())
                 }
             }
-            Err(e) => return Err(e.into()),
+            Err(e) => return Err(e),
         };
         items.push(item);
     }
 }
 
 /// Reads a length-prefixed list from a stream.
-pub fn read_list<T>(
+pub fn read_list_with_hints<T>(
     read: &mut dyn BitRead,
     settings: &Settings,
-    hints: &mut hint::Hints,
+    hints: &mut externally_length_prefixed::Hints,
 ) -> Result<Vec<T>, Error>
 where
     T: Parcel,
@@ -99,7 +89,7 @@ where
     match hints.current_field_length() {
         Some(FieldLength { length, kind }) => {
             match kind {
-                hint::LengthPrefixKind::Bytes => {
+                LengthPrefixKind::Bytes => {
                     let byte_count = length;
 
                     // First, read all bytes of the list without processing them.
@@ -116,18 +106,16 @@ where
 
                     Ok(items)
                 }
-                hint::LengthPrefixKind::Elements => {
+                LengthPrefixKind::Elements => {
                     read_items(length, read, settings).map(|i| i.collect())
                 }
             }
         }
-        _ => {
-            unreachable!()
-        }
+        _ => return Err(Error::NoLengthPrefix),
     }
 }
 
-pub fn write_list_nohint<'a, T, I>(
+pub fn write_list_length_prefixed<'a, T, I>(
     elements: I,
     write: &mut dyn BitWrite,
     settings: &Settings,

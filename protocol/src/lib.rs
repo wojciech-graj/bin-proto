@@ -149,10 +149,11 @@ pub use self::bit_read::BitRead;
 pub use self::bit_write::BitWrite;
 pub use self::enum_ty::Enum;
 pub use self::errors::{Error, Result};
+#[doc(inline)]
+pub use self::externally_length_prefixed::ExternallyLengthPrefixed;
 pub use self::flexible_array_member::FlexibleArrayMember;
 pub use self::parcel::Parcel;
 pub use self::settings::*;
-pub use self::with_length_prefix::WithLengthPrefix;
 
 /// Custom derive to implement `Parcel` for a type that contains other `Parcel` types.
 ///
@@ -270,17 +271,16 @@ pub use protocol_derive::Protocol;
 mod bit_field;
 mod bit_read;
 mod bit_write;
+pub mod externally_length_prefixed;
 mod flexible_array_member;
 mod settings;
-mod with_length_prefix;
 #[macro_use]
 pub mod types;
 
 mod enum_ty;
 mod errors;
-pub mod hint;
 mod parcel;
-pub mod util;
+mod util;
 
 #[cfg(feature = "uuid")]
 extern crate uuid;

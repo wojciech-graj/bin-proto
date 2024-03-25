@@ -1,12 +1,8 @@
-use crate::{hint, util, BitRead, BitWrite, Error, Parcel, Settings};
+use crate::{util, BitRead, BitWrite, Error, Parcel, Settings};
 use std::ffi::CString;
 
 impl Parcel for CString {
-    fn read_field(
-        read: &mut dyn BitRead,
-        settings: &Settings,
-        _hints: &mut hint::Hints,
-    ) -> Result<Self, Error> {
+    fn read_field(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
         let mut result = Vec::new();
         // this logic is susceptible to DoS attacks by never providing
         //   a null character and will be fixed by
@@ -20,12 +16,7 @@ impl Parcel for CString {
         }
     }
 
-    fn write_field(
-        &self,
-        write: &mut dyn BitWrite,
-        settings: &Settings,
-        _hints: &mut hint::Hints,
-    ) -> Result<(), Error> {
+    fn write_field(&self, write: &mut dyn BitWrite, settings: &Settings) -> Result<(), Error> {
         util::write_items(self.clone().into_bytes_with_nul().iter(), write, settings)
     }
 }

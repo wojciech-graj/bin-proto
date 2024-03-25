@@ -51,8 +51,6 @@ mod enums;
 #[cfg(test)]
 mod flexible_array_member;
 #[cfg(test)]
-mod hints;
-#[cfg(test)]
 mod ipv4;
 #[cfg(test)]
 mod length_prefix;

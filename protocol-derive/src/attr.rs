@@ -28,8 +28,12 @@ impl LengthPrefixKind {
     /// Gets a path to the length prefix in the protocol crate.
     pub fn path_expr(&self) -> TokenStream {
         match *self {
-            LengthPrefixKind::Bytes => quote!(protocol::hint::LengthPrefixKind::Bytes),
-            LengthPrefixKind::Elements => quote!(protocol::hint::LengthPrefixKind::Elements),
+            LengthPrefixKind::Bytes => {
+                quote!(protocol::externally_length_prefixed::LengthPrefixKind::Bytes)
+            }
+            LengthPrefixKind::Elements => {
+                quote!(protocol::externally_length_prefixed::LengthPrefixKind::Elements)
+            }
         }
     }
 }

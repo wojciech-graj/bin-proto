@@ -90,22 +90,20 @@ fn impl_parcel_for_struct(
         quote! {
             #[allow(unused_variables)]
             fn read_field(__io_reader: &mut protocol::BitRead,
-                          __settings: &protocol::Settings,
-                          __hints: &mut protocol::hint::Hints)
+                          __settings: &protocol::Settings)
                 -> protocol::Result<Self> {
                 // Each type gets its own hints.
-                let mut __hints = __hints.new_nested();
+                let mut __hints = protocol::externally_length_prefixed::Hints::default();
 
                 Ok(#strukt_name # read_fields)
             }
 
             #[allow(unused_variables)]
             fn write_field(&self, __io_writer: &mut protocol::BitWrite,
-                           __settings: &protocol::Settings,
-                           __hints: &mut protocol::hint::Hints)
+                           __settings: &protocol::Settings)
                 -> protocol::Result<()> {
                 // Each type gets its own hints.
-                let mut __hints = __hints.new_nested();
+                let mut __hints = protocol::externally_length_prefixed::Hints::default();
 
                 #write_fields
                 Ok(())
@@ -127,7 +125,6 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
                 quote!(protocol::BitField::read_field(
                     __io_reader,
                     __settings,
-                    &mut __hints,
                     #field_width,
                 )?),
             ),
@@ -141,7 +138,7 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
 
                 quote!(
                     const _: () = assert!(#discriminant_expr < (1 as #discriminant_ty) << #field_width, #error_message);
-                    <#discriminant_ty as protocol::BitField>::write_field(#discriminant_ref_expr, __io_writer, __settings, &mut __hints, #field_width)?;
+                    <#discriminant_ty as protocol::BitField>::write_field(#discriminant_ref_expr, __io_writer, __settings, #field_width)?;
                 )
             }),
         )
@@ -149,15 +146,11 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
         (
             codegen::enums::read_variant(
                 plan,
-                quote!(protocol::Parcel::read_field(
-                    __io_reader,
-                    __settings,
-                    &mut __hints,
-                )?),
+                quote!(protocol::Parcel::read_field(__io_reader, __settings,)?),
             ),
             codegen::enums::write_variant(plan, &|variant| {
                 let discriminant_ref_expr = variant.discriminant_ref_expr();
-                quote! { <#discriminant_ty as protocol::Parcel>::write_field(#discriminant_ref_expr, __io_writer, __settings, &mut __hints)?; }
+                quote! { <#discriminant_ty as protocol::Parcel>::write_field(#discriminant_ref_expr, __io_writer, __settings)?; }
             }),
         )
     };
@@ -168,22 +161,20 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
         quote! {
             #[allow(unused_variables)]
             fn read_field(__io_reader: &mut protocol::BitRead,
-                          __settings: &protocol::Settings,
-                          __hints: &mut protocol::hint::Hints)
+                          __settings: &protocol::Settings)
                 -> protocol::Result<Self> {
                 // Each type gets its own hints.
-                let mut __hints = __hints.new_nested();
+                let mut __hints = protocol::externally_length_prefixed::Hints::default();
 
                 Ok(#read_variant)
             }
 
             #[allow(unused_variables)]
             fn write_field(&self, __io_writer: &mut protocol::BitWrite,
-                           __settings: &protocol::Settings,
-                           __hints: &mut protocol::hint::Hints)
+                           __settings: &protocol::Settings)
                 -> protocol::Result<()> {
                 // Each type gets its own hints.
-                let mut __hints = __hints.new_nested();
+                let mut __hints = protocol::externally_length_prefixed::Hints::default();
 
                 #write_variant
 

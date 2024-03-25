@@ -26,4 +26,6 @@ pub enum Error {
     },
     #[error("nonzero pad")]
     NonZeroPad,
+    #[error("did not find length prefix")]
+    NoLengthPrefix,
 }

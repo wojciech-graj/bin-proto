@@ -1,4 +1,21 @@
+use crate::{BitRead, BitWrite, Error, Settings};
+
 use std::collections::HashMap;
+
+pub trait ExternallyLengthPrefixed: Sized {
+    fn read_field(
+        read: &mut dyn BitRead,
+        settings: &Settings,
+        hints: &mut Hints,
+    ) -> Result<Self, Error>;
+
+    fn write_field(
+        &self,
+        write: &mut dyn BitWrite,
+        settings: &Settings,
+        hints: &mut Hints,
+    ) -> Result<(), Error>;
+}
 
 pub type FieldIndex = usize;
 
@@ -38,26 +55,17 @@ impl Hints {
 }
 
 /// Helpers for the `protocol-derive` crate.
+#[doc(hidden)]
 mod protocol_derive_helpers {
     use super::*;
 
     impl Hints {
         // Updates the hints to indicate a field was just read.
-        #[doc(hidden)]
         pub fn next_field(&mut self) {
             self.current_field_index += 1;
         }
 
-        #[doc(hidden)]
-        pub fn new_nested(&self) -> Self {
-            Self {
-                current_field_index: 0,
-                ..Default::default()
-            }
-        }
-
         // Sets the length of a variable-sized field by its 0-based index.
-        #[doc(hidden)]
         pub fn set_field_length(
             &mut self,
             field_index: FieldIndex,
