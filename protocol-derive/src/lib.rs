@@ -140,11 +140,7 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
                 );
 
                 quote!(
-                    #[allow(dead_code)]
-                    const fn assert_discriminant_fits_in_bit_field() {
-                        assert!(#discriminant_expr < (1 as #discriminant_ty) << #field_width, #error_message);
-                    }
-                    const _: () = assert_discriminant_fits_in_bit_field();
+                    const _: () = assert!(#discriminant_expr < (1 as #discriminant_ty) << #field_width, #error_message);
                     <#discriminant_ty as protocol::BitField>::write_field(#discriminant_ref_expr, __io_writer, __settings, &mut __hints, #field_width)?;
                 )
             }),

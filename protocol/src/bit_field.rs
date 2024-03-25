@@ -1,5 +1,14 @@
 use crate::{hint, BitRead, BitWrite, Error, Parcel, Settings};
 
+/// ```compile_fail
+/// #[derive(protocol::Protocol)]
+/// #[protocol(discriminant = "integer")]
+/// #[protocol(bits = 1)]
+/// #[repr(u8)]
+/// enum WontFit {
+///     Variant = 2,
+/// }
+/// ```
 pub trait BitField: Parcel {
     fn read_field(
         read: &mut dyn BitRead,

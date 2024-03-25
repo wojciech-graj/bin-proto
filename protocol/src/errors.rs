@@ -64,14 +64,14 @@ error_chain! {
     }
 
     errors {
-        UnknownPacketId {
-            description("unknown packet identifier")
-            display("unknown packet identifier")
-        }
-
         UnknownEnumDiscriminant(type_name: &'static str, discriminant: String) {
             description("received unknown enum discriminant")
             display("received unknown enum discriminant '{}' for type '{}'", discriminant, type_name)
+        }
+
+        NonZeroPad {
+            description("nonzero pad")
+            display("nonzero pad")
         }
     }
 }

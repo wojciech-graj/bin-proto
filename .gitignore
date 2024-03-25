@@ -1,2 +1,5 @@
 target
 Cargo.lock
+*.profraw
+*.profdata
+.DS_Store

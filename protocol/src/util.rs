@@ -111,12 +111,6 @@ where
                             let item =
                                 match T::read(&mut read_back_bytes, settings).map_err(|e| e.0) {
                                     Ok(item) => item,
-                                    Err(ErrorKind::Io(ref io))
-                                        if io.kind() == io::ErrorKind::UnexpectedEof =>
-                                    {
-                                        // FIXME: make this a client error.
-                                        panic!("length prefix in bytes does not match actual size");
-                                    }
                                     Err(e) => return Err(e.into()),
                                 };
                             items.push(item);

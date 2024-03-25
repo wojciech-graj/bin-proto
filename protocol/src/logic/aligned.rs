@@ -1,4 +1,4 @@
-use crate::{hint, BitRead, BitWrite, Error, Parcel, Settings};
+use crate::{errors::ErrorKind, hint, BitRead, BitWrite, Error, Parcel, Settings};
 use std::{marker, mem};
 
 /// A value that is aligned to a specified number of bytes.
@@ -98,8 +98,9 @@ where
         for _ in 0..padding_size {
             let padding_byte = u8::read(read, settings)?;
 
-            // FIXME: promote to error.
-            assert_eq!(0x00, padding_byte, "padding bytes should be zero");
+            if padding_byte != 0x00 {
+                return Err(ErrorKind::NonZeroPad.into());
+            }
         }
 
         Ok(Aligned {
