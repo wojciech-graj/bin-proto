@@ -8,9 +8,9 @@ pub trait Integer: Parcel + FromPrimitive + ToPrimitive {}
 impl BitField for bool {
     fn read_field(
         read: &mut dyn BitRead,
-        bits: u32,
         _: &Settings,
         _: &mut hint::Hints,
+        bits: u32,
     ) -> Result<Self, Error> {
         if read.read_u8_bf(bits)? == 0 {
             Ok(false)
@@ -22,9 +22,9 @@ impl BitField for bool {
     fn write_field(
         &self,
         write: &mut dyn BitWrite,
-        bits: u32,
         _: &Settings,
         _: &mut hint::Hints,
+        bits: u32,
     ) -> Result<(), Error> {
         write.write_u8_bf(bits, if *self { 1 } else { 0 })?;
         Ok(())
@@ -124,9 +124,9 @@ macro_rules! impl_bitfield_for_numeric {
         impl BitField for $ty {
             fn read_field(
                 read: &mut dyn BitRead,
-                bits: u32,
                 _: &Settings,
                 _: &mut hint::Hints,
+                bits: u32,
             ) -> Result<Self, Error> {
                 Ok(BitRead::$read_fn(read, bits)?)
             }
@@ -134,9 +134,9 @@ macro_rules! impl_bitfield_for_numeric {
             fn write_field(
                 &self,
                 write: &mut dyn BitWrite,
-                bits: u32,
                 _: &Settings,
                 _: &mut hint::Hints,
+                bits: u32,
             ) -> Result<(), Error> {
                 BitWrite::$write_fn(write, bits, *self)?;
                 Ok(())

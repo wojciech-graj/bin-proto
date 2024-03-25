@@ -51,9 +51,9 @@ fn read_named_fields(fields_named: &syn::FieldsNamed) -> TokenStream {
 
 fn read_field(field: &syn::Field) -> TokenStream {
     let attribs = attr::protocol(&field.attrs);
-    if let Some(i) = attribs.bit_field {
+    if let Some(field_width) = attribs.bit_field {
         return quote! {
-            protocol::BitField::read_field(__io_reader, #i, __settings, &mut __hints)
+            protocol::BitField::read_field(__io_reader, __settings, &mut __hints, #field_width)
         };
     }
     if attribs.flexible_array_member {
@@ -69,9 +69,9 @@ fn read_field(field: &syn::Field) -> TokenStream {
 
 fn write_field<T: quote::ToTokens>(field: &syn::Field, field_name: &T) -> TokenStream {
     let attribs = attr::protocol(&field.attrs);
-    if let Some(i) = attribs.bit_field {
+    if let Some(field_width) = attribs.bit_field {
         return quote! {
-            protocol::BitField::write_field(&self. #field_name, __io_writer, #i, __settings, &mut __hints)
+            protocol::BitField::write_field(&self. #field_name, __io_writer, __settings, &mut __hints, #field_width)
         };
     }
     if attribs.flexible_array_member {

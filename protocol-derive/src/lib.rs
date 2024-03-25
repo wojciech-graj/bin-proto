@@ -118,22 +118,36 @@ fn impl_parcel_for_struct(
 fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro2::TokenStream {
     let discriminant_ty = plan.discriminant();
 
-    println!("{:?}", attr::protocol(&ast.attrs));
-    let (read_variant, write_variant) = if let Some(i) = attr::protocol(&ast.attrs).bit_field {
+    let (read_variant, write_variant) = if let Some(field_width) =
+        attr::protocol(&ast.attrs).bit_field
+    {
         (
             codegen::enums::read_variant(
                 plan,
                 quote!(protocol::BitField::read_field(
                     __io_reader,
-                    #i,
                     __settings,
                     &mut __hints,
+                    #field_width,
                 )?),
             ),
-            codegen::enums::write_variant(
-                plan,
-                &|discriminant_ref_expr| quote! { <#discriminant_ty as protocol::BitField>::write_field(#discriminant_ref_expr, __io_writer, #i, __settings, &mut __hints)?; },
-            ),
+            codegen::enums::write_variant(plan, &|variant| {
+                let discriminant_expr = variant.discriminant_expr();
+                let discriminant_ref_expr = variant.discriminant_ref_expr();
+                let error_message = format!(
+                    "Discriminant for variant '{}' does not fit in bitfield with width {}.",
+                    variant.ident, field_width
+                );
+
+                quote!(
+                    #[allow(dead_code)]
+                    const fn assert_discriminant_fits_in_bit_field() {
+                        assert!(#discriminant_expr < (1 as #discriminant_ty) << #field_width, #error_message);
+                    }
+                    const _: () = assert_discriminant_fits_in_bit_field();
+                    <#discriminant_ty as protocol::BitField>::write_field(#discriminant_ref_expr, __io_writer, __settings, &mut __hints, #field_width)?;
+                )
+            }),
         )
     } else {
         (
@@ -145,10 +159,10 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
                     &mut __hints,
                 )?),
             ),
-            codegen::enums::write_variant(
-                plan,
-                &|discriminant_ref_expr| quote! { <#discriminant_ty as protocol::Parcel>::write_field(#discriminant_ref_expr, __io_writer, __settings, &mut __hints)?; },
-            ),
+            codegen::enums::write_variant(plan, &|variant| {
+                let discriminant_ref_expr = variant.discriminant_ref_expr();
+                quote! { <#discriminant_ty as protocol::Parcel>::write_field(#discriminant_ref_expr, __io_writer, __settings, &mut __hints)?; }
+            }),
         )
     };
 

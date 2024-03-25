@@ -1,4 +1,7 @@
-use crate::{codegen, plan};
+use crate::{
+    codegen,
+    plan::{self, EnumVariant},
+};
 use proc_macro2::{Span, TokenStream};
 
 /// Generates code that reads one of a set of
@@ -6,15 +9,14 @@ use proc_macro2::{Span, TokenStream};
 /// of the same type as the enum.
 pub fn write_variant(
     plan: &plan::Enum,
-    write_discriminant: &dyn Fn(TokenStream) -> TokenStream,
+    write_discriminant: &dyn Fn(&EnumVariant) -> TokenStream,
 ) -> TokenStream {
     let enum_name = &plan.ident;
 
     let variant_match_branches: Vec<_> = plan.variants.iter().map(|variant| {
         let variant_name = &variant.ident;
-        let discriminant_ref_expr = variant.discriminant_ref_expr();
 
-        let write_discriminant = write_discriminant(discriminant_ref_expr);
+        let write_discriminant = write_discriminant(variant);
 
         let (binding_names, fields_pattern) = bind_fields_pattern(variant_name, &variant.fields);
 
