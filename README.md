@@ -1,6 +1,6 @@
 # bin-proto
 
-[![Crates.io](https://img.shields.io/crates/v/protocol.svg)](https://crates.io/crates/bin-proto)
+[![Crates.io](https://img.shields.io/crates/v/bin-proto.svg)](https://crates.io/crates/bin-proto)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
 [Documentation](https://docs.rs/bin-proto)
