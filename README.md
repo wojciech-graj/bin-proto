@@ -1,28 +1,17 @@
-# protocol
+# bin-proto
 
-[![Build Status](https://travis-ci.org/dylanmckay/protocol.svg?branch=master)](https://travis-ci.org/dylanmckay/protocol)
-[![Crates.io](https://img.shields.io/crates/v/protocol.svg)](https://crates.io/crates/protocol)
+[![Crates.io](https://img.shields.io/crates/v/protocol.svg)](https://crates.io/crates/bin-proto)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
-[Documentation](https://docs.rs/protocol)
+[Documentation](https://docs.rs/bin-proto)
 
-Easy protocol definitions in Rust.
+Simple bit-level protocol definitions in Rust.
 
-This crate adds a custom derive that can be added to types, allowing
-structured data to be sent and received from any IO stream.
+An improved and modernized fork of [protocol](https://crates.io/crates/bin-proto).
 
-Networking is built-in, with special support for TCP and UDP.
-
-The protocol you define can be used outside of networking too - see the `Parcel::from_raw_bytes` and `Parcel::raw_bytes` methods.
-
-This crate also provides:
-
-* [TCP](https://docs.rs/protocol/latest/protocol/wire/stream/index.html) and [UDP](https://docs.rs/protocol/latest/protocol/wire/dgram/index.html) modules for easy sending and receiving of `Parcel`s
-* A generic [middleware](https://docs.rs/protocol/latest/protocol/wire/middleware/index.html) library for automatic transformation of sent/received data
-  * Middleware has already been written to support [compression](https://docs.rs/protocol/latest/protocol/wire/middleware/compression/index.html)
-  * Custom middleware can be implemented via a trait with two methods
-
-Checkout the [examples](./examples) folder for usage.
+This crate adds a trait (and a custom derive for ease-of-use) that can be
+implemented on types, allowing structured data to be sent and received from
+any binary stream. It is recommended to use [bitstream_io](https://docs.rs/bitstream-io/latest/bitstream_io/) if you need bit-level precision.
 
 ## Usage
 
@@ -30,139 +19,96 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-protocol = { version = "3.4", features = ["derive"] }
+bin-proto = { version = "0.1", features = ["derive"] }
 ```
 
-And then define a type with the `#[derive(protocol::Protocol)]` attribute:
+And then define a type with the `#[derive(bin_proto::Protocol)]` attribute:
 
 ```rust
-#[derive(protocol::Protocol)]
-struct Hello {
-    pub a: String,
-    pub b: u32,
+#[derive(bin_proto::Protocol)]
+struct S {
+    a: String,
+    b: u32,
 }
 ```
-
-## Under the hood
-
-The most interesting part here is the [`protocol::Parcel`](https://docs.rs/protocol/latest/protocol/trait.Parcel.html) trait. Any type that implements this trait can then be serialized to and from a byte stream. All primitive types, standard collections, tuples, and arrays implement this trait.
-
-This crate becomes particularly useful when you define your own `Parcel` types. You can use `#[derive(protocol::Protocol)]` to do this. Note that in order for a type to implement `Parcel`, it must also implement `Clone`, `Debug`, and `PartialEq`.
-
-```rust
-#[derive(Parcel, Clone, Debug, PartialEq)]
-pub struct Health(f32);
-
-#[derive(Parcel, Clone, Debug, PartialEq)]
-pub struct SetPlayerPosition {
-    pub position: (f32, f32),
-    pub health: Health,
-    pub values: Vec<String>,
-}
-```
-
-### Custom derive
-
-Any user-defined type can have the `Parcel` trait automatically derived.
 
 ## Example
 
 ```rust
-#[derive(protocol::Protocol, Clone, Debug, PartialEq)]
-pub struct Handshake;
+use bin_proto::Protocol;
 
-#[derive(protocol::Protocol, Clone, Debug, PartialEq)]
-pub struct Hello {
-    id: i64,
-    data: Vec<u8>,
-}
-
-#[derive(protocol::Protocol, Clone, Debug, PartialEq)]
-pub struct Goodbye {
-    id: i64,
-    reason: String,
-}
-
-#[derive(protocol::Protocol, Clone, Debug, PartialEq)]
-pub struct Node {
-    name: String,
-    enabled: bool
-}
-
+#[derive(Debug, Protocol, PartialEq)]
 #[protocol(discriminant = "integer")]
-#[derive(protocol::Protocol, Clone, Debug, PartialEq)]
-pub enum PacketKind {
-    #[protocol(discriminator(0x00))]
-    Handshake(Handshake),
-    #[protocol(discriminator(0xaa))]
-    Hello(Hello),
-    #[protocol(discriminator(0xaf))]
-    Goodbye(Goodbye),
+#[protocol(bits = 4)]
+#[repr(u8)]
+enum Version {
+    V4 = 4,
 }
 
-fn main() {
-    use std::net::TcpStream;
+#[derive(Debug, Protocol, PartialEq)]
+struct Flags {
+    #[protocol(bits = 1)]
+    reserved: bool,
+    #[protocol(bits = 1)]
+    dont_fragment: bool,
+    #[protocol(bits = 1)]
+    more_fragments: bool,
+}
 
-    let stream = TcpStream::connect("127.0.0.1:34254").unwrap();
-    let mut connection = protocol::wire::stream::Connection::new(stream, protocol::wire::middleware::pipeline::default());
+#[derive(Debug, Protocol, PartialEq)]
+struct IPv4 {
+    version: Version,
+    #[protocol(bits = 4)]
+    internet_header_length: u8,
+    #[protocol(bits = 6)]
+    differentiated_services_code_point: u8,
+    #[protocol(bits = 2)]
+    explicit_congestion_notification: u8,
+    total_length: u16,
+    identification: u16,
+    flags: Flags,
+    #[protocol(bits = 13)]
+    fragment_offset: u16,
+    time_to_live: u8,
+    protocol: u8,
+    header_checksum: u16,
+    source_address: [u8; 4],
+    destination_address: [u8; 4],
+}
 
-    connection.send_packet(&Packet::Handshake(Handshake)).unwrap();
-    connection.send_packet(&Packet::Hello(Hello { id: 0, data: vec![ 55 ]})).unwrap();
-    connection.send_packet(&Packet::Goodbye(Goodbye { id: 0, reason: "leaving".to_string() })).unwrap();
-
-    loop {
-        if let Some(response) = connection.receive_packet().unwrap() {
-            println!("{:?}", response);
-            break;
-        }
+assert_eq!(
+    IPv4::from_bytes(&[
+            0b0100_0000 // Version: 4
+            |    0b0101, // Header Length: 5,
+            0x00, // Differentiated Services Codepoint: 0, Explicit Congestion Notification: 0
+            0x05, 0x94, // Total Length: 1428
+            0x83, 0xf6, // Identification: 0x83f6
+            0b0100_0000 // Flags: Don't Fragment
+            |  0b0_0000, 0x00, // Fragment Offset: 0
+            0x40, // Time to Live: 64
+            0x01, // Protocol: 1
+            0xeb, 0x6e, // Header Checksum: 0xeb6e
+            0x02, 0x01, 0x01, 0x01, // Source Address: 2.1.1.1
+            0x02, 0x01, 0x01, 0x02, // Destination Address: 2.1.1.2
+        ], &bin_proto::Settings::default()).unwrap(),
+    IPv4 {
+        version: Version::V4,
+        internet_header_length: 5,
+        differentiated_services_code_point: 0,
+        explicit_congestion_notification: 0,
+        total_length: 1428,
+        identification: 0x83f6,
+        flags: Flags {
+            reserved: false,
+            dont_fragment: true,
+            more_fragments: false,
+        },
+        fragment_offset: 0x0,
+        time_to_live: 64,
+        protocol: 1,
+        header_checksum: 0xeb6e,
+        source_address: [2, 1, 1, 1],
+        destination_address: [2, 1, 1, 2],
     }
-}
-```
-
-## Enums
-
-### Discriminators
-
-Enum values can be transmitted either by their 1-based variant index, or by transmitting the string name of each variant.
-
-**NOTE:** The default behaviour is to use *the variant name as a string* (`string`).
-
-This behaviour can be changed by the `#[protocol(discriminant = "<type>")]` attribute.
-
-Supported discriminant types:
-
-* `string` (default)
-    * This transmits the enum variant name as the over-the-wire discriminant
-    * This uses more bytes per message, but it very flexible
-* `integer`
-    * This transmits the 1-based variant number as the over-the-wire discriminant
-    * If enum variants have explicit discriminators, the
-    * Enum variants cannot be reordered in the source without breaking the protocol
-
-
-```rust
-#[derive(protocol::Protocol, Clone, Debug, PartialEq)]
-#[protocol(discriminant = "string")]
-pub enum PlayerState {
-  Stationary,
-  Flying { velocity: (f32,f32,f32) },
-  // Discriminators can be explicitly specified.
-  #[protocol(discriminator("ArbitraryOverTheWireName"))]
-  Jumping { height: f32 },
-}
-```
-
-### Misc
-
-You can rename the variant for their serialisation.
-
-```rust
-#[derive(protocol::Protocol, Clone, Debug, PartialEq)]
-#[protocol(discriminant = "string")]
-pub enum Foo {
-  Bar,
-  #[protocol(name = "Biz")] // the Bing variant will be send/received as 'Biz'.
-  Bing,
-  Baz,
-}
+);
 ```

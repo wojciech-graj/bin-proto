@@ -1,5 +1,7 @@
 //! Simple bit-level protocol definitions in Rust.
 //!
+//! For more information about `#[derive(Protocol)]`, see [macro@Protocol].
+//!
 //! # Example
 //!
 //! ```
