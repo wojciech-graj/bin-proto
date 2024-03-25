@@ -15,3 +15,24 @@ impl<T> Parcel for PhantomData<T> {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn can_read_phantom_data() {
+        assert_eq!(
+            PhantomData::<u8>::from_raw_bytes(&[], &Settings::default()).unwrap(),
+            PhantomData
+        )
+    }
+
+    #[test]
+    fn can_write_phantom_data() {
+        assert_eq!(
+            PhantomData::<u8>.raw_bytes(&Settings::default()).unwrap(),
+            &[]
+        )
+    }
+}
