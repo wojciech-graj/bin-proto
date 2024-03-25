@@ -1,13 +1,13 @@
-use protocol::{ExternallyLengthPrefixed, Parcel, Settings};
+use bin_proto::{ExternallyLengthPrefixed, Protocol, Settings};
 
-#[derive(protocol::Protocol, Debug, PartialEq, Eq)]
+#[derive(bin_proto::Protocol, Debug, PartialEq, Eq)]
 struct ExternallyLengthPrefixedSeparateType {
     pub prefix: Prefix,
     #[protocol(length_prefix(bytes("prefix.reason_length")))]
     pub reason: String,
 }
 
-#[derive(protocol::Protocol, Debug, PartialEq, Eq)]
+#[derive(bin_proto::Protocol, Debug, PartialEq, Eq)]
 struct Foo<L: ExternallyLengthPrefixed> {
     pub reason_length: u16,
     pub other: u8,
@@ -15,12 +15,12 @@ struct Foo<L: ExternallyLengthPrefixed> {
     pub reason: L,
 }
 
-#[derive(protocol::Protocol, Debug, PartialEq, Eq)]
+#[derive(bin_proto::Protocol, Debug, PartialEq, Eq)]
 pub struct Prefix {
     pub reason_length: u8,
 }
 
-#[derive(protocol::Protocol, Debug, PartialEq, Eq)]
+#[derive(bin_proto::Protocol, Debug, PartialEq, Eq)]
 pub struct WithElementsLength {
     pub count: u32,
     pub foo: bool,
@@ -74,8 +74,8 @@ fn can_read_length_prefix_3_elements() {
                 1, // boolean true
                 0, 0, 0, 1, // 1
                 0, 0, 0, 2, // 2
-                0, 0, 0, 3
-            ], // 3
+                0, 0, 0, 3 // 3
+            ],
             &Settings::default()
         )
         .unwrap()

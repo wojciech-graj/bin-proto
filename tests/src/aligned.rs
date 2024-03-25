@@ -1,15 +1,15 @@
-use protocol::{Parcel, Settings};
+use bin_proto::{Protocol, Settings};
 
 /// An example packet with a length prefix disjoint
 /// from its data, with the data also
-#[derive(protocol::Protocol, Clone, Debug, PartialEq)]
+#[derive(bin_proto::Protocol, Clone, Debug, PartialEq)]
 struct Packet {
     /// The length of the 'reason' string.
     pub reason_length: u8,
-    /// The version number of the protocol.
+    /// The version number of the bin_proto.
     pub version_number: (u32, u32),
     #[protocol(length_prefix(bytes(reason_length)))]
-    pub reason: protocol::types::Aligned<String, u64>,
+    pub reason: bin_proto::types::Aligned<String, u64>,
 }
 
 #[test]
@@ -19,7 +19,7 @@ fn write_alignment_pads_zero() {
         version_number: (11, 0xdeadbeef),
         reason: "hello world!".to_owned().into(),
     }
-    .raw_bytes(&protocol::Settings::default())
+    .raw_bytes(&bin_proto::Settings::default())
     .unwrap();
     assert_eq!(
         &[

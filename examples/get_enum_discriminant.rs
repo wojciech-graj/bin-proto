@@ -1,21 +1,21 @@
-use protocol::Enum;
+use bin_proto::Enum;
 
-#[derive(protocol::Protocol, Clone, Debug, PartialEq)]
+#[derive(bin_proto::Protocol, Clone, Debug, PartialEq)]
 pub struct Handshake;
 
-#[derive(protocol::Protocol, Clone, Debug, PartialEq)]
+#[derive(bin_proto::Protocol, Clone, Debug, PartialEq)]
 pub struct Hello {
     id: i64,
     data: Vec<u8>,
 }
 
-#[derive(protocol::Protocol, Clone, Debug, PartialEq)]
+#[derive(bin_proto::Protocol, Clone, Debug, PartialEq)]
 pub struct Goodbye {
     id: i64,
     reason: String,
 }
 
-#[derive(protocol::Protocol, Clone, Debug, PartialEq)]
+#[derive(bin_proto::Protocol, Clone, Debug, PartialEq)]
 #[protocol(discriminant = "integer")]
 #[repr(u16)]
 pub enum PacketKind {

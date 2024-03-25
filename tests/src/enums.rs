@@ -1,4 +1,4 @@
-#[derive(protocol::Protocol, Clone, Debug, PartialEq)]
+#[derive(bin_proto::Protocol, Clone, Debug, PartialEq)]
 pub enum WithGenerics<A, B> {
     Foo(A, B),
     Bar,
@@ -6,17 +6,16 @@ pub enum WithGenerics<A, B> {
 
 mod string_discriminants {
     #[allow(unused_imports)]
-    use protocol::{Parcel, Settings};
+    use bin_proto::{Protocol, Settings};
 
-    #[derive(protocol::Protocol, Clone, Debug, PartialEq)]
-    #[protocol]
+    #[derive(bin_proto::Protocol, Clone, Debug, PartialEq)]
     pub enum PlayerState {
         Stationary,
         Flying { velocity: (f32, f32, f32) },
         Jumping { height: f32 },
     }
 
-    #[derive(protocol::Protocol, Debug, PartialEq)]
+    #[derive(bin_proto::Protocol, Debug, PartialEq)]
     #[protocol(discriminant = "string")]
     pub enum Axis {
         X,
@@ -26,7 +25,7 @@ mod string_discriminants {
         Bimp { val: u64 },
     }
 
-    #[derive(protocol::Protocol, Debug, PartialEq)]
+    #[derive(bin_proto::Protocol, Debug, PartialEq)]
     #[protocol(discriminant = "string")]
     pub enum RenamedVariant {
         Hello,
@@ -34,7 +33,7 @@ mod string_discriminants {
         World,
     }
 
-    #[derive(protocol::Protocol, Debug, PartialEq)]
+    #[derive(bin_proto::Protocol, Debug, PartialEq)]
     #[protocol(discriminant = "string")]
     pub enum WithDiscriminantAttrs {
         #[protocol(discriminant("FooBar"))]
@@ -85,31 +84,31 @@ mod string_discriminants {
 mod generics {
     use std::fmt;
 
-    #[derive(protocol::Protocol, Debug, PartialEq)]
+    #[derive(bin_proto::Protocol, Debug, PartialEq)]
     pub enum EnumWithEmptyGenerics {
         First { a: u32, b: String, c: u64 },
     }
-    #[derive(protocol::Protocol, Debug, PartialEq)]
+    #[derive(bin_proto::Protocol, Debug, PartialEq)]
     pub enum EnumWithUnconstrainedType<T> {
         Variant1 { a: T, b: T },
         Variant2 { c: T },
     }
-    #[derive(protocol::Protocol, Debug, PartialEq)]
+    #[derive(bin_proto::Protocol, Debug, PartialEq)]
     pub enum EnumWithUnconstrainedTypes<A, B, C, D> {
         Value { a: A, b: B, c: C, d: D },
         Variant2 { a: A },
     }
-    #[derive(protocol::Protocol, Debug, PartialEq)]
+    #[derive(bin_proto::Protocol, Debug, PartialEq)]
     pub enum EnumWithConstrainedType<T: Clone + PartialEq + fmt::Debug + fmt::Display> {
         Variant1 { inner: T },
         Variant2 { c: T },
     }
-    #[derive(protocol::Protocol, Debug, PartialEq)]
+    #[derive(bin_proto::Protocol, Debug, PartialEq)]
     pub enum EnumWithConstrainedTypes<T: Clone, A: fmt::Debug + fmt::Display, B: Copy> {
         Variant1 { t: T, a: A, b: B },
         Variant2 { c: T },
     }
-    #[derive(protocol::Protocol, Debug, PartialEq)]
+    #[derive(bin_proto::Protocol, Debug, PartialEq)]
     pub enum EnumWithWhereClause<T>
     where
         T: fmt::Debug + fmt::Display,
@@ -117,7 +116,7 @@ mod generics {
         Variant1 { t: T },
         Variant2 { t: T },
     }
-    #[derive(protocol::Protocol, Debug, PartialEq)]
+    #[derive(bin_proto::Protocol, Debug, PartialEq)]
     pub enum EnumWithWhereClauses<A, B, C>
     where
         A: Copy,
@@ -147,9 +146,9 @@ mod generics {
 
 mod integer_discriminants {
     #[allow(unused_imports)]
-    use protocol::{Parcel, Settings};
+    use bin_proto::{Protocol, Settings};
 
-    #[derive(protocol::Protocol, Debug, PartialEq, Eq)]
+    #[derive(bin_proto::Protocol, Debug, PartialEq, Eq)]
     #[protocol(discriminant = "integer")]
     pub enum BoatKind {
         Speedboat { warp_speed_enabled: bool },
@@ -157,7 +156,7 @@ mod integer_discriminants {
         Fart,
     }
 
-    #[derive(protocol::Protocol, Debug, PartialEq, Eq)]
+    #[derive(bin_proto::Protocol, Debug, PartialEq, Eq)]
     #[protocol(discriminant = "integer")]
     #[repr(u8)]
     enum WithCustomRepr {
@@ -165,7 +164,7 @@ mod integer_discriminants {
         Second = 2,
     }
 
-    #[derive(protocol::Protocol, Debug, PartialEq)]
+    #[derive(bin_proto::Protocol, Debug, PartialEq)]
     #[protocol(discriminant = "integer")]
     #[repr(u8)]
     pub enum CustomDiscriminantAttrs {
@@ -175,7 +174,7 @@ mod integer_discriminants {
         World,
     }
 
-    #[derive(protocol::Protocol, Debug, PartialEq, Eq)]
+    #[derive(bin_proto::Protocol, Debug, PartialEq, Eq)]
     #[protocol(discriminant = "integer")]
     #[repr(i8)]
     enum WithoutExplicitDiscriminants {
@@ -201,7 +200,7 @@ mod integer_discriminants {
         assert_eq!(
             vec![1],
             WithoutExplicitDiscriminants::Only
-                .raw_bytes(&protocol::Settings::default())
+                .raw_bytes(&bin_proto::Settings::default())
                 .unwrap()
         );
     }
@@ -213,7 +212,7 @@ mod integer_discriminants {
             BoatKind::Speedboat {
                 warp_speed_enabled: true,
             }
-            .raw_bytes(&protocol::Settings::default())
+            .raw_bytes(&bin_proto::Settings::default())
             .unwrap()
         );
     }
@@ -269,7 +268,7 @@ mod integer_discriminants {
     fn returns_error_on_unexpected_discriminant() {
         let result = BoatKind::from_raw_bytes(&[99, 99, 88, 11, 13], &Settings::default());
         match result.as_ref() {
-            Err(&protocol::Error::UnknownEnumDiscriminant { .. }) => (), // pass
+            Err(&bin_proto::Error::UnknownEnumDiscriminant { .. }) => (), // pass
             Err(unexpected_error) => {
                 panic!("expected a different error but got: {}", unexpected_error)
             }
@@ -288,12 +287,12 @@ mod integer_discriminants {
     }
 }
 
-#[derive(protocol::Protocol)]
+#[derive(bin_proto::Protocol)]
 enum OneVariant {
     A,
 }
 
-#[derive(protocol::Protocol)]
+#[derive(bin_proto::Protocol)]
 enum BuzzyBee {
     B(u32, u32),
 }

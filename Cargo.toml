@@ -1,6 +1,6 @@
 [workspace]
 members = [
-  "protocol",
-  "protocol-derive",
+  "bin-proto",
+  "bin-proto-derive",
   "tests",
 ]

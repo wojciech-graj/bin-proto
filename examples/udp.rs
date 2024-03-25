@@ -1,13 +1,13 @@
-#[derive(protocol::Protocol, Clone, Debug, PartialEq)]
+#[derive(bin_proto::Protocol, Clone, Debug, PartialEq)]
 pub struct Handshake;
 
-#[derive(protocol::Protocol, Clone, Debug, PartialEq)]
+#[derive(bin_proto::Protocol, Clone, Debug, PartialEq)]
 pub struct Hello {
     id: i64,
     data: Vec<u8>
 }
 
-#[derive(protocol::Protocol, Clone, Debug, PartialEq)]
+#[derive(bin_proto::Protocol, Clone, Debug, PartialEq)]
 pub enum Packet {
     Handshake(Handshake),
     Hello(Hello),
@@ -19,8 +19,8 @@ fn main() {
     let socket = UdpSocket::bind("127.0.0.1:34254").unwrap();
     socket.connect("127.0.0.1:53111").unwrap();
 
-    let settings = protocol::Settings::default();
-    let mut pipeline = protocol::wire::dgram::Pipeline::new(protocol::wire::middleware::pipeline::default(), settings);
+    let settings = bin_proto::Settings::default();
+    let mut pipeline = bin_proto::wire::dgram::Pipeline::new(bin_proto::wire::middleware::pipeline::default(), settings);
 
 
     // Send some data.

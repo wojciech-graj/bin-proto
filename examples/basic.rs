@@ -1,26 +1,26 @@
-#[derive(protocol::Protocol, Clone, Debug, PartialEq)]
+#[derive(bin_proto::Protocol, Clone, Debug, PartialEq)]
 pub struct Handshake;
 
-#[derive(protocol::Protocol, Clone, Debug, PartialEq)]
+#[derive(bin_proto::Protocol, Clone, Debug, PartialEq)]
 pub struct Hello {
     id: i64,
     data: Vec<u8>,
 }
 
-#[derive(protocol::Protocol, Clone, Debug, PartialEq)]
+#[derive(bin_proto::Protocol, Clone, Debug, PartialEq)]
 pub struct Goodbye {
     id: i64,
     reason: String,
 }
 
-#[derive(protocol::Protocol, Clone, Debug, PartialEq)]
+#[derive(bin_proto::Protocol, Clone, Debug, PartialEq)]
 pub struct Node {
     name: String,
     enabled: bool
 }
 
 // Defines a packet kind enum.
-#[derive(protocol::Protocol, Clone, Debug, PartialEq)]
+#[derive(bin_proto::Protocol, Clone, Debug, PartialEq)]
 #[protocol(discriminant = "integer")]
 pub enum Packet {
     #[protocol(discriminant(0x00))]
@@ -35,11 +35,11 @@ fn main() {
     use std::net::TcpStream;
 
     let stream = TcpStream::connect("127.0.0.1:34254").unwrap();
-    let settings = protocol::Settings {
-        byte_order: protocol::ByteOrder::LittleEndian,
+    let settings = bin_proto::Settings {
+        byte_order: bin_proto::ByteOrder::LittleEndian,
         ..Default::default()
     };
-    let mut connection = protocol::wire::stream::Connection::new(stream, protocol::wire::middleware::pipeline::default(), settings);
+    let mut connection = bin_proto::wire::stream::Connection::new(stream, bin_proto::wire::middleware::pipeline::default(), settings);
 
     connection.send_packet(&Packet::Handshake(Handshake)).unwrap();
     connection.send_packet(&Packet::Hello(Hello { id: 0, data: vec![ 55 ]})).unwrap();

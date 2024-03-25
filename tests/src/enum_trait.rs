@@ -1,6 +1,6 @@
-use protocol::Enum;
+use bin_proto::Enum;
 
-#[derive(protocol::Protocol, Clone, Debug, PartialEq)]
+#[derive(bin_proto::Protocol, Clone, Debug, PartialEq)]
 pub enum WithGenerics<A, B> {
     Foo(A, B),
     Bar,

@@ -4,23 +4,23 @@ macro_rules! verify_read_back {
     ($name:ident => $parcel:expr) => {
         pub mod $name {
             use super::*;
-            use protocol::{self, Parcel, Settings};
+            use bin_proto::{self, Protocol, Settings};
 
             fn verify_read_back(settings: &Settings) {
                 let read_back =
-                    Parcel::from_raw_bytes(&$parcel.raw_bytes(&settings).unwrap()[..], &settings)
+                    Protocol::from_raw_bytes(&$parcel.raw_bytes(&settings).unwrap()[..], &settings)
                         .unwrap();
                 assert_eq!($parcel, read_back);
             }
 
             #[test]
             fn can_read_back_default_settings() {
-                verify_read_back(&protocol::Settings::default());
+                verify_read_back(&bin_proto::Settings::default());
             }
 
             mod byte_order {
                 use super::*;
-                use protocol::{ByteOrder, Settings};
+                use bin_proto::{ByteOrder, Settings};
 
                 #[test]
                 fn can_read_back_in_big_endian() {

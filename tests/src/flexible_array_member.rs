@@ -1,7 +1,7 @@
-use protocol::Parcel;
-use protocol::Settings;
+use bin_proto::Protocol;
+use bin_proto::Settings;
 
-#[derive(Debug, protocol::Protocol, PartialEq)]
+#[derive(Debug, bin_proto::Protocol, PartialEq)]
 struct WithFlexibleArrayMember(#[protocol(flexible_array_member)] Vec<u8>);
 
 #[test]

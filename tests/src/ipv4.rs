@@ -1,7 +1,7 @@
-use protocol::Parcel;
-use protocol::Settings;
+use bin_proto::Protocol;
+use bin_proto::Settings;
 
-#[derive(Debug, protocol::Protocol, PartialEq)]
+#[derive(Debug, bin_proto::Protocol, PartialEq)]
 #[protocol(discriminant = "integer")]
 #[protocol(bits = 4)]
 #[repr(u8)]
@@ -9,7 +9,7 @@ enum Version {
     V4 = 4,
 }
 
-#[derive(Debug, protocol::Protocol, PartialEq)]
+#[derive(Debug, bin_proto::Protocol, PartialEq)]
 struct Flags {
     #[protocol(bits = 1)]
     reserved: bool,
@@ -19,7 +19,7 @@ struct Flags {
     more_fragments: bool,
 }
 
-#[derive(Debug, protocol::Protocol, PartialEq)]
+#[derive(Debug, bin_proto::Protocol, PartialEq)]
 struct IPv4 {
     version: Version,
     #[protocol(bits = 4)]
@@ -43,8 +43,28 @@ struct IPv4 {
 #[test]
 fn can_encode_decode_ipv4() {
     let raw = [
-        0x45, 0x00, 0x05, 0x94, 0x83, 0xf6, 0x40, 0x00, 0x40, 0x01, 0xeb, 0x6e, 0x02, 0x01, 0x01,
-        0x01, 0x02, 0x01, 0x01, 0x02,
+        0b0100_0000 // Version: 4
+            | 0b0101, // Header Length: 5,
+        0x00, // Differentiated Services Codepoint: 0, Explicit Congestion Notification: 0
+        0x05,
+        0x94, // Total Length: 1428
+        0x83,
+        0xf6, // Identification: 0x83f6
+        0b0100_0000 // Flags: Don't Fragment
+        | 0b0_0000,
+        0x00, // Fragment Offset: 0
+        0x40, // Time to Live: 64
+        0x01, // Protocol: 1
+        0xeb,
+        0x6e, // Header Checksum: 0xeb6e
+        0x02,
+        0x01,
+        0x01,
+        0x01, // Source Address: 2.1.1.1
+        0x02,
+        0x01,
+        0x01,
+        0x02, // Destination Address: 2.1.1.2
     ];
     let parsed = IPv4 {
         version: Version::V4,
