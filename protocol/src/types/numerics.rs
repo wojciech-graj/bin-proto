@@ -1,10 +1,5 @@
 use crate::{hint, BitField, BitRead, BitWrite, Error, Parcel, Settings};
 
-use num_traits::{FromPrimitive, ToPrimitive};
-
-/// An integer value that can be serialized and deserialized.
-pub trait Integer: Parcel + FromPrimitive + ToPrimitive {}
-
 impl BitField for bool {
     fn read_field(
         read: &mut dyn BitRead,
@@ -160,12 +155,3 @@ impl_bitfield_for_numeric!(u16 => [read_u16_bf : write_u16_bf]);
 impl_bitfield_for_numeric!(i16 => [read_i16_bf : write_i16_bf]);
 impl_bitfield_for_numeric!(u32 => [read_u32_bf : write_u32_bf]);
 impl_bitfield_for_numeric!(i32 => [read_i32_bf : write_i32_bf]);
-
-impl Integer for u8 {}
-impl Integer for i8 {}
-impl Integer for u16 {}
-impl Integer for i16 {}
-impl Integer for u32 {}
-impl Integer for i32 {}
-impl Integer for u64 {}
-impl Integer for i64 {}

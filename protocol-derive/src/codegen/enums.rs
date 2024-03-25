@@ -63,9 +63,9 @@ pub fn read_variant(plan: &plan::Enum, read_discriminant: TokenStream) -> TokenS
             match #discriminant_for_pattern_matching {
                 #(#discriminant_match_branches,)*
                 unknown_discriminant => {
-                    return Err(protocol::ErrorKind::UnknownEnumDiscriminant(
-                        stringify!(#enum_name), format!("{:?}", unknown_discriminant),
-                    ).into());
+                    return Err(protocol::Error::UnknownEnumDiscriminant{
+                        type_name: stringify!(#enum_name), discriminant: format!("{:?}", unknown_discriminant),
+                    }.into());
                 },
             }
         }

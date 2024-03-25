@@ -268,8 +268,8 @@ mod integer_discriminants {
     #[test]
     fn returns_error_on_unexpected_discriminant() {
         let result = BoatKind::from_raw_bytes(&[99, 99, 88, 11, 13], &Settings::default());
-        match result.as_ref().map_err(|e| e.kind()) {
-            Err(&protocol::ErrorKind::UnknownEnumDiscriminant(..)) => (), // pass
+        match result.as_ref() {
+            Err(&protocol::Error::UnknownEnumDiscriminant { .. }) => (), // pass
             Err(unexpected_error) => {
                 panic!("expected a different error but got: {}", unexpected_error)
             }

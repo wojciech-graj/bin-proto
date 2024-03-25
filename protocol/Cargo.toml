@@ -18,6 +18,5 @@ derive = ["protocol-derive"]
 [dependencies]
 protocol-derive = { version = "3.4.0", path = "../protocol-derive", optional = true }
 bitstream-io = "2.2.0"
-uuid = { version = "0.8", optional = true }
-error-chain = "0.12"
-num-traits = "0.2"
+uuid = { version = "1.8.0", optional = true }
+thiserror = "1.0.58"

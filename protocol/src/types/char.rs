@@ -1,5 +1,5 @@
-use crate::{hint, BitRead, BitWrite, CharTryFromError, Error, Parcel, Settings};
-use std::char;
+use crate::{hint, BitRead, BitWrite, Error, Parcel, Settings};
+use std::convert::TryFrom;
 
 impl Parcel for char {
     fn read_field(
@@ -8,7 +8,7 @@ impl Parcel for char {
         _: &mut hint::Hints,
     ) -> Result<Self, Error> {
         let bytes = u32::read(read, settings)?;
-        Ok(char::from_u32(bytes).ok_or(CharTryFromError {})?)
+        Ok(char::try_from(bytes)?)
     }
 
     fn write_field(

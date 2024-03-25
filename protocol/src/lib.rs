@@ -148,7 +148,7 @@ pub use self::bit_field::BitField;
 pub use self::bit_read::BitRead;
 pub use self::bit_write::BitWrite;
 pub use self::enum_ty::Enum;
-pub use self::errors::{CharTryFromError, Error, ErrorKind, Result, ResultExt, TryFromIntError};
+pub use self::errors::{Error, Result};
 pub use self::flexible_array_member::FlexibleArrayMember;
 pub use self::parcel::Parcel;
 pub use self::settings::*;
@@ -179,13 +179,8 @@ pub mod attributes;
 mod enum_ty;
 mod errors;
 pub mod hint;
-pub mod logic;
 mod parcel;
 pub mod util;
 
-#[macro_use]
-extern crate error_chain;
-
-extern crate num_traits;
 #[cfg(feature = "uuid")]
 extern crate uuid;

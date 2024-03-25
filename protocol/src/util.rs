@@ -2,9 +2,9 @@
 
 use bitstream_io::{BigEndian, BitReader};
 
-use crate::types::Integer;
-use crate::{hint, BitRead, BitWrite, Error, ErrorKind, Parcel, Settings, TryFromIntError};
+use crate::{hint, BitRead, BitWrite, Error, Parcel, Settings};
 
+use std::convert::TryFrom;
 use std::io;
 
 /// The integer type that we will use to send length prefixes.
@@ -64,33 +64,6 @@ pub fn read_list<T>(
 where
     T: Parcel,
 {
-    self::read_list_ext::<SizeType, T>(read, settings, hints)
-}
-
-/// BitWrites a length-prefixed list to a stream.
-pub fn write_list<'a, T, I>(
-    elements: I,
-    write: &mut dyn BitWrite,
-    settings: &Settings,
-    hints: &mut hint::Hints,
-) -> Result<(), Error>
-where
-    T: Parcel + 'a,
-    I: IntoIterator<Item = &'a T>,
-{
-    self::write_list_ext::<SizeType, T, I>(elements, write, settings, hints)
-}
-
-/// Reads a length-prefixed list from a stream.
-pub fn read_list_ext<S, T>(
-    read: &mut dyn BitRead,
-    settings: &Settings,
-    hints: &mut hint::Hints,
-) -> Result<Vec<T>, Error>
-where
-    S: Integer,
-    T: Parcel,
-{
     match hints.current_field_length() {
         Some(length) => {
             match length {
@@ -108,11 +81,7 @@ where
                         // FIXME: potential DoS vector, should timeout.
                         while read_back_bytes.position_in_bits().unwrap() < (byte_count as u64) * 8
                         {
-                            let item =
-                                match T::read(&mut read_back_bytes, settings).map_err(|e| e.0) {
-                                    Ok(item) => item,
-                                    Err(e) => return Err(e.into()),
-                                };
+                            let item = T::read(&mut read_back_bytes, settings)?;
                             items.push(item);
                         }
 
@@ -125,12 +94,14 @@ where
                 hint::FieldLength::Flexible => {
                     let mut items = Vec::new();
                     loop {
-                        let item = match T::read(read, settings).map_err(|e| e.0) {
+                        let item = match T::read(read, settings) {
                             Ok(item) => item,
-                            Err(ErrorKind::Io(ref io))
-                                if io.kind() == io::ErrorKind::UnexpectedEof =>
-                            {
-                                return Ok(items)
+                            Err(Error::IO(e)) => {
+                                return if e.kind() == io::ErrorKind::UnexpectedEof {
+                                    Ok(items)
+                                } else {
+                                    Err(e.into())
+                                }
                             }
                             Err(e) => return Err(e.into()),
                         };
@@ -142,8 +113,8 @@ where
         None => {
             // We do not know the length in the field in advance, therefore there
             // the length prefix is not disjoint.
-            let size = S::read(read, settings)?;
-            let size: usize = size.to_usize().ok_or(TryFromIntError {})?;
+            let size = SizeType::read(read, settings)?;
+            let size: usize = usize::try_from(size)?;
 
             read_items(size, read, settings).map(|i| i.collect())
         }
@@ -151,14 +122,13 @@ where
 }
 
 /// BitWrites a length-prefixed list to a stream.
-pub fn write_list_ext<'a, S, T, I>(
+pub fn write_list<'a, T, I>(
     elements: I,
     write: &mut dyn BitWrite,
     settings: &Settings,
     hints: &mut hint::Hints,
 ) -> Result<(), Error>
 where
-    S: Integer,
     T: Parcel + 'a,
     I: IntoIterator<Item = &'a T>,
 {
@@ -169,7 +139,7 @@ where
         Some(_length) => (),
         // The length is not known, send a prefix.
         _ => {
-            let length = S::from_usize(elements.len()).ok_or(TryFromIntError {})?;
+            let length = SizeType::try_from(elements.len())?;
             length.write(write, settings)?;
         }
     }

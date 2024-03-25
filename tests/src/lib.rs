@@ -43,6 +43,8 @@ macro_rules! verify_read_back {
 }
 
 #[cfg(test)]
+mod aligned;
+#[cfg(test)]
 mod enum_trait;
 #[cfg(test)]
 mod enums;
@@ -54,7 +56,5 @@ mod hints;
 mod ipv4;
 #[cfg(test)]
 mod length_prefix;
-#[cfg(test)]
-mod logic;
 #[cfg(test)]
 mod structs;

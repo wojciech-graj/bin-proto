@@ -1,4 +1,4 @@
-use crate::{errors::ErrorKind, hint, BitRead, BitWrite, Error, Parcel, Settings};
+use crate::{hint, BitRead, BitWrite, Error, Parcel, Settings};
 use std::{marker, mem};
 
 /// A value that is aligned to a specified number of bytes.
@@ -32,7 +32,7 @@ use std::{marker, mem};
 ///     /// The version number of the protocol.
 ///     pub version_number: (u32, u32),
 ///     #[protocol(length_prefix(bytes(reason_length)))]
-///     pub reason: protocol::logic::Aligned<String, u64>,
+///     pub reason: protocol::types::Aligned<String, u64>,
 ///
 /// }
 ///
@@ -99,7 +99,7 @@ where
             let padding_byte = u8::read(read, settings)?;
 
             if padding_byte != 0x00 {
-                return Err(ErrorKind::NonZeroPad.into());
+                return Err(Error::NonZeroPad);
             }
         }
 

@@ -1,8 +1,9 @@
 //! Contains newtypes over the standard library types
 //! that support finer-grained serialization settings.
 
-pub use self::numerics::Integer;
+pub use aligned::Aligned;
 
+mod aligned;
 mod array;
 mod char;
 /// Definitions for the `std::collections` module.
