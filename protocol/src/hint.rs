@@ -13,12 +13,9 @@ pub struct Hints {
 
 /// Information about the length of a field.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub enum FieldLength {
-    Fixed {
-        length: usize,
-        kind: LengthPrefixKind,
-    },
-    Flexible,
+pub struct FieldLength {
+    pub length: usize,
+    pub kind: LengthPrefixKind,
 }
 
 /// Specifies what kind of data the length prefix captures.
@@ -68,7 +65,7 @@ mod protocol_derive_helpers {
             kind: LengthPrefixKind,
         ) {
             self.known_field_lengths
-                .insert(field_index, FieldLength::Fixed { kind, length });
+                .insert(field_index, FieldLength { kind, length });
         }
     }
 }

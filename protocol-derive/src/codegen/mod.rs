@@ -57,8 +57,13 @@ fn read_field(field: &syn::Field) -> TokenStream {
         };
     }
     if attribs.flexible_array_member {
-        quote! {
+        return quote! {
             protocol::FlexibleArrayMember::read_field(__io_reader, __settings, &mut __hints)
+        };
+    }
+    if attribs.length_prefix.is_some() {
+        quote! {
+            protocol::WithLengthPrefix::read_field(__io_reader, __settings, &mut __hints)
         }
     } else {
         quote! {
@@ -75,8 +80,13 @@ fn write_field<T: quote::ToTokens>(field: &syn::Field, field_name: &T) -> TokenS
         };
     }
     if attribs.flexible_array_member {
-        quote! {
+        return quote! {
             protocol::FlexibleArrayMember::write_field(&self. #field_name, __io_writer, __settings, &mut __hints)
+        };
+    }
+    if attribs.length_prefix.is_some() {
+        quote! {
+            protocol::WithLengthPrefix::write_field(&self. #field_name, __io_writer, __settings, &mut __hints)
         }
     } else {
         quote! {

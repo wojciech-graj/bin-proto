@@ -1,6 +1,6 @@
 use crate::{hint, BitRead, BitWrite, Error, Parcel, Settings};
 
-pub trait FlexibleArrayMember: Parcel {
+pub trait WithLengthPrefix: Parcel {
     fn read_field(
         read: &mut dyn BitRead,
         settings: &Settings,

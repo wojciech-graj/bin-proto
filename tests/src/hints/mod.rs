@@ -127,7 +127,7 @@ macro_rules! define_common_hint_invariant_tests {
                     .map(|i| {
                         (
                             i,
-                            protocol::hint::FieldLength::Fixed {
+                            protocol::hint::FieldLength {
                                 length: i + i / 2,
                                 kind: protocol::hint::LengthPrefixKind::Bytes,
                             },

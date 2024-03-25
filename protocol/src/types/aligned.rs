@@ -1,4 +1,6 @@
-use crate::{hint, BitRead, BitWrite, Error, Parcel, Settings};
+use bitstream_io::{BigEndian, BitWriter};
+
+use crate::{hint, BitRead, BitWrite, Error, Parcel, Settings, WithLengthPrefix};
 use std::{marker, mem};
 
 /// A value that is aligned to a specified number of bytes.
@@ -116,6 +118,53 @@ where
         hints: &mut hint::Hints,
     ) -> Result<(), Error> {
         let unaligned_bytes = self.value.raw_bytes_field(settings, hints)?;
+        let aligned_bytes = align_to(Self::align_to_bytes(), 0x00, unaligned_bytes);
+        write.write_bytes(&aligned_bytes)?;
+        Ok(())
+    }
+}
+
+impl<T, ToSizeOfType> WithLengthPrefix for Aligned<T, ToSizeOfType>
+where
+    T: WithLengthPrefix,
+    ToSizeOfType: Sized,
+{
+    fn read_field(
+        read: &mut dyn BitRead,
+        settings: &Settings,
+        hints: &mut hint::Hints,
+    ) -> Result<Self, Error> {
+        let inner_value = <T as WithLengthPrefix>::read_field(read, settings, hints)?;
+        let value_size = inner_value.raw_bytes_field(settings, hints).unwrap().len();
+        let padding_size = calculate_padding(Self::align_to_bytes(), value_size);
+
+        for _ in 0..padding_size {
+            let padding_byte = u8::read(read, settings)?;
+
+            if padding_byte != 0x00 {
+                return Err(Error::NonZeroPad);
+            }
+        }
+
+        Ok(Aligned {
+            value: inner_value,
+            _phantom: marker::PhantomData,
+        })
+    }
+
+    fn write_field(
+        &self,
+        write: &mut dyn BitWrite,
+        settings: &Settings,
+        hints: &mut hint::Hints,
+    ) -> Result<(), Error> {
+        let mut unaligned_bytes: Vec<u8> = Vec::new();
+        WithLengthPrefix::write_field(
+            &self.value,
+            &mut BitWriter::endian(&mut unaligned_bytes, BigEndian),
+            settings,
+            hints,
+        )?;
         let aligned_bytes = align_to(Self::align_to_bytes(), 0x00, unaligned_bytes);
         write.write_bytes(&aligned_bytes)?;
         Ok(())

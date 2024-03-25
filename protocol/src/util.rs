@@ -2,6 +2,7 @@
 
 use bitstream_io::{BigEndian, BitReader};
 
+use crate::hint::FieldLength;
 use crate::{hint, BitRead, BitWrite, Error, Parcel, Settings};
 
 use std::convert::TryFrom;
@@ -55,6 +56,37 @@ where
     Ok(())
 }
 
+pub fn read_list_nohint<T>(read: &mut dyn BitRead, settings: &Settings) -> Result<Vec<T>, Error>
+where
+    T: Parcel,
+{
+    let size = SizeType::read(read, settings)?;
+    let size: usize = usize::try_from(size)?;
+
+    read_items(size, read, settings).map(|i| i.collect())
+}
+
+pub fn read_list_flexible<T>(read: &mut dyn BitRead, settings: &Settings) -> Result<Vec<T>, Error>
+where
+    T: Parcel,
+{
+    let mut items = Vec::new();
+    loop {
+        let item = match T::read(read, settings) {
+            Ok(item) => item,
+            Err(Error::IO(e)) => {
+                return if e.kind() == io::ErrorKind::UnexpectedEof {
+                    Ok(items)
+                } else {
+                    Err(e.into())
+                }
+            }
+            Err(e) => return Err(e.into()),
+        };
+        items.push(item);
+    }
+}
+
 /// Reads a length-prefixed list from a stream.
 pub fn read_list<T>(
     read: &mut dyn BitRead,
@@ -65,68 +97,40 @@ where
     T: Parcel,
 {
     match hints.current_field_length() {
-        Some(length) => {
-            match length {
-                hint::FieldLength::Fixed { length, kind } => match kind {
-                    hint::LengthPrefixKind::Bytes => {
-                        let byte_count = length;
+        Some(FieldLength { length, kind }) => {
+            match kind {
+                hint::LengthPrefixKind::Bytes => {
+                    let byte_count = length;
 
-                        // First, read all bytes of the list without processing them.
-                        let bytes: Vec<u8> = read_items(byte_count, read, settings)?.collect();
-                        let mut read_back_bytes =
-                            BitReader::endian(io::Cursor::new(bytes), BigEndian);
+                    // First, read all bytes of the list without processing them.
+                    let bytes: Vec<u8> = read_items(byte_count, read, settings)?.collect();
+                    let mut read_back_bytes = BitReader::endian(io::Cursor::new(bytes), BigEndian);
 
-                        // Then, parse the items until we reach the end of the buffer stream.
-                        let mut items = Vec::new();
-                        // FIXME: potential DoS vector, should timeout.
-                        while read_back_bytes.position_in_bits().unwrap() < (byte_count as u64) * 8
-                        {
-                            let item = T::read(&mut read_back_bytes, settings)?;
-                            items.push(item);
-                        }
-
-                        Ok(items)
-                    }
-                    hint::LengthPrefixKind::Elements => {
-                        read_items(length, read, settings).map(|i| i.collect())
-                    }
-                },
-                hint::FieldLength::Flexible => {
+                    // Then, parse the items until we reach the end of the buffer stream.
                     let mut items = Vec::new();
-                    loop {
-                        let item = match T::read(read, settings) {
-                            Ok(item) => item,
-                            Err(Error::IO(e)) => {
-                                return if e.kind() == io::ErrorKind::UnexpectedEof {
-                                    Ok(items)
-                                } else {
-                                    Err(e.into())
-                                }
-                            }
-                            Err(e) => return Err(e.into()),
-                        };
+                    // FIXME: potential DoS vector, should timeout.
+                    while read_back_bytes.position_in_bits().unwrap() < (byte_count as u64) * 8 {
+                        let item = T::read(&mut read_back_bytes, settings)?;
                         items.push(item);
                     }
+
+                    Ok(items)
+                }
+                hint::LengthPrefixKind::Elements => {
+                    read_items(length, read, settings).map(|i| i.collect())
                 }
             }
         }
-        None => {
-            // We do not know the length in the field in advance, therefore there
-            // the length prefix is not disjoint.
-            let size = SizeType::read(read, settings)?;
-            let size: usize = usize::try_from(size)?;
-
-            read_items(size, read, settings).map(|i| i.collect())
+        _ => {
+            unreachable!()
         }
     }
 }
 
-/// BitWrites a length-prefixed list to a stream.
-pub fn write_list<'a, T, I>(
+pub fn write_list_nohint<'a, T, I>(
     elements: I,
     write: &mut dyn BitWrite,
     settings: &Settings,
-    hints: &mut hint::Hints,
 ) -> Result<(), Error>
 where
     T: Parcel + 'a,
@@ -134,15 +138,25 @@ where
 {
     let elements: Vec<_> = elements.into_iter().collect();
 
-    match hints.current_field_length() {
-        // If there is an existing length prefix, don't bother sending another.
-        Some(_length) => (),
-        // The length is not known, send a prefix.
-        _ => {
-            let length = SizeType::try_from(elements.len())?;
-            length.write(write, settings)?;
-        }
-    }
+    let length = SizeType::try_from(elements.len())?;
+    length.write(write, settings)?;
+    write_items(elements.into_iter(), write, settings)?;
+
+    Ok(())
+}
+
+/// BitWrites a length-prefixed list to a stream.
+pub fn write_list<'a, T, I>(
+    elements: I,
+    write: &mut dyn BitWrite,
+    settings: &Settings,
+) -> Result<(), Error>
+where
+    T: Parcel + 'a,
+    I: IntoIterator<Item = &'a T>,
+{
+    let elements: Vec<_> = elements.into_iter().collect();
+
     write_items(elements.into_iter(), write, settings)?;
 
     Ok(())

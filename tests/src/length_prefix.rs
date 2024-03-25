@@ -1,4 +1,4 @@
-use protocol::{Parcel, Settings};
+use protocol::{Parcel, Settings, WithLengthPrefix};
 
 #[derive(protocol::Protocol, Debug, PartialEq, Eq)]
 struct WithLengthPrefixSeparateType {
@@ -8,7 +8,7 @@ struct WithLengthPrefixSeparateType {
 }
 
 #[derive(protocol::Protocol, Debug, PartialEq, Eq)]
-struct Foo<L: Parcel> {
+struct Foo<L: WithLengthPrefix> {
     pub reason_length: u16,
     pub other: u8,
     #[protocol(length_prefix(bytes(reason_length)))]

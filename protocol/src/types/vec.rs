@@ -1,6 +1,27 @@
-use crate::{hint, util, BitRead, BitWrite, Error, FlexibleArrayMember, Parcel, Settings};
+use crate::{
+    hint, util, BitRead, BitWrite, Error, FlexibleArrayMember, Parcel, Settings, WithLengthPrefix,
+};
 
 impl<T: Parcel> Parcel for Vec<T> {
+    fn read_field(
+        read: &mut dyn BitRead,
+        settings: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<Self, Error> {
+        util::read_list_nohint(read, settings)
+    }
+
+    fn write_field(
+        &self,
+        write: &mut dyn BitWrite,
+        settings: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<(), Error> {
+        util::write_list_nohint(self.iter(), write, settings)
+    }
+}
+
+impl<T: Parcel> WithLengthPrefix for Vec<T> {
     fn read_field(
         read: &mut dyn BitRead,
         settings: &Settings,
@@ -13,10 +34,27 @@ impl<T: Parcel> Parcel for Vec<T> {
         &self,
         write: &mut dyn BitWrite,
         settings: &Settings,
-        hints: &mut hint::Hints,
+        _: &mut hint::Hints,
     ) -> Result<(), Error> {
-        util::write_list(self.iter(), write, settings, hints)
+        util::write_list(self.iter(), write, settings)
     }
 }
 
-impl<T: Parcel> FlexibleArrayMember for Vec<T> {}
+impl<T: Parcel> FlexibleArrayMember for Vec<T> {
+    fn read_field(
+        read: &mut dyn BitRead,
+        settings: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<Self, Error> {
+        util::read_list_flexible(read, settings)
+    }
+
+    fn write_field(
+        &self,
+        write: &mut dyn BitWrite,
+        settings: &Settings,
+        _: &mut hint::Hints,
+    ) -> Result<(), Error> {
+        util::write_list(self.iter(), write, settings)
+    }
+}
