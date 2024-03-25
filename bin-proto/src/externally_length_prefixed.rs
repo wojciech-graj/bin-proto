@@ -1,15 +1,14 @@
+//! Utilities for externally length prefixed fields
+
 use crate::{BitRead, BitWrite, Error, Settings};
 
 use std::collections::HashMap;
 
+/// A trait for variable-length types with a disjoint length prefix.
 pub trait ExternallyLengthPrefixed: Sized {
-    fn read_field(
-        read: &mut dyn BitRead,
-        settings: &Settings,
-        hints: &mut Hints,
-    ) -> Result<Self, Error>;
+    fn read(read: &mut dyn BitRead, settings: &Settings, hints: &mut Hints) -> Result<Self, Error>;
 
-    fn write_field(
+    fn write(
         &self,
         write: &mut dyn BitWrite,
         settings: &Settings,

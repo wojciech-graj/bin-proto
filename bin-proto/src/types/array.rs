@@ -6,7 +6,7 @@ macro_rules! impl_parcel_for_array {
         where
             T: Copy,
         {
-            fn read_field(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
+            fn read(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
                 use std::mem;
 
                 let elements: Vec<_> = util::read_items($n, read, settings)?.collect();
@@ -28,7 +28,7 @@ macro_rules! impl_parcel_for_array {
                 Ok(*array)
             }
 
-            fn write_field(
+            fn write(
                 &self,
                 write: &mut dyn BitWrite,
                 settings: &Settings,

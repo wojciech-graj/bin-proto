@@ -36,7 +36,7 @@ fn named_fields_are_correctly_written() {
             b: '2' as u8,
             c: 1,
         }
-        .raw_bytes(&Settings::default())
+        .bytes(&Settings::default())
         .unwrap()
     );
 }
@@ -49,7 +49,7 @@ fn named_fields_are_correctly_read() {
             b: '2' as u8,
             c: 1,
         },
-        Foobar::from_raw_bytes(&[3, '2' as u8, 1], &Settings::default()).unwrap()
+        Foobar::from_bytes(&[3, '2' as u8, 1], &Settings::default()).unwrap()
     );
 }
 
@@ -57,7 +57,7 @@ fn named_fields_are_correctly_read() {
 fn unnamed_fields_are_correctly_written() {
     assert_eq!(
         vec![6, 1, 9],
-        BizBong(6, 1, 9).raw_bytes(&Settings::default()).unwrap()
+        BizBong(6, 1, 9).bytes(&Settings::default()).unwrap()
     );
 }
 
@@ -65,14 +65,14 @@ fn unnamed_fields_are_correctly_written() {
 fn unnamed_fields_are_correctly_read() {
     assert_eq!(
         BizBong(3, 1, 7),
-        BizBong::from_raw_bytes(&[3, 1, 7], &Settings::default()).unwrap()
+        BizBong::from_bytes(&[3, 1, 7], &Settings::default()).unwrap()
     );
 }
 
 #[test]
 fn unit_structs_are_correctly_written() {
     assert_eq!(
-        PartyInTheFront.raw_bytes(&Settings::default()).unwrap(),
+        PartyInTheFront.bytes(&Settings::default()).unwrap(),
         &[]
     );
 }
@@ -81,7 +81,7 @@ fn unit_structs_are_correctly_written() {
 fn unit_structs_are_correctly_read() {
     assert_eq!(
         PartyInTheFront,
-        PartyInTheFront::from_raw_bytes(&[], &Settings::default()).unwrap()
+        PartyInTheFront::from_bytes(&[], &Settings::default()).unwrap()
     );
 }
 
@@ -94,7 +94,7 @@ fn ipv4() {
     }
 
     assert_eq!(
-        IPv4Header::from_raw_bytes(&[0x45], &Settings::default()).unwrap(),
+        IPv4Header::from_bytes(&[0x45], &Settings::default()).unwrap(),
         IPv4Header { version: 4 }
     )
 }

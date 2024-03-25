@@ -1,14 +1,12 @@
-use crate::{BitRead, BitWrite, Error, Protocol, Settings};
+use crate::{BitRead, BitWrite, Error, Settings};
 
-pub trait BitField: Protocol {
-    fn read_field(read: &mut dyn BitRead, settings: &Settings, bits: u32) -> Result<Self, Error>;
+/// A trait for variable-width bit-level co/dec.
+///
+/// **WARNING**: This trait can and often will ignore the endianness settings.
+pub trait BitField: Sized {
+    fn read(read: &mut dyn BitRead, settings: &Settings, bits: u32) -> Result<Self, Error>;
 
-    fn write_field(
-        &self,
-        write: &mut dyn BitWrite,
-        settings: &Settings,
-        bits: u32,
-    ) -> Result<(), Error>;
+    fn write(&self, write: &mut dyn BitWrite, settings: &Settings, bits: u32) -> Result<(), Error>;
 }
 
 /// ```compile_fail

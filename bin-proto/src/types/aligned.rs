@@ -38,11 +38,11 @@ use std::{marker, mem};
 ///
 /// }
 ///
-/// let raw_bytes = Packet {
+/// let bytes = Packet {
 ///     reason_length: 12,
 ///     version_number: (11, 0xdeadbeef),
 ///     reason: "hello world!".to_owned().into(),
-/// }.raw_bytes(&bin_proto::Settings::default()).unwrap();
+/// }.bytes(&bin_proto::Settings::default()).unwrap();
 ///
 /// assert_eq!(&[
 ///     12, // reason length
@@ -50,7 +50,7 @@ use std::{marker, mem};
 ///     // the string "hello world".
 ///     b'h', b'e', b'l', b'l', b'o', b' ', b'w', b'o', b'r', b'l', b'd', b'!',
 ///     0x00, 0x00, 0x00, 0x00, // padding bytes to align to string to 16 bytes.
-///     ], &raw_bytes[..]);
+///     ], &bytes[..]);
 /// ```
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -88,9 +88,9 @@ where
     T: Protocol,
     ToSizeOfType: Sized,
 {
-    fn read_field(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
-        let inner_value = T::read_field(read, settings)?;
-        let value_size = inner_value.raw_bytes_field(settings).unwrap().len();
+    fn read(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
+        let inner_value = T::read(read, settings)?;
+        let value_size = inner_value.bytes(settings).unwrap().len();
         let padding_size = calculate_padding(Self::alignment_bytes(), value_size);
 
         for _ in 0..padding_size {
@@ -107,8 +107,8 @@ where
         })
     }
 
-    fn write_field(&self, write: &mut dyn BitWrite, settings: &Settings) -> Result<(), Error> {
-        let unaligned_bytes = self.value.raw_bytes_field(settings)?;
+    fn write(&self, write: &mut dyn BitWrite, settings: &Settings) -> Result<(), Error> {
+        let unaligned_bytes = self.value.bytes(settings)?;
         let aligned_bytes = align_to(Self::alignment_bytes(), 0x00, unaligned_bytes);
         write.write_bytes(&aligned_bytes)?;
         Ok(())
@@ -120,13 +120,13 @@ where
     T: Protocol + ExternallyLengthPrefixed,
     ToSizeOfType: Sized,
 {
-    fn read_field(
+    fn read(
         read: &mut dyn BitRead,
         settings: &Settings,
         hints: &mut externally_length_prefixed::Hints,
     ) -> Result<Self, Error> {
-        let inner_value = <T as ExternallyLengthPrefixed>::read_field(read, settings, hints)?;
-        let value_size = inner_value.raw_bytes_field(settings).unwrap().len();
+        let inner_value = <T as ExternallyLengthPrefixed>::read(read, settings, hints)?;
+        let value_size = inner_value.bytes(settings).unwrap().len();
         let padding_size = calculate_padding(Self::alignment_bytes(), value_size);
 
         for _ in 0..padding_size {
@@ -143,14 +143,14 @@ where
         })
     }
 
-    fn write_field(
+    fn write(
         &self,
         write: &mut dyn BitWrite,
         settings: &Settings,
         hints: &mut externally_length_prefixed::Hints,
     ) -> Result<(), Error> {
         let mut unaligned_bytes: Vec<u8> = Vec::new();
-        ExternallyLengthPrefixed::write_field(
+        ExternallyLengthPrefixed::write(
             &self.value,
             &mut BitWriter::endian(&mut unaligned_bytes, BigEndian),
             settings,

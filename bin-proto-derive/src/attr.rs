@@ -18,6 +18,23 @@ pub struct Attribs {
     pub length_prefix: Option<LengthPrefix>,
 }
 
+impl Attribs {
+    fn validate(&self) {
+        if [
+            self.bit_field.is_some(),
+            self.flexible_array_member,
+            self.length_prefix.is_some(),
+        ]
+        .iter()
+        .filter(|b| **b)
+        .count()
+            > 1
+        {
+            panic!("'bits', 'flexible_array_member', and 'length_prefix' attributes are mutually-exclusive.")
+        }
+    }
+}
+
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum LengthPrefixKind {
     Bytes,
@@ -183,6 +200,7 @@ pub fn protocol(attrs: &[syn::Attribute]) -> Attribs {
             };
         }
     }
+    attribs.validate();
     attribs
 }
 

@@ -11,7 +11,7 @@ macro_rules! impl_map_type {
             where K: Protocol + $( $k_pred +)+,
                   V: Protocol
         {
-            fn read_field(read: &mut dyn BitRead,
+            fn read(read: &mut dyn BitRead,
                           settings: &Settings,
                           ) -> Result<Self, Error> {
                 let mut map = $ty::new();
@@ -28,7 +28,7 @@ macro_rules! impl_map_type {
                 Ok(map)
             }
 
-            fn write_field(&self, write: &mut dyn BitWrite,
+            fn write(&self, write: &mut dyn BitWrite,
                            settings: &Settings,
                            ) -> Result<(), Error> {
                 (self.len() as SizeType).write(write, settings)?;

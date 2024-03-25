@@ -5,13 +5,13 @@ where
     T0: Protocol,
     T1: Protocol,
 {
-    fn read_field(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
+    fn read(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
         let v0 = T0::read(read, settings)?;
         let v1 = T1::read(read, settings)?;
         Ok((v0, v1))
     }
 
-    fn write_field(&self, write: &mut dyn BitWrite, settings: &Settings) -> Result<(), Error> {
+    fn write(&self, write: &mut dyn BitWrite, settings: &Settings) -> Result<(), Error> {
         self.0.write(write, settings)?;
         self.1.write(write, settings)?;
 
@@ -25,14 +25,14 @@ where
     T1: Protocol,
     T2: Protocol,
 {
-    fn read_field(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
+    fn read(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
         let v0 = T0::read(read, settings)?;
         let v1 = T1::read(read, settings)?;
         let v2 = T2::read(read, settings)?;
         Ok((v0, v1, v2))
     }
 
-    fn write_field(&self, write: &mut dyn BitWrite, settings: &Settings) -> Result<(), Error> {
+    fn write(&self, write: &mut dyn BitWrite, settings: &Settings) -> Result<(), Error> {
         self.0.write(write, settings)?;
         self.1.write(write, settings)?;
         self.2.write(write, settings)?;
@@ -48,7 +48,7 @@ where
     T2: Protocol,
     T3: Protocol,
 {
-    fn read_field(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
+    fn read(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
         let v0 = T0::read(read, settings)?;
         let v1 = T1::read(read, settings)?;
         let v2 = T2::read(read, settings)?;
@@ -56,7 +56,7 @@ where
         Ok((v0, v1, v2, v3))
     }
 
-    fn write_field(&self, write: &mut dyn BitWrite, settings: &Settings) -> Result<(), Error> {
+    fn write(&self, write: &mut dyn BitWrite, settings: &Settings) -> Result<(), Error> {
         self.0.write(write, settings)?;
         self.1.write(write, settings)?;
         self.2.write(write, settings)?;
@@ -74,7 +74,7 @@ where
     T3: Protocol,
     T4: Protocol,
 {
-    fn read_field(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
+    fn read(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
         let v0 = T0::read(read, settings)?;
         let v1 = T1::read(read, settings)?;
         let v2 = T2::read(read, settings)?;
@@ -83,7 +83,7 @@ where
         Ok((v0, v1, v2, v3, v4))
     }
 
-    fn write_field(&self, write: &mut dyn BitWrite, settings: &Settings) -> Result<(), Error> {
+    fn write(&self, write: &mut dyn BitWrite, settings: &Settings) -> Result<(), Error> {
         self.0.write(write, settings)?;
         self.1.write(write, settings)?;
         self.2.write(write, settings)?;
@@ -103,7 +103,7 @@ where
     T4: Protocol,
     T5: Protocol,
 {
-    fn read_field(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
+    fn read(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
         let v0 = T0::read(read, settings)?;
         let v1 = T1::read(read, settings)?;
         let v2 = T2::read(read, settings)?;
@@ -113,7 +113,7 @@ where
         Ok((v0, v1, v2, v3, v4, v5))
     }
 
-    fn write_field(&self, write: &mut dyn BitWrite, settings: &Settings) -> Result<(), Error> {
+    fn write(&self, write: &mut dyn BitWrite, settings: &Settings) -> Result<(), Error> {
         self.0.write(write, settings)?;
         self.1.write(write, settings)?;
         self.2.write(write, settings)?;
@@ -135,7 +135,7 @@ where
     T5: Protocol,
     T6: Protocol,
 {
-    fn read_field(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
+    fn read(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
         let v0 = T0::read(read, settings)?;
         let v1 = T1::read(read, settings)?;
         let v2 = T2::read(read, settings)?;
@@ -146,7 +146,7 @@ where
         Ok((v0, v1, v2, v3, v4, v5, v6))
     }
 
-    fn write_field(&self, write: &mut dyn BitWrite, settings: &Settings) -> Result<(), Error> {
+    fn write(&self, write: &mut dyn BitWrite, settings: &Settings) -> Result<(), Error> {
         self.0.write(write, settings)?;
         self.1.write(write, settings)?;
         self.2.write(write, settings)?;
@@ -170,7 +170,7 @@ where
     T6: Protocol,
     T7: Protocol,
 {
-    fn read_field(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
+    fn read(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
         let v0 = T0::read(read, settings)?;
         let v1 = T1::read(read, settings)?;
         let v2 = T2::read(read, settings)?;
@@ -182,7 +182,7 @@ where
         Ok((v0, v1, v2, v3, v4, v5, v6, v7))
     }
 
-    fn write_field(&self, write: &mut dyn BitWrite, settings: &Settings) -> Result<(), Error> {
+    fn write(&self, write: &mut dyn BitWrite, settings: &Settings) -> Result<(), Error> {
         self.0.write(write, settings)?;
         self.1.write(write, settings)?;
         self.2.write(write, settings)?;
@@ -208,7 +208,7 @@ where
     T7: Protocol,
     T8: Protocol,
 {
-    fn read_field(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
+    fn read(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
         let v0 = T0::read(read, settings)?;
         let v1 = T1::read(read, settings)?;
         let v2 = T2::read(read, settings)?;
@@ -221,7 +221,7 @@ where
         Ok((v0, v1, v2, v3, v4, v5, v6, v7, v8))
     }
 
-    fn write_field(&self, write: &mut dyn BitWrite, settings: &Settings) -> Result<(), Error> {
+    fn write(&self, write: &mut dyn BitWrite, settings: &Settings) -> Result<(), Error> {
         self.0.write(write, settings)?;
         self.1.write(write, settings)?;
         self.2.write(write, settings)?;
@@ -249,7 +249,7 @@ where
     T8: Protocol,
     T9: Protocol,
 {
-    fn read_field(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
+    fn read(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
         let v0 = T0::read(read, settings)?;
         let v1 = T1::read(read, settings)?;
         let v2 = T2::read(read, settings)?;
@@ -263,7 +263,7 @@ where
         Ok((v0, v1, v2, v3, v4, v5, v6, v7, v8, v9))
     }
 
-    fn write_field(&self, write: &mut dyn BitWrite, settings: &Settings) -> Result<(), Error> {
+    fn write(&self, write: &mut dyn BitWrite, settings: &Settings) -> Result<(), Error> {
         self.0.write(write, settings)?;
         self.1.write(write, settings)?;
         self.2.write(write, settings)?;
@@ -294,7 +294,7 @@ where
     T9: Protocol,
     T10: Protocol,
 {
-    fn read_field(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
+    fn read(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
         let v0 = T0::read(read, settings)?;
         let v1 = T1::read(read, settings)?;
         let v2 = T2::read(read, settings)?;
@@ -309,7 +309,7 @@ where
         Ok((v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10))
     }
 
-    fn write_field(&self, write: &mut dyn BitWrite, settings: &Settings) -> Result<(), Error> {
+    fn write(&self, write: &mut dyn BitWrite, settings: &Settings) -> Result<(), Error> {
         self.0.write(write, settings)?;
         self.1.write(write, settings)?;
         self.2.write(write, settings)?;

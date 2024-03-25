@@ -15,15 +15,8 @@ pub enum Error {
     #[cfg(feature = "uuid")]
     #[error("{0}")]
     UuidParseError(#[from] uuid::Error),
-    #[error(
-        "received unknown enum discriminant '{}' for type '{}'",
-        discriminant,
-        type_name
-    )]
-    UnknownEnumDiscriminant {
-        type_name: &'static str,
-        discriminant: String,
-    },
+    #[error("received unknown enum discriminant '{0}'")]
+    UnknownEnumDiscriminant(String),
     #[error("nonzero pad")]
     NonZeroPad,
     #[error("did not find length prefix")]

@@ -4,17 +4,17 @@ use crate::{
 };
 
 impl<T: Protocol> Protocol for Vec<T> {
-    fn read_field(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
+    fn read(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
         util::read_list(read, settings)
     }
 
-    fn write_field(&self, write: &mut dyn BitWrite, settings: &Settings) -> Result<(), Error> {
+    fn write(&self, write: &mut dyn BitWrite, settings: &Settings) -> Result<(), Error> {
         util::write_list_length_prefixed(self.iter(), write, settings)
     }
 }
 
 impl<T: Protocol> ExternallyLengthPrefixed for Vec<T> {
-    fn read_field(
+    fn read(
         read: &mut dyn BitRead,
         settings: &Settings,
         hints: &mut externally_length_prefixed::Hints,
@@ -22,7 +22,7 @@ impl<T: Protocol> ExternallyLengthPrefixed for Vec<T> {
         util::read_list_with_hints(read, settings, hints)
     }
 
-    fn write_field(
+    fn write(
         &self,
         write: &mut dyn BitWrite,
         settings: &Settings,
@@ -33,11 +33,11 @@ impl<T: Protocol> ExternallyLengthPrefixed for Vec<T> {
 }
 
 impl<T: Protocol> FlexibleArrayMember for Vec<T> {
-    fn read_field(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
+    fn read(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
         util::read_list_to_eof(read, settings)
     }
 
-    fn write_field(&self, write: &mut dyn BitWrite, settings: &Settings) -> Result<(), Error> {
+    fn write(&self, write: &mut dyn BitWrite, settings: &Settings) -> Result<(), Error> {
         util::write_list(self.iter(), write, settings)
     }
 }

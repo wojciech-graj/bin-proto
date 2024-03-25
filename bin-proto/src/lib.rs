@@ -44,7 +44,7 @@
 //! }
 //!
 //! assert_eq!(
-//!     IPv4::from_raw_bytes(&[
+//!     IPv4::from_bytes(&[
 //!             0b0100_0000 // Version: 4
 //!             |    0b0101, // Header Length: 5,
 //!             0x00, // Differentiated Services Codepoint: 0, Explicit Congestion Notification: 0
@@ -88,10 +88,10 @@ pub use self::error::{Error, Result};
 #[doc(inline)]
 pub use self::externally_length_prefixed::ExternallyLengthPrefixed;
 pub use self::flexible_array_member::FlexibleArrayMember;
-pub use self::parcel::Protocol;
+pub use self::protocol::Protocol;
 pub use self::settings::*;
 
-/// Derive `Protocol` trait.
+/// Derive the `Protocol` trait.
 ///
 /// # Attributes
 ///
@@ -173,8 +173,21 @@ pub mod types;
 
 mod enum_ty;
 mod error;
-mod parcel;
+mod protocol;
 mod util;
 
 #[cfg(feature = "uuid")]
 extern crate uuid;
+
+/// ```compile_fail
+/// #[derive(bin_proto::Protocol)]
+/// struct MutuallyExclusiveAttrs {
+///     pub length: u8,
+///     #[protocol(flexible_array_member)]
+///     #[protocol(length_prefix(bytes("length")))]
+///     pub reason: String,
+/// }
+/// ```
+#[cfg(all(feature = "derive", doctest))]
+#[allow(unused)]
+fn compile_fail_if_multiple_exclusive_attrs() {}

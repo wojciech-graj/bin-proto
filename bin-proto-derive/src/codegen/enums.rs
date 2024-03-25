@@ -28,7 +28,7 @@ pub fn write_variant(
                 #write_discriminant
 
                 #(
-                    bin_proto::Protocol::write_field(#binding_names, __io_writer, __settings)?;
+                    bin_proto::Protocol::write(#binding_names, __io_writer, __settings)?;
                 )*
             })
         })
@@ -37,7 +37,7 @@ pub fn write_variant(
     quote! {
         match *self {
             #(#variant_match_branches,)*
-            _ => panic!("unknown discriminant"), // FIXME: this should not be a panic
+            _ => return Err(bin_proto::Error::UnknownEnumDiscriminant(String::new())),
         }
     }
 }
@@ -52,7 +52,7 @@ pub fn read_variant(plan: &plan::Enum, read_discriminant: TokenStream) -> TokenS
     let discriminant_match_branches = plan.variants.iter().map(|variant| {
         let variant_name = &variant.ident;
         let discriminant_literal = variant.discriminant_literal();
-        let initializer = codegen::read_fields(&variant.fields);
+        let initializer = codegen::reads(&variant.fields);
 
         quote! {
             #discriminant_literal => {
@@ -68,9 +68,9 @@ pub fn read_variant(plan: &plan::Enum, read_discriminant: TokenStream) -> TokenS
             match #discriminant_for_pattern_matching {
                 #(#discriminant_match_branches,)*
                 unknown_discriminant => {
-                    return Err(bin_proto::Error::UnknownEnumDiscriminant{
-                        type_name: stringify!(#enum_name), discriminant: format!("{:?}", unknown_discriminant),
-                    }.into());
+                    return Err(bin_proto::Error::UnknownEnumDiscriminant(
+                        format!("{:?}", unknown_discriminant),
+                    ));
                 },
             }
         }

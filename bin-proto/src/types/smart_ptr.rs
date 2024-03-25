@@ -7,12 +7,12 @@ use std::sync::Arc;
 macro_rules! impl_smart_ptr_type {
     ($ty:ident) => {
         impl<T: Protocol> Protocol for $ty<T> {
-            fn read_field(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
+            fn read(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
                 let value = T::read(read, settings)?;
                 Ok($ty::new(value))
             }
 
-            fn write_field(
+            fn write(
                 &self,
                 write: &mut dyn BitWrite,
                 settings: &Settings,

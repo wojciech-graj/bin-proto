@@ -2,6 +2,8 @@ use std::io;
 
 use bitstream_io::{BE, LE};
 
+/// A bit-level equivalent of `std::io::Write`. An object-safe wrapper over
+/// bitstream_io::BitWrite.
 pub trait BitWrite {
     fn write_bit(&mut self, bit: bool) -> io::Result<()>;
     fn write_bytes(&mut self, buf: &[u8]) -> io::Result<()>;

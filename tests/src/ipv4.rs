@@ -87,10 +87,10 @@ fn can_encode_decode_ipv4() {
     };
     assert_eq!(
         parsed,
-        IPv4::from_raw_bytes(&raw, &Settings::default()).unwrap()
+        IPv4::from_bytes(&raw, &Settings::default()).unwrap()
     );
     assert_eq!(
         raw,
-        parsed.raw_bytes(&Settings::default()).unwrap().as_slice()
+        parsed.bytes(&Settings::default()).unwrap().as_slice()
     )
 }

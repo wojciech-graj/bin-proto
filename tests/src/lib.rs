@@ -8,7 +8,7 @@ macro_rules! verify_read_back {
 
             fn verify_read_back(settings: &Settings) {
                 let read_back =
-                    Protocol::from_raw_bytes(&$parcel.raw_bytes(&settings).unwrap()[..], &settings)
+                    Protocol::from_bytes(&$parcel.bytes(&settings).unwrap()[..], &settings)
                         .unwrap();
                 assert_eq!($parcel, read_back);
             }

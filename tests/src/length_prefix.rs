@@ -36,7 +36,7 @@ fn can_read_length_prefix_5_bytes_string() {
             other: 123,
             reason: "hello".to_owned(),
         },
-        Foo::from_raw_bytes(
+        Foo::from_bytes(
             &[0, 5, 123, b'h', b'e', b'l', b'l', b'o'],
             &Settings::default()
         )
@@ -52,7 +52,7 @@ fn can_read_length_prefix_8_bytes_u32_array() {
             other: 123,
             reason: vec![0x00ff00ff, 0x00ff00ff],
         },
-        Foo::from_raw_bytes(
+        Foo::from_bytes(
             &[0, 8, 123, 0, !0, 0, !0, 0, !0, 0, !0],
             &Settings::default()
         )
@@ -68,7 +68,7 @@ fn can_read_length_prefix_3_elements() {
             foo: true,
             data: vec![1, 2, 3],
         },
-        WithElementsLength::from_raw_bytes(
+        WithElementsLength::from_bytes(
             &[
                 0, 0, 0, 3, // disjoint length prefix
                 1, // boolean true

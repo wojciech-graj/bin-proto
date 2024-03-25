@@ -3,14 +3,14 @@ macro_rules! impl_list_type {
         impl<T> $crate::Protocol for ::std::collections::$ty<T>
             where T: $crate::Protocol $( + $ty_pred )*
         {
-            fn read_field(read: &mut dyn crate::BitRead,
+            fn read(read: &mut dyn crate::BitRead,
                           settings: &crate::Settings,
                           ) -> Result<Self, $crate::Error> {
                 let elements = crate::util::read_list(read, settings)?;
                 Ok(elements.into_iter().collect())
             }
 
-            fn write_field(&self, write: &mut dyn crate::BitWrite,
+            fn write(&self, write: &mut dyn crate::BitWrite,
                            settings: &crate::Settings,
                            )
                 -> Result<(), $crate::Error> {
@@ -29,8 +29,8 @@ macro_rules! impl_list_type {
                 let original: $ty<u32> = [1, 2, 3, 4, 5].iter().cloned().collect();
 
                 let settings = Settings::default();
-                let raw_bytes = original.raw_bytes(&settings).unwrap();
-                let read_deque = $ty::<u32>::from_raw_bytes(&raw_bytes, &settings).unwrap();
+                let bytes = original.bytes(&settings).unwrap();
+                let read_deque = $ty::<u32>::from_bytes(&bytes, &settings).unwrap();
 
                 assert_eq!(original, read_deque);
             }

@@ -81,31 +81,31 @@ fn impl_parcel_for_struct(
     strukt: &syn::DataStruct,
 ) -> proc_macro2::TokenStream {
     let strukt_name = &ast.ident;
-    let read_fields = codegen::read_fields(&strukt.fields);
-    let write_fields = codegen::write_fields(&strukt.fields);
+    let reads = codegen::reads(&strukt.fields);
+    let writes = codegen::writes(&strukt.fields);
 
     impl_trait_for(
         ast,
         quote!(bin_proto::Protocol),
         quote! {
             #[allow(unused_variables)]
-            fn read_field(__io_reader: &mut bin_proto::BitRead,
+            fn read(__io_reader: &mut bin_proto::BitRead,
                           __settings: &bin_proto::Settings)
                 -> bin_proto::Result<Self> {
                 // Each type gets its own hints.
                 let mut __hints = bin_proto::externally_length_prefixed::Hints::default();
 
-                Ok(#strukt_name # read_fields)
+                Ok(#strukt_name # reads)
             }
 
             #[allow(unused_variables)]
-            fn write_field(&self, __io_writer: &mut bin_proto::BitWrite,
+            fn write(&self, __io_writer: &mut bin_proto::BitWrite,
                            __settings: &bin_proto::Settings)
                 -> bin_proto::Result<()> {
                 // Each type gets its own hints.
                 let mut __hints = bin_proto::externally_length_prefixed::Hints::default();
 
-                #write_fields
+                #writes
                 Ok(())
             }
         },
@@ -122,7 +122,7 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
         (
             codegen::enums::read_variant(
                 plan,
-                quote!(bin_proto::BitField::read_field(
+                quote!(bin_proto::BitField::read(
                     __io_reader,
                     __settings,
                     #field_width,
@@ -138,7 +138,7 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
 
                 quote!(
                     const _: () = assert!(#discriminant_expr < (1 as #discriminant_ty) << #field_width, #error_message);
-                    <#discriminant_ty as bin_proto::BitField>::write_field(#discriminant_ref_expr, __io_writer, __settings, #field_width)?;
+                    <#discriminant_ty as bin_proto::BitField>::write(#discriminant_ref_expr, __io_writer, __settings, #field_width)?;
                 )
             }),
         )
@@ -146,11 +146,11 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
         (
             codegen::enums::read_variant(
                 plan,
-                quote!(bin_proto::Protocol::read_field(__io_reader, __settings,)?),
+                quote!(bin_proto::Protocol::read(__io_reader, __settings,)?),
             ),
             codegen::enums::write_variant(plan, &|variant| {
                 let discriminant_ref_expr = variant.discriminant_ref_expr();
-                quote! { <#discriminant_ty as bin_proto::Protocol>::write_field(#discriminant_ref_expr, __io_writer, __settings)?; }
+                quote! { <#discriminant_ty as bin_proto::Protocol>::write(#discriminant_ref_expr, __io_writer, __settings)?; }
             }),
         )
     };
@@ -160,7 +160,7 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
         quote!(bin_proto::Protocol),
         quote! {
             #[allow(unused_variables)]
-            fn read_field(__io_reader: &mut bin_proto::BitRead,
+            fn read(__io_reader: &mut bin_proto::BitRead,
                           __settings: &bin_proto::Settings)
                 -> bin_proto::Result<Self> {
                 // Each type gets its own hints.
@@ -170,7 +170,7 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
             }
 
             #[allow(unused_variables)]
-            fn write_field(&self, __io_writer: &mut bin_proto::BitWrite,
+            fn write(&self, __io_writer: &mut bin_proto::BitWrite,
                            __settings: &bin_proto::Settings)
                 -> bin_proto::Result<()> {
                 // Each type gets its own hints.

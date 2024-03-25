@@ -45,14 +45,14 @@ mod string_discriminants {
         let settings = Settings::default();
         assert_eq!(
             vec![0, 0, 0, 1, 'X' as _],
-            Axis::X.raw_bytes(&settings).unwrap()
+            Axis::X.bytes(&settings).unwrap()
         );
         assert_eq!(
             vec![
                 0, 0, 0, 5, 'O' as _, 't' as _, 'h' as _, 'e' as _, 'r' as _, 0, 0, 0, 4, 'r' as _,
                 'o' as _, 'l' as _, 'l' as _
             ],
-            Axis::Other("roll".to_owned()).raw_bytes(&settings).unwrap()
+            Axis::Other("roll".to_owned()).bytes(&settings).unwrap()
         );
     }
 
@@ -67,14 +67,14 @@ mod string_discriminants {
 
         assert_eq!(
             vec![0, 0, 0, 5, 'H' as _, 'e' as _, 'l' as _, 'l' as _, 'o' as _],
-            RenamedVariant::Hello.raw_bytes(&settings).unwrap()
+            RenamedVariant::Hello.bytes(&settings).unwrap()
         );
         assert_eq!(
             vec![
                 0, 0, 0, 8, 'U' as _, 'n' as _, 'i' as _, 'v' as _, 'e' as _, 'r' as _, 's' as _,
                 'e' as _
             ],
-            RenamedVariant::World.raw_bytes(&settings).unwrap()
+            RenamedVariant::World.bytes(&settings).unwrap()
         );
     }
 
@@ -187,11 +187,11 @@ mod integer_discriminants {
 
         assert_eq!(
             vec![255],
-            CustomDiscriminantAttrs::Hello.raw_bytes(&settings).unwrap()
+            CustomDiscriminantAttrs::Hello.bytes(&settings).unwrap()
         );
         assert_eq!(
             vec![122],
-            CustomDiscriminantAttrs::World.raw_bytes(&settings).unwrap()
+            CustomDiscriminantAttrs::World.bytes(&settings).unwrap()
         );
     }
 
@@ -200,7 +200,7 @@ mod integer_discriminants {
         assert_eq!(
             vec![1],
             WithoutExplicitDiscriminants::Only
-                .raw_bytes(&bin_proto::Settings::default())
+                .bytes(&bin_proto::Settings::default())
                 .unwrap()
         );
     }
@@ -212,7 +212,7 @@ mod integer_discriminants {
             BoatKind::Speedboat {
                 warp_speed_enabled: true,
             }
-            .raw_bytes(&bin_proto::Settings::default())
+            .bytes(&bin_proto::Settings::default())
             .unwrap()
         );
     }
@@ -225,7 +225,7 @@ mod integer_discriminants {
                 0xf1, 0xed
             ],
             BoatKind::Dingy(0xf1, 0xed)
-                .raw_bytes(&Settings::default())
+                .bytes(&Settings::default())
                 .unwrap()
         );
     }
@@ -234,7 +234,7 @@ mod integer_discriminants {
     fn unit_variants_are_correctly_written() {
         assert_eq!(
             vec![0, 0, 0, 3], // discriminant
-            BoatKind::Fart.raw_bytes(&Settings::default()).unwrap()
+            BoatKind::Fart.bytes(&Settings::default()).unwrap()
         );
     }
 
@@ -244,7 +244,7 @@ mod integer_discriminants {
             BoatKind::Speedboat {
                 warp_speed_enabled: true,
             },
-            BoatKind::from_raw_bytes(&[0, 0, 0, 1, 1], &Settings::default()).unwrap()
+            BoatKind::from_bytes(&[0, 0, 0, 1, 1], &Settings::default()).unwrap()
         );
     }
 
@@ -252,7 +252,7 @@ mod integer_discriminants {
     fn unnamed_fields_are_correctly_read() {
         assert_eq!(
             BoatKind::Dingy(99, 78),
-            BoatKind::from_raw_bytes(&[0, 0, 0, 2, 99, 78], &Settings::default()).unwrap()
+            BoatKind::from_bytes(&[0, 0, 0, 2, 99, 78], &Settings::default()).unwrap()
         );
     }
 
@@ -260,15 +260,15 @@ mod integer_discriminants {
     fn unit_variants_are_correctly_read() {
         assert_eq!(
             BoatKind::Fart,
-            BoatKind::from_raw_bytes(&[0, 0, 0, 3], &Settings::default()).unwrap()
+            BoatKind::from_bytes(&[0, 0, 0, 3], &Settings::default()).unwrap()
         );
     }
 
     #[test]
     fn returns_error_on_unexpected_discriminant() {
-        let result = BoatKind::from_raw_bytes(&[99, 99, 88, 11, 13], &Settings::default());
+        let result = BoatKind::from_bytes(&[99, 99, 88, 11, 13], &Settings::default());
         match result.as_ref() {
-            Err(&bin_proto::Error::UnknownEnumDiscriminant { .. }) => (), // pass
+            Err(&bin_proto::Error::UnknownEnumDiscriminant(_)) => (), // pass
             Err(unexpected_error) => {
                 panic!("expected a different error but got: {}", unexpected_error)
             }
@@ -280,9 +280,7 @@ mod integer_discriminants {
     fn custom_int_discriminant_repr_is_respected() {
         assert_eq!(
             vec![1],
-            WithCustomRepr::First
-                .raw_bytes(&Settings::default())
-                .unwrap()
+            WithCustomRepr::First.bytes(&Settings::default()).unwrap()
         );
     }
 }

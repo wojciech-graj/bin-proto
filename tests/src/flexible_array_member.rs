@@ -7,7 +7,7 @@ struct WithFlexibleArrayMember(#[protocol(flexible_array_member)] Vec<u8>);
 #[test]
 fn reads_flexible_array_member() {
     assert_eq!(
-        WithFlexibleArrayMember::from_raw_bytes(&[1, 2, 3], &Settings::default()).unwrap(),
+        WithFlexibleArrayMember::from_bytes(&[1, 2, 3], &Settings::default()).unwrap(),
         WithFlexibleArrayMember(vec![1, 2, 3])
     );
 }
@@ -16,7 +16,7 @@ fn reads_flexible_array_member() {
 fn writes_flexible_array_member() {
     assert_eq!(
         WithFlexibleArrayMember(vec![1, 2, 3])
-            .raw_bytes(&Settings::default())
+            .bytes(&Settings::default())
             .unwrap(),
         vec![1, 2, 3]
     );

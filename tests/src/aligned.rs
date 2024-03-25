@@ -14,12 +14,12 @@ struct Packet {
 
 #[test]
 fn write_alignment_pads_zero() {
-    let raw_bytes = Packet {
+    let bytes = Packet {
         reason_length: 12,
         version_number: (11, 0xdeadbeef),
         reason: "hello world!".to_owned().into(),
     }
-    .raw_bytes(&bin_proto::Settings::default())
+    .bytes(&bin_proto::Settings::default())
     .unwrap();
     assert_eq!(
         &[
@@ -29,7 +29,7 @@ fn write_alignment_pads_zero() {
             b'h', b'e', b'l', b'l', b'o', b' ', b'w', b'o', b'r', b'l', b'd', b'!', 0x00, 0x00,
             0x00, 0x00, // padding bytes to align string to 16 bytes.
         ],
-        &raw_bytes[..]
+        &bytes[..]
     );
 }
 
@@ -43,7 +43,7 @@ fn read_alignment_pads_zero() {
 
     assert_eq!(
         expected_packet,
-        Packet::from_raw_bytes(
+        Packet::from_bytes(
             &[
                 4, // reason length
                 0, 0, 0, 11, 0xde, 0xad, 0xbe, 0xef, // version number

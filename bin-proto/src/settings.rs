@@ -1,11 +1,10 @@
-/// Defines serialization settings.
+/// Endianness settings.
 #[derive(Clone, Debug, PartialEq, PartialOrd, Default)]
 pub struct Settings {
-    /// The byte ordering of data transmitted.
     pub byte_order: ByteOrder,
 }
 
-/// Specifies the byte order of data transfer.
+/// Endianness.
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ByteOrder {
     /// Least significant byte first.

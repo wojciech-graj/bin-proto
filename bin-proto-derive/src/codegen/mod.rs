@@ -3,7 +3,7 @@ pub mod enums;
 use crate::attr::{self, LengthPrefix};
 use proc_macro2::TokenStream;
 
-pub fn read_fields(fields: &syn::Fields) -> TokenStream {
+pub fn reads(fields: &syn::Fields) -> TokenStream {
     match *fields {
         syn::Fields::Named(ref fields_named) => read_named_fields(fields_named),
         syn::Fields::Unnamed(ref fields_unnamed) => read_unnamed_fields(fields_unnamed),
@@ -11,7 +11,7 @@ pub fn read_fields(fields: &syn::Fields) -> TokenStream {
     }
 }
 
-pub fn write_fields(fields: &syn::Fields) -> TokenStream {
+pub fn writes(fields: &syn::Fields) -> TokenStream {
     match *fields {
         syn::Fields::Named(ref fields_named) => write_named_fields(fields_named),
         syn::Fields::Unnamed(ref fields_unnamed) => write_unnamed_fields(fields_unnamed),
@@ -32,12 +32,12 @@ fn read_named_fields(fields_named: &syn::FieldsNamed) -> TokenStream {
             let field_name = &field.ident;
             let field_ty = &field.ty;
 
-            let read_field = read_field(field);
+            let read = read(field);
             let post = update_hints_after_read(field, &fields_named.named);
 
             quote! {
                 #field_name : {
-                    let res: bin_proto::Result<#field_ty> = #read_field;
+                    let res: bin_proto::Result<#field_ty> = #read;
                     #post
                     res?
                 }
@@ -48,48 +48,48 @@ fn read_named_fields(fields_named: &syn::FieldsNamed) -> TokenStream {
     quote! { { #( #field_initializers ),* } }
 }
 
-fn read_field(field: &syn::Field) -> TokenStream {
+fn read(field: &syn::Field) -> TokenStream {
     let attribs = attr::protocol(&field.attrs);
     if let Some(field_width) = attribs.bit_field {
         return quote! {
-            bin_proto::BitField::read_field(__io_reader, __settings, #field_width)
+            bin_proto::BitField::read(__io_reader, __settings, #field_width)
         };
     }
     if attribs.flexible_array_member {
         return quote! {
-            bin_proto::FlexibleArrayMember::read_field(__io_reader, __settings)
+            bin_proto::FlexibleArrayMember::read(__io_reader, __settings)
         };
     }
     if attribs.length_prefix.is_some() {
         quote! {
-            bin_proto::ExternallyLengthPrefixed::read_field(__io_reader, __settings, &mut __hints)
+            bin_proto::ExternallyLengthPrefixed::read(__io_reader, __settings, &mut __hints)
         }
     } else {
         quote! {
-            bin_proto::Protocol::read_field(__io_reader, __settings)
+            bin_proto::Protocol::read(__io_reader, __settings)
         }
     }
 }
 
-fn write_field<T: quote::ToTokens>(field: &syn::Field, field_name: &T) -> TokenStream {
+fn write<T: quote::ToTokens>(field: &syn::Field, field_name: &T) -> TokenStream {
     let attribs = attr::protocol(&field.attrs);
     if let Some(field_width) = attribs.bit_field {
         return quote! {
-            bin_proto::BitField::write_field(&self. #field_name, __io_writer, __settings, #field_width)
+            bin_proto::BitField::write(&self. #field_name, __io_writer, __settings, #field_width)
         };
     }
     if attribs.flexible_array_member {
         return quote! {
-            bin_proto::FlexibleArrayMember::write_field(&self. #field_name, __io_writer, __settings)
+            bin_proto::FlexibleArrayMember::write(&self. #field_name, __io_writer, __settings)
         };
     }
     if attribs.length_prefix.is_some() {
         quote! {
-            bin_proto::ExternallyLengthPrefixed::write_field(&self. #field_name, __io_writer, __settings, &mut __hints)
+            bin_proto::ExternallyLengthPrefixed::write(&self. #field_name, __io_writer, __settings, &mut __hints)
         }
     } else {
         quote! {
-            bin_proto::Protocol::write_field(&self. #field_name, __io_writer, __settings)
+            bin_proto::Protocol::write(&self. #field_name, __io_writer, __settings)
         }
     }
 }
@@ -206,12 +206,12 @@ fn write_named_fields(fields_named: &syn::FieldsNamed) -> TokenStream {
         .map(|field| {
             let field_name = &field.ident;
 
-            let write_field = write_field(field, field_name);
+            let write = write(field, field_name);
             let post = update_hints_after_write(field, &fields_named.named);
 
             quote! {
                 {
-                    let res = #write_field;
+                    let res = #write;
                     #post
                     res?
                 }
@@ -228,11 +228,11 @@ fn read_unnamed_fields(fields_unnamed: &syn::FieldsUnnamed) -> TokenStream {
         .iter()
         .map(|field| {
             let field_ty = &field.ty;
-            let read_field = read_field(field);
+            let read = read(field);
 
             quote! {
                 {
-                    let res: bin_proto::Result<#field_ty> = #read_field;
+                    let res: bin_proto::Result<#field_ty> = #read;
                     __hints.next_field();
                     res?
                 }
@@ -250,11 +250,11 @@ fn write_unnamed_fields(fields_unnamed: &syn::FieldsUnnamed) -> TokenStream {
         .enumerate()
         .map(|(field_index, field)| {
             let field_index = syn::Index::from(field_index);
-            let write_field = write_field(field, &field_index);
+            let write = write(field, &field_index);
 
             quote! {
                 {
-                    let res = #write_field;
+                    let res = #write;
                     __hints.next_field();
                     res?
                 }
