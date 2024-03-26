@@ -1,6 +1,5 @@
 #![recursion_limit = "128"]
 
-extern crate proc_macro;
 extern crate proc_macro2;
 extern crate syn;
 #[macro_use]
@@ -11,6 +10,7 @@ mod codegen;
 mod format;
 mod plan;
 
+use attr::Attrs;
 use proc_macro::TokenStream;
 
 #[proc_macro_derive(Protocol, attributes(protocol))]
@@ -87,13 +87,12 @@ fn impl_parcel_for_struct(
     impl_trait_for(
         ast,
         quote!(bin_proto::Protocol),
-        quote! {
+        quote!(
             #[allow(unused_variables)]
             fn read(__io_reader: &mut bin_proto::BitRead,
                           __settings: &bin_proto::Settings,
                            __ctx: &mut dyn core::any::Any)
                 -> bin_proto::Result<Self> {
-                // Each type gets its own hints.
                 #hints
 
                 Ok(Self # reads)
@@ -107,7 +106,7 @@ fn impl_parcel_for_struct(
                 #writes
                 Ok(())
             }
-        },
+        ),
     )
 }
 
@@ -116,7 +115,7 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
     let discriminant_ty = plan.discriminant();
 
     let (read_variant, write_variant) = if let Some(field_width) =
-        attr::protocol(&ast.attrs).bit_field
+        Attrs::from(ast.attrs.as_slice()).bit_field
     {
         (
             codegen::enums::read_variant(
@@ -150,7 +149,7 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
             ),
             codegen::enums::write_variant(plan, &|variant| {
                 let discriminant_ref_expr = variant.discriminant_ref_expr();
-                quote! { <#discriminant_ty as bin_proto::Protocol>::write(#discriminant_ref_expr, __io_writer, __settings, __ctx)?; }
+                quote!( <#discriminant_ty as bin_proto::Protocol>::write(#discriminant_ref_expr, __io_writer, __settings, __ctx)?; )
             }),
         )
     };
@@ -158,7 +157,7 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
     impl_trait_for(
         ast,
         quote!(bin_proto::Protocol),
-        quote! {
+        quote!(
             #[allow(unused_variables)]
             fn read(__io_reader: &mut bin_proto::BitRead,
                           __settings: &bin_proto::Settings,
@@ -176,7 +175,7 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
                 #write_variant
                 Ok(())
             }
-        },
+        ),
     )
 }
 
@@ -225,7 +224,7 @@ fn anonymous_constant_block(
         proc_macro2::Span::call_site(),
     );
 
-    quote! {
+    quote!(
         #[allow(non_upper_case_globals)]
         const #anon_const_name: () = {
             extern crate bin_proto;
@@ -233,7 +232,7 @@ fn anonymous_constant_block(
 
             #body
         };
-    }
+    )
 }
 
 fn impl_trait_for(
@@ -250,11 +249,11 @@ fn impl_trait_for(
     anonymous_constant_block(
         &description,
         item_name,
-        quote! {
+        quote!(
             impl < #(#generics),* > #trait_name for #item_name < #(#generics),* >
                 where #(#where_predicates),* {
                 #impl_body
             }
-        },
+        ),
     )
 }

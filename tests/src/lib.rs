@@ -45,6 +45,8 @@ macro_rules! verify_read_back {
 #[cfg(test)]
 mod aligned;
 #[cfg(test)]
+mod ctx;
+#[cfg(test)]
 mod enum_trait;
 #[cfg(test)]
 mod enums;

@@ -25,7 +25,7 @@ pub type FieldIndex = usize;
 /// Information about the length of a field.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct FieldLength {
-    pub length: usize,
+    pub length: u32,
     pub kind: LengthPrefixKind,
 }
 

@@ -34,12 +34,12 @@ pub fn write_variant(
         })
         .collect();
 
-    quote! {
+    quote!(
         match *self {
             #(#variant_match_branches,)*
             _ => return Err(bin_proto::Error::UnknownEnumDiscriminant(String::new())),
         }
-    }
+    )
 }
 
 pub fn read_variant(plan: &plan::Enum, read_discriminant: TokenStream) -> TokenStream {
@@ -54,15 +54,15 @@ pub fn read_variant(plan: &plan::Enum, read_discriminant: TokenStream) -> TokenS
         let initializer = codegen::reads(&variant.fields);
         let hints = codegen::hints(&variant.fields);
 
-        quote! {
+        quote!(
             #discriminant_literal => {
                 #hints
                 Self::#variant_name # initializer
             }
-        }
+        )
     });
 
-    quote! {
+    quote!(
         {
             let discriminant: #discriminant_ty = #read_discriminant;
 
@@ -75,7 +75,7 @@ pub fn read_variant(plan: &plan::Enum, read_discriminant: TokenStream) -> TokenS
                 },
             }
         }
-    }
+    )
 }
 
 /// Generates code for a pattern that binds a set of fields by reference.
@@ -96,13 +96,13 @@ pub fn bind_fields_pattern(
                 .named
                 .iter()
                 .map(|f| &f.ident)
-                .map(|n| quote! { ref #n });
+                .map(|n| quote!( ref #n ));
 
             (
                 field_names,
-                quote! {
+                quote!(
                     #parent_name { #( #field_name_refs ),* }
-                },
+                ),
             )
         }
         syn::Fields::Unnamed(ref fields_unnamed) => {
@@ -110,13 +110,13 @@ pub fn bind_fields_pattern(
                 .map(|i| syn::Ident::new(&format!("field_{}", i), proc_macro2::Span::call_site()))
                 .collect();
 
-            let field_refs: Vec<_> = binding_names.iter().map(|i| quote! { ref #i }).collect();
+            let field_refs: Vec<_> = binding_names.iter().map(|i| quote!( ref #i )).collect();
 
             (
                 binding_names,
-                quote! {
+                quote!(
                     #parent_name ( #( #field_refs ),* )
-                },
+                ),
             )
         }
         syn::Fields::Unit => (Vec::new(), quote!(#parent_name)),

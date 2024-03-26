@@ -6,7 +6,7 @@ use crate::externally_length_prefixed::{FieldLength, LengthPrefixKind};
 use crate::{BitRead, BitWrite, Error, Protocol, Settings};
 
 use core::any::Any;
-use std::convert::TryFrom;
+use std::convert::{TryFrom, TryInto};
 use std::io;
 
 /// The integer type that we will use to send length prefixes.
@@ -14,7 +14,7 @@ pub type SizeType = u32;
 
 /// Reads a specified number of items from a stream.
 pub fn read_items<T>(
-    item_count: usize,
+    item_count: u32,
     read: &mut dyn BitRead,
     settings: &Settings,
     ctx: &mut dyn Any,
@@ -22,7 +22,7 @@ pub fn read_items<T>(
 where
     T: Protocol,
 {
-    let mut elements = Vec::with_capacity(item_count);
+    let mut elements = Vec::with_capacity(item_count.try_into().unwrap());
 
     for _ in 0..item_count {
         let element = T::read(read, settings, ctx)?;
@@ -58,7 +58,6 @@ where
     T: Protocol,
 {
     let size = SizeType::read(read, settings, ctx)?;
-    let size: usize = usize::try_from(size)?;
 
     read_items(size, read, settings, ctx).map(|i| i.collect())
 }

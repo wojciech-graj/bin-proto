@@ -1,4 +1,4 @@
-use crate::{attr, format};
+use crate::{attr::Attrs, format};
 use proc_macro2::{Span, TokenStream};
 
 /// The first integer discriminant assigned,
@@ -34,7 +34,7 @@ pub struct EnumVariant {
 impl Enum {
     /// Creates a layout plan for an enum.
     pub fn new(ast: &syn::DeriveInput, e: &syn::DataEnum) -> Enum {
-        let attrs = attr::protocol(&ast.attrs);
+        let attrs = Attrs::from(ast.attrs.as_slice());
         let mut plan = Enum {
             ident: ast.ident.clone(),
             explicit_format: attrs.discriminant_format,
@@ -50,7 +50,8 @@ impl Enum {
 
                     EnumVariant {
                         ident: variant.ident.clone(),
-                        explicit_discriminant_attr: attr::protocol(&variant.attrs).discriminant,
+                        explicit_discriminant_attr: Attrs::from(variant.attrs.as_slice())
+                            .discriminant,
                         explicit_int_discriminant_equals: equals_discriminant,
                         actual_discriminant: None,
                         fields: variant.fields.clone(),
