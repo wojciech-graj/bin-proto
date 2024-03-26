@@ -155,7 +155,6 @@ where
         write: &mut dyn BitWrite,
         settings: &Settings,
         ctx: &mut dyn Any,
-        length: &FieldLength,
     ) -> Result<(), Error> {
         let mut unaligned_bytes: Vec<u8> = Vec::new();
         ExternallyLengthPrefixed::write(
@@ -163,7 +162,6 @@ where
             &mut BitWriter::endian(&mut unaligned_bytes, BigEndian),
             settings,
             ctx,
-            length,
         )?;
         let aligned_bytes = align_to(Self::alignment_bytes(), 0x00, unaligned_bytes);
         write.write_bytes(&aligned_bytes)?;

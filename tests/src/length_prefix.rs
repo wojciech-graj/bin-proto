@@ -1,13 +1,6 @@
 use bin_proto::{ExternallyLengthPrefixed, Protocol, Settings};
 
 #[derive(bin_proto::Protocol, Debug, PartialEq, Eq)]
-struct ExternallyLengthPrefixedSeparateType {
-    pub prefix: Prefix,
-    #[protocol(length_prefix(bytes("prefix.reason_length")))]
-    pub reason: String,
-}
-
-#[derive(bin_proto::Protocol, Debug, PartialEq, Eq)]
 struct Foo<L: ExternallyLengthPrefixed> {
     pub reason_length: u16,
     pub other: u8,

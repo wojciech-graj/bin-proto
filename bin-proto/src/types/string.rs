@@ -40,7 +40,6 @@ impl ExternallyLengthPrefixed for String {
         write: &mut dyn BitWrite,
         settings: &Settings,
         ctx: &mut dyn Any,
-        _: &FieldLength,
     ) -> Result<(), Error> {
         let bytes: Vec<u8> = str::bytes(self).collect();
         util::write_list(&bytes, write, settings, ctx)

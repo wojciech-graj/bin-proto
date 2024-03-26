@@ -1,12 +1,11 @@
 use crate::format::{self, Format};
 
-use proc_macro2::{Span, TokenStream};
+use proc_macro2::TokenStream;
 
 #[derive(Debug)]
 pub struct LengthPrefix {
     pub kind: LengthPrefixKind,
     pub prefix_field_name: syn::Ident,
-    pub prefix_subfield_names: Vec<syn::Ident>,
 }
 
 #[derive(Debug, Default)]
@@ -100,37 +99,19 @@ pub fn protocol(attrs: &[syn::Attribute]) -> Attribs {
 
                             let length_prefix_expr =
                                 expect::meta_list::single_element(nested_list).unwrap();
-                            let (prefix_field_name, prefix_subfield_names) =
-                                match length_prefix_expr {
-                                    syn::NestedMeta::Lit(syn::Lit::Str(s)) => {
-                                        let mut parts: Vec<_> = s
-                                            .value()
-                                            .split('.')
-                                            .map(|s| syn::Ident::new(s, Span::call_site()))
-                                            .collect();
-
-                                        if parts.is_empty() {
-                                            panic!("there must be at least one field mentioned");
-                                        }
-
-                                        let field_ident = parts.remove(0);
-                                        let subfield_idents = parts.into_iter().collect();
-
-                                        (field_ident, subfield_idents)
+                            let prefix_field_name = match length_prefix_expr {
+                                syn::NestedMeta::Meta(syn::Meta::Path(path)) => {
+                                    match path.get_ident() {
+                                        Some(field_ident) => field_ident.clone(),
+                                        None => panic!("path is not an ident"),
                                     }
-                                    syn::NestedMeta::Meta(syn::Meta::Path(path)) => {
-                                        match path.get_ident() {
-                                            Some(field_ident) => (field_ident.clone(), Vec::new()),
-                                            None => panic!("path is not an ident"),
-                                        }
-                                    }
-                                    _ => panic!("unexpected format for length prefix attribute"),
-                                };
+                                }
+                                _ => panic!("unexpected format for length prefix attribute"),
+                            };
 
                             attribs.length_prefix = Some(LengthPrefix {
                                 kind: prefix_kind,
                                 prefix_field_name,
-                                prefix_subfield_names,
                             })
                         }
                         "discriminant" => {

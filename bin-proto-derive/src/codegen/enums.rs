@@ -43,7 +43,6 @@ pub fn write_variant(
 }
 
 pub fn read_variant(plan: &plan::Enum, read_discriminant: TokenStream) -> TokenStream {
-    let enum_name = &plan.ident;
     let discriminant_ty = plan.discriminant();
     let discriminant_var = syn::Ident::new("discriminant", Span::call_site());
     let discriminant_for_pattern_matching =
@@ -53,10 +52,12 @@ pub fn read_variant(plan: &plan::Enum, read_discriminant: TokenStream) -> TokenS
         let variant_name = &variant.ident;
         let discriminant_literal = variant.discriminant_literal();
         let initializer = codegen::reads(&variant.fields);
+        let hints = codegen::hints(&variant.fields);
 
         quote! {
             #discriminant_literal => {
-                #enum_name::#variant_name # initializer
+                #hints
+                Self::#variant_name # initializer
             }
         }
     });

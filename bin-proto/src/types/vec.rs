@@ -34,7 +34,6 @@ impl<T: Protocol> ExternallyLengthPrefixed for Vec<T> {
         write: &mut dyn BitWrite,
         settings: &Settings,
         ctx: &mut dyn Any,
-        _: &FieldLength,
     ) -> Result<(), Error> {
         util::write_list(self.iter(), write, settings, ctx)
     }

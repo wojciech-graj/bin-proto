@@ -3,6 +3,25 @@ pub mod enums;
 use crate::attr::{self, LengthPrefix};
 use proc_macro2::TokenStream;
 
+pub fn hints(fields: &syn::Fields) -> TokenStream {
+    match *fields {
+        syn::Fields::Named(ref fields) => {
+            fields
+                .named
+                .iter()
+                .filter_map(|field| {
+                    let field_name = &field.ident;
+
+                    if attr::protocol(&field.attrs).length_prefix.is_some() {Some(quote! {
+                        let mut #field_name: Option<bin_proto::externally_length_prefixed::FieldLength> = None;
+                    })} else {None}
+                })
+                .collect()
+        }
+        _ => quote!(),
+    }
+}
+
 pub fn reads(fields: &syn::Fields) -> TokenStream {
     match *fields {
         syn::Fields::Named(ref fields_named) => read_named_fields(fields_named),
@@ -37,9 +56,9 @@ fn read_named_fields(fields_named: &syn::FieldsNamed) -> TokenStream {
 
             quote! {
                 #field_name : {
-                    let res: bin_proto::Result<#field_ty> = #read;
+                    let res: #field_ty = #read?;
                     #post
-                    res?
+                    res
                 }
             }
         })
@@ -61,8 +80,9 @@ fn read(field: &syn::Field) -> TokenStream {
         };
     }
     if attribs.length_prefix.is_some() {
+        let field_ident = field.clone().ident.unwrap().clone();
         quote! {
-            bin_proto::ExternallyLengthPrefixed::read(__io_reader, __settings, __ctx, &__hints.current_field_length()?)
+            bin_proto::ExternallyLengthPrefixed::read(__io_reader, __settings, __ctx, &#field_ident .unwrap())
         }
     } else {
         quote! {
@@ -85,7 +105,7 @@ fn write<T: quote::ToTokens>(field: &syn::Field, field_name: &T) -> TokenStream 
     }
     if attribs.length_prefix.is_some() {
         quote! {
-            bin_proto::ExternallyLengthPrefixed::write(&self. #field_name, __io_writer, __settings, __ctx, &__hints.current_field_length()?)
+            bin_proto::ExternallyLengthPrefixed::write(&self. #field_name, __io_writer, __settings, __ctx)
         }
     } else {
         quote! {
@@ -95,51 +115,22 @@ fn write<T: quote::ToTokens>(field: &syn::Field, field_name: &T) -> TokenStream 
 }
 
 fn update_hints_after_read<'a>(
-    field: &'a syn::Field,
+    field: &syn::Field,
     fields: impl IntoIterator<Item = &'a syn::Field> + Clone,
 ) -> TokenStream {
-    if let Some((length_prefix_of, kind, prefix_subfield_names)) =
-        length_prefix_of(field, fields.clone())
-    {
-        let kind = kind.path_expr();
+    if let Some(length_prefix_of) = length_prefix_of(field, fields.clone()) {
+        let attrs = attr::protocol(&length_prefix_of.attrs);
+        let kind = attrs.length_prefix.unwrap().kind.path_expr();
+        let field_name = length_prefix_of.clone().ident.unwrap();
 
         quote! {
-            if let Ok(parcel) = res.as_ref() {
-                __hints.set_field_length(#length_prefix_of,
-                                         (parcel #(.#prefix_subfield_names)* ).clone() as usize,
-                                         #kind);
-            }
-            __hints.next_field();
+                #field_name = Some(bin_proto::externally_length_prefixed::FieldLength{
+                    kind: #kind,
+                    length: res as usize,
+            });
         }
     } else {
-        quote! {
-            __hints.next_field();
-        }
-    }
-}
-
-fn update_hints_after_write<'a>(
-    field: &'a syn::Field,
-    fields: impl IntoIterator<Item = &'a syn::Field> + Clone,
-) -> TokenStream {
-    if let Some((length_prefix_of, kind, prefix_subfield_names)) =
-        length_prefix_of(field, fields.clone())
-    {
-        let field_name = &field.ident;
-        let kind = kind.path_expr();
-
-        quote! {
-            if let Ok(()) = res {
-                __hints.set_field_length(#length_prefix_of,
-                                         (self.#field_name #(.#prefix_subfield_names)* ).clone() as usize,
-                                         #kind);
-            }
-            __hints.next_field();
-        }
-    } else {
-        quote! {
-            __hints.next_field();
-        }
+        quote! {}
     }
 }
 
@@ -150,53 +141,36 @@ fn update_hints_after_write<'a>(
 ///
 /// Returns the field index of the field whose length is specified.
 fn length_prefix_of<'a>(
-    field: &'a syn::Field,
+    field: &syn::Field,
     fields: impl IntoIterator<Item = &'a syn::Field> + Clone,
-) -> Option<(usize, attr::LengthPrefixKind, Vec<syn::Ident>)> {
+) -> Option<syn::Field> {
     let potential_prefix = field.ident.as_ref();
-
-    let prefix_of = fields.clone().into_iter().find(|potential_prefix_of| {
-        if let Some(LengthPrefix {
-            ref prefix_field_name,
-            ..
-        }) = attr::protocol(&potential_prefix_of.attrs).length_prefix
-        {
-            if !fields
-                .clone()
-                .into_iter()
-                .any(|f| f.ident.as_ref() == Some(prefix_field_name))
+    fields
+        .clone()
+        .into_iter()
+        .find(|potential_prefix_of| {
+            if let Some(LengthPrefix {
+                ref prefix_field_name,
+                ..
+            }) = attr::protocol(&potential_prefix_of.attrs).length_prefix
             {
-                panic!(
-                    "length prefix is invalid: there is no sibling field named '{}",
-                    prefix_field_name
-                );
+                if !fields
+                    .clone()
+                    .into_iter()
+                    .any(|f| f.ident.as_ref() == Some(prefix_field_name))
+                {
+                    panic!(
+                        "length prefix is invalid: there is no sibling field named '{}",
+                        prefix_field_name
+                    );
+                }
+
+                potential_prefix == Some(prefix_field_name)
+            } else {
+                false
             }
-
-            potential_prefix == Some(prefix_field_name)
-        } else {
-            false
-        }
-    });
-
-    if let Some(prefix_of) = prefix_of {
-        let prefix_of_index = fields
-            .clone()
-            .into_iter()
-            .position(|f| f == prefix_of)
-            .unwrap();
-        if let Some(LengthPrefix {
-            kind,
-            prefix_subfield_names,
-            ..
-        }) = attr::protocol(&prefix_of.attrs).length_prefix
-        {
-            Some((prefix_of_index, kind, prefix_subfield_names))
-        } else {
-            unreachable!()
-        }
-    } else {
-        None
-    }
+        })
+        .cloned()
 }
 
 fn write_named_fields(fields_named: &syn::FieldsNamed) -> TokenStream {
@@ -207,12 +181,10 @@ fn write_named_fields(fields_named: &syn::FieldsNamed) -> TokenStream {
             let field_name = &field.ident;
 
             let write = write(field, field_name);
-            let post = update_hints_after_write(field, &fields_named.named);
 
             quote! {
                 {
                     let res = #write;
-                    #post
                     res?
                 }
             }
@@ -233,7 +205,6 @@ fn read_unnamed_fields(fields_unnamed: &syn::FieldsUnnamed) -> TokenStream {
             quote! {
                 {
                     let res: bin_proto::Result<#field_ty> = #read;
-                    __hints.next_field();
                     res?
                 }
             }
@@ -255,7 +226,6 @@ fn write_unnamed_fields(fields_unnamed: &syn::FieldsUnnamed) -> TokenStream {
             quote! {
                 {
                     let res = #write;
-                    __hints.next_field();
                     res?
                 }
             }

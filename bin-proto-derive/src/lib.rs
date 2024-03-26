@@ -80,7 +80,7 @@ fn impl_parcel_for_struct(
     ast: &syn::DeriveInput,
     strukt: &syn::DataStruct,
 ) -> proc_macro2::TokenStream {
-    let strukt_name = &ast.ident;
+    let hints = codegen::hints(&strukt.fields);
     let reads = codegen::reads(&strukt.fields);
     let writes = codegen::writes(&strukt.fields);
 
@@ -94,9 +94,9 @@ fn impl_parcel_for_struct(
                            __ctx: &mut dyn core::any::Any)
                 -> bin_proto::Result<Self> {
                 // Each type gets its own hints.
-                let mut __hints = bin_proto::externally_length_prefixed::Hints::default();
+                #hints
 
-                Ok(#strukt_name # reads)
+                Ok(Self # reads)
             }
 
             #[allow(unused_variables)]
@@ -104,9 +104,6 @@ fn impl_parcel_for_struct(
                            __settings: &bin_proto::Settings,
                            __ctx: &mut dyn core::any::Any)
                 -> bin_proto::Result<()> {
-                // Each type gets its own hints.
-                let mut __hints = bin_proto::externally_length_prefixed::Hints::default();
-
                 #writes
                 Ok(())
             }
@@ -167,8 +164,6 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
                           __settings: &bin_proto::Settings,
                            __ctx: &mut dyn core::any::Any)
                 -> bin_proto::Result<Self> {
-                // Each type gets its own hints.
-                let mut __hints = bin_proto::externally_length_prefixed::Hints::default();
 
                 Ok(#read_variant)
             }
@@ -178,11 +173,7 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
                            __settings: &bin_proto::Settings,
                            __ctx: &mut dyn core::any::Any)
                 -> bin_proto::Result<()> {
-                // Each type gets its own hints.
-                let mut __hints = bin_proto::externally_length_prefixed::Hints::default();
-
                 #write_variant
-
                 Ok(())
             }
         },
@@ -190,7 +181,6 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
 }
 
 fn impl_enum_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro2::TokenStream {
-    let enum_ident = &plan.ident;
     let discriminant = plan.discriminant();
 
     let variant_matchers = plan.variants.iter().map(|variant| {
@@ -198,7 +188,7 @@ fn impl_enum_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro2:
         let discriminant = variant.discriminant_expr();
         let fields_expr = variant.ignore_fields_pattern_expr();
 
-        quote!(#enum_ident::#variant_ident #fields_expr => {
+        quote!(Self::#variant_ident #fields_expr => {
             #discriminant
         })
     });
