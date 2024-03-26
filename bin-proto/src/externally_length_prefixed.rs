@@ -11,7 +11,7 @@ pub trait ExternallyLengthPrefixed: Sized {
         read: &mut dyn BitRead,
         settings: &Settings,
         ctx: &mut dyn Any,
-        hints: &mut Hints,
+        length: &FieldLength,
     ) -> Result<Self, Error>;
 
     fn write(
@@ -19,13 +19,14 @@ pub trait ExternallyLengthPrefixed: Sized {
         write: &mut dyn BitWrite,
         settings: &Settings,
         ctx: &mut dyn Any,
-        hints: &mut Hints,
+        length: &FieldLength,
     ) -> Result<(), Error>;
 }
 
 pub type FieldIndex = usize;
 
 /// Hints given when reading parcels.
+#[doc(hidden)]
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Hints {
     pub current_field_index: FieldIndex,
@@ -50,16 +51,6 @@ pub enum LengthPrefixKind {
     Elements,
 }
 
-impl Hints {
-    /// Gets the length of the field currently being
-    /// read, if known.
-    pub fn current_field_length(&self) -> Option<FieldLength> {
-        self.known_field_lengths
-            .get(&self.current_field_index)
-            .cloned()
-    }
-}
-
 /// Helpers for the `bin_proto-derive` crate.
 #[doc(hidden)]
 mod bin_proto_derive_helpers {
@@ -80,6 +71,14 @@ mod bin_proto_derive_helpers {
         ) {
             self.known_field_lengths
                 .insert(field_index, FieldLength { kind, length });
+        }
+
+        // Gets the length of the field currently being read, if known.
+        pub fn current_field_length(&self) -> Result<FieldLength, Error> {
+            self.known_field_lengths
+                .get(&self.current_field_index)
+                .cloned()
+                .ok_or(Error::NoLengthPrefix)
         }
     }
 }

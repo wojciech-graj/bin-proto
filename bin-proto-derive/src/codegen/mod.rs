@@ -62,7 +62,7 @@ fn read(field: &syn::Field) -> TokenStream {
     }
     if attribs.length_prefix.is_some() {
         quote! {
-            bin_proto::ExternallyLengthPrefixed::read(__io_reader, __settings, __ctx, &mut __hints)
+            bin_proto::ExternallyLengthPrefixed::read(__io_reader, __settings, __ctx, &__hints.current_field_length()?)
         }
     } else {
         quote! {
@@ -85,7 +85,7 @@ fn write<T: quote::ToTokens>(field: &syn::Field, field_name: &T) -> TokenStream 
     }
     if attribs.length_prefix.is_some() {
         quote! {
-            bin_proto::ExternallyLengthPrefixed::write(&self. #field_name, __io_writer, __settings, __ctx, &mut __hints)
+            bin_proto::ExternallyLengthPrefixed::write(&self. #field_name, __io_writer, __settings, __ctx, &__hints.current_field_length()?)
         }
     } else {
         quote! {

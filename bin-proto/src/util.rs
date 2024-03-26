@@ -3,7 +3,7 @@
 use bitstream_io::{BigEndian, BitReader};
 
 use crate::externally_length_prefixed::{FieldLength, LengthPrefixKind};
-use crate::{externally_length_prefixed, BitRead, BitWrite, Error, Protocol, Settings};
+use crate::{BitRead, BitWrite, Error, Protocol, Settings};
 
 use core::any::Any;
 use std::convert::TryFrom;
@@ -93,37 +93,31 @@ pub fn read_list_with_hints<T>(
     read: &mut dyn BitRead,
     settings: &Settings,
     ctx: &mut dyn Any,
-    hints: &mut externally_length_prefixed::Hints,
+    length: &FieldLength,
 ) -> Result<Vec<T>, Error>
 where
     T: Protocol,
 {
-    match hints.current_field_length() {
-        Some(FieldLength { length, kind }) => {
-            match kind {
-                LengthPrefixKind::Bytes => {
-                    let byte_count = length;
+    let FieldLength { length, kind } = *length;
+    match kind {
+        LengthPrefixKind::Bytes => {
+            let byte_count = length;
 
-                    // First, read all bytes of the list without processing them.
-                    let bytes: Vec<u8> = read_items(byte_count, read, settings, ctx)?.collect();
-                    let mut read_back_bytes = BitReader::endian(io::Cursor::new(bytes), BigEndian);
+            // First, read all bytes of the list without processing them.
+            let bytes: Vec<u8> = read_items(byte_count, read, settings, ctx)?.collect();
+            let mut read_back_bytes = BitReader::endian(io::Cursor::new(bytes), BigEndian);
 
-                    // Then, parse the items until we reach the end of the buffer stream.
-                    let mut items = Vec::new();
-                    // FIXME: potential DoS vector, should timeout.
-                    while read_back_bytes.position_in_bits().unwrap() < (byte_count as u64) * 8 {
-                        let item = T::read(&mut read_back_bytes, settings, ctx)?;
-                        items.push(item);
-                    }
-
-                    Ok(items)
-                }
-                LengthPrefixKind::Elements => {
-                    read_items(length, read, settings, ctx).map(|i| i.collect())
-                }
+            // Then, parse the items until we reach the end of the buffer stream.
+            let mut items = Vec::new();
+            // FIXME: potential DoS vector, should timeout.
+            while read_back_bytes.position_in_bits().unwrap() < (byte_count as u64) * 8 {
+                let item = T::read(&mut read_back_bytes, settings, ctx)?;
+                items.push(item);
             }
+
+            Ok(items)
         }
-        _ => Err(Error::NoLengthPrefix),
+        LengthPrefixKind::Elements => read_items(length, read, settings, ctx).map(|i| i.collect()),
     }
 }
 

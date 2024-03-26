@@ -1,6 +1,6 @@
 use crate::{
-    externally_length_prefixed, util, BitRead, BitWrite, Error, ExternallyLengthPrefixed, Protocol,
-    Settings,
+    externally_length_prefixed::FieldLength, util, BitRead, BitWrite, Error,
+    ExternallyLengthPrefixed, Protocol, Settings,
 };
 use core::any::Any;
 
@@ -28,9 +28,9 @@ impl ExternallyLengthPrefixed for String {
         read: &mut dyn BitRead,
         settings: &Settings,
         ctx: &mut dyn Any,
-        hints: &mut externally_length_prefixed::Hints,
+        length: &FieldLength,
     ) -> Result<Self, Error> {
-        let bytes: Vec<u8> = util::read_list_with_hints(read, settings, ctx, hints)?;
+        let bytes: Vec<u8> = util::read_list_with_hints(read, settings, ctx, length)?;
 
         Ok(String::from_utf8(bytes)?)
     }
@@ -40,7 +40,7 @@ impl ExternallyLengthPrefixed for String {
         write: &mut dyn BitWrite,
         settings: &Settings,
         ctx: &mut dyn Any,
-        _: &mut externally_length_prefixed::Hints,
+        _: &FieldLength,
     ) -> Result<(), Error> {
         let bytes: Vec<u8> = str::bytes(self).collect();
         util::write_list(&bytes, write, settings, ctx)

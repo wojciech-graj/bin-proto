@@ -2,8 +2,8 @@ use bitstream_io::{BigEndian, BitWriter};
 use core::any::Any;
 
 use crate::{
-    externally_length_prefixed, BitRead, BitWrite, Error, ExternallyLengthPrefixed, Protocol,
-    Settings,
+    externally_length_prefixed::FieldLength, BitRead, BitWrite, Error, ExternallyLengthPrefixed,
+    Protocol, Settings,
 };
 use std::{marker, mem};
 
@@ -130,9 +130,9 @@ where
         read: &mut dyn BitRead,
         settings: &Settings,
         ctx: &mut dyn Any,
-        hints: &mut externally_length_prefixed::Hints,
+        length: &FieldLength,
     ) -> Result<Self, Error> {
-        let inner_value = <T as ExternallyLengthPrefixed>::read(read, settings, ctx, hints)?;
+        let inner_value = <T as ExternallyLengthPrefixed>::read(read, settings, ctx, length)?;
         let value_size = inner_value.bytes_ctx(settings, ctx).unwrap().len();
         let padding_size = calculate_padding(Self::alignment_bytes(), value_size);
 
@@ -155,7 +155,7 @@ where
         write: &mut dyn BitWrite,
         settings: &Settings,
         ctx: &mut dyn Any,
-        hints: &mut externally_length_prefixed::Hints,
+        length: &FieldLength,
     ) -> Result<(), Error> {
         let mut unaligned_bytes: Vec<u8> = Vec::new();
         ExternallyLengthPrefixed::write(
@@ -163,7 +163,7 @@ where
             &mut BitWriter::endian(&mut unaligned_bytes, BigEndian),
             settings,
             ctx,
-            hints,
+            length,
         )?;
         let aligned_bytes = align_to(Self::alignment_bytes(), 0x00, unaligned_bytes);
         write.write_bytes(&aligned_bytes)?;

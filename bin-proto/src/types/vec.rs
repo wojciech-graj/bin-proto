@@ -1,6 +1,6 @@
 use crate::{
-    externally_length_prefixed, util, BitRead, BitWrite, Error, ExternallyLengthPrefixed,
-    FlexibleArrayMember, Protocol, Settings,
+    externally_length_prefixed::FieldLength, util, BitRead, BitWrite, Error,
+    ExternallyLengthPrefixed, FlexibleArrayMember, Protocol, Settings,
 };
 use core::any::Any;
 
@@ -24,9 +24,9 @@ impl<T: Protocol> ExternallyLengthPrefixed for Vec<T> {
         read: &mut dyn BitRead,
         settings: &Settings,
         ctx: &mut dyn Any,
-        hints: &mut externally_length_prefixed::Hints,
+        length: &FieldLength,
     ) -> Result<Self, Error> {
-        util::read_list_with_hints(read, settings, ctx, hints)
+        util::read_list_with_hints(read, settings, ctx, length)
     }
 
     fn write(
@@ -34,7 +34,7 @@ impl<T: Protocol> ExternallyLengthPrefixed for Vec<T> {
         write: &mut dyn BitWrite,
         settings: &Settings,
         ctx: &mut dyn Any,
-        _: &mut externally_length_prefixed::Hints,
+        _: &FieldLength,
     ) -> Result<(), Error> {
         util::write_list(self.iter(), write, settings, ctx)
     }
