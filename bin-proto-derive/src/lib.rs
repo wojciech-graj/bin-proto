@@ -90,7 +90,8 @@ fn impl_parcel_for_struct(
         quote! {
             #[allow(unused_variables)]
             fn read(__io_reader: &mut bin_proto::BitRead,
-                          __settings: &bin_proto::Settings)
+                          __settings: &bin_proto::Settings,
+                           __ctx: &mut dyn core::any::Any)
                 -> bin_proto::Result<Self> {
                 // Each type gets its own hints.
                 let mut __hints = bin_proto::externally_length_prefixed::Hints::default();
@@ -100,7 +101,8 @@ fn impl_parcel_for_struct(
 
             #[allow(unused_variables)]
             fn write(&self, __io_writer: &mut bin_proto::BitWrite,
-                           __settings: &bin_proto::Settings)
+                           __settings: &bin_proto::Settings,
+                           __ctx: &mut dyn core::any::Any)
                 -> bin_proto::Result<()> {
                 // Each type gets its own hints.
                 let mut __hints = bin_proto::externally_length_prefixed::Hints::default();
@@ -125,6 +127,7 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
                 quote!(bin_proto::BitField::read(
                     __io_reader,
                     __settings,
+                    __ctx,
                     #field_width,
                 )?),
             ),
@@ -138,7 +141,7 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
 
                 quote!(
                     const _: () = assert!(#discriminant_expr < (1 as #discriminant_ty) << #field_width, #error_message);
-                    <#discriminant_ty as bin_proto::BitField>::write(#discriminant_ref_expr, __io_writer, __settings, #field_width)?;
+                    <#discriminant_ty as bin_proto::BitField>::write(#discriminant_ref_expr, __io_writer, __settings, __ctx, #field_width)?;
                 )
             }),
         )
@@ -146,11 +149,11 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
         (
             codegen::enums::read_variant(
                 plan,
-                quote!(bin_proto::Protocol::read(__io_reader, __settings,)?),
+                quote!(bin_proto::Protocol::read(__io_reader, __settings, __ctx)?),
             ),
             codegen::enums::write_variant(plan, &|variant| {
                 let discriminant_ref_expr = variant.discriminant_ref_expr();
-                quote! { <#discriminant_ty as bin_proto::Protocol>::write(#discriminant_ref_expr, __io_writer, __settings)?; }
+                quote! { <#discriminant_ty as bin_proto::Protocol>::write(#discriminant_ref_expr, __io_writer, __settings, __ctx)?; }
             }),
         )
     };
@@ -161,7 +164,8 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
         quote! {
             #[allow(unused_variables)]
             fn read(__io_reader: &mut bin_proto::BitRead,
-                          __settings: &bin_proto::Settings)
+                          __settings: &bin_proto::Settings,
+                           __ctx: &mut dyn core::any::Any)
                 -> bin_proto::Result<Self> {
                 // Each type gets its own hints.
                 let mut __hints = bin_proto::externally_length_prefixed::Hints::default();
@@ -171,7 +175,8 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
 
             #[allow(unused_variables)]
             fn write(&self, __io_writer: &mut bin_proto::BitWrite,
-                           __settings: &bin_proto::Settings)
+                           __settings: &bin_proto::Settings,
+                           __ctx: &mut dyn core::any::Any)
                 -> bin_proto::Result<()> {
                 // Each type gets its own hints.
                 let mut __hints = bin_proto::externally_length_prefixed::Hints::default();

@@ -1,4 +1,5 @@
 use crate::{util, BitRead, BitWrite, Error, Protocol, Settings};
+use core::any::Any;
 
 macro_rules! impl_parcel_for_array {
     ($n:expr) => {
@@ -6,10 +7,14 @@ macro_rules! impl_parcel_for_array {
         where
             T: Copy,
         {
-            fn read(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
+            fn read(
+                read: &mut dyn BitRead,
+                settings: &Settings,
+                ctx: &mut dyn Any,
+            ) -> Result<Self, Error> {
                 use std::mem;
 
-                let elements: Vec<_> = util::read_items($n, read, settings)?.collect();
+                let elements: Vec<_> = util::read_items($n, read, settings, ctx)?.collect();
                 assert_eq!(
                     elements.len(),
                     $n,
@@ -32,8 +37,9 @@ macro_rules! impl_parcel_for_array {
                 &self,
                 write: &mut dyn BitWrite,
                 settings: &Settings,
+                ctx: &mut dyn Any,
             ) -> Result<(), Error> {
-                util::write_items(self.iter(), write, settings)
+                util::write_items(self.iter(), write, settings, ctx)
             }
         }
     };
@@ -96,7 +102,7 @@ mod test {
     #[test]
     fn can_read_array() {
         let mut data = BitReader::endian(Cursor::new([0u8, 1, 2, 3]), BigEndian);
-        let read_back: [u8; 4] = Protocol::read(&mut data, &Settings::default()).unwrap();
+        let read_back: [u8; 4] = Protocol::read(&mut data, &Settings::default(), &mut ()).unwrap();
         assert_eq!(read_back, [0, 1, 2, 3]);
     }
 
@@ -106,7 +112,7 @@ mod test {
         let mut writer = BitWriter::endian(&mut data, BigEndian);
 
         [5u8, 7, 9, 11]
-            .write(&mut writer, &Settings::default())
+            .write(&mut writer, &Settings::default(), &mut ())
             .unwrap();
         assert_eq!(data, vec![5, 7, 9, 11]);
     }

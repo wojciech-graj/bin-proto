@@ -55,11 +55,6 @@ impl LengthPrefixKind {
     }
 }
 
-/// Gets the value of the `repr(type)` attribute.
-pub fn repr(attrs: &[syn::Attribute]) -> Option<syn::Ident> {
-    attribute::with_ident("repr", attrs)
-}
-
 pub fn protocol(attrs: &[syn::Attribute]) -> Attribs {
     let meta_lists = attrs.iter().filter_map(|attr| match attr.parse_meta() {
         Ok(syn::Meta::List(meta_list)) => {
@@ -158,7 +153,7 @@ pub fn protocol(attrs: &[syn::Attribute]) -> Attribs {
                                                 Ok(f) => f,
                                                 Err(()) => {
                                                     panic!(
-                                                        "invalid enum discriminant format: '{}",
+                                                        "invalid enum discriminant format: '{}'",
                                                         s.value()
                                                     )
                                                 }
@@ -227,42 +222,5 @@ mod expect {
                 _ => Err(()),
             })
         }
-    }
-}
-
-mod attribute {
-    pub fn with_list(name: &str, attrs: &[syn::Attribute]) -> Option<Vec<syn::NestedMeta>> {
-        attrs
-            .iter()
-            .filter_map(|attr| match attr.parse_meta() {
-                Ok(syn::Meta::List(list)) => match list.path.get_ident() {
-                    Some(ident) if ident == name => Some(list.nested.into_iter().collect()),
-                    _ => None,
-                },
-                _ => None,
-            })
-            .next()
-    }
-
-    pub fn with_unitary_list(name: &str, attrs: &[syn::Attribute]) -> Option<syn::NestedMeta> {
-        with_list(name, attrs).map(|list| {
-            if list.len() != 1 {
-                panic!(
-                    "expected only one meta inside list but found {}",
-                    list.len()
-                );
-            }
-            list.into_iter().next().unwrap()
-        })
-    }
-
-    pub fn with_ident(name: &str, attrs: &[syn::Attribute]) -> Option<syn::Ident> {
-        with_unitary_list(name, attrs).map(|nested| match nested {
-            syn::NestedMeta::Meta(syn::Meta::Path(path)) => match path.get_ident() {
-                Some(ident) => ident.clone(),
-                None => panic!("expected an ident"),
-            },
-            _ => panic!("expected an ident"),
-        })
     }
 }

@@ -16,7 +16,7 @@ mod string_discriminants {
     }
 
     #[derive(bin_proto::Protocol, Debug, PartialEq)]
-    #[protocol(discriminant = "string")]
+    #[protocol(discriminant = "str")]
     pub enum Axis {
         X,
         Y,
@@ -26,7 +26,7 @@ mod string_discriminants {
     }
 
     #[derive(bin_proto::Protocol, Debug, PartialEq)]
-    #[protocol(discriminant = "string")]
+    #[protocol(discriminant = "str")]
     pub enum RenamedVariant {
         Hello,
         #[protocol(discriminant("Universe"))]
@@ -34,7 +34,7 @@ mod string_discriminants {
     }
 
     #[derive(bin_proto::Protocol, Debug, PartialEq)]
-    #[protocol(discriminant = "string")]
+    #[protocol(discriminant = "str")]
     pub enum WithDiscriminantAttrs {
         #[protocol(discriminant("FooBar"))]
         Foo,
@@ -149,7 +149,7 @@ mod integer_discriminants {
     use bin_proto::{Protocol, Settings};
 
     #[derive(bin_proto::Protocol, Debug, PartialEq, Eq)]
-    #[protocol(discriminant = "integer")]
+    #[protocol(discriminant = "u32")]
     pub enum BoatKind {
         Speedboat { warp_speed_enabled: bool },
         Dingy(u8, u8),
@@ -157,16 +157,14 @@ mod integer_discriminants {
     }
 
     #[derive(bin_proto::Protocol, Debug, PartialEq, Eq)]
-    #[protocol(discriminant = "integer")]
-    #[repr(u8)]
+    #[protocol(discriminant = "u8")]
     enum WithCustomRepr {
         First = 1,
         Second = 2,
     }
 
     #[derive(bin_proto::Protocol, Debug, PartialEq)]
-    #[protocol(discriminant = "integer")]
-    #[repr(u8)]
+    #[protocol(discriminant = "u8")]
     pub enum CustomDiscriminantAttrs {
         #[protocol(discriminant(255))]
         Hello,
@@ -175,8 +173,7 @@ mod integer_discriminants {
     }
 
     #[derive(bin_proto::Protocol, Debug, PartialEq, Eq)]
-    #[protocol(discriminant = "integer")]
-    #[repr(i8)]
+    #[protocol(discriminant = "i8")]
     enum WithoutExplicitDiscriminants {
         Only,
     }

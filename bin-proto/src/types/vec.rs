@@ -2,14 +2,20 @@ use crate::{
     externally_length_prefixed, util, BitRead, BitWrite, Error, ExternallyLengthPrefixed,
     FlexibleArrayMember, Protocol, Settings,
 };
+use core::any::Any;
 
 impl<T: Protocol> Protocol for Vec<T> {
-    fn read(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
-        util::read_list(read, settings)
+    fn read(read: &mut dyn BitRead, settings: &Settings, ctx: &mut dyn Any) -> Result<Self, Error> {
+        util::read_list(read, settings, ctx)
     }
 
-    fn write(&self, write: &mut dyn BitWrite, settings: &Settings) -> Result<(), Error> {
-        util::write_list_length_prefixed(self.iter(), write, settings)
+    fn write(
+        &self,
+        write: &mut dyn BitWrite,
+        settings: &Settings,
+        ctx: &mut dyn Any,
+    ) -> Result<(), Error> {
+        util::write_list_length_prefixed(self.iter(), write, settings, ctx)
     }
 }
 
@@ -17,27 +23,34 @@ impl<T: Protocol> ExternallyLengthPrefixed for Vec<T> {
     fn read(
         read: &mut dyn BitRead,
         settings: &Settings,
+        ctx: &mut dyn Any,
         hints: &mut externally_length_prefixed::Hints,
     ) -> Result<Self, Error> {
-        util::read_list_with_hints(read, settings, hints)
+        util::read_list_with_hints(read, settings, ctx, hints)
     }
 
     fn write(
         &self,
         write: &mut dyn BitWrite,
         settings: &Settings,
+        ctx: &mut dyn Any,
         _: &mut externally_length_prefixed::Hints,
     ) -> Result<(), Error> {
-        util::write_list(self.iter(), write, settings)
+        util::write_list(self.iter(), write, settings, ctx)
     }
 }
 
 impl<T: Protocol> FlexibleArrayMember for Vec<T> {
-    fn read(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
-        util::read_list_to_eof(read, settings)
+    fn read(read: &mut dyn BitRead, settings: &Settings, ctx: &mut dyn Any) -> Result<Self, Error> {
+        util::read_list_to_eof(read, settings, ctx)
     }
 
-    fn write(&self, write: &mut dyn BitWrite, settings: &Settings) -> Result<(), Error> {
-        util::write_list(self.iter(), write, settings)
+    fn write(
+        &self,
+        write: &mut dyn BitWrite,
+        settings: &Settings,
+        ctx: &mut dyn Any,
+    ) -> Result<(), Error> {
+        util::write_list(self.iter(), write, settings, ctx)
     }
 }

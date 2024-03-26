@@ -2,9 +2,8 @@ use bin_proto::Protocol;
 use bin_proto::Settings;
 
 #[derive(Debug, bin_proto::Protocol, PartialEq)]
-#[protocol(discriminant = "integer")]
+#[protocol(discriminant = "u8")]
 #[protocol(bits = 4)]
-#[repr(u8)]
 enum Version {
     V4 = 4,
 }
@@ -89,8 +88,5 @@ fn can_encode_decode_ipv4() {
         parsed,
         IPv4::from_bytes(&raw, &Settings::default()).unwrap()
     );
-    assert_eq!(
-        raw,
-        parsed.bytes(&Settings::default()).unwrap().as_slice()
-    )
+    assert_eq!(raw, parsed.bytes(&Settings::default()).unwrap().as_slice())
 }

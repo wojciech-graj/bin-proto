@@ -1,4 +1,5 @@
 use bitstream_io::{BigEndian, BitWriter};
+use core::any::Any;
 
 use crate::{
     externally_length_prefixed, BitRead, BitWrite, Error, ExternallyLengthPrefixed, Protocol,
@@ -88,49 +89,13 @@ where
     T: Protocol,
     ToSizeOfType: Sized,
 {
-    fn read(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
-        let inner_value = T::read(read, settings)?;
-        let value_size = inner_value.bytes(settings).unwrap().len();
+    fn read(read: &mut dyn BitRead, settings: &Settings, ctx: &mut dyn Any) -> Result<Self, Error> {
+        let inner_value = T::read(read, settings, ctx)?;
+        let value_size = inner_value.bytes_ctx(settings, ctx).unwrap().len();
         let padding_size = calculate_padding(Self::alignment_bytes(), value_size);
 
         for _ in 0..padding_size {
-            let padding_byte = u8::read(read, settings)?;
-
-            if padding_byte != 0x00 {
-                return Err(Error::NonZeroPad);
-            }
-        }
-
-        Ok(Aligned {
-            value: inner_value,
-            _phantom: marker::PhantomData,
-        })
-    }
-
-    fn write(&self, write: &mut dyn BitWrite, settings: &Settings) -> Result<(), Error> {
-        let unaligned_bytes = self.value.bytes(settings)?;
-        let aligned_bytes = align_to(Self::alignment_bytes(), 0x00, unaligned_bytes);
-        write.write_bytes(&aligned_bytes)?;
-        Ok(())
-    }
-}
-
-impl<T, ToSizeOfType> ExternallyLengthPrefixed for Aligned<T, ToSizeOfType>
-where
-    T: Protocol + ExternallyLengthPrefixed,
-    ToSizeOfType: Sized,
-{
-    fn read(
-        read: &mut dyn BitRead,
-        settings: &Settings,
-        hints: &mut externally_length_prefixed::Hints,
-    ) -> Result<Self, Error> {
-        let inner_value = <T as ExternallyLengthPrefixed>::read(read, settings, hints)?;
-        let value_size = inner_value.bytes(settings).unwrap().len();
-        let padding_size = calculate_padding(Self::alignment_bytes(), value_size);
-
-        for _ in 0..padding_size {
-            let padding_byte = u8::read(read, settings)?;
+            let padding_byte = u8::read(read, settings, ctx)?;
 
             if padding_byte != 0x00 {
                 return Err(Error::NonZeroPad);
@@ -147,6 +112,49 @@ where
         &self,
         write: &mut dyn BitWrite,
         settings: &Settings,
+        ctx: &mut dyn Any,
+    ) -> Result<(), Error> {
+        let unaligned_bytes = self.value.bytes_ctx(settings, ctx)?;
+        let aligned_bytes = align_to(Self::alignment_bytes(), 0x00, unaligned_bytes);
+        write.write_bytes(&aligned_bytes)?;
+        Ok(())
+    }
+}
+
+impl<T, ToSizeOfType> ExternallyLengthPrefixed for Aligned<T, ToSizeOfType>
+where
+    T: Protocol + ExternallyLengthPrefixed,
+    ToSizeOfType: Sized,
+{
+    fn read(
+        read: &mut dyn BitRead,
+        settings: &Settings,
+        ctx: &mut dyn Any,
+        hints: &mut externally_length_prefixed::Hints,
+    ) -> Result<Self, Error> {
+        let inner_value = <T as ExternallyLengthPrefixed>::read(read, settings, ctx, hints)?;
+        let value_size = inner_value.bytes_ctx(settings, ctx).unwrap().len();
+        let padding_size = calculate_padding(Self::alignment_bytes(), value_size);
+
+        for _ in 0..padding_size {
+            let padding_byte = u8::read(read, settings, ctx)?;
+
+            if padding_byte != 0x00 {
+                return Err(Error::NonZeroPad);
+            }
+        }
+
+        Ok(Aligned {
+            value: inner_value,
+            _phantom: marker::PhantomData,
+        })
+    }
+
+    fn write(
+        &self,
+        write: &mut dyn BitWrite,
+        settings: &Settings,
+        ctx: &mut dyn Any,
         hints: &mut externally_length_prefixed::Hints,
     ) -> Result<(), Error> {
         let mut unaligned_bytes: Vec<u8> = Vec::new();
@@ -154,6 +162,7 @@ where
             &self.value,
             &mut BitWriter::endian(&mut unaligned_bytes, BigEndian),
             settings,
+            ctx,
             hints,
         )?;
         let aligned_bytes = align_to(Self::alignment_bytes(), 0x00, unaligned_bytes);

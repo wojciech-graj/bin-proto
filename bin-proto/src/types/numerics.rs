@@ -1,7 +1,13 @@
 use crate::{BitField, BitRead, BitWrite, Error, Protocol, Settings};
+use core::any::Any;
 
 impl BitField for bool {
-    fn read(read: &mut dyn BitRead, _: &Settings, bits: u32) -> Result<Self, Error> {
+    fn read(
+        read: &mut dyn BitRead,
+        _: &Settings,
+        _: &mut dyn Any,
+        bits: u32,
+    ) -> Result<Self, Error> {
         if read.read_u8_bf(bits)? == 0 {
             Ok(false)
         } else {
@@ -9,14 +15,20 @@ impl BitField for bool {
         }
     }
 
-    fn write(&self, write: &mut dyn BitWrite, _: &Settings, bits: u32) -> Result<(), Error> {
+    fn write(
+        &self,
+        write: &mut dyn BitWrite,
+        _: &Settings,
+        _: &mut dyn Any,
+        bits: u32,
+    ) -> Result<(), Error> {
         write.write_u8_bf(bits, if *self { 1 } else { 0 })?;
         Ok(())
     }
 }
 
 impl Protocol for bool {
-    fn read(read: &mut dyn BitRead, _: &Settings) -> Result<Self, Error> {
+    fn read(read: &mut dyn BitRead, _: &Settings, _: &mut dyn Any) -> Result<Self, Error> {
         if read.read_u8()? == 0 {
             Ok(false)
         } else {
@@ -24,29 +36,29 @@ impl Protocol for bool {
         }
     }
 
-    fn write(&self, write: &mut dyn BitWrite, _: &Settings) -> Result<(), Error> {
+    fn write(&self, write: &mut dyn BitWrite, _: &Settings, _: &mut dyn Any) -> Result<(), Error> {
         write.write_u8(if *self { 1 } else { 0 })?;
         Ok(())
     }
 }
 
 impl Protocol for u8 {
-    fn read(read: &mut dyn BitRead, _: &Settings) -> Result<Self, Error> {
+    fn read(read: &mut dyn BitRead, _: &Settings, _: &mut dyn Any) -> Result<Self, Error> {
         Ok(read.read_u8()?)
     }
 
-    fn write(&self, write: &mut dyn BitWrite, _: &Settings) -> Result<(), Error> {
+    fn write(&self, write: &mut dyn BitWrite, _: &Settings, _: &mut dyn Any) -> Result<(), Error> {
         write.write_u8(*self)?;
         Ok(())
     }
 }
 
 impl Protocol for i8 {
-    fn read(read: &mut dyn BitRead, _: &Settings) -> Result<Self, Error> {
+    fn read(read: &mut dyn BitRead, _: &Settings, _: &mut dyn Any) -> Result<Self, Error> {
         Ok(read.read_i8()?)
     }
 
-    fn write(&self, write: &mut dyn BitWrite, _: &Settings) -> Result<(), Error> {
+    fn write(&self, write: &mut dyn BitWrite, _: &Settings, _: &mut dyn Any) -> Result<(), Error> {
         write.write_i8(*self)?;
         Ok(())
     }
@@ -55,7 +67,11 @@ impl Protocol for i8 {
 macro_rules! impl_parcel_for_numeric {
     ($ty:ident => [$read_fn:ident : $write_fn:ident]) => {
         impl Protocol for $ty {
-            fn read(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
+            fn read(
+                read: &mut dyn BitRead,
+                settings: &Settings,
+                _: &mut dyn Any,
+            ) -> Result<Self, Error> {
                 settings.byte_order.$read_fn(read)
             }
 
@@ -63,6 +79,7 @@ macro_rules! impl_parcel_for_numeric {
                 &self,
                 write: &mut dyn BitWrite,
                 settings: &Settings,
+                _: &mut dyn Any,
             ) -> Result<(), Error> {
                 settings.byte_order.$write_fn(*self, write)?;
                 Ok(())
@@ -74,7 +91,12 @@ macro_rules! impl_parcel_for_numeric {
 macro_rules! impl_bitfield_for_numeric {
     ($ty:ident => [$read_fn:ident : $write_fn:ident]) => {
         impl BitField for $ty {
-            fn read(read: &mut dyn BitRead, _: &Settings, bits: u32) -> Result<Self, Error> {
+            fn read(
+                read: &mut dyn BitRead,
+                _: &Settings,
+                _: &mut dyn Any,
+                bits: u32,
+            ) -> Result<Self, Error> {
                 Ok(BitRead::$read_fn(read, bits)?)
             }
 
@@ -82,6 +104,7 @@ macro_rules! impl_bitfield_for_numeric {
                 &self,
                 write: &mut dyn BitWrite,
                 _: &Settings,
+                _: &mut dyn Any,
                 bits: u32,
             ) -> Result<(), Error> {
                 BitWrite::$write_fn(write, bits, *self)?;

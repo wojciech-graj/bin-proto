@@ -10,7 +10,7 @@ pub trait Format: Clone {
 #[derive(Clone, Default, Debug, PartialEq)]
 pub enum Enum {
     /// The enum is transmitted by using the 1-based index of the enum variant.
-    IntegerDiscriminant,
+    IntegerDiscriminant(syn::Ident),
     /// The enum is transmitted by using the name of the variant.
     #[default]
     StringDiscriminant,
@@ -19,9 +19,11 @@ pub enum Enum {
 impl Format for Enum {
     fn from_str(s: &str) -> Result<Self, ()> {
         match s {
-            "integer" => Ok(Enum::IntegerDiscriminant),
-            "string" => Ok(Enum::StringDiscriminant),
-            _ => Err(()),
+            "str" => Ok(Enum::StringDiscriminant),
+            _ => Ok(Enum::IntegerDiscriminant(syn::Ident::new(
+                s,
+                proc_macro2::Span::call_site(),
+            ))),
         }
     }
 }

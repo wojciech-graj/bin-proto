@@ -1,11 +1,6 @@
 use crate::{attr, format};
 use proc_macro2::{Span, TokenStream};
 
-/// The default type used to represent
-/// integer discriminants unless explicitly
-/// overriden.
-const DEFAULT_INT_DISCRIMINANT: &str = "u32";
-
 /// The first integer discriminant assigned,
 /// unless an explicit discriminant is given
 /// in the first variant.
@@ -17,8 +12,6 @@ pub struct Enum {
     pub ident: syn::Ident,
     /// The enum format.
     pub explicit_format: Option<format::Enum>,
-    /// The `#[repr(..)]` attribute.
-    pub repr_attr: Option<syn::Ident>,
     pub variants: Vec<EnumVariant>,
 }
 
@@ -41,10 +34,10 @@ pub struct EnumVariant {
 impl Enum {
     /// Creates a layout plan for an enum.
     pub fn new(ast: &syn::DeriveInput, e: &syn::DataEnum) -> Enum {
+        let attrs = attr::protocol(&ast.attrs);
         let mut plan = Enum {
             ident: ast.ident.clone(),
-            repr_attr: attr::repr(&ast.attrs),
-            explicit_format: attr::protocol(&ast.attrs).discriminant_format,
+            explicit_format: attrs.discriminant_format,
             variants: e
                 .variants
                 .iter()
@@ -80,23 +73,16 @@ impl Enum {
 
     /// Gets the type used for the discriminant.
     pub fn discriminant(&self) -> syn::Ident {
-        match self.repr_attr.clone() {
-            // An explicit discriminant via `#[repr(ty)]`.
-            Some(ty) => ty,
-            // Use the default discriminant.
-            None => match self.format() {
-                format::Enum::StringDiscriminant => syn::Ident::new("String", Span::call_site()),
-                format::Enum::IntegerDiscriminant => {
-                    syn::Ident::new(DEFAULT_INT_DISCRIMINANT, Span::call_site())
-                }
-            },
+        match self.format() {
+            format::Enum::StringDiscriminant => syn::Ident::new("String", Span::call_site()),
+            format::Enum::IntegerDiscriminant(ty) => ty,
         }
     }
 
     /// Gets an expression that can be used in as the RHS in pattern matching.
     pub fn matchable_discriminant_expr(&self, variable_ident: syn::Ident) -> TokenStream {
         match self.format() {
-            format::Enum::IntegerDiscriminant => quote!(#variable_ident),
+            format::Enum::IntegerDiscriminant(_) => quote!(#variable_ident),
             format::Enum::StringDiscriminant => quote!(&#variable_ident[..]),
         }
     }
@@ -114,7 +100,7 @@ impl Enum {
                         // the variant itself.
                         syn::LitStr::new(&variant.ident.to_string(), Span::call_site()).into()
                     }
-                    format::Enum::IntegerDiscriminant => {
+                    format::Enum::IntegerDiscriminant(_) => {
                         // By default, assign integer discriminants the value of the
                         // last discriminant plus one.
                         syn::LitInt::new(

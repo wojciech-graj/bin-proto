@@ -52,21 +52,21 @@ fn read(field: &syn::Field) -> TokenStream {
     let attribs = attr::protocol(&field.attrs);
     if let Some(field_width) = attribs.bit_field {
         return quote! {
-            bin_proto::BitField::read(__io_reader, __settings, #field_width)
+            bin_proto::BitField::read(__io_reader, __settings, __ctx, #field_width)
         };
     }
     if attribs.flexible_array_member {
         return quote! {
-            bin_proto::FlexibleArrayMember::read(__io_reader, __settings)
+            bin_proto::FlexibleArrayMember::read(__io_reader, __settings, __ctx)
         };
     }
     if attribs.length_prefix.is_some() {
         quote! {
-            bin_proto::ExternallyLengthPrefixed::read(__io_reader, __settings, &mut __hints)
+            bin_proto::ExternallyLengthPrefixed::read(__io_reader, __settings, __ctx, &mut __hints)
         }
     } else {
         quote! {
-            bin_proto::Protocol::read(__io_reader, __settings)
+            bin_proto::Protocol::read(__io_reader, __settings, __ctx)
         }
     }
 }
@@ -75,21 +75,21 @@ fn write<T: quote::ToTokens>(field: &syn::Field, field_name: &T) -> TokenStream 
     let attribs = attr::protocol(&field.attrs);
     if let Some(field_width) = attribs.bit_field {
         return quote! {
-            bin_proto::BitField::write(&self. #field_name, __io_writer, __settings, #field_width)
+            bin_proto::BitField::write(&self. #field_name, __io_writer, __settings, __ctx, #field_width)
         };
     }
     if attribs.flexible_array_member {
         return quote! {
-            bin_proto::FlexibleArrayMember::write(&self. #field_name, __io_writer, __settings)
+            bin_proto::FlexibleArrayMember::write(&self. #field_name, __io_writer, __settings, __ctx)
         };
     }
     if attribs.length_prefix.is_some() {
         quote! {
-            bin_proto::ExternallyLengthPrefixed::write(&self. #field_name, __io_writer, __settings, &mut __hints)
+            bin_proto::ExternallyLengthPrefixed::write(&self. #field_name, __io_writer, __settings, __ctx, &mut __hints)
         }
     } else {
         quote! {
-            bin_proto::Protocol::write(&self. #field_name, __io_writer, __settings)
+            bin_proto::Protocol::write(&self. #field_name, __io_writer, __settings, __ctx)
         }
     }
 }

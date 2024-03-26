@@ -56,9 +56,8 @@ If you need parsing with context, or more attributes to customize the co/dec beh
 use bin_proto::Protocol;
 
 #[derive(Debug, Protocol, PartialEq)]
-#[protocol(discriminant = "integer")]
+#[protocol(discriminant = "u8")]
 #[protocol(bits = 4)]
-#[repr(u8)]
 enum Version {
     V4 = 4,
 }

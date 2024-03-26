@@ -1,5 +1,6 @@
 use crate::{BitRead, BitWrite, Error, Protocol, Settings};
 
+use core::any::Any;
 use std::collections::{BTreeMap, HashMap};
 use std::hash::Hash;
 
@@ -12,15 +13,15 @@ macro_rules! impl_map_type {
                   V: Protocol
         {
             fn read(read: &mut dyn BitRead,
-                          settings: &Settings,
+                          settings: &Settings, ctx: &mut dyn Any,
                           ) -> Result<Self, Error> {
                 let mut map = $ty::new();
 
-                let length = SizeType::read(read, settings)?;
+                let length = SizeType::read(read, settings, ctx)?;
 
                 for _ in 0..length {
-                    let key = K::read(read, settings)?;
-                    let value = V::read(read, settings)?;
+                    let key = K::read(read, settings, ctx)?;
+                    let value = V::read(read, settings, ctx)?;
 
                     map.insert(key, value);
                 }
@@ -29,13 +30,13 @@ macro_rules! impl_map_type {
             }
 
             fn write(&self, write: &mut dyn BitWrite,
-                           settings: &Settings,
+                           settings: &Settings, ctx: &mut dyn Any,
                            ) -> Result<(), Error> {
-                (self.len() as SizeType).write(write, settings)?;
+                (self.len() as SizeType).write(write, settings, ctx)?;
 
                 for (key, value) in self.iter() {
-                    key.write(write, settings)?;
-                    value.write(write, settings)?;
+                    key.write(write, settings, ctx)?;
+                    value.write(write, settings, ctx)?;
                 }
 
                 Ok(())

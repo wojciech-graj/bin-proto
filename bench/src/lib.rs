@@ -229,8 +229,7 @@ mod bench {
         use super::*;
 
         #[derive(Debug, Protocol, PartialEq)]
-        #[protocol(discriminant = "integer")]
-        #[repr(u8)]
+        #[protocol(discriminant = "u8")]
         enum E {
             V0 = 0,
             V1 = 1,
@@ -264,9 +263,8 @@ mod bench {
         use super::*;
 
         #[derive(Debug, Protocol, PartialEq)]
-        #[protocol(discriminant = "integer")]
+        #[protocol(discriminant = "u8")]
         #[protocol(bits = 4)]
-        #[repr(u8)]
         enum Version {
             V4 = 4,
         }

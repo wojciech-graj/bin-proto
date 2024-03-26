@@ -2,28 +2,12 @@ use crate::{
     externally_length_prefixed, util, BitRead, BitWrite, Error, ExternallyLengthPrefixed, Protocol,
     Settings,
 };
+use core::any::Any;
 
 // The default implementation treats the string as a normal char array.
 impl Protocol for String {
-    fn read(read: &mut dyn BitRead, settings: &Settings) -> Result<Self, Error> {
-        let bytes: Vec<u8> = util::read_list(read, settings)?;
-
-        Ok(String::from_utf8(bytes)?)
-    }
-
-    fn write(&self, write: &mut dyn BitWrite, settings: &Settings) -> Result<(), Error> {
-        let bytes: Vec<u8> = str::bytes(self).collect();
-        util::write_list_length_prefixed(&bytes, write, settings)
-    }
-}
-
-impl ExternallyLengthPrefixed for String {
-    fn read(
-        read: &mut dyn BitRead,
-        settings: &Settings,
-        hints: &mut externally_length_prefixed::Hints,
-    ) -> Result<Self, Error> {
-        let bytes: Vec<u8> = util::read_list_with_hints(read, settings, hints)?;
+    fn read(read: &mut dyn BitRead, settings: &Settings, ctx: &mut dyn Any) -> Result<Self, Error> {
+        let bytes: Vec<u8> = util::read_list(read, settings, ctx)?;
 
         Ok(String::from_utf8(bytes)?)
     }
@@ -32,9 +16,33 @@ impl ExternallyLengthPrefixed for String {
         &self,
         write: &mut dyn BitWrite,
         settings: &Settings,
+        ctx: &mut dyn Any,
+    ) -> Result<(), Error> {
+        let bytes: Vec<u8> = str::bytes(self).collect();
+        util::write_list_length_prefixed(&bytes, write, settings, ctx)
+    }
+}
+
+impl ExternallyLengthPrefixed for String {
+    fn read(
+        read: &mut dyn BitRead,
+        settings: &Settings,
+        ctx: &mut dyn Any,
+        hints: &mut externally_length_prefixed::Hints,
+    ) -> Result<Self, Error> {
+        let bytes: Vec<u8> = util::read_list_with_hints(read, settings, ctx, hints)?;
+
+        Ok(String::from_utf8(bytes)?)
+    }
+
+    fn write(
+        &self,
+        write: &mut dyn BitWrite,
+        settings: &Settings,
+        ctx: &mut dyn Any,
         _: &mut externally_length_prefixed::Hints,
     ) -> Result<(), Error> {
         let bytes: Vec<u8> = str::bytes(self).collect();
-        util::write_list(&bytes, write, settings)
+        util::write_list(&bytes, write, settings, ctx)
     }
 }

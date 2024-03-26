@@ -5,16 +5,18 @@ macro_rules! impl_list_type {
         {
             fn read(read: &mut dyn crate::BitRead,
                           settings: &crate::Settings,
+                          ctx: &mut dyn core::any::Any,
                           ) -> Result<Self, $crate::Error> {
-                let elements = crate::util::read_list(read, settings)?;
+                let elements = crate::util::read_list(read, settings, ctx)?;
                 Ok(elements.into_iter().collect())
             }
 
             fn write(&self, write: &mut dyn crate::BitWrite,
                            settings: &crate::Settings,
+                           ctx: &mut dyn core::any::Any,
                            )
                 -> Result<(), $crate::Error> {
-                crate::util::write_list_length_prefixed(self.iter(), write, settings)
+                crate::util::write_list_length_prefixed(self.iter(), write, settings, ctx)
             }
         }
 

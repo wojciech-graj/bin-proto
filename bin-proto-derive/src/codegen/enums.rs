@@ -28,7 +28,7 @@ pub fn write_variant(
                 #write_discriminant
 
                 #(
-                    bin_proto::Protocol::write(#binding_names, __io_writer, __settings)?;
+                    bin_proto::Protocol::write(#binding_names, __io_writer, __settings, __ctx)?;
                 )*
             })
         })

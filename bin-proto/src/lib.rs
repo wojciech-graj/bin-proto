@@ -7,9 +7,8 @@
 //! ```
 //! # use bin_proto::Protocol;
 //! #[derive(Debug, Protocol, PartialEq)]
-//! #[protocol(discriminant = "integer")]
+//! #[protocol(discriminant = "u8")]
 //! #[protocol(bits = 4)]
-//! #[repr(u8)]
 //! enum Version {
 //!     V4 = 4,
 //! }
@@ -99,17 +98,15 @@ pub use self::settings::*;
 ///
 /// ## `#[protocol(discriminant = <kind>)]`
 /// - Applies to: `enum` with `#[derive(Protocol)]`.
-/// - `<kind>`: `"integer"`, `"string"`
+/// - `<kind>`: `"str"`, any numeric type
 ///
-/// Specify is enum variant should be determined by a string or interger
-/// representation of its discriminant. The width of the integer discriminant
-/// can be changed with e.g. `#[repr(u8)]`.
+/// Specify if enum variant should be determined by a string or interger
+/// representation of its discriminant.
 ///
 /// ```
 /// # use bin_proto::Protocol;
 /// #[derive(Protocol)]
-/// #[protocol(discriminant = "integer")]
-/// #[repr(u8)]
+/// #[protocol(discriminant = "u8")]
 /// enum Example {
 ///     Variant1 = 1,
 ///     Variant5 = 5,
