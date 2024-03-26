@@ -11,7 +11,7 @@ An improved and modernized fork of [protocol](https://crates.io/crates/bin-proto
 
 This crate adds a trait (and a custom derive for ease-of-use) that can be
 implemented on types, allowing structured data to be sent and received from
-any binary stream. It is recommended to use [bitstream_io](https://docs.rs/bitstream-io/latest/bitstream_io/) if you need bit-level precision.
+any binary stream. It is recommended to use [bitstream_io](https://docs.rs/bitstream-io/latest/bitstream_io/) if you need bit streams, as their `BitRead` and `BitWrite` traits are used internally.
 
 ## Usage
 
