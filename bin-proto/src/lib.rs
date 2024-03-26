@@ -96,9 +96,9 @@ pub use self::settings::*;
 ///
 /// # Attributes
 ///
-/// ## `#[protocol(discriminant = <kind>)]`
+/// ## `#[protocol(discriminant = "<kind>")]`
 /// - Applies to: `enum` with `#[derive(Protocol)]`.
-/// - `<kind>`: `"str"`, any numeric type
+/// - `<kind>`: `str`, any numeric type
 ///
 /// Specify if enum variant should be determined by a string or interger
 /// representation of its discriminant.
@@ -112,6 +112,24 @@ pub use self::settings::*;
 ///     Variant5 = 5,
 /// }
 /// ```
+///
+/// ## `#[protocol(discriminant(<value>))]`
+/// - Applies to: `enum` variant
+/// - `<value>`: unique value of the discriminant's type
+///
+/// ```
+/// # use bin_proto::Protocol;
+/// #[derive(Protocol)]
+/// #[protocol(discriminant = "u8")]
+/// enum Example {
+///     #[protocol(discriminant(1))]
+///     Variant1,
+///     #[protocol(discriminant(5))]
+///     Variant5,
+/// }
+/// ```
+///
+/// Specify the discriminant for a variant.
 ///
 /// ## `#[protocol(bits = <width>)]`
 /// - Applies to: `impl BitField`, `enum` with integer discriminant
@@ -158,6 +176,25 @@ pub use self::settings::*;
 ///     pub data: Vec<u32>,
 /// }
 /// ```
+///
+/// ## `#[protocol(auto)]`
+/// - Applies to: length prefix fields storing element count
+///
+/// Writes the length of the variable-length field that it counts the elements
+/// of instead of own value. The variable-length field must have a `.iter()`
+/// method.
+///
+/// ```
+/// # use bin_proto::Protocol;
+/// #[derive(Protocol)]
+/// pub struct WithElementsLengthAuto {
+///     #[protocol(auto)]
+///     pub count: u32,
+///     pub foo: bool,
+///     #[protocol(length_prefix(elements(count)))]
+///     pub data: Vec<u32>,
+/// }
+/// ```
 #[cfg(feature = "derive")]
 pub use bin_proto_derive::Protocol;
 
@@ -174,6 +211,8 @@ mod enum_ty;
 mod error;
 mod protocol;
 mod util;
+
+pub extern crate bitstream_io;
 
 #[cfg(feature = "uuid")]
 extern crate uuid;

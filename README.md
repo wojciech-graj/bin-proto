@@ -11,7 +11,7 @@ An improved and modernized fork of [protocol](https://crates.io/crates/bin-proto
 
 This crate adds a trait (and a custom derive for ease-of-use) that can be
 implemented on types, allowing structured data to be sent and received from
-any binary stream. It is recommended to use [bitstream_io](https://docs.rs/bitstream-io/latest/bitstream_io/) if you need bit streams, as their `BitRead` and `BitWrite` traits are used internally.
+any binary stream. It is recommended to use [bitstream_io](https://docs.rs/bitstream-io/latest/bitstream_io/) if you need bit streams, as their `BitRead` and `BitWrite` traits are being used internally.
 
 ## Usage
 
@@ -22,28 +22,19 @@ Add this to your `Cargo.toml`:
 bin-proto = { version = "0.1", features = ["derive"] }
 ```
 
-And then define a type with the `#[derive(bin_proto::Protocol)]` attribute:
-
-```rust
-#[derive(bin_proto::Protocol)]
-struct S {
-    a: String,
-    b: u32,
-}
-```
+And then define a type with the `#[derive(bin_proto::Protocol)]` attribute.
 
 ## Alternatives
 
-This crate's main alternative is [deku](https://crates.io/crates/deku). `deku` has more attributes that can be used to customize the co/dec behaviour, but cannot do the following:
-- Check that all enum variants fit in bitfield
+This crate's main alternative is [deku](https://crates.io/crates/deku). `deku` has more attributes that can be used to customize the co/dec behaviour, but the following is exclusive to `bin-proto`:
+- easily pass around arbitrary context
+- check that all enum variants fit in bitfield
 - co/dec packets to/from a non-byte-aligned stream
 - read a stream until it ends, without a length prefix
 
-If you need parsing with context, or more attributes to customize the co/dec behaviour, use `deku` instead.
-
 ### Performance comparison
 
-`bin-proto` is at least approx. twice as fast as `deku` in most of the benchmarks. The units for the below table are ns/iter.
+`bin-proto` is significantly faster than `deku` in almost all of the benchmarks. The units for the below table are ns/iter. You can find the benchmarks in the `bench` directory.
 
 |             | Read `enum` | Write `enum` | Read `Vec` | Write `Vec` | Read IPv4 header | Write IPv4 header |
 |-------------|-------------|--------------|------------|-------------|------------------|-------------------|

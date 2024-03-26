@@ -93,30 +93,61 @@ fn read(field: &syn::Field) -> TokenStream {
     }
 }
 
-fn write<T: quote::ToTokens>(field: &syn::Field, field_name: &T) -> TokenStream {
+fn write<'a, T: quote::ToTokens>(
+    field: &syn::Field,
+    field_name: &T,
+    fields: impl IntoIterator<Item = &'a syn::Field> + Clone,
+) -> TokenStream {
     let attribs = Attrs::from(field.attrs.as_slice());
+
+    let field_ref = if attribs.auto {
+        if let Some(length_prefix_of) = length_prefix_of(field, fields.clone()) {
+            let field_attribs = Attrs::from(length_prefix_of.attrs.as_slice());
+            let ty = field.ty.clone();
+            let field_ident = length_prefix_of.ident;
+            match field_attribs.length_prefix.unwrap().kind {
+                crate::attr::LengthPrefixKind::Bytes => {
+                    panic!("auto is unsupported on bytes length prefixes")
+                }
+                crate::attr::LengthPrefixKind::Elements => {
+                    quote!(&{
+                        let mut cnt: #ty = 0;
+                        for _ in self.#field_ident.iter() {
+                            cnt += 1;
+                        }
+                        cnt
+                    })
+                }
+            }
+        } else {
+            panic!("TODO");
+        }
+    } else {
+        quote!(&self. #field_name)
+    };
+
     if let Some(field_width) = attribs.bit_field {
         quote!(
             {
-                bin_proto::BitField::write(&self. #field_name, __io_writer, __settings, __ctx, #field_width)?
+                bin_proto::BitField::write(#field_ref, __io_writer, __settings, __ctx, #field_width)?
             }
         )
     } else if attribs.flexible_array_member {
         quote!(
             {
-                bin_proto::FlexibleArrayMember::write(&self. #field_name, __io_writer, __settings, __ctx)?
+                bin_proto::FlexibleArrayMember::write(#field_ref, __io_writer, __settings, __ctx)?
             }
         )
     } else if attribs.length_prefix.is_some() {
         quote!(
             {
-                bin_proto::ExternallyLengthPrefixed::write(&self. #field_name, __io_writer, __settings, __ctx)?
+                bin_proto::ExternallyLengthPrefixed::write(#field_ref, __io_writer, __settings, __ctx)?
             }
         )
     } else {
         quote!(
             {
-                bin_proto::Protocol::write(&self. #field_name, __io_writer, __settings, __ctx)?
+                bin_proto::Protocol::write(#field_ref, __io_writer, __settings, __ctx)?
             }
         )
     }
@@ -183,7 +214,7 @@ fn write_named_fields(fields_named: &syn::FieldsNamed) -> TokenStream {
         .iter()
         .map(|field| {
             let field_name = &field.ident;
-            write(field, field_name)
+            write(field, field_name, &fields_named.named)
         })
         .collect();
 
@@ -217,7 +248,7 @@ fn write_unnamed_fields(fields_unnamed: &syn::FieldsUnnamed) -> TokenStream {
         .enumerate()
         .map(|(field_index, field)| {
             let field_index = syn::Index::from(field_index);
-            write(field, &field_index)
+            write(field, &field_index, &fields_unnamed.unnamed) // TODO
         })
         .collect();
 

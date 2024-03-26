@@ -12,6 +12,7 @@ pub struct LengthPrefix {
 pub struct Attrs {
     pub discriminant_format: Option<format::Enum>,
     pub discriminant: Option<syn::Lit>,
+    pub auto: bool,
     pub bit_field: Option<u32>,
     pub flexible_array_member: bool,
     pub length_prefix: Option<LengthPrefix>,
@@ -85,6 +86,7 @@ impl From<&[syn::Attribute]> for Attrs {
                     syn::NestedMeta::Meta(syn::Meta::Path(path)) => match path.get_ident() {
                         Some(ident) => match ident.to_string().as_str() {
                             "flexible_array_member" => attribs.flexible_array_member = true,
+                            "auto" => attribs.auto = true,
                             _ => panic!("got unexpected '{}'", ident),
                         },
                         None => panic!("parsed string was not an identifier"),

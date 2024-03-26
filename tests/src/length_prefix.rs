@@ -21,6 +21,15 @@ pub struct WithElementsLength {
     pub data: Vec<u32>,
 }
 
+#[derive(bin_proto::Protocol, Debug, PartialEq, Eq)]
+pub struct WithElementsLengthAuto {
+    #[protocol(auto)]
+    pub count: u32,
+    pub foo: bool,
+    #[protocol(length_prefix(elements(count)))]
+    pub data: Vec<u32>,
+}
+
 #[test]
 fn can_read_length_prefix_5_bytes_string() {
     assert_eq!(
@@ -72,5 +81,25 @@ fn can_read_length_prefix_3_elements() {
             &Settings::default()
         )
         .unwrap()
+    );
+}
+
+#[test]
+fn can_write_auto_length_prefix_3_elements() {
+    assert_eq!(
+        WithElementsLengthAuto {
+            count: 0,
+            foo: true,
+            data: vec![1, 2, 3],
+        }
+        .bytes(&Settings::default())
+        .unwrap(),
+        vec![
+            0, 0, 0, 3, // disjoint length prefix
+            1, // boolean true
+            0, 0, 0, 1, // 1
+            0, 0, 0, 2, // 2
+            0, 0, 0, 3 // 3
+        ],
     );
 }

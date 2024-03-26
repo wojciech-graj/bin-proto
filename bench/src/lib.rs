@@ -196,8 +196,9 @@ mod bench {
 
         #[derive(Debug, Protocol, PartialEq)]
         struct V {
+            #[protocol(auto)]
             count: u8,
-            #[protocol(length_prefix(bytes("count")))]
+            #[protocol(length_prefix(elements(count)))]
             data: Vec<u8>,
         }
 
