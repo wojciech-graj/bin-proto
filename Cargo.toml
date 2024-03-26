@@ -4,3 +4,6 @@ members = [
   "bin-proto-derive",
   "tests",
 ]
+exclude = [
+  "bench",
+]

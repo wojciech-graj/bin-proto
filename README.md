@@ -7,7 +7,7 @@
 
 Simple bit-level protocol definitions in Rust.
 
-An improved and modernized fork of [protocol](https://crates.io/crates/bin-proto).
+An improved and modernized fork of [protocol](https://crates.io/crates/bin-proto). A more efficient but less feature-rich alternative to [deku](https://crates.io/crates/deku).
 
 This crate adds a trait (and a custom derive for ease-of-use) that can be
 implemented on types, allowing structured data to be sent and received from
@@ -31,6 +31,24 @@ struct S {
     b: u32,
 }
 ```
+
+## Alternatives
+
+This crate's main alternative is [deku](https://crates.io/crates/deku). `deku` has more attributes that can be used to customize the co/dec behaviour, but cannot do the following:
+- Check that all enum variants fit in bitfield
+- co/dec packets to/from a non-byte-aligned stream
+- read a stream until it ends, without a length prefix
+
+If you need parsing with context, or more attributes to customize the co/dec behaviour, use `deku` instead.
+
+### Performance comparison
+
+`bin-proto` is at least approx. twice as fast as `deku` in most of the benchmarks. The units for the below table are ns/iter.
+
+|             | Read `enum` | Write `enum` | Read `Vec` | Write `Vec` | Read IPv4 header | Write IPv4 header |
+|-------------|-------------|--------------|------------|-------------|------------------|-------------------|
+| `bin-proto` | 18          | 86           | 1,615      | 791         | 103              | 126               |
+| `deku`      | 32          | 141          | 1,544      | 5,102       | 1,387            | 562               |
 
 ## Example
 
