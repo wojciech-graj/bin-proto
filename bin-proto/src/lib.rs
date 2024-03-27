@@ -9,74 +9,43 @@
 //! #[derive(Debug, Protocol, PartialEq)]
 //! #[protocol(discriminant_type = "u8")]
 //! #[protocol(bits = 4)]
-//! enum Version {
+//! enum E {
+//!     V1 = 1,
+//!     #[protocol(discriminant = "4")]
 //!     V4 = 4,
 //! }
 //!
 //! #[derive(Debug, Protocol, PartialEq)]
-//! struct Flags {
+//! struct S {
 //!     #[protocol(bits = 1)]
-//!     reserved: bool,
-//!     #[protocol(bits = 1)]
-//!     dont_fragment: bool,
-//!     #[protocol(bits = 1)]
-//!     more_fragments: bool,
-//! }
-//!
-//! #[derive(Debug, Protocol, PartialEq)]
-//! struct IPv4 {
-//!     version: Version,
-//!     #[protocol(bits = 4)]
-//!     internet_header_length: u8,
-//!     #[protocol(bits = 6)]
-//!     differentiated_services_code_point: u8,
-//!     #[protocol(bits = 2)]
-//!     explicit_congestion_notification: u8,
-//!     total_length: u16,
-//!     identification: u16,
-//!     flags: Flags,
-//!     #[protocol(bits = 13)]
-//!     fragment_offset: u16,
-//!     time_to_live: u8,
-//!     protocol: u8,
-//!     header_checksum: u16,
-//!     source_address: [u8; 4],
-//!     destination_address: [u8; 4],
+//!     bitflag: bool,
+//!     #[protocol(bits = 3)]
+//!     bitfield: u8,
+//!     enum_: E,
+//!     #[protocol(write_value = "self.arr.len() as u8")]
+//!     arr_len: u8,
+//!     #[protocol(length = "arr_len as usize")]
+//!     arr: Vec<u8>,
+//!     #[protocol(flexible_array_member)]
+//!     read_to_end: Vec<u8>,
 //! }
 //!
 //! assert_eq!(
-//!     IPv4::from_bytes(&[
-//!             0b0100_0000 // Version: 4
-//!             |    0b0101, // Header Length: 5,
-//!             0x00, // Differentiated Services Codepoint: 0, Explicit Congestion Notification: 0
-//!             0x05, 0x94, // Total Length: 1428
-//!             0x83, 0xf6, // Identification: 0x83f6
-//!             0b0100_0000 // Flags: Don't Fragment
-//!             |  0b0_0000, 0x00, // Fragment Offset: 0
-//!             0x40, // Time to Live: 64
-//!             0x01, // Protocol: 1
-//!             0xeb, 0x6e, // Header Checksum: 0xeb6e
-//!             0x02, 0x01, 0x01, 0x01, // Source Address: 2.1.1.1
-//!             0x02, 0x01, 0x01, 0x02, // Destination Address: 2.1.1.2
-//!         ], &bin_proto::Settings::default()).unwrap(),
-//!     IPv4 {
-//!         version: Version::V4,
-//!         internet_header_length: 5,
-//!         differentiated_services_code_point: 0,
-//!         explicit_congestion_notification: 0,
-//!         total_length: 1428,
-//!         identification: 0x83f6,
-//!         flags: Flags {
-//!             reserved: false,
-//!             dont_fragment: true,
-//!             more_fragments: false,
-//!         },
-//!         fragment_offset: 0x0,
-//!         time_to_live: 64,
-//!         protocol: 1,
-//!         header_checksum: 0xeb6e,
-//!         source_address: [2, 1, 1, 1],
-//!         destination_address: [2, 1, 1, 2],
+//!     S::from_bytes(&[
+//!         0b1000_0000 // bitflag: true (1)
+//!        | 0b101_0000 // bitfield: 5 (101)
+//!            | 0b0001, // enum_: V1 (0001)
+//!         0x02, // arr_len: 2
+//!         0x21, 0x37, // arr: [0x21, 0x37]
+//!         0x01, 0x02, 0x03, // read_to_end: [0x01, 0x02, 0x03]
+//!     ], &bin_proto::Settings::default()).unwrap(),
+//!     S {
+//!         bitflag: true,
+//!         bitfield: 5,
+//!         enum_: E::V1,
+//!         arr_len: 2,
+//!         arr: vec![0x21, 0x37],
+//!         read_to_end: vec![0x01, 0x02, 0x03],
 //!     }
 //! );
 //! ```
@@ -86,7 +55,6 @@ pub use self::bit_read::BitRead;
 pub use self::bit_write::BitWrite;
 pub use self::enum_ty::Enum;
 pub use self::error::{Error, Result};
-#[doc(inline)]
 pub use self::externally_length_prefixed::ExternallyLengthPrefixed;
 pub use self::flexible_array_member::FlexibleArrayMember;
 pub use self::protocol::Protocol;
@@ -96,9 +64,9 @@ pub use self::settings::*;
 ///
 /// # Attributes
 ///
-/// ## `#[protocol(discriminant_type = "<kind>")]`
+/// ## `#[protocol(discriminant_type = "<type>")]`
 /// - Applies to: `enum` with `#[derive(Protocol)]`.
-/// - `<kind>`: `str`, any numeric type
+/// - `<type>`: an arbitrary type that implements `Protocol`
 ///
 /// Specify if enum variant should be determined by a string or interger
 /// representation of its discriminant.
@@ -131,7 +99,7 @@ pub use self::settings::*;
 /// Specify the discriminant for a variant.
 ///
 /// ## `#[protocol(bits = <width>)]`
-/// - Applies to: `impl BitField`, `enum` with integer discriminant
+/// - Applies to: `impl BitField`, `enum` with discriminant that `impl BitField`
 ///
 /// Determine width of field in bits.
 ///
@@ -180,7 +148,7 @@ pub use self::settings::*;
 /// - `<expr>`: An expression that can be coerced to the field type, potentially
 ///   using `self`
 ///
-///
+/// Specify an expression that should be used as the field's value for writing.
 ///
 /// ```
 /// # use bin_proto::Protocol;
