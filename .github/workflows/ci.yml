@@ -9,32 +9,25 @@ jobs:
     name: Test and Benchmark
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        rust-version: [stable, nightly]
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
 
     - name: Set up Rust - Stable
-      if: matrix.rust-version == 'stable'
       uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
         profile: minimal
 
     - name: Set up Rust - Nightly
-      if: matrix.rust-version == 'nightly'
       uses: actions-rs/toolchain@v1
       with:
         toolchain: nightly
         profile: minimal
 
     - name: Test
-      if: matrix.rust-version == 'stable'
       run: cargo test
 
     - name: Bench
-      if: matrix.rust-version == 'nightly'
-      run: cargo bench
+      working-directory: bench
+      run: cargo +nightly bench
