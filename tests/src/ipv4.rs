@@ -2,7 +2,7 @@ use bin_proto::Protocol;
 use bin_proto::Settings;
 
 #[derive(Debug, bin_proto::Protocol, PartialEq)]
-#[protocol(discriminant = "u8")]
+#[protocol(discriminant_type = "u8")]
 #[protocol(bits = 4)]
 enum Version {
     V4 = 4,

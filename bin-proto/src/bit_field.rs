@@ -24,7 +24,7 @@ pub trait BitField: Sized {
 
 /// ```compile_fail
 /// #[derive(bin_proto::Protocol)]
-/// #[protocol(discriminant = "u8")]
+/// #[protocol(discriminant_type = "u8")]
 /// #[protocol(bits = 1)]
 /// enum WontFit {
 ///     Variant = 2,

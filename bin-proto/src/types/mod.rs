@@ -1,8 +1,5 @@
 //! Utility types
 
-pub use aligned::Aligned;
-
-mod aligned;
 mod array;
 mod char;
 /// Definitions for the `std::collections` module.

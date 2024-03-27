@@ -9,7 +9,7 @@ pub trait ExternallyLengthPrefixed: Sized {
         read: &mut dyn BitRead,
         settings: &Settings,
         ctx: &mut dyn Any,
-        length: &FieldLength,
+        length: usize,
     ) -> Result<Self, Error>;
 
     fn write(
@@ -18,22 +18,4 @@ pub trait ExternallyLengthPrefixed: Sized {
         settings: &Settings,
         ctx: &mut dyn Any,
     ) -> Result<(), Error>;
-}
-
-pub type FieldIndex = usize;
-
-/// Information about the length of a field.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub struct FieldLength {
-    pub length: u32,
-    pub kind: LengthPrefixKind,
-}
-
-/// Specifies what kind of data the length prefix captures.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub enum LengthPrefixKind {
-    /// The length prefix stores the total number of bytes making up another field.
-    Bytes,
-    /// The length prefix stores the total number of elements inside another field.
-    Elements,
 }

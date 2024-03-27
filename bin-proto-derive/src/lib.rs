@@ -7,7 +7,6 @@ extern crate quote;
 
 mod attr;
 mod codegen;
-mod format;
 mod plan;
 
 use attr::Attrs;
@@ -16,7 +15,7 @@ use proc_macro::TokenStream;
 #[proc_macro_derive(Protocol, attributes(protocol))]
 pub fn protocol(input: TokenStream) -> TokenStream {
     // Parse the string representation
-    let ast: syn::DeriveInput = syn::parse(input).unwrap();
+    let ast: syn::DeriveInput = syn::parse(input).expect("Failed to parse input");
 
     // Build the impl
     let gen = impl_parcel(&ast);
@@ -55,7 +54,7 @@ fn build_generics(
 
     generics.extend(ast.generics.type_params().map(|t| {
         let (ident, bounds) = (&t.ident, &t.bounds);
-        where_predicates.push(quote!(#ident : bin_proto::Protocol + #bounds));
+        where_predicates.push(quote!(#ident : #bounds));
         quote!(#ident)
     }));
 
@@ -80,8 +79,7 @@ fn impl_parcel_for_struct(
     ast: &syn::DeriveInput,
     strukt: &syn::DataStruct,
 ) -> proc_macro2::TokenStream {
-    let hints = codegen::hints(&strukt.fields);
-    let reads = codegen::reads(&strukt.fields);
+    let (reads, initializers) = codegen::reads(&strukt.fields);
     let writes = codegen::writes(&strukt.fields);
 
     impl_trait_for(
@@ -93,9 +91,8 @@ fn impl_parcel_for_struct(
                           __settings: &bin_proto::Settings,
                            __ctx: &mut dyn core::any::Any)
                 -> bin_proto::Result<Self> {
-                #hints
-
-                Ok(Self # reads)
+                #reads
+                Ok(Self #initializers)
             }
 
             #[allow(unused_variables)]
@@ -112,10 +109,10 @@ fn impl_parcel_for_struct(
 
 /// Generates a `Protocol` trait implementation for an enum.
 fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro2::TokenStream {
-    let discriminant_ty = plan.discriminant();
+    let discriminant_ty = plan.discriminant_ty.clone();
 
     let (read_variant, write_variant) = if let Some(field_width) =
-        Attrs::from(ast.attrs.as_slice()).bit_field
+        Attrs::from(ast.attrs.as_slice()).bits
     {
         (
             codegen::enums::read_variant(
@@ -128,8 +125,7 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
                 )?),
             ),
             codegen::enums::write_variant(plan, &|variant| {
-                let discriminant_expr = variant.discriminant_expr();
-                let discriminant_ref_expr = variant.discriminant_ref_expr();
+                let discriminant_expr = variant.discriminant_value.clone();
                 let error_message = format!(
                     "Discriminant for variant '{}' does not fit in bitfield with width {}.",
                     variant.ident, field_width
@@ -137,7 +133,7 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
 
                 quote!(
                     const _: () = assert!(#discriminant_expr < (1 as #discriminant_ty) << #field_width, #error_message);
-                    <#discriminant_ty as bin_proto::BitField>::write(#discriminant_ref_expr, __io_writer, __settings, __ctx, #field_width)?;
+                    <#discriminant_ty as bin_proto::BitField>::write(&{#discriminant_expr}, __io_writer, __settings, __ctx, #field_width)?;
                 )
             }),
         )
@@ -148,8 +144,8 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
                 quote!(bin_proto::Protocol::read(__io_reader, __settings, __ctx)?),
             ),
             codegen::enums::write_variant(plan, &|variant| {
-                let discriminant_ref_expr = variant.discriminant_ref_expr();
-                quote!( <#discriminant_ty as bin_proto::Protocol>::write(#discriminant_ref_expr, __io_writer, __settings, __ctx)?; )
+                let discriminant_expr = variant.discriminant_value.clone();
+                quote!( <#discriminant_ty as bin_proto::Protocol>::write(&{#discriminant_expr}, __io_writer, __settings, __ctx)?; )
             }),
         )
     };
@@ -180,11 +176,11 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
 }
 
 fn impl_enum_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro2::TokenStream {
-    let discriminant = plan.discriminant();
+    let discriminant = plan.discriminant_ty.clone();
 
     let variant_matchers = plan.variants.iter().map(|variant| {
         let variant_ident = &variant.ident;
-        let discriminant = variant.discriminant_expr();
+        let discriminant = variant.discriminant_value.clone();
         let fields_expr = variant.ignore_fields_pattern_expr();
 
         quote!(Self::#variant_ident #fields_expr => {

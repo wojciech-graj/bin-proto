@@ -3,7 +3,7 @@ use std::io;
 use bitstream_io::{BE, LE};
 
 /// A bit-level equivalent of `std::io::Read`. An object-safe wrapper over
-/// bitstream_io::BitRead.
+/// `bitstream_io::BitRead`.
 pub trait BitRead {
     fn read_bit(&mut self) -> io::Result<bool>;
     fn skip(&mut self, bits: u32) -> io::Result<()>;

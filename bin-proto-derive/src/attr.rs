@@ -1,36 +1,68 @@
-use crate::format::{self, Format};
-
-use proc_macro2::TokenStream;
-
-#[derive(Debug)]
-pub struct LengthPrefix {
-    pub kind: LengthPrefixKind,
-    pub prefix_field_name: syn::Ident,
-}
-
 #[derive(Debug, Default)]
 pub struct Attrs {
-    pub discriminant_format: Option<format::Enum>,
-    pub discriminant: Option<syn::Lit>,
-    pub value: Option<syn::Expr>,
-    pub bit_field: Option<u32>,
+    pub discriminant_type: Option<syn::Ident>,
+    pub discriminant: Option<syn::Expr>,
+    pub write_value: Option<syn::Expr>,
+    pub bits: Option<u32>,
     pub flexible_array_member: bool,
-    pub length_prefix: Option<LengthPrefix>,
+    pub length: Option<syn::Expr>,
 }
 
 impl Attrs {
-    fn validate(&self) {
+    pub fn validate_enum(&self) {
+        if self.discriminant_type.is_none() {
+            panic!("expected discriminant_type attribute for enum")
+        }
+        if self.discriminant.is_some() {
+            panic!("unexpected discriminant attribute for enum")
+        }
+        if self.write_value.is_some() {
+            panic!("unexpected write_value attribute for enum")
+        }
+        if self.flexible_array_member {
+            panic!("unexpected flexible_array_member attribute for enum")
+        }
+        if self.length.is_some() {
+            panic!("unexpected length attribute for enum")
+        }
+    }
+
+    pub fn validate_variant(&self) {
+        if self.discriminant_type.is_some() {
+            panic!("unexpected discriminant_type attribute for variant")
+        }
+        if self.write_value.is_some() {
+            panic!("unexpected write_value attribute for variant")
+        }
+        if self.bits.is_some() {
+            panic!("unexpected bits attribute for variant")
+        }
+        if self.flexible_array_member {
+            panic!("unexpected flexible_array_member attribute for variant")
+        }
+        if self.length.is_some() {
+            panic!("unexpected length attribute for variant")
+        }
+    }
+
+    pub fn validate_field(&self) {
+        if self.discriminant_type.is_some() {
+            panic!("unexpected discriminant_type attribute for field")
+        }
+        if self.discriminant.is_some() {
+            panic!("unexpected discriminant attribute for field")
+        }
         if [
-            self.bit_field.is_some(),
+            self.bits.is_some(),
             self.flexible_array_member,
-            self.length_prefix.is_some(),
+            self.length.is_some(),
         ]
         .iter()
         .filter(|b| **b)
         .count()
             > 1
         {
-            panic!("'bits', 'flexible_array_member', and 'length_prefix' attributes are mutually-exclusive.")
+            panic!("bits, flexible_array_member, and length are mutually-exclusive attributes")
         }
     }
 }
@@ -54,40 +86,33 @@ impl From<&[syn::Attribute]> for Attrs {
         for meta_list in meta_lists {
             for meta in meta_list.nested {
                 match meta {
-                    syn::NestedMeta::Meta(syn::Meta::List(nested_list)) => {
-                        match &nested_list
-                            .path
-                            .get_ident()
-                            .expect("meta is not an ident")
-                            .to_string()[..]
-                        {
-                            "length_prefix" => {
-                                attribs.length_prefix = Some(attr_length_prefix(nested_list))
-                            }
-                            "discriminant" => {
-                                attribs.discriminant = Some(attr_field_discriminant(nested_list))
-                            }
-                            name => panic!("#[protocol({})] is not valid", name),
-                        }
-                    }
                     syn::NestedMeta::Meta(syn::Meta::NameValue(name_value)) => {
                         match name_value.path.get_ident() {
                             Some(ident) => match &ident.to_string()[..] {
-                                "discriminant" => {
-                                    attribs.discriminant_format =
-                                        Some(attr_enum_discriminant(name_value))
+                                "discriminant_type" => {
+                                    attribs.discriminant_type =
+                                        Some(meta_name_value_to_parse(name_value))
                                 }
-                                "bits" => attribs.bit_field = Some(attr_bits(name_value)),
-                                "value" => attribs.value = Some(attr_value(name_value)),
-                                ident => panic!("got unexpected '{}'", ident),
+                                "discriminant" => {
+                                    attribs.discriminant =
+                                        Some(meta_name_value_to_parse(name_value))
+                                }
+                                "bits" => attribs.bits = Some(meta_name_value_to_u32(name_value)),
+                                "write_value" => {
+                                    attribs.write_value = Some(meta_name_value_to_parse(name_value))
+                                }
+                                "length" => {
+                                    attribs.length = Some(meta_name_value_to_parse(name_value))
+                                }
+                                ident => panic!("unrecognised #[protocol({})]", ident),
                             },
-                            None => panic!("parsed string was not an identifier"),
+                            None => panic!("failed to parse #[protocol(...)]"),
                         }
                     }
                     syn::NestedMeta::Meta(syn::Meta::Path(path)) => match path.get_ident() {
                         Some(ident) => match ident.to_string().as_str() {
                             "flexible_array_member" => attribs.flexible_array_member = true,
-                            _ => panic!("got unexpected '{}'", ident),
+                            _ => panic!("unrecognised #[protocol({})]", ident),
                         },
                         None => panic!("parsed string was not an identifier"),
                     },
@@ -97,118 +122,30 @@ impl From<&[syn::Attribute]> for Attrs {
                 };
             }
         }
-        attribs.validate();
         attribs
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
-pub enum LengthPrefixKind {
-    Bytes,
-    Elements,
-}
-
-impl LengthPrefixKind {
-    /// Gets a path to the length prefix in the bin_proto crate.
-    pub fn path_expr(&self) -> TokenStream {
-        match *self {
-            LengthPrefixKind::Bytes => {
-                quote!(bin_proto::externally_length_prefixed::LengthPrefixKind::Bytes)
-            }
-            LengthPrefixKind::Elements => {
-                quote!(bin_proto::externally_length_prefixed::LengthPrefixKind::Elements)
-            }
-        }
-    }
-}
-
-fn attr_length_prefix(nested_list: syn::MetaList) -> LengthPrefix {
-    let nested_list = expect::meta_list::nested_list(nested_list).expect("expected a nested list");
-    let prefix_kind = match &nested_list
-        .path
-        .get_ident()
-        .expect("nested list is not an ident")
-        .to_string()[..]
-    {
-        "bytes" => LengthPrefixKind::Bytes,
-        "elements" => LengthPrefixKind::Elements,
-        invalid_prefix => {
-            panic!("invalid length prefix type: '{}'", invalid_prefix)
-        }
-    };
-
-    let length_prefix_expr = expect::meta_list::single_element(nested_list).unwrap();
-    let prefix_field_name = match length_prefix_expr {
-        syn::NestedMeta::Meta(syn::Meta::Path(path)) => match path.get_ident() {
-            Some(field_ident) => field_ident.clone(),
-            None => panic!("path is not an ident"),
-        },
-        _ => panic!("unexpected format for length prefix attribute"),
-    };
-
-    LengthPrefix {
-        kind: prefix_kind,
-        prefix_field_name,
-    }
-}
-
-fn attr_field_discriminant(nested_list: syn::MetaList) -> syn::Lit {
-    expect::meta_list::single_literal(nested_list).expect("expected a single literal")
-}
-
-fn attr_enum_discriminant(name_value: syn::MetaNameValue) -> format::Enum {
+fn meta_name_value_to_parse<T: syn::parse::Parse>(name_value: syn::MetaNameValue) -> T {
     match name_value.lit {
-        syn::Lit::Str(s) => match format::Enum::from_str(&s.value()) {
+        syn::Lit::Str(s) => match syn::parse_str::<T>(s.value().as_str()) {
             Ok(f) => f,
-            Err(()) => {
-                panic!("invalid enum discriminant format: '{}'", s.value())
+            Err(_) => {
+                panic!("Failed to parse '{}'", s.value())
             }
         },
-        _ => panic!("discriminant format mut be string"),
+        _ => panic!("#[protocol(... = \"...\")] must be string"),
     }
 }
 
-fn attr_bits(name_value: syn::MetaNameValue) -> u32 {
+fn meta_name_value_to_u32(name_value: syn::MetaNameValue) -> u32 {
     match name_value.lit {
         syn::Lit::Int(i) => match i.base10_parse() {
             Ok(i) => i,
             Err(_) => {
-                panic!("bitfield must have constant unsigned size.")
+                panic!("Failed to parse integer from '{}'", i)
             }
         },
         _ => panic!("bitfield size must be an integer"),
-    }
-}
-
-fn attr_value(name_value: syn::MetaNameValue) -> syn::Expr {
-    match name_value.lit {
-        syn::Lit::Str(s) => syn::parse_str::<syn::Expr>(s.value().as_str()).unwrap(),
-        _ => panic!("bitfield size must be an integer"),
-    }
-}
-
-mod expect {
-    pub mod meta_list {
-        pub fn nested_list(list: syn::MetaList) -> Result<syn::MetaList, ()> {
-            assert!(list.nested.len() == 1, "list should only have one item");
-            match list.nested.into_iter().next().unwrap() {
-                syn::NestedMeta::Meta(syn::Meta::List(nested)) => Ok(nested),
-                _ => Err(()),
-            }
-        }
-
-        /// Expects a list with a single element.
-        pub fn single_element(list: syn::MetaList) -> Result<syn::NestedMeta, ()> {
-            assert!(list.nested.len() == 1, "list should only have one item");
-            Ok(list.nested.into_iter().next().unwrap())
-        }
-
-        /// A single word `name(literal)`.
-        pub fn single_literal(list: syn::MetaList) -> Result<syn::Lit, ()> {
-            single_element(list).and_then(|nested| match nested {
-                syn::NestedMeta::Lit(lit) => Ok(lit),
-                _ => Err(()),
-            })
-        }
     }
 }

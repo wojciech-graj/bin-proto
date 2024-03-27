@@ -14,16 +14,17 @@ pub struct BizBong(u8, u8, pub u8);
 pub struct PartyInTheFront;
 
 #[derive(bin_proto::Protocol, Debug, PartialEq, Eq)]
-pub struct NamedFieldsWithGenerics<A, D> {
+pub struct NamedFieldsWithGenerics<A: Protocol, D: Protocol> {
     pub value: A,
     pub del: D,
 }
 
 #[derive(bin_proto::Protocol, Debug, PartialEq, Eq)]
-pub struct UnnamedFieldsWithGenerics<A, D>(A, D);
+pub struct UnnamedFieldsWithGenerics<A: Protocol, D: Protocol>(A, D);
 
 #[derive(bin_proto::Protocol, Debug, PartialEq, Eq)]
-pub struct StructWithExistingBoundedGenerics<A: ::std::fmt::Display + ::std::fmt::Debug> {
+pub struct StructWithExistingBoundedGenerics<A: ::std::fmt::Display + ::std::fmt::Debug + Protocol>
+{
     foo: A,
 }
 
@@ -71,10 +72,7 @@ fn unnamed_fields_are_correctly_read() {
 
 #[test]
 fn unit_structs_are_correctly_written() {
-    assert_eq!(
-        PartyInTheFront.bytes(&Settings::default()).unwrap(),
-        &[]
-    );
+    assert_eq!(PartyInTheFront.bytes(&Settings::default()).unwrap(), &[]);
 }
 
 #[test]

@@ -196,9 +196,9 @@ mod bench {
 
         #[derive(Debug, Protocol, PartialEq)]
         struct V {
-            #[protocol(value = "self.data.len() as u8")]
+            #[protocol(write_value = "self.data.len() as u8")]
             count: u8,
-            #[protocol(length_prefix(elements(count)))]
+            #[protocol(length = "count as usize")]
             data: Vec<u8>,
         }
 
@@ -230,7 +230,7 @@ mod bench {
         use super::*;
 
         #[derive(Debug, Protocol, PartialEq)]
-        #[protocol(discriminant = "u8")]
+        #[protocol(discriminant_type = "u8")]
         enum E {
             V0 = 0,
             V1 = 1,
@@ -264,7 +264,7 @@ mod bench {
         use super::*;
 
         #[derive(Debug, Protocol, PartialEq)]
-        #[protocol(discriminant = "u8")]
+        #[protocol(discriminant_type = "u8")]
         #[protocol(bits = 4)]
         enum Version {
             V4 = 4,

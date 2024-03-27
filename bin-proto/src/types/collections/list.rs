@@ -1,13 +1,19 @@
+use crate::ExternallyLengthPrefixed;
+use core::any::Any;
+use std::collections::{BTreeSet, HashSet, LinkedList, VecDeque};
+use std::hash::Hash;
+
 macro_rules! impl_list_type {
     ( $ty:ident => T: $( $ty_pred:ident ),* ) => {
-        impl<T> $crate::Protocol for ::std::collections::$ty<T>
+        impl<T> ExternallyLengthPrefixed for $ty<T>
             where T: $crate::Protocol $( + $ty_pred )*
         {
             fn read(read: &mut dyn crate::BitRead,
                           settings: &crate::Settings,
-                          ctx: &mut dyn core::any::Any,
+                          ctx: &mut dyn Any,
+                          length: usize,
                           ) -> Result<Self, $crate::Error> {
-                let elements = crate::util::read_list(read, settings, ctx)?;
+                let elements = crate::util::read_items(length, read, settings, ctx)?;
                 Ok(elements.into_iter().collect())
             }
 
@@ -16,42 +22,14 @@ macro_rules! impl_list_type {
                            ctx: &mut dyn core::any::Any,
                            )
                 -> Result<(), $crate::Error> {
-                crate::util::write_list_length_prefixed(self.iter(), write, settings, ctx)
-            }
-        }
-
-        #[cfg(test)]
-        mod test
-        {
-            pub use crate::{Protocol, Settings};
-            pub use std::collections::$ty;
-
-            #[test]
-            fn can_be_written_and_read_back_correctly() {
-                let original: $ty<u32> = [1, 2, 3, 4, 5].iter().cloned().collect();
-
-                let settings = Settings::default();
-                let bytes = original.bytes(&settings).unwrap();
-                let read_deque = $ty::<u32>::from_bytes(&bytes, &settings).unwrap();
-
-                assert_eq!(original, read_deque);
+                crate::util::write_list(self.iter(), write, settings, ctx)
             }
         }
     }
 }
 
-pub mod linked_list {
-    impl_list_type!(LinkedList => T: );
-}
-pub mod vec_deque {
-    impl_list_type!(VecDeque   => T: );
-}
-
-pub mod btree_set {
-    impl_list_type!(BTreeSet   => T: Ord);
-}
-
-pub mod hash_set {
-    use std::hash::Hash;
-    impl_list_type!(HashSet => T: Hash, Eq);
-}
+impl_list_type!(Vec => T: );
+impl_list_type!(LinkedList => T: );
+impl_list_type!(VecDeque   => T: );
+impl_list_type!(BTreeSet   => T: Ord);
+impl_list_type!(HashSet => T: Hash, Eq);

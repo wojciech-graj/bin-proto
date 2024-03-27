@@ -7,7 +7,7 @@
 //! ```
 //! # use bin_proto::Protocol;
 //! #[derive(Debug, Protocol, PartialEq)]
-//! #[protocol(discriminant = "u8")]
+//! #[protocol(discriminant_type = "u8")]
 //! #[protocol(bits = 4)]
 //! enum Version {
 //!     V4 = 4,
@@ -96,7 +96,7 @@ pub use self::settings::*;
 ///
 /// # Attributes
 ///
-/// ## `#[protocol(discriminant = "<kind>")]`
+/// ## `#[protocol(discriminant_type = "<kind>")]`
 /// - Applies to: `enum` with `#[derive(Protocol)]`.
 /// - `<kind>`: `str`, any numeric type
 ///
@@ -106,26 +106,25 @@ pub use self::settings::*;
 /// ```
 /// # use bin_proto::Protocol;
 /// #[derive(Protocol)]
-/// #[protocol(discriminant = "u8")]
+/// #[protocol(discriminant_type = "u8")]
 /// enum Example {
 ///     Variant1 = 1,
 ///     Variant5 = 5,
 /// }
 /// ```
 ///
-/// ## `#[protocol(discriminant(<value>))]`
+/// ## `#[protocol(discriminant = "<value>")]`
 /// - Applies to: `enum` variant
 /// - `<value>`: unique value of the discriminant's type
 ///
 /// ```
 /// # use bin_proto::Protocol;
 /// #[derive(Protocol)]
-/// #[protocol(discriminant = "u8")]
+/// #[protocol(discriminant_type = "u8")]
 /// enum Example {
-///     #[protocol(discriminant(1))]
+///     #[protocol(discriminant = "1")]
 ///     Variant1,
-///     #[protocol(discriminant(5))]
-///     Variant5,
+///     Variant5 = 5,
 /// }
 /// ```
 ///
@@ -158,13 +157,12 @@ pub use self::settings::*;
 /// struct ReadToEnd(#[protocol(flexible_array_member)] Vec<u8>);
 /// ```
 ///
-/// ## `#[protocol(length_prefix(<kind>(<field>)))]`
+/// ## `#[protocol(length = "<expr>")]`
 /// - Applies to: `impl ExternallyLengthPrefixed`
-/// - `<kind>`: `bytes`, `elements`
-/// - `<field>`: field in parent container storing length prefix
+/// - `<expr>`: arbitrary `usize` expression. Fields in parent container can be
+///   used without prefixing them with `self`.
 ///
-/// Specify variable holding length of variable-length field, instead
-/// of prepending it by a `u32` holding the length.
+/// Specify length of variable-length field.
 ///
 /// ```
 /// # use bin_proto::Protocol;
@@ -172,23 +170,26 @@ pub use self::settings::*;
 /// pub struct WithElementsLength {
 ///     pub count: u32,
 ///     pub foo: bool,
-///     #[protocol(length_prefix(elements(count)))]
+///     #[protocol(length = "count as usize")]
 ///     pub data: Vec<u32>,
 /// }
 /// ```
 ///
-/// ## `#[protocol(value = "<expr>")]`
+/// ## `#[protocol(write_value = "<expr>")]`
 /// - Applies to: fields
-/// - `<expr>`: An expression that can be coerced to the field type, potentially using `self`
+/// - `<expr>`: An expression that can be coerced to the field type, potentially
+///   using `self`
+///
+///
 ///
 /// ```
 /// # use bin_proto::Protocol;
 /// #[derive(Protocol)]
 /// pub struct WithElementsLengthAuto {
-///     #[protocol(value = "self.data.len() as u32")]
+///     #[protocol(write_value = "self.data.len() as u32")]
 ///     pub count: u32,
 ///     pub foo: bool,
-///     #[protocol(length_prefix(elements(count)))]
+///     #[protocol(length = "count as usize")]
 ///     pub data: Vec<u32>,
 /// }
 /// ```
@@ -198,11 +199,10 @@ pub use bin_proto_derive::Protocol;
 mod bit_field;
 mod bit_read;
 mod bit_write;
-pub mod externally_length_prefixed;
+mod externally_length_prefixed;
 mod flexible_array_member;
 mod settings;
-#[macro_use]
-pub mod types;
+mod types;
 
 mod enum_ty;
 mod error;
@@ -219,7 +219,7 @@ extern crate uuid;
 /// struct MutuallyExclusiveAttrs {
 ///     pub length: u8,
 ///     #[protocol(flexible_array_member)]
-///     #[protocol(length_prefix(bytes("length")))]
+///     #[protocol(length = "length as usize")]
 ///     pub reason: String,
 /// }
 /// ```
