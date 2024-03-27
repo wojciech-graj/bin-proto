@@ -5,3 +5,4 @@
 - Add `#[protocol(write_value = "<expr>")]` for automatically writing arbitrary element value
 - Replace `#[protocol(length_prefix(<kind>(<field>)))]` with `#[protocol(length = "<expr>")]`
 - Check attribute applicability in every context
+- Require discriminants type to be specified for an enum
