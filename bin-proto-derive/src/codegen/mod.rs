@@ -93,35 +93,15 @@ fn read(field: &syn::Field) -> TokenStream {
     }
 }
 
-fn write<'a, T: quote::ToTokens>(
-    field: &syn::Field,
-    field_name: &T,
-    fields: impl IntoIterator<Item = &'a syn::Field> + Clone,
-) -> TokenStream {
+fn write<T: quote::ToTokens>(field: &syn::Field, field_name: &T) -> TokenStream {
     let attribs = Attrs::from(field.attrs.as_slice());
 
-    let field_ref = if attribs.auto {
-        if let Some(length_prefix_of) = length_prefix_of(field, fields.clone()) {
-            let field_attribs = Attrs::from(length_prefix_of.attrs.as_slice());
-            let ty = field.ty.clone();
-            let field_ident = length_prefix_of.ident;
-            match field_attribs.length_prefix.unwrap().kind {
-                crate::attr::LengthPrefixKind::Bytes => {
-                    panic!("auto is unsupported on bytes length prefixes")
-                }
-                crate::attr::LengthPrefixKind::Elements => {
-                    quote!(&{
-                        let mut cnt: #ty = 0;
-                        for _ in self.#field_ident.iter() {
-                            cnt += 1;
-                        }
-                        cnt
-                    })
-                }
-            }
-        } else {
-            panic!("TODO");
-        }
+    let field_ref = if let Some(value) = attribs.value {
+        let ty = field.ty.clone();
+        quote!(&{
+            let value: #ty = {#value};
+            value
+        })
     } else {
         quote!(&self. #field_name)
     };
@@ -214,7 +194,7 @@ fn write_named_fields(fields_named: &syn::FieldsNamed) -> TokenStream {
         .iter()
         .map(|field| {
             let field_name = &field.ident;
-            write(field, field_name, &fields_named.named)
+            write(field, field_name)
         })
         .collect();
 
@@ -248,7 +228,7 @@ fn write_unnamed_fields(fields_unnamed: &syn::FieldsUnnamed) -> TokenStream {
         .enumerate()
         .map(|(field_index, field)| {
             let field_index = syn::Index::from(field_index);
-            write(field, &field_index, &fields_unnamed.unnamed) // TODO
+            write(field, &field_index)
         })
         .collect();
 

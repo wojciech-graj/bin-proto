@@ -23,7 +23,7 @@ pub struct WithElementsLength {
 
 #[derive(bin_proto::Protocol, Debug, PartialEq, Eq)]
 pub struct WithElementsLengthAuto {
-    #[protocol(auto)]
+    #[protocol(value = "self.data.len() as u32")]
     pub count: u32,
     pub foo: bool,
     #[protocol(length_prefix(elements(count)))]

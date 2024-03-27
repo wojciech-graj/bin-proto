@@ -12,7 +12,7 @@ pub struct LengthPrefix {
 pub struct Attrs {
     pub discriminant_format: Option<format::Enum>,
     pub discriminant: Option<syn::Lit>,
-    pub auto: bool,
+    pub value: Option<syn::Expr>,
     pub bit_field: Option<u32>,
     pub flexible_array_member: bool,
     pub length_prefix: Option<LengthPrefix>,
@@ -78,6 +78,7 @@ impl From<&[syn::Attribute]> for Attrs {
                                         Some(attr_enum_discriminant(name_value))
                                 }
                                 "bits" => attribs.bit_field = Some(attr_bits(name_value)),
+                                "value" => attribs.value = Some(attr_value(name_value)),
                                 ident => panic!("got unexpected '{}'", ident),
                             },
                             None => panic!("parsed string was not an identifier"),
@@ -86,7 +87,6 @@ impl From<&[syn::Attribute]> for Attrs {
                     syn::NestedMeta::Meta(syn::Meta::Path(path)) => match path.get_ident() {
                         Some(ident) => match ident.to_string().as_str() {
                             "flexible_array_member" => attribs.flexible_array_member = true,
-                            "auto" => attribs.auto = true,
                             _ => panic!("got unexpected '{}'", ident),
                         },
                         None => panic!("parsed string was not an identifier"),
@@ -176,6 +176,13 @@ fn attr_bits(name_value: syn::MetaNameValue) -> u32 {
                 panic!("bitfield must have constant unsigned size.")
             }
         },
+        _ => panic!("bitfield size must be an integer"),
+    }
+}
+
+fn attr_value(name_value: syn::MetaNameValue) -> syn::Expr {
+    match name_value.lit {
+        syn::Lit::Str(s) => syn::parse_str::<syn::Expr>(s.value().as_str()).unwrap(),
         _ => panic!("bitfield size must be an integer"),
     }
 }

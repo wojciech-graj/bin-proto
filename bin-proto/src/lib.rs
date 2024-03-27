@@ -177,18 +177,15 @@ pub use self::settings::*;
 /// }
 /// ```
 ///
-/// ## `#[protocol(auto)]`
-/// - Applies to: length prefix fields storing element count
-///
-/// Writes the length of the variable-length field that it counts the elements
-/// of instead of own value. The variable-length field must have a `.iter()`
-/// method.
+/// ## `#[protocol(value = "<expr>")]`
+/// - Applies to: fields
+/// - `<expr>`: An expression that can be coerced to the field type, potentially using `self`
 ///
 /// ```
 /// # use bin_proto::Protocol;
 /// #[derive(Protocol)]
 /// pub struct WithElementsLengthAuto {
-///     #[protocol(auto)]
+///     #[protocol(value = "self.data.len() as u32")]
 ///     pub count: u32,
 ///     pub foo: bool,
 ///     #[protocol(length_prefix(elements(count)))]
