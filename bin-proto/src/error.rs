@@ -10,15 +10,9 @@ pub enum Error {
     FromNulError(#[from] std::ffi::NulError),
     #[error("{0}")]
     TryFromIntError(#[from] std::num::TryFromIntError),
-    #[error("{0}")]
-    CharTryFromError(#[from] std::char::CharTryFromError),
     #[cfg(feature = "uuid")]
     #[error("{0}")]
     UuidParseError(#[from] uuid::Error),
     #[error("received unknown enum discriminant '{0}'")]
     UnknownEnumDiscriminant(String),
-    #[error("nonzero pad")]
-    NonZeroPad,
-    #[error("did not find length prefix")]
-    NoLengthPrefix,
 }

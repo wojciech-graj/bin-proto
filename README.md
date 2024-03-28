@@ -5,7 +5,7 @@
 [![docs.rs](https://docs.rs/bin-proto/badge.svg)](https://docs.rs/bin-proto)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
-Simple and fast bit-level protocol definitions in Rust.
+Simple & fast bit-level binary co/dec in Rust.
 
 An improved and modernized fork of
 [protocol](https://crates.io/crates/bin-proto). A more efficient but (slightly)
@@ -37,7 +37,7 @@ use bin_proto::Protocol;
 enum E {
     V1 = 1,
     #[protocol(discriminant = "4")]
-    V4 = 4,
+    V4,
 }
 
 #[derive(Debug, Protocol, PartialEq)]
@@ -63,7 +63,7 @@ assert_eq!(
         0x02, // arr_len: 2
         0x21, 0x37, // arr: [0x21, 0x37]
         0x01, 0x02, 0x03, // read_to_end: [0x01, 0x02, 0x03]
-    ], &bin_proto::Settings::default()).unwrap(),
+    ], bin_proto::ByteOrder::BigEndian).unwrap(),
     S {
         bitflag: true,
         bitfield: 5,
@@ -89,7 +89,7 @@ struct CtxCheck;
 impl Protocol for CtxCheck {
     fn read(
         _: &mut dyn bin_proto::BitRead,
-        _: &bin_proto::Settings,
+        _: bin_proto::ByteOrder,
         ctx: &mut dyn std::any::Any,
     ) -> Result<Self, bin_proto::Error> {
         ctx.downcast_mut::<Ctx>().unwrap().0 = true;
@@ -99,7 +99,7 @@ impl Protocol for CtxCheck {
     fn write(
         &self,
         _: &mut dyn bin_proto::BitWrite,
-        _: &bin_proto::Settings,
+        _: bin_proto::ByteOrder,
         ctx: &mut dyn std::any::Any,
     ) -> Result<(), bin_proto::Error> {
         ctx.downcast_mut::<Ctx>().unwrap().0 = true;
@@ -114,13 +114,13 @@ This crate's main alternative is [deku](https://crates.io/crates/deku), and [bin
 
 `bin-proto` is significantly faster than `deku` in all of the tested scenarios.
 The units for the below table are `ns/iter`, taken from
-[github CI](https://github.com/wojciech-graj/bin-proto/actions/runs/8458342566/job/23172355723).
+[github CI](https://github.com/wojciech-graj/bin-proto/actions/runs/8471691807/job/23212208550).
 You can find the benchmarks in the `bench` directory.
 
 |             | Read `enum` | Write `enum` | Read `Vec` | Write `Vec` | Read IPv4 header | Write IPv4 header |
 |-------------|-------------|--------------|------------|-------------|------------------|-------------------|
-| `bin-proto` | 28          | 100          | 1,374      | 1,679       | 174              | 208               |
-| `deku`      | 67          | 226          | 2,963      | 9,296       | 2,734            | 1,013             |
+| `bin-proto` | 28          | 110          | 1,293      | 1,261       | 165              | 163               |
+| `deku`      | 68          | 324          | 3,042      | 9,178       | 2,580            | 696               |
 
 ## Roadmap
 

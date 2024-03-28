@@ -1,6 +1,6 @@
-//! Simple bit-level protocol definitions in Rust.
+//! Simple & fast bit-level binary co/dec in Rust.
 //!
-//! For more information about `#[derive(Protocol)]`, see [macro@Protocol].
+//! For more information about `#[derive(Protocol)]` and its attributes, see [macro@Protocol].
 //!
 //! # Example
 //!
@@ -12,7 +12,7 @@
 //! enum E {
 //!     V1 = 1,
 //!     #[protocol(discriminant = "4")]
-//!     V4 = 4,
+//!     V4,
 //! }
 //!
 //! #[derive(Debug, Protocol, PartialEq)]

@@ -15,7 +15,7 @@ documentation = "https://docs.rs/bin-proto"
 keywords = ["protocol", "binary", "bit", "codec", "serde"]
 
 [features]
-default = ["derive", "uuid"]
+default = ["derive"]
 derive = ["bin-proto-derive"]
 
 [dependencies]
