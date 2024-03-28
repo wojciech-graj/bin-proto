@@ -167,6 +167,7 @@ pub use bin_proto_derive::Protocol;
 mod bit_field;
 mod bit_read;
 mod bit_write;
+#[macro_use]
 mod externally_length_prefixed;
 mod flexible_array_member;
 mod settings;

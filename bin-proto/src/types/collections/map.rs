@@ -1,23 +1,15 @@
-use crate::{BitRead, BitWrite, Error, Protocol, Settings};
-
-use core::any::Any;
-use std::collections::{BTreeMap, HashMap};
-use std::hash::Hash;
-
-pub type SizeType = u32;
-
 macro_rules! impl_map_type {
     ( $ty:ident => K: $( $k_pred:ident ),+ ) => {
-        impl<K, V> Protocol for $ty<K, V>
-            where K: Protocol + $( $k_pred +)+,
-                  V: Protocol
+        impl<K, V> crate::ExternallyLengthPrefixed for $ty<K, V>
+            where K: crate::Protocol + $( $k_pred +)+,
+                  V: crate::Protocol
         {
-            fn read(read: &mut dyn BitRead,
-                          settings: &Settings, ctx: &mut dyn Any,
-                          ) -> Result<Self, Error> {
+            fn read(read: &mut dyn crate::BitRead,
+                    settings: &crate::Settings,
+                    ctx: &mut dyn core::any::Any,
+                    length: usize,
+                    ) -> Result<Self, crate::Error> {
                 let mut map = $ty::new();
-
-                let length = SizeType::read(read, settings, ctx)?;
 
                 for _ in 0..length {
                     let key = K::read(read, settings, ctx)?;
@@ -29,11 +21,10 @@ macro_rules! impl_map_type {
                 Ok(map)
             }
 
-            fn write(&self, write: &mut dyn BitWrite,
-                           settings: &Settings, ctx: &mut dyn Any,
-                           ) -> Result<(), Error> {
-                (self.len() as SizeType).write(write, settings, ctx)?;
-
+            fn write(&self, write: &mut dyn crate::BitWrite,
+                    settings: &crate::Settings,
+                    ctx: &mut dyn core::any::Any,
+                    ) -> Result<(), crate::Error> {
                 for (key, value) in self.iter() {
                     key.write(write, settings, ctx)?;
                     value.write(write, settings, ctx)?;
@@ -45,5 +36,28 @@ macro_rules! impl_map_type {
     }
 }
 
-impl_map_type!(HashMap => K: Hash, Eq);
-impl_map_type!(BTreeMap => K: Ord);
+macro_rules! test_map_type {
+    ( $t:ident ) => {
+        #[cfg(test)]
+        #[allow(unused_imports)]
+        mod tests {
+            use super::*;
+
+            test_externally_length_prefixed!($t<u8, u16> => [[0x01, 0x00, 0x02, 0x03, 0x00, 0x04], $t::from([(1, 2), (3, 4)])]);
+        }
+    }
+}
+
+mod hash_map {
+    use std::collections::HashMap;
+    use std::hash::Hash;
+
+    impl_map_type!(HashMap => K: Hash, Eq);
+}
+
+mod b_tree_map {
+    use std::collections::BTreeMap;
+
+    impl_map_type!(BTreeMap => K: Ord);
+    test_map_type!(BTreeMap);
+}

@@ -23,3 +23,8 @@ impl ExternallyLengthPrefixed for String {
         util::write_list(&bytes, write, settings, ctx)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    test_externally_length_prefixed!(String => [[b'a', b'b', b'c', b'd'], String::from("abcd")]);
+}

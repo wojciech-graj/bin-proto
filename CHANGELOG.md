@@ -1,3 +1,6 @@
+# v0.3.0
+- Implement `ExternallyLengthPrefixed` on `HashMap` and `BTreeMap` instead of implementing `Protocol`
+- Do not implement `Protocol` on `char`, `range`
 # v0.2.0
 - Add context to all parse functions
 - Remove `#[repr(...)]`, instead specify repr in `#[protocol(discriminant = "...")]`

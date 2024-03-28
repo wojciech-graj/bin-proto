@@ -19,3 +19,37 @@ pub trait ExternallyLengthPrefixed: Sized {
         ctx: &mut dyn Any,
     ) -> Result<(), Error>;
 }
+
+#[cfg(test)]
+macro_rules! test_externally_length_prefixed {
+    ($t:ty => [$bytes:expr, $value:expr]) => {
+        #[test]
+        fn read_externally_length_prefixed() {
+            let bytes: &[u8] = $bytes.as_slice();
+            assert_eq!(
+                <$t as crate::ExternallyLengthPrefixed>::read(
+                    &mut bitstream_io::BitReader::endian(bytes, bitstream_io::BigEndian),
+                    &crate::Settings::default(),
+                    &mut (),
+                    $value.len()
+                )
+                .unwrap(),
+                $value
+            )
+        }
+
+        #[test]
+        fn write_externally_length_prefixed() {
+            let mut buffer: Vec<u8> = Vec::new();
+            let value: $t = $value;
+            crate::ExternallyLengthPrefixed::write(
+                &value,
+                &mut bitstream_io::BitWriter::endian(&mut buffer, bitstream_io::BigEndian),
+                &crate::Settings::default(),
+                &mut (),
+            )
+            .unwrap();
+            assert_eq!(buffer.as_slice(), $bytes)
+        }
+    };
+}
