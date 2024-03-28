@@ -1,6 +1,37 @@
 use crate::{BitRead, BitWrite, Error, Protocol, Settings};
 use core::any::Any;
 
+impl Protocol for () {
+    fn read(_: &mut dyn BitRead, _: &Settings, _: &mut dyn Any) -> Result<Self, Error> {
+        Ok(())
+    }
+
+    fn write(&self, _: &mut dyn BitWrite, _: &Settings, _: &mut dyn Any) -> Result<(), Error> {
+        Ok(())
+    }
+}
+
+impl<T0> Protocol for (T0,)
+where
+    T0: Protocol,
+{
+    fn read(read: &mut dyn BitRead, settings: &Settings, ctx: &mut dyn Any) -> Result<Self, Error> {
+        let v = T0::read(read, settings, ctx)?;
+        Ok((v,))
+    }
+
+    fn write(
+        &self,
+        write: &mut dyn BitWrite,
+        settings: &Settings,
+        ctx: &mut dyn Any,
+    ) -> Result<(), Error> {
+        self.0.write(write, settings, ctx)?;
+
+        Ok(())
+    }
+}
+
 impl<T0, T1> Protocol for (T0, T1)
 where
     T0: Protocol,

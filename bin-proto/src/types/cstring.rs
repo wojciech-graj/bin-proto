@@ -38,24 +38,25 @@ mod test {
 
     use crate::{Protocol, Settings};
     use std::ffi::CString;
-    use std::io::Cursor;
 
     #[test]
     fn can_read_cstring() {
-        let mut data = BitReader::endian(Cursor::new([0x41, 0x42, 0x43, 0]), BigEndian);
+        let mut data = BitReader::endian([0x41u8, 0x42, 0x43, 0].as_slice(), BigEndian);
         let read_back: CString = Protocol::read(&mut data, &Settings::default(), &mut ()).unwrap();
         assert_eq!(read_back, CString::new("ABC").unwrap());
     }
 
     #[test]
     fn can_write_cstring() {
-        let mut data = Cursor::new(Vec::new());
-        let mut buffer = BitWriter::endian(&mut data, BigEndian);
-
+        let mut data: Vec<u8> = Vec::new();
         CString::new("ABC")
             .unwrap()
-            .write(&mut buffer, &Settings::default(), &mut ())
+            .write(
+                &mut BitWriter::endian(&mut data, BigEndian),
+                &Settings::default(),
+                &mut (),
+            )
             .unwrap();
-        assert_eq!(data.into_inner(), vec![0x41, 0x42, 0x43, 0]);
+        assert_eq!(data, vec![0x41, 0x42, 0x43, 0]);
     }
 }
