@@ -5,7 +5,7 @@
 [![docs.rs](https://docs.rs/bin-proto/badge.svg)](https://docs.rs/bin-proto)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
-Simple & fast bit-level binary co/dec in Rust.
+Simple & fast structured bit-level binary co/dec in Rust.
 
 An improved and modernized fork of
 [protocol](https://crates.io/crates/bin-proto). A more efficient but (slightly)
@@ -23,7 +23,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-bin-proto = "0.2"
+bin-proto = "0.3"
 ```
 
 And then define a type with the `#[derive(bin_proto::Protocol)]` attribute.
@@ -125,5 +125,6 @@ You can find the benchmarks in the `bench` directory.
 ## Roadmap
 
 The following features are planned:
-- `no_std` support
-- bit/byte alignment
+- Bit/byte alignment
+- Better derive macro error messages
+- `no_std` support (only after `bitstream_io` supports it)
