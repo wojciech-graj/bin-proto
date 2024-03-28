@@ -1,12 +1,12 @@
-use crate::{BitRead, BitWrite, Error, Protocol, Settings};
+use crate::{BitRead, BitWrite, ByteOrder, Error, Protocol};
 use core::any::Any;
 
 impl Protocol for () {
-    fn read(_: &mut dyn BitRead, _: &Settings, _: &mut dyn Any) -> Result<Self, Error> {
+    fn read(_: &mut dyn BitRead, _: ByteOrder, _: &mut dyn Any) -> Result<Self, Error> {
         Ok(())
     }
 
-    fn write(&self, _: &mut dyn BitWrite, _: &Settings, _: &mut dyn Any) -> Result<(), Error> {
+    fn write(&self, _: &mut dyn BitWrite, _: ByteOrder, _: &mut dyn Any) -> Result<(), Error> {
         Ok(())
     }
 }
@@ -15,18 +15,22 @@ impl<T0> Protocol for (T0,)
 where
     T0: Protocol,
 {
-    fn read(read: &mut dyn BitRead, settings: &Settings, ctx: &mut dyn Any) -> Result<Self, Error> {
-        let v = T0::read(read, settings, ctx)?;
+    fn read(
+        read: &mut dyn BitRead,
+        byte_order: ByteOrder,
+        ctx: &mut dyn Any,
+    ) -> Result<Self, Error> {
+        let v = T0::read(read, byte_order, ctx)?;
         Ok((v,))
     }
 
     fn write(
         &self,
         write: &mut dyn BitWrite,
-        settings: &Settings,
+        byte_order: ByteOrder,
         ctx: &mut dyn Any,
     ) -> Result<(), Error> {
-        self.0.write(write, settings, ctx)?;
+        self.0.write(write, byte_order, ctx)?;
 
         Ok(())
     }
@@ -37,20 +41,24 @@ where
     T0: Protocol,
     T1: Protocol,
 {
-    fn read(read: &mut dyn BitRead, settings: &Settings, ctx: &mut dyn Any) -> Result<Self, Error> {
-        let v0 = T0::read(read, settings, ctx)?;
-        let v1 = T1::read(read, settings, ctx)?;
+    fn read(
+        read: &mut dyn BitRead,
+        byte_order: ByteOrder,
+        ctx: &mut dyn Any,
+    ) -> Result<Self, Error> {
+        let v0 = T0::read(read, byte_order, ctx)?;
+        let v1 = T1::read(read, byte_order, ctx)?;
         Ok((v0, v1))
     }
 
     fn write(
         &self,
         write: &mut dyn BitWrite,
-        settings: &Settings,
+        byte_order: ByteOrder,
         ctx: &mut dyn Any,
     ) -> Result<(), Error> {
-        self.0.write(write, settings, ctx)?;
-        self.1.write(write, settings, ctx)?;
+        self.0.write(write, byte_order, ctx)?;
+        self.1.write(write, byte_order, ctx)?;
 
         Ok(())
     }
@@ -62,22 +70,26 @@ where
     T1: Protocol,
     T2: Protocol,
 {
-    fn read(read: &mut dyn BitRead, settings: &Settings, ctx: &mut dyn Any) -> Result<Self, Error> {
-        let v0 = T0::read(read, settings, ctx)?;
-        let v1 = T1::read(read, settings, ctx)?;
-        let v2 = T2::read(read, settings, ctx)?;
+    fn read(
+        read: &mut dyn BitRead,
+        byte_order: ByteOrder,
+        ctx: &mut dyn Any,
+    ) -> Result<Self, Error> {
+        let v0 = T0::read(read, byte_order, ctx)?;
+        let v1 = T1::read(read, byte_order, ctx)?;
+        let v2 = T2::read(read, byte_order, ctx)?;
         Ok((v0, v1, v2))
     }
 
     fn write(
         &self,
         write: &mut dyn BitWrite,
-        settings: &Settings,
+        byte_order: ByteOrder,
         ctx: &mut dyn Any,
     ) -> Result<(), Error> {
-        self.0.write(write, settings, ctx)?;
-        self.1.write(write, settings, ctx)?;
-        self.2.write(write, settings, ctx)?;
+        self.0.write(write, byte_order, ctx)?;
+        self.1.write(write, byte_order, ctx)?;
+        self.2.write(write, byte_order, ctx)?;
 
         Ok(())
     }
@@ -90,24 +102,28 @@ where
     T2: Protocol,
     T3: Protocol,
 {
-    fn read(read: &mut dyn BitRead, settings: &Settings, ctx: &mut dyn Any) -> Result<Self, Error> {
-        let v0 = T0::read(read, settings, ctx)?;
-        let v1 = T1::read(read, settings, ctx)?;
-        let v2 = T2::read(read, settings, ctx)?;
-        let v3 = T3::read(read, settings, ctx)?;
+    fn read(
+        read: &mut dyn BitRead,
+        byte_order: ByteOrder,
+        ctx: &mut dyn Any,
+    ) -> Result<Self, Error> {
+        let v0 = T0::read(read, byte_order, ctx)?;
+        let v1 = T1::read(read, byte_order, ctx)?;
+        let v2 = T2::read(read, byte_order, ctx)?;
+        let v3 = T3::read(read, byte_order, ctx)?;
         Ok((v0, v1, v2, v3))
     }
 
     fn write(
         &self,
         write: &mut dyn BitWrite,
-        settings: &Settings,
+        byte_order: ByteOrder,
         ctx: &mut dyn Any,
     ) -> Result<(), Error> {
-        self.0.write(write, settings, ctx)?;
-        self.1.write(write, settings, ctx)?;
-        self.2.write(write, settings, ctx)?;
-        self.3.write(write, settings, ctx)?;
+        self.0.write(write, byte_order, ctx)?;
+        self.1.write(write, byte_order, ctx)?;
+        self.2.write(write, byte_order, ctx)?;
+        self.3.write(write, byte_order, ctx)?;
 
         Ok(())
     }
@@ -121,26 +137,30 @@ where
     T3: Protocol,
     T4: Protocol,
 {
-    fn read(read: &mut dyn BitRead, settings: &Settings, ctx: &mut dyn Any) -> Result<Self, Error> {
-        let v0 = T0::read(read, settings, ctx)?;
-        let v1 = T1::read(read, settings, ctx)?;
-        let v2 = T2::read(read, settings, ctx)?;
-        let v3 = T3::read(read, settings, ctx)?;
-        let v4 = T4::read(read, settings, ctx)?;
+    fn read(
+        read: &mut dyn BitRead,
+        byte_order: ByteOrder,
+        ctx: &mut dyn Any,
+    ) -> Result<Self, Error> {
+        let v0 = T0::read(read, byte_order, ctx)?;
+        let v1 = T1::read(read, byte_order, ctx)?;
+        let v2 = T2::read(read, byte_order, ctx)?;
+        let v3 = T3::read(read, byte_order, ctx)?;
+        let v4 = T4::read(read, byte_order, ctx)?;
         Ok((v0, v1, v2, v3, v4))
     }
 
     fn write(
         &self,
         write: &mut dyn BitWrite,
-        settings: &Settings,
+        byte_order: ByteOrder,
         ctx: &mut dyn Any,
     ) -> Result<(), Error> {
-        self.0.write(write, settings, ctx)?;
-        self.1.write(write, settings, ctx)?;
-        self.2.write(write, settings, ctx)?;
-        self.3.write(write, settings, ctx)?;
-        self.4.write(write, settings, ctx)?;
+        self.0.write(write, byte_order, ctx)?;
+        self.1.write(write, byte_order, ctx)?;
+        self.2.write(write, byte_order, ctx)?;
+        self.3.write(write, byte_order, ctx)?;
+        self.4.write(write, byte_order, ctx)?;
 
         Ok(())
     }
@@ -155,28 +175,32 @@ where
     T4: Protocol,
     T5: Protocol,
 {
-    fn read(read: &mut dyn BitRead, settings: &Settings, ctx: &mut dyn Any) -> Result<Self, Error> {
-        let v0 = T0::read(read, settings, ctx)?;
-        let v1 = T1::read(read, settings, ctx)?;
-        let v2 = T2::read(read, settings, ctx)?;
-        let v3 = T3::read(read, settings, ctx)?;
-        let v4 = T4::read(read, settings, ctx)?;
-        let v5 = T5::read(read, settings, ctx)?;
+    fn read(
+        read: &mut dyn BitRead,
+        byte_order: ByteOrder,
+        ctx: &mut dyn Any,
+    ) -> Result<Self, Error> {
+        let v0 = T0::read(read, byte_order, ctx)?;
+        let v1 = T1::read(read, byte_order, ctx)?;
+        let v2 = T2::read(read, byte_order, ctx)?;
+        let v3 = T3::read(read, byte_order, ctx)?;
+        let v4 = T4::read(read, byte_order, ctx)?;
+        let v5 = T5::read(read, byte_order, ctx)?;
         Ok((v0, v1, v2, v3, v4, v5))
     }
 
     fn write(
         &self,
         write: &mut dyn BitWrite,
-        settings: &Settings,
+        byte_order: ByteOrder,
         ctx: &mut dyn Any,
     ) -> Result<(), Error> {
-        self.0.write(write, settings, ctx)?;
-        self.1.write(write, settings, ctx)?;
-        self.2.write(write, settings, ctx)?;
-        self.3.write(write, settings, ctx)?;
-        self.4.write(write, settings, ctx)?;
-        self.5.write(write, settings, ctx)?;
+        self.0.write(write, byte_order, ctx)?;
+        self.1.write(write, byte_order, ctx)?;
+        self.2.write(write, byte_order, ctx)?;
+        self.3.write(write, byte_order, ctx)?;
+        self.4.write(write, byte_order, ctx)?;
+        self.5.write(write, byte_order, ctx)?;
 
         Ok(())
     }
@@ -192,30 +216,34 @@ where
     T5: Protocol,
     T6: Protocol,
 {
-    fn read(read: &mut dyn BitRead, settings: &Settings, ctx: &mut dyn Any) -> Result<Self, Error> {
-        let v0 = T0::read(read, settings, ctx)?;
-        let v1 = T1::read(read, settings, ctx)?;
-        let v2 = T2::read(read, settings, ctx)?;
-        let v3 = T3::read(read, settings, ctx)?;
-        let v4 = T4::read(read, settings, ctx)?;
-        let v5 = T5::read(read, settings, ctx)?;
-        let v6 = T6::read(read, settings, ctx)?;
+    fn read(
+        read: &mut dyn BitRead,
+        byte_order: ByteOrder,
+        ctx: &mut dyn Any,
+    ) -> Result<Self, Error> {
+        let v0 = T0::read(read, byte_order, ctx)?;
+        let v1 = T1::read(read, byte_order, ctx)?;
+        let v2 = T2::read(read, byte_order, ctx)?;
+        let v3 = T3::read(read, byte_order, ctx)?;
+        let v4 = T4::read(read, byte_order, ctx)?;
+        let v5 = T5::read(read, byte_order, ctx)?;
+        let v6 = T6::read(read, byte_order, ctx)?;
         Ok((v0, v1, v2, v3, v4, v5, v6))
     }
 
     fn write(
         &self,
         write: &mut dyn BitWrite,
-        settings: &Settings,
+        byte_order: ByteOrder,
         ctx: &mut dyn Any,
     ) -> Result<(), Error> {
-        self.0.write(write, settings, ctx)?;
-        self.1.write(write, settings, ctx)?;
-        self.2.write(write, settings, ctx)?;
-        self.3.write(write, settings, ctx)?;
-        self.4.write(write, settings, ctx)?;
-        self.5.write(write, settings, ctx)?;
-        self.6.write(write, settings, ctx)?;
+        self.0.write(write, byte_order, ctx)?;
+        self.1.write(write, byte_order, ctx)?;
+        self.2.write(write, byte_order, ctx)?;
+        self.3.write(write, byte_order, ctx)?;
+        self.4.write(write, byte_order, ctx)?;
+        self.5.write(write, byte_order, ctx)?;
+        self.6.write(write, byte_order, ctx)?;
 
         Ok(())
     }
@@ -232,32 +260,36 @@ where
     T6: Protocol,
     T7: Protocol,
 {
-    fn read(read: &mut dyn BitRead, settings: &Settings, ctx: &mut dyn Any) -> Result<Self, Error> {
-        let v0 = T0::read(read, settings, ctx)?;
-        let v1 = T1::read(read, settings, ctx)?;
-        let v2 = T2::read(read, settings, ctx)?;
-        let v3 = T3::read(read, settings, ctx)?;
-        let v4 = T4::read(read, settings, ctx)?;
-        let v5 = T5::read(read, settings, ctx)?;
-        let v6 = T6::read(read, settings, ctx)?;
-        let v7 = T7::read(read, settings, ctx)?;
+    fn read(
+        read: &mut dyn BitRead,
+        byte_order: ByteOrder,
+        ctx: &mut dyn Any,
+    ) -> Result<Self, Error> {
+        let v0 = T0::read(read, byte_order, ctx)?;
+        let v1 = T1::read(read, byte_order, ctx)?;
+        let v2 = T2::read(read, byte_order, ctx)?;
+        let v3 = T3::read(read, byte_order, ctx)?;
+        let v4 = T4::read(read, byte_order, ctx)?;
+        let v5 = T5::read(read, byte_order, ctx)?;
+        let v6 = T6::read(read, byte_order, ctx)?;
+        let v7 = T7::read(read, byte_order, ctx)?;
         Ok((v0, v1, v2, v3, v4, v5, v6, v7))
     }
 
     fn write(
         &self,
         write: &mut dyn BitWrite,
-        settings: &Settings,
+        byte_order: ByteOrder,
         ctx: &mut dyn Any,
     ) -> Result<(), Error> {
-        self.0.write(write, settings, ctx)?;
-        self.1.write(write, settings, ctx)?;
-        self.2.write(write, settings, ctx)?;
-        self.3.write(write, settings, ctx)?;
-        self.4.write(write, settings, ctx)?;
-        self.5.write(write, settings, ctx)?;
-        self.6.write(write, settings, ctx)?;
-        self.7.write(write, settings, ctx)?;
+        self.0.write(write, byte_order, ctx)?;
+        self.1.write(write, byte_order, ctx)?;
+        self.2.write(write, byte_order, ctx)?;
+        self.3.write(write, byte_order, ctx)?;
+        self.4.write(write, byte_order, ctx)?;
+        self.5.write(write, byte_order, ctx)?;
+        self.6.write(write, byte_order, ctx)?;
+        self.7.write(write, byte_order, ctx)?;
 
         Ok(())
     }
@@ -275,34 +307,38 @@ where
     T7: Protocol,
     T8: Protocol,
 {
-    fn read(read: &mut dyn BitRead, settings: &Settings, ctx: &mut dyn Any) -> Result<Self, Error> {
-        let v0 = T0::read(read, settings, ctx)?;
-        let v1 = T1::read(read, settings, ctx)?;
-        let v2 = T2::read(read, settings, ctx)?;
-        let v3 = T3::read(read, settings, ctx)?;
-        let v4 = T4::read(read, settings, ctx)?;
-        let v5 = T5::read(read, settings, ctx)?;
-        let v6 = T6::read(read, settings, ctx)?;
-        let v7 = T7::read(read, settings, ctx)?;
-        let v8 = T8::read(read, settings, ctx)?;
+    fn read(
+        read: &mut dyn BitRead,
+        byte_order: ByteOrder,
+        ctx: &mut dyn Any,
+    ) -> Result<Self, Error> {
+        let v0 = T0::read(read, byte_order, ctx)?;
+        let v1 = T1::read(read, byte_order, ctx)?;
+        let v2 = T2::read(read, byte_order, ctx)?;
+        let v3 = T3::read(read, byte_order, ctx)?;
+        let v4 = T4::read(read, byte_order, ctx)?;
+        let v5 = T5::read(read, byte_order, ctx)?;
+        let v6 = T6::read(read, byte_order, ctx)?;
+        let v7 = T7::read(read, byte_order, ctx)?;
+        let v8 = T8::read(read, byte_order, ctx)?;
         Ok((v0, v1, v2, v3, v4, v5, v6, v7, v8))
     }
 
     fn write(
         &self,
         write: &mut dyn BitWrite,
-        settings: &Settings,
+        byte_order: ByteOrder,
         ctx: &mut dyn Any,
     ) -> Result<(), Error> {
-        self.0.write(write, settings, ctx)?;
-        self.1.write(write, settings, ctx)?;
-        self.2.write(write, settings, ctx)?;
-        self.3.write(write, settings, ctx)?;
-        self.4.write(write, settings, ctx)?;
-        self.5.write(write, settings, ctx)?;
-        self.6.write(write, settings, ctx)?;
-        self.7.write(write, settings, ctx)?;
-        self.8.write(write, settings, ctx)?;
+        self.0.write(write, byte_order, ctx)?;
+        self.1.write(write, byte_order, ctx)?;
+        self.2.write(write, byte_order, ctx)?;
+        self.3.write(write, byte_order, ctx)?;
+        self.4.write(write, byte_order, ctx)?;
+        self.5.write(write, byte_order, ctx)?;
+        self.6.write(write, byte_order, ctx)?;
+        self.7.write(write, byte_order, ctx)?;
+        self.8.write(write, byte_order, ctx)?;
 
         Ok(())
     }
@@ -321,36 +357,40 @@ where
     T8: Protocol,
     T9: Protocol,
 {
-    fn read(read: &mut dyn BitRead, settings: &Settings, ctx: &mut dyn Any) -> Result<Self, Error> {
-        let v0 = T0::read(read, settings, ctx)?;
-        let v1 = T1::read(read, settings, ctx)?;
-        let v2 = T2::read(read, settings, ctx)?;
-        let v3 = T3::read(read, settings, ctx)?;
-        let v4 = T4::read(read, settings, ctx)?;
-        let v5 = T5::read(read, settings, ctx)?;
-        let v6 = T6::read(read, settings, ctx)?;
-        let v7 = T7::read(read, settings, ctx)?;
-        let v8 = T8::read(read, settings, ctx)?;
-        let v9 = T9::read(read, settings, ctx)?;
+    fn read(
+        read: &mut dyn BitRead,
+        byte_order: ByteOrder,
+        ctx: &mut dyn Any,
+    ) -> Result<Self, Error> {
+        let v0 = T0::read(read, byte_order, ctx)?;
+        let v1 = T1::read(read, byte_order, ctx)?;
+        let v2 = T2::read(read, byte_order, ctx)?;
+        let v3 = T3::read(read, byte_order, ctx)?;
+        let v4 = T4::read(read, byte_order, ctx)?;
+        let v5 = T5::read(read, byte_order, ctx)?;
+        let v6 = T6::read(read, byte_order, ctx)?;
+        let v7 = T7::read(read, byte_order, ctx)?;
+        let v8 = T8::read(read, byte_order, ctx)?;
+        let v9 = T9::read(read, byte_order, ctx)?;
         Ok((v0, v1, v2, v3, v4, v5, v6, v7, v8, v9))
     }
 
     fn write(
         &self,
         write: &mut dyn BitWrite,
-        settings: &Settings,
+        byte_order: ByteOrder,
         ctx: &mut dyn Any,
     ) -> Result<(), Error> {
-        self.0.write(write, settings, ctx)?;
-        self.1.write(write, settings, ctx)?;
-        self.2.write(write, settings, ctx)?;
-        self.3.write(write, settings, ctx)?;
-        self.4.write(write, settings, ctx)?;
-        self.5.write(write, settings, ctx)?;
-        self.6.write(write, settings, ctx)?;
-        self.7.write(write, settings, ctx)?;
-        self.8.write(write, settings, ctx)?;
-        self.9.write(write, settings, ctx)?;
+        self.0.write(write, byte_order, ctx)?;
+        self.1.write(write, byte_order, ctx)?;
+        self.2.write(write, byte_order, ctx)?;
+        self.3.write(write, byte_order, ctx)?;
+        self.4.write(write, byte_order, ctx)?;
+        self.5.write(write, byte_order, ctx)?;
+        self.6.write(write, byte_order, ctx)?;
+        self.7.write(write, byte_order, ctx)?;
+        self.8.write(write, byte_order, ctx)?;
+        self.9.write(write, byte_order, ctx)?;
 
         Ok(())
     }
@@ -371,38 +411,42 @@ where
     T9: Protocol,
     T10: Protocol,
 {
-    fn read(read: &mut dyn BitRead, settings: &Settings, ctx: &mut dyn Any) -> Result<Self, Error> {
-        let v0 = T0::read(read, settings, ctx)?;
-        let v1 = T1::read(read, settings, ctx)?;
-        let v2 = T2::read(read, settings, ctx)?;
-        let v3 = T3::read(read, settings, ctx)?;
-        let v4 = T4::read(read, settings, ctx)?;
-        let v5 = T5::read(read, settings, ctx)?;
-        let v6 = T6::read(read, settings, ctx)?;
-        let v7 = T7::read(read, settings, ctx)?;
-        let v8 = T8::read(read, settings, ctx)?;
-        let v9 = T9::read(read, settings, ctx)?;
-        let v10 = T10::read(read, settings, ctx)?;
+    fn read(
+        read: &mut dyn BitRead,
+        byte_order: ByteOrder,
+        ctx: &mut dyn Any,
+    ) -> Result<Self, Error> {
+        let v0 = T0::read(read, byte_order, ctx)?;
+        let v1 = T1::read(read, byte_order, ctx)?;
+        let v2 = T2::read(read, byte_order, ctx)?;
+        let v3 = T3::read(read, byte_order, ctx)?;
+        let v4 = T4::read(read, byte_order, ctx)?;
+        let v5 = T5::read(read, byte_order, ctx)?;
+        let v6 = T6::read(read, byte_order, ctx)?;
+        let v7 = T7::read(read, byte_order, ctx)?;
+        let v8 = T8::read(read, byte_order, ctx)?;
+        let v9 = T9::read(read, byte_order, ctx)?;
+        let v10 = T10::read(read, byte_order, ctx)?;
         Ok((v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10))
     }
 
     fn write(
         &self,
         write: &mut dyn BitWrite,
-        settings: &Settings,
+        byte_order: ByteOrder,
         ctx: &mut dyn Any,
     ) -> Result<(), Error> {
-        self.0.write(write, settings, ctx)?;
-        self.1.write(write, settings, ctx)?;
-        self.2.write(write, settings, ctx)?;
-        self.3.write(write, settings, ctx)?;
-        self.4.write(write, settings, ctx)?;
-        self.5.write(write, settings, ctx)?;
-        self.6.write(write, settings, ctx)?;
-        self.7.write(write, settings, ctx)?;
-        self.8.write(write, settings, ctx)?;
-        self.9.write(write, settings, ctx)?;
-        self.10.write(write, settings, ctx)?;
+        self.0.write(write, byte_order, ctx)?;
+        self.1.write(write, byte_order, ctx)?;
+        self.2.write(write, byte_order, ctx)?;
+        self.3.write(write, byte_order, ctx)?;
+        self.4.write(write, byte_order, ctx)?;
+        self.5.write(write, byte_order, ctx)?;
+        self.6.write(write, byte_order, ctx)?;
+        self.7.write(write, byte_order, ctx)?;
+        self.8.write(write, byte_order, ctx)?;
+        self.9.write(write, byte_order, ctx)?;
+        self.10.write(write, byte_order, ctx)?;
 
         Ok(())
     }

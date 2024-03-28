@@ -5,10 +5,10 @@ use crate::Protocol;
 impl Protocol for Ipv4Addr {
     fn read(
         read: &mut dyn crate::BitRead,
-        settings: &crate::Settings,
+        byte_order: crate::ByteOrder,
         ctx: &mut dyn std::any::Any,
     ) -> Result<Self, crate::Error> {
-        let bytes: [u8; 4] = Protocol::read(read, settings, ctx)?;
+        let bytes: [u8; 4] = Protocol::read(read, byte_order, ctx)?;
 
         Ok(Self::new(bytes[0], bytes[1], bytes[2], bytes[3]))
     }
@@ -16,20 +16,20 @@ impl Protocol for Ipv4Addr {
     fn write(
         &self,
         write: &mut dyn crate::BitWrite,
-        settings: &crate::Settings,
+        byte_order: crate::ByteOrder,
         ctx: &mut dyn std::any::Any,
     ) -> Result<(), crate::Error> {
-        Protocol::write(&self.octets(), write, settings, ctx)
+        Protocol::write(&self.octets(), write, byte_order, ctx)
     }
 }
 
 impl Protocol for Ipv6Addr {
     fn read(
         read: &mut dyn crate::BitRead,
-        settings: &crate::Settings,
+        byte_order: crate::ByteOrder,
         ctx: &mut dyn std::any::Any,
     ) -> Result<Self, crate::Error> {
-        let bytes: [u16; 8] = Protocol::read(read, settings, ctx)?;
+        let bytes: [u16; 8] = Protocol::read(read, byte_order, ctx)?;
 
         Ok(Self::new(
             bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
@@ -39,10 +39,10 @@ impl Protocol for Ipv6Addr {
     fn write(
         &self,
         write: &mut dyn crate::BitWrite,
-        settings: &crate::Settings,
+        byte_order: crate::ByteOrder,
         ctx: &mut dyn std::any::Any,
     ) -> Result<(), crate::Error> {
-        Protocol::write(&self.octets(), write, settings, ctx)
+        Protocol::write(&self.octets(), write, byte_order, ctx)
     }
 }
 
@@ -50,7 +50,7 @@ impl Protocol for Ipv6Addr {
 mod tests {
     use bitstream_io::{BigEndian, BitReader, BitWriter};
 
-    use crate::Settings;
+    use crate::ByteOrder;
 
     use super::*;
 
@@ -59,7 +59,7 @@ mod tests {
         assert_eq!(
             <Ipv4Addr as Protocol>::read(
                 &mut BitReader::endian([192u8, 168, 1, 0].as_slice(), BigEndian),
-                &Settings::default(),
+                ByteOrder::BigEndian,
                 &mut ()
             )
             .unwrap(),
@@ -73,7 +73,7 @@ mod tests {
         Protocol::write(
             &Ipv4Addr::new(192, 168, 1, 0),
             &mut BitWriter::endian(&mut data, BigEndian),
-            &Settings::default(),
+            ByteOrder::BigEndian,
             &mut (),
         )
         .unwrap();
@@ -92,7 +92,7 @@ mod tests {
                     .as_slice(),
                     BigEndian
                 ),
-                &Settings::default(),
+                ByteOrder::BigEndian,
                 &mut ()
             )
             .unwrap(),
@@ -108,7 +108,7 @@ mod tests {
                 0x2001, 0x0db8, 0x85a3, 0x0000, 0x0000, 0x8a2e, 0x0370, 0x7334,
             ),
             &mut BitWriter::endian(&mut data, BigEndian),
-            &Settings::default(),
+            ByteOrder::BigEndian,
             &mut (),
         )
         .unwrap();

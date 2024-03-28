@@ -1,6 +1,6 @@
 //! Helper functions for dealing with sets or lists of parcels.
 
-use crate::{BitRead, BitWrite, Error, Protocol, Settings};
+use crate::{BitRead, BitWrite, ByteOrder, Error, Protocol};
 
 use core::any::Any;
 use std::io;
@@ -9,7 +9,7 @@ use std::io;
 pub fn read_items<T>(
     item_count: usize,
     read: &mut dyn BitRead,
-    settings: &Settings,
+    byte_order: ByteOrder,
     ctx: &mut dyn Any,
 ) -> Result<impl Iterator<Item = T>, Error>
 where
@@ -18,7 +18,7 @@ where
     let mut elements = Vec::with_capacity(item_count);
 
     for _ in 0..item_count {
-        let element = T::read(read, settings, ctx)?;
+        let element = T::read(read, byte_order, ctx)?;
         elements.push(element);
     }
     Ok(elements.into_iter())
@@ -30,21 +30,21 @@ where
 pub fn write_items<'a, T>(
     items: impl IntoIterator<Item = &'a T>,
     write: &mut dyn BitWrite,
-    settings: &Settings,
+    byte_order: ByteOrder,
     ctx: &mut dyn Any,
 ) -> Result<(), Error>
 where
     T: Protocol + 'a,
 {
     for item in items.into_iter() {
-        item.write(write, settings, ctx)?;
+        item.write(write, byte_order, ctx)?;
     }
     Ok(())
 }
 
 pub fn read_items_to_eof<T>(
     read: &mut dyn BitRead,
-    settings: &Settings,
+    byte_order: ByteOrder,
     ctx: &mut dyn Any,
 ) -> Result<Vec<T>, Error>
 where
@@ -52,7 +52,7 @@ where
 {
     let mut items = Vec::new();
     loop {
-        let item = match T::read(read, settings, ctx) {
+        let item = match T::read(read, byte_order, ctx) {
             Ok(item) => item,
             Err(Error::IO(e)) => {
                 return if e.kind() == io::ErrorKind::UnexpectedEof {

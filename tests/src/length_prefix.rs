@@ -1,4 +1,4 @@
-use bin_proto::{Protocol, Settings};
+use bin_proto::{Protocol, ByteOrder};
 
 #[derive(bin_proto::Protocol, Debug, PartialEq, Eq)]
 pub struct Prefix {
@@ -38,7 +38,7 @@ fn can_read_length_prefix_3_elements() {
                 0, 0, 0, 2, // 2
                 0, 0, 0, 3 // 3
             ],
-            &Settings::default()
+            ByteOrder::BigEndian
         )
         .unwrap()
     );
@@ -52,7 +52,7 @@ fn can_write_auto_length_prefix_3_elements() {
             foo: true,
             data: vec![1, 2, 3],
         }
-        .bytes(&Settings::default())
+        .bytes(ByteOrder::BigEndian)
         .unwrap(),
         vec![
             0, 0, 0, 3, // disjoint length prefix

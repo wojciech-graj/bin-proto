@@ -1,4 +1,4 @@
-use bin_proto::{Protocol, Settings};
+use bin_proto::{Protocol, ByteOrder};
 
 #[derive(bin_proto::Protocol, Debug, PartialEq, Eq)]
 pub struct Foobar {
@@ -37,7 +37,7 @@ fn named_fields_are_correctly_written() {
             b: '2' as u8,
             c: 1,
         }
-        .bytes(&Settings::default())
+        .bytes(ByteOrder::BigEndian)
         .unwrap()
     );
 }
@@ -50,7 +50,7 @@ fn named_fields_are_correctly_read() {
             b: '2' as u8,
             c: 1,
         },
-        Foobar::from_bytes(&[3, '2' as u8, 1], &Settings::default()).unwrap()
+        Foobar::from_bytes(&[3, '2' as u8, 1], ByteOrder::BigEndian).unwrap()
     );
 }
 
@@ -58,7 +58,7 @@ fn named_fields_are_correctly_read() {
 fn unnamed_fields_are_correctly_written() {
     assert_eq!(
         vec![6, 1, 9],
-        BizBong(6, 1, 9).bytes(&Settings::default()).unwrap()
+        BizBong(6, 1, 9).bytes(ByteOrder::BigEndian).unwrap()
     );
 }
 
@@ -66,20 +66,20 @@ fn unnamed_fields_are_correctly_written() {
 fn unnamed_fields_are_correctly_read() {
     assert_eq!(
         BizBong(3, 1, 7),
-        BizBong::from_bytes(&[3, 1, 7], &Settings::default()).unwrap()
+        BizBong::from_bytes(&[3, 1, 7], ByteOrder::BigEndian).unwrap()
     );
 }
 
 #[test]
 fn unit_structs_are_correctly_written() {
-    assert_eq!(PartyInTheFront.bytes(&Settings::default()).unwrap(), &[]);
+    assert_eq!(PartyInTheFront.bytes(ByteOrder::BigEndian).unwrap(), &[]);
 }
 
 #[test]
 fn unit_structs_are_correctly_read() {
     assert_eq!(
         PartyInTheFront,
-        PartyInTheFront::from_bytes(&[], &Settings::default()).unwrap()
+        PartyInTheFront::from_bytes(&[], ByteOrder::BigEndian).unwrap()
     );
 }
 
@@ -92,7 +92,7 @@ fn ipv4() {
     }
 
     assert_eq!(
-        IPv4Header::from_bytes(&[0x45], &Settings::default()).unwrap(),
+        IPv4Header::from_bytes(&[0x45], ByteOrder::BigEndian).unwrap(),
         IPv4Header { version: 4 }
     )
 }

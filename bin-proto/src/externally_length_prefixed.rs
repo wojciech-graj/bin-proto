@@ -1,13 +1,13 @@
 //! Utilities for externally length prefixed fields
 
-use crate::{BitRead, BitWrite, Error, Settings};
+use crate::{BitRead, BitWrite, ByteOrder, Error};
 use core::any::Any;
 
 /// A trait for variable-length types with a disjoint length prefix.
 pub trait ExternallyLengthPrefixed: Sized {
     fn read(
         read: &mut dyn BitRead,
-        settings: &Settings,
+        byte_order: ByteOrder,
         ctx: &mut dyn Any,
         length: usize,
     ) -> Result<Self, Error>;
@@ -15,7 +15,7 @@ pub trait ExternallyLengthPrefixed: Sized {
     fn write(
         &self,
         write: &mut dyn BitWrite,
-        settings: &Settings,
+        byte_order: ByteOrder,
         ctx: &mut dyn Any,
     ) -> Result<(), Error>;
 }
@@ -29,7 +29,7 @@ macro_rules! test_externally_length_prefixed {
             assert_eq!(
                 <$t as crate::ExternallyLengthPrefixed>::read(
                     &mut bitstream_io::BitReader::endian(bytes, bitstream_io::BigEndian),
-                    &crate::Settings::default(),
+                    crate::ByteOrder::BigEndian,
                     &mut (),
                     $value.len()
                 )
@@ -45,7 +45,7 @@ macro_rules! test_externally_length_prefixed {
             crate::ExternallyLengthPrefixed::write(
                 &value,
                 &mut bitstream_io::BitWriter::endian(&mut buffer, bitstream_io::BigEndian),
-                &crate::Settings::default(),
+                crate::ByteOrder::BigEndian,
                 &mut (),
             )
             .unwrap();

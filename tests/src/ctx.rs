@@ -1,4 +1,4 @@
-use bin_proto::{Protocol, Settings};
+use bin_proto::{Protocol, ByteOrder};
 
 #[derive(Debug)]
 struct Ctx(bool);
@@ -9,7 +9,7 @@ struct CtxCheck;
 impl Protocol for CtxCheck {
     fn read(
         _: &mut dyn bin_proto::BitRead,
-        _: &bin_proto::Settings,
+        _: bin_proto::ByteOrder,
         ctx: &mut dyn std::any::Any,
     ) -> Result<Self, bin_proto::Error> {
         ctx.downcast_mut::<Ctx>().unwrap().0 = true;
@@ -19,7 +19,7 @@ impl Protocol for CtxCheck {
     fn write(
         &self,
         _: &mut dyn bin_proto::BitWrite,
-        _: &bin_proto::Settings,
+        _: bin_proto::ByteOrder,
         ctx: &mut dyn std::any::Any,
     ) -> Result<(), bin_proto::Error> {
         ctx.downcast_mut::<Ctx>().unwrap().0 = true;
@@ -33,14 +33,14 @@ struct CtxCheckWrapper(CtxCheck);
 #[test]
 fn read_ctx_passed() {
     let mut ctx = Ctx(false);
-    CtxCheck::from_bytes_ctx(&[], &Settings::default(), &mut ctx).unwrap();
+    CtxCheck::from_bytes_ctx(&[], ByteOrder::BigEndian, &mut ctx).unwrap();
     assert!(ctx.0);
 }
 
 #[test]
 fn write_ctx_passed() {
     let mut ctx = Ctx(false);
-    CtxCheck.bytes_ctx(&Settings::default(), &mut ctx).unwrap();
+    CtxCheck.bytes_ctx(ByteOrder::BigEndian, &mut ctx).unwrap();
     assert!(ctx.0);
 }
 
@@ -48,7 +48,7 @@ fn write_ctx_passed() {
 fn read_ctx_passed_recur() {
     let mut ctx = Ctx(false);
     CtxCheckWrapper(CtxCheck)
-        .bytes_ctx(&Settings::default(), &mut ctx)
+        .bytes_ctx(ByteOrder::BigEndian, &mut ctx)
         .unwrap();
     assert!(ctx.0);
 }
@@ -57,7 +57,7 @@ fn read_ctx_passed_recur() {
 fn write_ctx_passed_recur() {
     let mut ctx = Ctx(false);
     CtxCheckWrapper(CtxCheck)
-        .bytes_ctx(&Settings::default(), &mut ctx)
+        .bytes_ctx(ByteOrder::BigEndian, &mut ctx)
         .unwrap();
     assert!(ctx.0);
 }

@@ -1,14 +1,18 @@
-use crate::{BitRead, BitWrite, Error, Settings};
+use crate::{BitRead, BitWrite, ByteOrder, Error};
 use core::any::Any;
 
 /// A trait for variable-length types without a length prefix.
 pub trait FlexibleArrayMember: Sized {
-    fn read(read: &mut dyn BitRead, settings: &Settings, ctx: &mut dyn Any) -> Result<Self, Error>;
+    fn read(
+        read: &mut dyn BitRead,
+        byte_order: ByteOrder,
+        ctx: &mut dyn Any,
+    ) -> Result<Self, Error>;
 
     fn write(
         &self,
         write: &mut dyn BitWrite,
-        settings: &Settings,
+        byte_order: ByteOrder,
         ctx: &mut dyn Any,
     ) -> Result<(), Error>;
 }

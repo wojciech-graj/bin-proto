@@ -1,10 +1,10 @@
-use crate::{BitField, BitRead, BitWrite, Error, Protocol, Settings};
+use crate::{BitField, BitRead, BitWrite, ByteOrder, Error, Protocol};
 use core::any::Any;
 
 impl BitField for bool {
     fn read(
         read: &mut dyn BitRead,
-        _: &Settings,
+        _: ByteOrder,
         _: &mut dyn Any,
         bits: u32,
     ) -> Result<Self, Error> {
@@ -18,7 +18,7 @@ impl BitField for bool {
     fn write(
         &self,
         write: &mut dyn BitWrite,
-        _: &Settings,
+        _: ByteOrder,
         _: &mut dyn Any,
         bits: u32,
     ) -> Result<(), Error> {
@@ -28,7 +28,7 @@ impl BitField for bool {
 }
 
 impl Protocol for bool {
-    fn read(read: &mut dyn BitRead, _: &Settings, _: &mut dyn Any) -> Result<Self, Error> {
+    fn read(read: &mut dyn BitRead, _: ByteOrder, _: &mut dyn Any) -> Result<Self, Error> {
         if read.read_u8()? == 0 {
             Ok(false)
         } else {
@@ -36,29 +36,29 @@ impl Protocol for bool {
         }
     }
 
-    fn write(&self, write: &mut dyn BitWrite, _: &Settings, _: &mut dyn Any) -> Result<(), Error> {
+    fn write(&self, write: &mut dyn BitWrite, _: ByteOrder, _: &mut dyn Any) -> Result<(), Error> {
         write.write_u8(if *self { 1 } else { 0 })?;
         Ok(())
     }
 }
 
 impl Protocol for u8 {
-    fn read(read: &mut dyn BitRead, _: &Settings, _: &mut dyn Any) -> Result<Self, Error> {
+    fn read(read: &mut dyn BitRead, _: ByteOrder, _: &mut dyn Any) -> Result<Self, Error> {
         Ok(read.read_u8()?)
     }
 
-    fn write(&self, write: &mut dyn BitWrite, _: &Settings, _: &mut dyn Any) -> Result<(), Error> {
+    fn write(&self, write: &mut dyn BitWrite, _: ByteOrder, _: &mut dyn Any) -> Result<(), Error> {
         write.write_u8(*self)?;
         Ok(())
     }
 }
 
 impl Protocol for i8 {
-    fn read(read: &mut dyn BitRead, _: &Settings, _: &mut dyn Any) -> Result<Self, Error> {
+    fn read(read: &mut dyn BitRead, _: ByteOrder, _: &mut dyn Any) -> Result<Self, Error> {
         Ok(read.read_i8()?)
     }
 
-    fn write(&self, write: &mut dyn BitWrite, _: &Settings, _: &mut dyn Any) -> Result<(), Error> {
+    fn write(&self, write: &mut dyn BitWrite, _: ByteOrder, _: &mut dyn Any) -> Result<(), Error> {
         write.write_i8(*self)?;
         Ok(())
     }
@@ -69,19 +69,19 @@ macro_rules! impl_parcel_for_numeric {
         impl Protocol for $ty {
             fn read(
                 read: &mut dyn BitRead,
-                settings: &Settings,
+                byte_order: ByteOrder,
                 _: &mut dyn Any,
             ) -> Result<Self, Error> {
-                settings.byte_order.$read_fn(read)
+                byte_order.$read_fn(read)
             }
 
             fn write(
                 &self,
                 write: &mut dyn BitWrite,
-                settings: &Settings,
+                byte_order: ByteOrder,
                 _: &mut dyn Any,
             ) -> Result<(), Error> {
-                settings.byte_order.$write_fn(*self, write)?;
+                byte_order.$write_fn(*self, write)?;
                 Ok(())
             }
         }
@@ -93,7 +93,7 @@ macro_rules! impl_bitfield_for_numeric {
         impl BitField for $ty {
             fn read(
                 read: &mut dyn BitRead,
-                _: &Settings,
+                _: ByteOrder,
                 _: &mut dyn Any,
                 bits: u32,
             ) -> Result<Self, Error> {
@@ -103,7 +103,7 @@ macro_rules! impl_bitfield_for_numeric {
             fn write(
                 &self,
                 write: &mut dyn BitWrite,
-                _: &Settings,
+                _: ByteOrder,
                 _: &mut dyn Any,
                 bits: u32,
             ) -> Result<(), Error> {

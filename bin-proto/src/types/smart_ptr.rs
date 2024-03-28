@@ -8,20 +8,20 @@ macro_rules! impl_smart_ptr_type {
             impl<T: crate::Protocol> crate::Protocol for $ty<T> {
                 fn read(
                     read: &mut dyn crate::BitRead,
-                    settings: &crate::Settings,
+                    byte_order: crate::ByteOrder,
                     ctx: &mut dyn core::any::Any,
                 ) -> Result<Self, crate::Error> {
-                    let value = T::read(read, settings, ctx)?;
+                    let value = T::read(read, byte_order, ctx)?;
                     Ok($ty::new(value))
                 }
 
                 fn write(
                     &self,
                     write: &mut dyn crate::BitWrite,
-                    settings: &crate::Settings,
+                    byte_order: crate::ByteOrder,
                     ctx: &mut dyn core::any::Any,
                 ) -> Result<(), crate::Error> {
-                    self.deref().write(write, settings, ctx)
+                    self.deref().write(write, byte_order, ctx)
                 }
             }
         }
@@ -39,7 +39,7 @@ macro_rules! impl_smart_ptr_type {
                             [7u8].as_slice(),
                             bitstream_io::BigEndian
                         ),
-                        &crate::Settings::default(),
+                        crate::ByteOrder::BigEndian,
                         &mut ()
                     )
                     .unwrap(),
@@ -53,7 +53,7 @@ macro_rules! impl_smart_ptr_type {
                 crate::Protocol::write(
                     &$ty::new(7u8),
                     &mut bitstream_io::BitWriter::endian(&mut data, bitstream_io::BigEndian),
-                    &crate::Settings::default(),
+                    crate::ByteOrder::BigEndian,
                     &mut (),
                 )
                 .unwrap();

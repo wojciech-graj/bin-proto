@@ -38,7 +38,7 @@
 //!         0x02, // arr_len: 2
 //!         0x21, 0x37, // arr: [0x21, 0x37]
 //!         0x01, 0x02, 0x03, // read_to_end: [0x01, 0x02, 0x03]
-//!     ], &bin_proto::Settings::default()).unwrap(),
+//!     ], bin_proto::ByteOrder::BigEndian).unwrap(),
 //!     S {
 //!         bitflag: true,
 //!         bitfield: 5,
@@ -53,12 +53,12 @@
 pub use self::bit_field::BitField;
 pub use self::bit_read::BitRead;
 pub use self::bit_write::BitWrite;
+pub use self::byte_order::ByteOrder;
 pub use self::enum_ext::EnumExt;
 pub use self::error::{Error, Result};
 pub use self::externally_length_prefixed::ExternallyLengthPrefixed;
 pub use self::flexible_array_member::FlexibleArrayMember;
 pub use self::protocol::Protocol;
-pub use self::settings::*;
 
 /// Derive the `Protocol` trait.
 ///
@@ -103,7 +103,7 @@ pub use self::settings::*;
 ///
 /// Determine width of field in bits.
 ///
-/// **WARNING**: Bitfields disregard Settings and instead have the same
+/// **WARNING**: Bitfields disregard ByteOrder and instead have the same
 /// endianness as the underlying `BitRead` / `BitWrite` instance. If you're
 /// using bitfields, you almost always want a big endian stream.
 ///
@@ -169,8 +169,8 @@ mod bit_read;
 mod bit_write;
 #[macro_use]
 mod externally_length_prefixed;
+mod byte_order;
 mod flexible_array_member;
-mod settings;
 mod types;
 
 mod enum_ext;

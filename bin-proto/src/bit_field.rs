@@ -1,14 +1,14 @@
 use core::any::Any;
 
-use crate::{BitRead, BitWrite, Error, Settings};
+use crate::{BitRead, BitWrite, ByteOrder, Error};
 
 /// A trait for variable-width bit-level co/dec.
 ///
-/// **WARNING**: This trait can and often will ignore the endianness settings.
+/// **WARNING**: This trait can and often will ignore the endianness.
 pub trait BitField: Sized {
     fn read(
         read: &mut dyn BitRead,
-        settings: &Settings,
+        byte_order: ByteOrder,
         ctx: &mut dyn Any,
         bits: u32,
     ) -> Result<Self, Error>;
@@ -16,7 +16,7 @@ pub trait BitField: Sized {
     fn write(
         &self,
         write: &mut dyn BitWrite,
-        settings: &Settings,
+        byte_order: ByteOrder,
         ctx: &mut dyn Any,
         bits: u32,
     ) -> Result<(), Error>;

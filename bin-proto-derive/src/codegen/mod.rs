@@ -58,20 +58,20 @@ fn read(field: &syn::Field) -> TokenStream {
     attribs.validate_field();
     if let Some(field_width) = attribs.bits {
         quote!(
-            bin_proto::BitField::read(__io_reader, __settings, __ctx, #field_width)
+            bin_proto::BitField::read(__io_reader, __byte_order, __ctx, #field_width)
         )
     } else if attribs.flexible_array_member {
         quote!(bin_proto::FlexibleArrayMember::read(
             __io_reader,
-            __settings,
+            __byte_order,
             __ctx
         ))
     } else if let Some(length) = attribs.length {
         quote!(
-            bin_proto::ExternallyLengthPrefixed::read(__io_reader, __settings, __ctx, #length)
+            bin_proto::ExternallyLengthPrefixed::read(__io_reader, __byte_order, __ctx, #length)
         )
     } else {
-        quote!(bin_proto::Protocol::read(__io_reader, __settings, __ctx))
+        quote!(bin_proto::Protocol::read(__io_reader, __byte_order, __ctx))
     }
 }
 
@@ -91,25 +91,25 @@ fn write<T: quote::ToTokens>(field: &syn::Field, field_name: &T) -> TokenStream 
     if let Some(field_width) = attribs.bits {
         quote!(
             {
-                bin_proto::BitField::write(#field_ref, __io_writer, __settings, __ctx, #field_width)?
+                bin_proto::BitField::write(#field_ref, __io_writer, __byte_order, __ctx, #field_width)?
             }
         )
     } else if attribs.flexible_array_member {
         quote!(
             {
-                bin_proto::FlexibleArrayMember::write(#field_ref, __io_writer, __settings, __ctx)?
+                bin_proto::FlexibleArrayMember::write(#field_ref, __io_writer, __byte_order, __ctx)?
             }
         )
     } else if attribs.length.is_some() {
         quote!(
             {
-                bin_proto::ExternallyLengthPrefixed::write(#field_ref, __io_writer, __settings, __ctx)?
+                bin_proto::ExternallyLengthPrefixed::write(#field_ref, __io_writer, __byte_order, __ctx)?
             }
         )
     } else {
         quote!(
             {
-                bin_proto::Protocol::write(#field_ref, __io_writer, __settings, __ctx)?
+                bin_proto::Protocol::write(#field_ref, __io_writer, __byte_order, __ctx)?
             }
         )
     }

@@ -5,15 +5,15 @@ macro_rules! impl_map_type {
                   V: crate::Protocol
         {
             fn read(read: &mut dyn crate::BitRead,
-                    settings: &crate::Settings,
+                    byte_order: crate::ByteOrder,
                     ctx: &mut dyn core::any::Any,
                     length: usize,
                     ) -> Result<Self, crate::Error> {
                 let mut map = $ty::new();
 
                 for _ in 0..length {
-                    let key = K::read(read, settings, ctx)?;
-                    let value = V::read(read, settings, ctx)?;
+                    let key = K::read(read, byte_order, ctx)?;
+                    let value = V::read(read, byte_order, ctx)?;
 
                     map.insert(key, value);
                 }
@@ -22,12 +22,12 @@ macro_rules! impl_map_type {
             }
 
             fn write(&self, write: &mut dyn crate::BitWrite,
-                    settings: &crate::Settings,
+                    byte_order: crate::ByteOrder,
                     ctx: &mut dyn core::any::Any,
                     ) -> Result<(), crate::Error> {
                 for (key, value) in self.iter() {
-                    key.write(write, settings, ctx)?;
-                    value.write(write, settings, ctx)?;
+                    key.write(write, byte_order, ctx)?;
+                    value.write(write, byte_order, ctx)?;
                 }
 
                 Ok(())

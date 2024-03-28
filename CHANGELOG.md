@@ -3,6 +3,7 @@
 - Do not implement `Protocol` on `char`, `range`, `HashMap`, `BTreeMap`
 - Implement protocol on `Ipv4Addr` and `Ipv6Addr`, `(T0, )`, `()`, `Box`
 - Rename `Enum` trait to `EnumExt`
+- Delete `Settings`, replace with `ByteOrder`
 # v0.2.0
 - Add context to all parse functions
 - Remove `#[repr(...)]`, instead specify repr in `#[protocol(discriminant = "...")]`

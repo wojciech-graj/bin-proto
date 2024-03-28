@@ -4,20 +4,20 @@ macro_rules! impl_list_type {
             where T: $crate::Protocol $( + $ty_pred )*
         {
             fn read(read: &mut dyn crate::BitRead,
-                    settings: &crate::Settings,
+                    byte_order: crate::ByteOrder,
                     ctx: &mut dyn core::any::Any,
                     length: usize,
                     ) -> Result<Self, $crate::Error> {
-                let elements = crate::util::read_items(length, read, settings, ctx)?;
+                let elements = crate::util::read_items(length, read, byte_order, ctx)?;
                 Ok(elements.into_iter().collect())
             }
 
             fn write(&self,
                      write: &mut dyn crate::BitWrite,
-                     settings: &crate::Settings,
+                     byte_order: crate::ByteOrder,
                      ctx: &mut dyn core::any::Any,
                      ) -> Result<(), $crate::Error> {
-                crate::util::write_items(self.iter(), write, settings, ctx)
+                crate::util::write_items(self.iter(), write, byte_order, ctx)
             }
         }
     }
