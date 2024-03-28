@@ -1,4 +1,4 @@
-use bin_proto::{Enum, Protocol};
+use bin_proto::{EnumExt, Protocol};
 
 #[derive(bin_proto::Protocol, Clone, Debug, PartialEq)]
 #[protocol(discriminant_type = "u8")]

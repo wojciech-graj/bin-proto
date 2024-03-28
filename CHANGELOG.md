@@ -1,7 +1,8 @@
 # v0.3.0
-- Implement `ExternallyLengthPrefixed` on `HashMap` and `BTreeMap` instead of implementing `Protocol`
-- Do not implement `Protocol` on `char`, `range`
+- Implement `ExternallyLengthPrefixed` on `HashMap`, `BTreeMap`, `String`
+- Do not implement `Protocol` on `char`, `range`, `HashMap`, `BTreeMap`
 - Implement protocol on `Ipv4Addr` and `Ipv6Addr`, `(T0, )`, `()`, `Box`
+- Rename `Enum` trait to `EnumExt`
 # v0.2.0
 - Add context to all parse functions
 - Remove `#[repr(...)]`, instead specify repr in `#[protocol(discriminant = "...")]`

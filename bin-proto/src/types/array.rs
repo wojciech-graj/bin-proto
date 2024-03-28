@@ -14,7 +14,7 @@ impl<T: Protocol + std::fmt::Debug, const N: usize> Protocol for [T; N] {
         settings: &Settings,
         ctx: &mut dyn Any,
     ) -> Result<(), Error> {
-        crate::util::write_list(self.iter(), write, settings, ctx)
+        crate::util::write_items(self.iter(), write, settings, ctx)
     }
 }
 

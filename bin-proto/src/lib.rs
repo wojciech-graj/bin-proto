@@ -53,7 +53,7 @@
 pub use self::bit_field::BitField;
 pub use self::bit_read::BitRead;
 pub use self::bit_write::BitWrite;
-pub use self::enum_ty::Enum;
+pub use self::enum_ext::EnumExt;
 pub use self::error::{Error, Result};
 pub use self::externally_length_prefixed::ExternallyLengthPrefixed;
 pub use self::flexible_array_member::FlexibleArrayMember;
@@ -173,7 +173,7 @@ mod flexible_array_member;
 mod settings;
 mod types;
 
-mod enum_ty;
+mod enum_ext;
 mod error;
 mod protocol;
 mod util;

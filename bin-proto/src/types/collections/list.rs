@@ -17,7 +17,7 @@ macro_rules! impl_list_type {
                      settings: &crate::Settings,
                      ctx: &mut dyn core::any::Any,
                      ) -> Result<(), $crate::Error> {
-                crate::util::write_list(self.iter(), write, settings, ctx)
+                crate::util::write_items(self.iter(), write, settings, ctx)
             }
         }
     }

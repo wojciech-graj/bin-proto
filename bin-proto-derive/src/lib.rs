@@ -190,7 +190,7 @@ fn impl_enum_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro2:
 
     impl_trait_for(
         ast,
-        quote!(bin_proto::Enum),
+        quote!(bin_proto::EnumExt),
         quote!(
             type Discriminant = #discriminant;
 

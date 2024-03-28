@@ -42,7 +42,7 @@ where
     Ok(())
 }
 
-pub fn read_list_to_eof<T>(
+pub fn read_items_to_eof<T>(
     read: &mut dyn BitRead,
     settings: &Settings,
     ctx: &mut dyn Any,
@@ -65,22 +65,4 @@ where
         };
         items.push(item);
     }
-}
-
-/// BitWrites a length-prefixed list to a stream.
-pub fn write_list<'a, T, I>(
-    elements: I,
-    write: &mut dyn BitWrite,
-    settings: &Settings,
-    ctx: &mut dyn Any,
-) -> Result<(), Error>
-where
-    T: Protocol + 'a,
-    I: IntoIterator<Item = &'a T>,
-{
-    let elements: Vec<_> = elements.into_iter().collect();
-
-    write_items(elements.into_iter(), write, settings, ctx)?;
-
-    Ok(())
 }

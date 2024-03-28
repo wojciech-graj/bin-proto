@@ -1,4 +1,6 @@
-use crate::{util, BitRead, BitWrite, Error, ExternallyLengthPrefixed, Settings};
+use crate::{
+    util, BitRead, BitWrite, Error, ExternallyLengthPrefixed, FlexibleArrayMember, Settings,
+};
 use core::any::Any;
 
 impl ExternallyLengthPrefixed for String {
@@ -20,7 +22,24 @@ impl ExternallyLengthPrefixed for String {
         ctx: &mut dyn Any,
     ) -> Result<(), Error> {
         let bytes: Vec<u8> = str::bytes(self).collect();
-        util::write_list(&bytes, write, settings, ctx)
+        util::write_items(&bytes, write, settings, ctx)
+    }
+}
+
+impl FlexibleArrayMember for String {
+    fn read(read: &mut dyn BitRead, settings: &Settings, ctx: &mut dyn Any) -> Result<Self, Error> {
+        let bytes: Vec<u8> = util::read_items_to_eof(read, settings, ctx)?;
+        Ok(String::from_utf8(bytes)?)
+    }
+
+    fn write(
+        &self,
+        write: &mut dyn BitWrite,
+        settings: &Settings,
+        ctx: &mut dyn Any,
+    ) -> Result<(), Error> {
+        let bytes: Vec<u8> = str::bytes(self).collect();
+        util::write_items(&bytes, write, settings, ctx)
     }
 }
 
