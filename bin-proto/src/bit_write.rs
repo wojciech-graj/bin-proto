@@ -27,6 +27,10 @@ pub trait BitWrite {
     fn write_u64_be(&mut self, value: u64) -> io::Result<()>;
     fn write_i64_le(&mut self, value: i64) -> io::Result<()>;
     fn write_i64_be(&mut self, value: i64) -> io::Result<()>;
+    fn write_u128_le(&mut self, value: u128) -> io::Result<()>;
+    fn write_u128_be(&mut self, value: u128) -> io::Result<()>;
+    fn write_i128_le(&mut self, value: i128) -> io::Result<()>;
+    fn write_i128_be(&mut self, value: i128) -> io::Result<()>;
     fn write_f32_le(&mut self, value: f32) -> io::Result<()>;
     fn write_f32_be(&mut self, value: f32) -> io::Result<()>;
     fn write_f64_le(&mut self, value: f64) -> io::Result<()>;
@@ -118,6 +122,22 @@ impl<T: bitstream_io::BitWrite> BitWrite for T {
     }
 
     fn write_i64_be(&mut self, value: i64) -> io::Result<()> {
+        bitstream_io::BitWrite::write_as_from::<BE, _>(self, value)
+    }
+
+    fn write_u128_le(&mut self, value: u128) -> io::Result<()> {
+        bitstream_io::BitWrite::write_as_from::<LE, _>(self, value)
+    }
+
+    fn write_u128_be(&mut self, value: u128) -> io::Result<()> {
+        bitstream_io::BitWrite::write_as_from::<BE, _>(self, value)
+    }
+
+    fn write_i128_le(&mut self, value: i128) -> io::Result<()> {
+        bitstream_io::BitWrite::write_as_from::<LE, _>(self, value)
+    }
+
+    fn write_i128_be(&mut self, value: i128) -> io::Result<()> {
         bitstream_io::BitWrite::write_as_from::<BE, _>(self, value)
     }
 

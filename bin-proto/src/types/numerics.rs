@@ -120,6 +120,8 @@ impl_parcel_for_numeric!(u32 => [read_u32 : write_u32]);
 impl_parcel_for_numeric!(i32 => [read_i32 : write_i32]);
 impl_parcel_for_numeric!(u64 => [read_u64 : write_u64]);
 impl_parcel_for_numeric!(i64 => [read_i64 : write_i64]);
+impl_parcel_for_numeric!(u128 => [read_u128 : write_u128]);
+impl_parcel_for_numeric!(i128 => [read_i128 : write_i128]);
 impl_parcel_for_numeric!(f32 => [read_f32 : write_f32]);
 impl_parcel_for_numeric!(f64 => [read_f64 : write_f64]);
 

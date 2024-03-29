@@ -29,6 +29,10 @@ pub trait BitRead {
     fn read_u64_be(&mut self) -> io::Result<u64>;
     fn read_i64_le(&mut self) -> io::Result<i64>;
     fn read_i64_be(&mut self) -> io::Result<i64>;
+    fn read_u128_le(&mut self) -> io::Result<u128>;
+    fn read_u128_be(&mut self) -> io::Result<u128>;
+    fn read_i128_le(&mut self) -> io::Result<i128>;
+    fn read_i128_be(&mut self) -> io::Result<i128>;
     fn read_f32_le(&mut self) -> io::Result<f32>;
     fn read_f32_be(&mut self) -> io::Result<f32>;
     fn read_f64_le(&mut self) -> io::Result<f64>;
@@ -129,6 +133,22 @@ impl<T: bitstream_io::BitRead> BitRead for T {
 
     fn read_i64_be(&mut self) -> io::Result<i64> {
         bitstream_io::BitRead::read_as_to::<BE, i64>(self)
+    }
+
+    fn read_u128_le(&mut self) -> io::Result<u128> {
+        bitstream_io::BitRead::read_as_to::<LE, u128>(self)
+    }
+
+    fn read_u128_be(&mut self) -> io::Result<u128> {
+        bitstream_io::BitRead::read_as_to::<BE, u128>(self)
+    }
+
+    fn read_i128_le(&mut self) -> io::Result<i128> {
+        bitstream_io::BitRead::read_as_to::<LE, i128>(self)
+    }
+
+    fn read_i128_be(&mut self) -> io::Result<i128> {
+        bitstream_io::BitRead::read_as_to::<BE, i128>(self)
     }
 
     fn read_f32_le(&mut self) -> io::Result<f32> {

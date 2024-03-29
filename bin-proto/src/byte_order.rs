@@ -37,6 +37,8 @@ impl_byte_order_helpers!(
     i32 => [read_i32 : [read_i32_le, read_i32_be], write_i32 : [write_i32_le, write_i32_be]]
     u64 => [read_u64 : [read_u64_le, read_u64_be], write_u64 : [write_u64_le, write_u64_be]]
     i64 => [read_i64 : [read_i64_le, read_i64_be], write_i64 : [write_i64_le, write_i64_be]]
+    u128 => [read_u128 : [read_u128_le, read_u128_be], write_u128 : [write_u128_le, write_u128_be]]
+    i128 => [read_i128 : [read_i128_le, read_i128_be], write_i128 : [write_i128_le, write_i128_be]]
     f32 => [read_f32 : [read_f32_le, read_f32_be], write_f32 : [write_f32_le, write_f32_be]]
     f64 => [read_f64 : [read_f64_le, read_f64_be], write_f64 : [write_f64_le, write_f64_be]]
 );
