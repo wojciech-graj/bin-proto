@@ -67,3 +67,9 @@ mod hash_set {
 
     impl_list_type!(HashSet => T: Hash, Eq);
 }
+
+mod binary_heap {
+    use std::collections::BinaryHeap;
+
+    impl_list_type!(BinaryHeap => T: Ord);
+}

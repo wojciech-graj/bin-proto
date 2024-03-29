@@ -180,9 +180,6 @@ mod util;
 
 pub extern crate bitstream_io;
 
-#[cfg(feature = "uuid")]
-extern crate uuid;
-
 /// ```compile_fail
 /// #[derive(bin_proto::Protocol)]
 /// struct MutuallyExclusiveAttrs {

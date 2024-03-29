@@ -1,5 +1,5 @@
 # v0.4.0
-- Implement `Protocol` on `i128`, `u128`, `PhantomPinned`
+- Implement `Protocol` on `i128`, `u128`, `PhantomPinned`, `BinaryHeap`
 - Implement `BitField` on `i128`, `u128`
 # v0.3.0
 - Implement `ExternallyLengthPrefixed` on `HashMap`, `BTreeMap`, `String`
