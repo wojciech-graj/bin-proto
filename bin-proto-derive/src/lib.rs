@@ -80,7 +80,7 @@ fn impl_parcel_for_struct(
     strukt: &syn::DataStruct,
 ) -> proc_macro2::TokenStream {
     let (reads, initializers) = codegen::reads(&strukt.fields);
-    let writes = codegen::writes(&strukt.fields);
+    let writes = codegen::writes(&strukt.fields, true);
 
     impl_trait_for(
         ast,

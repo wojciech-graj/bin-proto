@@ -175,6 +175,7 @@ mod types;
 
 mod enum_ext;
 mod error;
+#[macro_use]
 mod protocol;
 mod util;
 

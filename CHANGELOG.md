@@ -1,6 +1,7 @@
-# v0.4.0
+# v0.3.1
 - Implement `Protocol` on `i128`, `u128`, `PhantomPinned`, `BinaryHeap`
 - Implement `BitField` on `i128`, `u128`
+- Fix `length` attribute not working in enum variant
 # v0.3.0
 - Implement `ExternallyLengthPrefixed` on `HashMap`, `BTreeMap`, `String`
 - Do not implement `Protocol` on `char`, `range`, `HashMap`, `BTreeMap`

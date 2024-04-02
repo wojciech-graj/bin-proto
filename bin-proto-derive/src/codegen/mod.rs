@@ -11,10 +11,12 @@ pub fn reads(fields: &syn::Fields) -> (TokenStream, TokenStream) {
     }
 }
 
-pub fn writes(fields: &syn::Fields) -> TokenStream {
+pub fn writes(fields: &syn::Fields, self_prefix: bool) -> TokenStream {
     match *fields {
-        syn::Fields::Named(ref fields_named) => write_named_fields(fields_named),
-        syn::Fields::Unnamed(ref fields_unnamed) => write_unnamed_fields(fields_unnamed),
+        syn::Fields::Named(ref fields_named) => write_named_fields(fields_named, self_prefix),
+        syn::Fields::Unnamed(ref fields_unnamed) => {
+            write_unnamed_fields(fields_unnamed, self_prefix)
+        }
         syn::Fields::Unit => quote!(),
     }
 }
@@ -75,7 +77,7 @@ fn read(field: &syn::Field) -> TokenStream {
     }
 }
 
-fn write<T: quote::ToTokens>(field: &syn::Field, field_name: &T) -> TokenStream {
+fn write(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
     let attribs = Attrs::from(field.attrs.as_slice());
 
     let field_ref = if let Some(value) = attribs.write_value {
@@ -85,7 +87,7 @@ fn write<T: quote::ToTokens>(field: &syn::Field, field_name: &T) -> TokenStream 
             value
         })
     } else {
-        quote!(&self. #field_name)
+        field_name.clone()
     };
 
     if let Some(field_width) = attribs.bits {
@@ -115,13 +117,20 @@ fn write<T: quote::ToTokens>(field: &syn::Field, field_name: &T) -> TokenStream 
     }
 }
 
-fn write_named_fields(fields_named: &syn::FieldsNamed) -> TokenStream {
+fn write_named_fields(fields_named: &syn::FieldsNamed, self_prefix: bool) -> TokenStream {
     let field_writers: Vec<_> = fields_named
         .named
         .iter()
         .map(|field| {
             let field_name = &field.ident;
-            write(field, field_name)
+            write(
+                field,
+                &if self_prefix {
+                    quote!(&self. #field_name)
+                } else {
+                    quote!(#field_name)
+                },
+            )
         })
         .collect();
 
@@ -148,14 +157,21 @@ fn read_unnamed_fields(fields_unnamed: &syn::FieldsUnnamed) -> TokenStream {
     quote!( ( #( #field_initializers ),* ) )
 }
 
-fn write_unnamed_fields(fields_unnamed: &syn::FieldsUnnamed) -> TokenStream {
+fn write_unnamed_fields(fields_unnamed: &syn::FieldsUnnamed, self_prefix: bool) -> TokenStream {
     let field_writers: Vec<_> = fields_unnamed
         .unnamed
         .iter()
         .enumerate()
         .map(|(field_index, field)| {
             let field_index = syn::Index::from(field_index);
-            write(field, &field_index)
+            write(
+                field,
+                &if self_prefix {
+                    quote!(&self. #field_index)
+                } else {
+                    format!("field_{}", field_index.index).parse().unwrap()
+                },
+            )
         })
         .collect();
 

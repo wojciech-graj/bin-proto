@@ -1,4 +1,4 @@
-use bin_proto::{Protocol, ByteOrder};
+use bin_proto::{ByteOrder, Protocol};
 
 #[derive(bin_proto::Protocol, Debug, PartialEq, Eq)]
 pub struct Prefix {

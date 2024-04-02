@@ -24,12 +24,11 @@ pub fn write_variant(
             let (binding_names, fields_pattern) =
                 bind_fields_pattern(variant_name, &variant.fields);
 
+            let writes = codegen::writes(&variant.fields, false);
+
             quote!(#enum_name :: #fields_pattern => {
                 #write_discriminant
-
-                #(
-                    bin_proto::Protocol::write(#binding_names, __io_writer, __byte_order, __ctx)?;
-                )*
+                #writes
             })
         })
         .collect();

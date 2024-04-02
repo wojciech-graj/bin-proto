@@ -70,3 +70,36 @@ pub trait Protocol: Sized {
         Ok(data)
     }
 }
+
+#[cfg(test)]
+macro_rules! test_protocol {
+    ($t:ty => [$bytes:expr, $value:expr]) => {
+        #[test]
+        fn read_protocol() {
+            let bytes: &[u8] = $bytes.as_slice();
+            assert_eq!(
+                <$t as crate::Protocol>::read(
+                    &mut bitstream_io::BitReader::endian(bytes, bitstream_io::BigEndian),
+                    crate::ByteOrder::BigEndian,
+                    &mut ()
+                )
+                .unwrap(),
+                $value
+            )
+        }
+
+        #[test]
+        fn write_protocol() {
+            let mut buffer: Vec<u8> = Vec::new();
+            let value: $t = $value;
+            crate::Protocol::write(
+                &value,
+                &mut bitstream_io::BitWriter::endian(&mut buffer, bitstream_io::BigEndian),
+                crate::ByteOrder::BigEndian,
+                &mut (),
+            )
+            .unwrap();
+            assert_eq!(buffer.as_slice(), $bytes)
+        }
+    };
+}
