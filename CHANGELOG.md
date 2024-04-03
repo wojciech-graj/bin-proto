@@ -1,3 +1,5 @@
+# v0.3.2
+- Use `std::net` instead of `core::net`
 # v0.3.1
 - Implement `Protocol` on `i128`, `u128`, `PhantomPinned`, `BinaryHeap`
 - Implement `BitField` on `i128`, `u128`

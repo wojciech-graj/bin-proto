@@ -156,7 +156,7 @@ mod enum_ {
 }
 
 mod ipv4 {
-    use core::net::Ipv4Addr;
+    use std::net::Ipv4Addr;
     use test::{black_box, Bencher};
 
     mod bench_bin_proto {
