@@ -10,9 +10,8 @@ pub enum Error {
     FromNulError(#[from] std::ffi::NulError),
     #[error("{0}")]
     TryFromIntError(#[from] std::num::TryFromIntError),
-    #[cfg(feature = "uuid")]
-    #[error("{0}")]
-    UuidParseError(#[from] uuid::Error),
     #[error("received unknown enum discriminant '{0}'")]
     UnknownEnumDiscriminant(String),
+    #[error("{0}")]
+    Other(Box<dyn std::error::Error>),
 }

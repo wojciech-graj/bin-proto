@@ -1,3 +1,5 @@
+# v0.3.3
+- Add `Other` error type
 # v0.3.2
 - Use `std::net` instead of `core::net`
 # v0.3.1
