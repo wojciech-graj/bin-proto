@@ -3,12 +3,12 @@
 [![crates](https://img.shields.io/crates/v/bin-proto.svg)](https://crates.io/crates/bin-proto)
 [![tests](https://github.com/wojciech-graj/bin-proto/actions/workflows/ci.yml/badge.svg)](https://github.com/wojciech-graj/bin-proto/actions/workflows/ci.yml)
 [![docs.rs](https://docs.rs/bin-proto/badge.svg)](https://docs.rs/bin-proto)
-[![license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE.txt)
 
 Simple & fast structured bit-level binary co/dec in Rust.
 
 An improved and modernized fork of
-[protocol](https://crates.io/crates/bin-proto). A more efficient but (slightly)
+[protocol](https://crates.io/crates/protocol). A more efficient but (slightly)
 less feature-rich alternative to [deku](https://crates.io/crates/deku).
 
 This crate adds a trait (and a custom derive for ease-of-use) that can be
