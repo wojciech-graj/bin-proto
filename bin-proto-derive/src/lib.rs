@@ -203,53 +203,20 @@ fn impl_enum_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro2:
     )
 }
 
-/// Wraps a stream of tokens in an anonymous constant block.
-///
-/// Inside this block, the bin_proto crate accessible.
-fn anonymous_constant_block(
-    description: &str,
-    item_name: &syn::Ident,
-    body: proc_macro2::TokenStream,
-) -> proc_macro2::TokenStream {
-    let anon_const_name = syn::Ident::new(
-        &format!(
-            "__{}_FOR_{}",
-            description.replace(' ', "_").replace("::", "_"),
-            item_name.to_owned()
-        ),
-        proc_macro2::Span::call_site(),
-    );
-
-    quote!(
-        #[allow(non_upper_case_globals)]
-        const #anon_const_name: () = {
-            extern crate bin_proto;
-            use std::io;
-
-            #body
-        };
-    )
-}
-
 fn impl_trait_for(
     ast: &syn::DeriveInput,
     trait_name: proc_macro2::TokenStream,
     impl_body: proc_macro2::TokenStream,
 ) -> proc_macro2::TokenStream {
     let item_name = &ast.ident;
-    let description = format!("impl {}", trait_name);
 
     let (generics, where_predicates) = build_generics(ast);
     let (generics, where_predicates) = (&generics, where_predicates);
 
-    anonymous_constant_block(
-        &description,
-        item_name,
-        quote!(
-            impl < #(#generics),* > #trait_name for #item_name < #(#generics),* >
-                where #(#where_predicates),* {
-                #impl_body
-            }
-        ),
+    quote!(
+        impl < #(#generics),* > #trait_name for #item_name < #(#generics),* >
+            where #(#where_predicates),* {
+            #impl_body
+        }
     )
 }
