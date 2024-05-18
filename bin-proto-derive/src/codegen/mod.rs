@@ -2,23 +2,20 @@ pub mod enums;
 
 use crate::attr::Attrs;
 use proc_macro2::TokenStream;
+use syn::spanned::Spanned;
 
 pub fn reads(fields: &syn::Fields, attrs: &Attrs) -> (TokenStream, TokenStream) {
     match *fields {
-        syn::Fields::Named(ref fields_named) => read_named_fields(fields_named, attrs),
-        syn::Fields::Unnamed(ref fields_unnamed) => {
-            (quote!(), read_unnamed_fields(fields_unnamed, attrs))
-        }
+        syn::Fields::Named(ref fields) => read_named_fields(fields, attrs),
+        syn::Fields::Unnamed(ref fields) => (quote!(), read_unnamed_fields(fields, attrs)),
         syn::Fields::Unit => (quote!(), quote!()),
     }
 }
 
 pub fn writes(fields: &syn::Fields, self_prefix: bool) -> TokenStream {
     match *fields {
-        syn::Fields::Named(ref fields_named) => write_named_fields(fields_named, self_prefix),
-        syn::Fields::Unnamed(ref fields_unnamed) => {
-            write_unnamed_fields(fields_unnamed, self_prefix)
-        }
+        syn::Fields::Named(ref fields) => write_named_fields(fields, self_prefix),
+        syn::Fields::Unnamed(ref fields) => write_unnamed_fields(fields, self_prefix),
         syn::Fields::Unit => quote!(),
     }
 }
@@ -45,9 +42,7 @@ fn read_named_fields(fields_named: &syn::FieldsNamed, attrs: &Attrs) -> (TokenSt
         .map(|field| {
             let field_name = &field.ident;
 
-            quote!(
-                #field_name
-            )
+            quote!(#field_name)
         })
         .collect();
 
@@ -58,27 +53,28 @@ fn read_named_fields(fields_named: &syn::FieldsNamed, attrs: &Attrs) -> (TokenSt
 }
 
 fn read(field: &syn::Field, parent_attribs: &Attrs) -> TokenStream {
-    let attribs = Attrs::from(field.attrs.as_slice());
-    attribs.validate_field();
+    let attribs = match Attrs::try_from(field.attrs.as_slice()) {
+        Ok(attribs) => attribs,
+        Err(e) => return e.to_compile_error(),
+    };
+    if let Err(e) = attribs.validate_field(field.span()) {
+        return e.to_compile_error();
+    };
 
-    let ctx_ty = parent_attribs.ctx_tok();
+    let ctx_ty = parent_attribs.ctx_ty();
 
     if let Some(field_width) = attribs.bits {
-        quote!(
-            bin_proto::BitField::<#ctx_ty>::read(__io_reader, __byte_order, __ctx, #field_width)
-        )
+        quote!(::bin_proto::BitField::<#ctx_ty>::read(__io_reader, __byte_order, __ctx, #field_width))
     } else if attribs.flexible_array_member {
-        quote!(bin_proto::FlexibleArrayMember::read(
+        quote!(::bin_proto::FlexibleArrayMember::read(
             __io_reader,
             __byte_order,
             __ctx
         ))
     } else if let Some(length) = attribs.length {
-        quote!(
-            bin_proto::ExternallyLengthPrefixed::<#ctx_ty>::read(__io_reader, __byte_order, __ctx, #length)
-        )
+        quote!(::bin_proto::ExternallyLengthPrefixed::<#ctx_ty>::read(__io_reader, __byte_order, __ctx, #length))
     } else {
-        quote!(bin_proto::Protocol::<#ctx_ty>::read(
+        quote!(::bin_proto::Protocol::<#ctx_ty>::read(
             __io_reader,
             __byte_order,
             __ctx
@@ -87,10 +83,13 @@ fn read(field: &syn::Field, parent_attribs: &Attrs) -> TokenStream {
 }
 
 fn write(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
-    let attribs = Attrs::from(field.attrs.as_slice());
+    let attribs = match Attrs::try_from(field.attrs.as_slice()) {
+        Ok(attribs) => attribs,
+        Err(e) => return e.to_compile_error(),
+    };
 
     let field_ref = if let Some(value) = attribs.write_value {
-        let ty = field.ty.clone();
+        let ty = &field.ty;
         quote!(&{
             let value: #ty = {#value};
             value
@@ -102,25 +101,25 @@ fn write(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
     if let Some(field_width) = attribs.bits {
         quote!(
             {
-                bin_proto::BitField::write(#field_ref, __io_writer, __byte_order, __ctx, #field_width)?
+                ::bin_proto::BitField::write(#field_ref, __io_writer, __byte_order, __ctx, #field_width)?
             }
         )
     } else if attribs.flexible_array_member {
         quote!(
             {
-                bin_proto::FlexibleArrayMember::write(#field_ref, __io_writer, __byte_order, __ctx)?
+                ::bin_proto::FlexibleArrayMember::write(#field_ref, __io_writer, __byte_order, __ctx)?
             }
         )
     } else if attribs.length.is_some() {
         quote!(
             {
-                bin_proto::ExternallyLengthPrefixed::write(#field_ref, __io_writer, __byte_order, __ctx)?
+                ::bin_proto::ExternallyLengthPrefixed::write(#field_ref, __io_writer, __byte_order, __ctx)?
             }
         )
     } else {
         quote!(
             {
-                bin_proto::Protocol::write(#field_ref, __io_writer, __byte_order, __ctx)?
+                ::bin_proto::Protocol::write(#field_ref, __io_writer, __byte_order, __ctx)?
             }
         )
     }

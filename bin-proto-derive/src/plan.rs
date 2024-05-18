@@ -1,4 +1,5 @@
 use crate::attr::Attrs;
+use syn::{spanned::Spanned, Error, Result};
 
 pub struct Enum {
     pub discriminant_ty: syn::Type,
@@ -12,32 +13,35 @@ pub struct EnumVariant {
 }
 
 impl Enum {
-    pub fn new(ast: &syn::DeriveInput, e: &syn::DataEnum) -> Enum {
-        let attrs = Attrs::from(ast.attrs.as_slice());
-        attrs.validate_enum();
+    pub fn try_new(ast: &syn::DeriveInput, e: &syn::DataEnum) -> Result<Self> {
+        let attrs = Attrs::try_from(ast.attrs.as_slice())?;
+        attrs.validate_enum(ast.span())?;
+
         let plan = Self {
             discriminant_ty: attrs.discriminant_type.unwrap(),
             variants: e
                 .variants
                 .iter()
                 .map(|variant| {
-                    let attrs = Attrs::from(variant.attrs.as_slice());
-                    attrs.validate_variant();
-                    let equals_discriminant = match variant.discriminant.clone().map(|a| a.1) {
-                        Some(expr_lit) => expr_lit,
+                    let attrs = Attrs::try_from(variant.attrs.as_slice())?;
+                    attrs.validate_variant(variant.span())?;
+
+                    let discriminant_value = match variant.discriminant.as_ref().map(|a| &a.1) {
+                        Some(expr_lit) => expr_lit.clone(),
                         None => attrs
                             .discriminant
-                            .expect("No discriminant provided for variant."),
+                            .ok_or(Error::new(variant.span(), "No discriminant for variant"))?,
                     };
 
-                    EnumVariant {
+                    let variant = EnumVariant {
                         ident: variant.ident.clone(),
-                        discriminant_value: equals_discriminant,
+                        discriminant_value,
                         fields: variant.fields.clone(),
-                    }
+                    };
+                    Ok(variant)
                 })
-                .collect(),
+                .collect::<Result<_>>()?,
         };
-        plan
+        Ok(plan)
     }
 }

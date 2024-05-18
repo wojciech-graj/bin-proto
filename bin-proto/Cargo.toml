@@ -20,5 +20,5 @@ derive = ["bin-proto-derive"]
 
 [dependencies]
 bin-proto-derive = { version = "0.4.0", path = "../bin-proto-derive", optional = true }
-bitstream-io = "2.2.0"
-thiserror = "1.0.58"
+bitstream-io = "2.3.0"
+thiserror = "1.0.61"
