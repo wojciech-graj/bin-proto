@@ -1,6 +1,7 @@
 # v0.4.0
 - Delete `EnumExt`
-- Bump rust version to 2021b
+- Bump rust version to 2021
+- Make lifetime generics work
 # v0.3.4
 - Do not trigger https://github.com/rust-lang/rust/issues/120363 with generated code
 # v0.3.3
