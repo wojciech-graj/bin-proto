@@ -23,7 +23,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-bin-proto = "0.3"
+bin-proto = "0.4"
 ```
 
 And then define a type with the `#[derive(bin_proto::Protocol)]` attribute.
@@ -120,13 +120,13 @@ This crate's main alternative is [deku](https://crates.io/crates/deku), and [bin
 
 `bin-proto` is significantly faster than `deku` in all of the tested scenarios.
 The units for the below table are `ns/iter`, taken from
-[github CI](https://github.com/wojciech-graj/bin-proto/actions/runs/8471691807/job/23212208550).
+[github CI](https://github.com/wojciech-graj/bin-proto/actions/runs/9143081499/job/25139334328).
 You can find the benchmarks in the `bench` directory.
 
 |             | Read `enum` | Write `enum` | Read `Vec` | Write `Vec` | Read IPv4 header | Write IPv4 header |
 |-------------|-------------|--------------|------------|-------------|------------------|-------------------|
-| `bin-proto` | 28          | 110          | 1,293      | 1,261       | 165              | 163               |
-| `deku`      | 68          | 324          | 3,042      | 9,178       | 2,580            | 696               |
+| `bin-proto` | 21          | 93           | 738        | 821         | 151              | 141               |
+| `deku`      | 67          | 227          | 3,041      | 9,705       | 2,468            | 821               |
 
 ## Roadmap
 
