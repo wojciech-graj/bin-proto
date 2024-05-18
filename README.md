@@ -29,7 +29,7 @@ bin-proto = "0.3"
 And then define a type with the `#[derive(bin_proto::Protocol)]` attribute.
 
 ```rust
-use bin_proto::Protocol;
+use bin_proto::{Protocol, ProtocolNoCtx};
 
 #[derive(Debug, Protocol, PartialEq)]
 #[protocol(discriminant_type = "u8")]
@@ -80,32 +80,38 @@ You can implement `Protocol` on your own types, and parse with context:
 ```rust
 use bin_proto::Protocol;
 
-#[derive(Debug)]
-struct Ctx(bool);
+pub struct Ctx;
 
-#[derive(Debug)]
-struct CtxCheck;
+pub struct NeedsCtx;
 
-impl Protocol for CtxCheck {
+impl Protocol<Ctx> for NeedsCtx {
     fn read(
-        _: &mut dyn bin_proto::BitRead,
-        _: bin_proto::ByteOrder,
-        ctx: &mut dyn std::any::Any,
+        _read: &mut dyn bin_proto::BitRead,
+        _byte_order: bin_proto::ByteOrder,
+        _ctx: &mut Ctx,
     ) -> Result<Self, bin_proto::Error> {
-        ctx.downcast_mut::<Ctx>().unwrap().0 = true;
+        // Use ctx here
         Ok(Self)
     }
 
     fn write(
         &self,
-        _: &mut dyn bin_proto::BitWrite,
-        _: bin_proto::ByteOrder,
-        ctx: &mut dyn std::any::Any,
+        _write: &mut dyn bin_proto::BitWrite,
+        _byte_order: bin_proto::ByteOrder,
+        _ctx: &mut Ctx,
     ) -> Result<(), bin_proto::Error> {
-        ctx.downcast_mut::<Ctx>().unwrap().0 = true;
+        // Use ctx here
         Ok(())
     }
 }
+
+#[derive(Protocol)]
+#[protocol(ctx = "Ctx")]
+pub struct WithCtx(NeedsCtx);
+
+WithCtx(NeedsCtx)
+    .bytes_ctx(bin_proto::ByteOrder::LittleEndian, &mut Ctx)
+    .unwrap();
 ```
 
 ## Performance / Alternatives
@@ -126,5 +132,4 @@ You can find the benchmarks in the `bench` directory.
 
 The following features are planned:
 - Bit/byte alignment
-- Better derive macro error messages
 - `no_std` support (only after `bitstream_io` supports it)

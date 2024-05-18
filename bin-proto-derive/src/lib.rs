@@ -37,19 +37,19 @@ fn impl_parcel_for_struct(ast: &syn::DeriveInput, strukt: &syn::DataStruct) -> T
         ast,
         quote!(
             #[allow(unused_variables)]
-            fn read(__io_reader: &mut dyn bin_proto::BitRead,
-                    __byte_order: bin_proto::ByteOrder,
+            fn read(__io_reader: &mut dyn ::bin_proto::BitRead,
+                    __byte_order: ::bin_proto::ByteOrder,
                     __ctx: &mut #ctx_ty)
-                    -> bin_proto::Result<Self> {
+                    -> ::bin_proto::Result<Self> {
                 #reads
                 Ok(Self #initializers)
             }
 
             #[allow(unused_variables)]
-            fn write(&self, __io_writer: &mut dyn bin_proto::BitWrite,
-                     __byte_order: bin_proto::ByteOrder,
+            fn write(&self, __io_writer: &mut dyn ::bin_proto::BitWrite,
+                     __byte_order: ::bin_proto::ByteOrder,
                      __ctx: &mut #ctx_ty)
-                     -> bin_proto::Result<()> {
+                     -> ::bin_proto::Result<()> {
                 #writes
                 Ok(())
             }
