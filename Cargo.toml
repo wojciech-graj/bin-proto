@@ -2,7 +2,6 @@
 members = [
   "bin-proto",
   "bin-proto-derive",
-  "tests",
 ]
 exclude = [
   "bench",

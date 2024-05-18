@@ -85,7 +85,7 @@ fn impl_parcel_for_struct(
         quote!(bin_proto::Protocol),
         quote!(
             #[allow(unused_variables)]
-            fn read(__io_reader: &mut bin_proto::BitRead,
+            fn read(__io_reader: &mut dyn bin_proto::BitRead,
                           __byte_order: bin_proto::ByteOrder,
                            __ctx: &mut dyn core::any::Any)
                 -> bin_proto::Result<Self> {
@@ -94,7 +94,7 @@ fn impl_parcel_for_struct(
             }
 
             #[allow(unused_variables)]
-            fn write(&self, __io_writer: &mut bin_proto::BitWrite,
+            fn write(&self, __io_writer: &mut dyn bin_proto::BitWrite,
                            __byte_order: bin_proto::ByteOrder,
                            __ctx: &mut dyn core::any::Any)
                 -> bin_proto::Result<()> {
@@ -153,7 +153,7 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
         quote!(bin_proto::Protocol),
         quote!(
             #[allow(unused_variables)]
-            fn read(__io_reader: &mut bin_proto::BitRead,
+            fn read(__io_reader: &mut dyn bin_proto::BitRead,
                           __byte_order: bin_proto::ByteOrder,
                            __ctx: &mut dyn core::any::Any)
                 -> bin_proto::Result<Self> {
@@ -162,7 +162,7 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
             }
 
             #[allow(unused_variables)]
-            fn write(&self, __io_writer: &mut bin_proto::BitWrite,
+            fn write(&self, __io_writer: &mut dyn bin_proto::BitWrite,
                            __byte_order: bin_proto::ByteOrder,
                            __ctx: &mut dyn core::any::Any)
                 -> bin_proto::Result<()> {
