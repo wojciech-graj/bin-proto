@@ -2,11 +2,11 @@ use std::net::{Ipv4Addr, Ipv6Addr};
 
 use crate::Protocol;
 
-impl Protocol for Ipv4Addr {
+impl<Ctx> Protocol<Ctx> for Ipv4Addr {
     fn read(
         read: &mut dyn crate::BitRead,
         byte_order: crate::ByteOrder,
-        ctx: &mut dyn std::any::Any,
+        ctx: &mut Ctx,
     ) -> Result<Self, crate::Error> {
         let bytes: [u8; 4] = Protocol::read(read, byte_order, ctx)?;
 
@@ -17,17 +17,17 @@ impl Protocol for Ipv4Addr {
         &self,
         write: &mut dyn crate::BitWrite,
         byte_order: crate::ByteOrder,
-        ctx: &mut dyn std::any::Any,
+        ctx: &mut Ctx,
     ) -> Result<(), crate::Error> {
         Protocol::write(&self.octets(), write, byte_order, ctx)
     }
 }
 
-impl Protocol for Ipv6Addr {
+impl<Ctx> Protocol<Ctx> for Ipv6Addr {
     fn read(
         read: &mut dyn crate::BitRead,
         byte_order: crate::ByteOrder,
-        ctx: &mut dyn std::any::Any,
+        ctx: &mut Ctx,
     ) -> Result<Self, crate::Error> {
         let bytes: [u16; 8] = Protocol::read(read, byte_order, ctx)?;
 
@@ -40,7 +40,7 @@ impl Protocol for Ipv6Addr {
         &self,
         write: &mut dyn crate::BitWrite,
         byte_order: crate::ByteOrder,
-        ctx: &mut dyn std::any::Any,
+        ctx: &mut Ctx,
     ) -> Result<(), crate::Error> {
         Protocol::write(&self.octets(), write, byte_order, ctx)
     }

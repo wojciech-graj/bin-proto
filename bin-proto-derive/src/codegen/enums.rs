@@ -1,4 +1,5 @@
 use crate::{
+    attr::Attrs,
     codegen,
     plan::{self, EnumVariant},
 };
@@ -19,8 +20,7 @@ pub fn write_variant(
 
             let write_discriminant = write_discriminant(variant);
 
-            let (binding_names, fields_pattern) =
-                bind_fields_pattern(variant_name, &variant.fields);
+            let fields_pattern = bind_fields_pattern(variant_name, &variant.fields);
 
             let writes = codegen::writes(&variant.fields, false);
 
@@ -39,13 +39,17 @@ pub fn write_variant(
     )
 }
 
-pub fn read_variant(plan: &plan::Enum, read_discriminant: TokenStream) -> TokenStream {
+pub fn read_variant(
+    plan: &plan::Enum,
+    read_discriminant: TokenStream,
+    attribs: &Attrs,
+) -> TokenStream {
     let discriminant_ty = plan.discriminant_ty.clone();
 
     let discriminant_match_branches = plan.variants.iter().map(|variant| {
         let variant_name = &variant.ident;
         let discriminant_literal = variant.discriminant_value.clone();
-        let (reader, initializer) = codegen::reads(&variant.fields);
+        let (reader, initializer) = codegen::reads(&variant.fields, attribs);
 
         quote!(
             #discriminant_literal => {
@@ -74,28 +78,16 @@ pub fn read_variant(plan: &plan::Enum, read_discriminant: TokenStream) -> TokenS
 /// Generates code for a pattern that binds a set of fields by reference.
 ///
 /// Returns a tuple of the pattern tokens and the field binding names.
-pub fn bind_fields_pattern(
-    parent_name: &syn::Ident,
-    fields: &syn::Fields,
-) -> (Vec<syn::Ident>, TokenStream) {
+pub fn bind_fields_pattern(parent_name: &syn::Ident, fields: &syn::Fields) -> TokenStream {
     match *fields {
         syn::Fields::Named(ref fields_named) => {
-            let field_names: Vec<_> = fields_named
-                .named
-                .iter()
-                .map(|f| f.ident.clone().unwrap())
-                .collect();
             let field_name_refs = fields_named
                 .named
                 .iter()
                 .map(|f| &f.ident)
                 .map(|n| quote!( ref #n ));
-
-            (
-                field_names,
-                quote!(
-                    #parent_name { #( #field_name_refs ),* }
-                ),
+            quote!(
+                #parent_name { #( #field_name_refs ),* }
             )
         }
         syn::Fields::Unnamed(ref fields_unnamed) => {
@@ -104,14 +96,10 @@ pub fn bind_fields_pattern(
                 .collect();
 
             let field_refs: Vec<_> = binding_names.iter().map(|i| quote!( ref #i )).collect();
-
-            (
-                binding_names,
-                quote!(
-                    #parent_name ( #( #field_refs ),* )
-                ),
+            quote!(
+                #parent_name ( #( #field_refs ),* )
             )
         }
-        syn::Fields::Unit => (Vec::new(), quote!(#parent_name)),
+        syn::Fields::Unit => quote!(#parent_name),
     }
 }

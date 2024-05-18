@@ -1,7 +1,7 @@
 use crate::attr::Attrs;
 
 pub struct Enum {
-    pub discriminant_ty: syn::Ident,
+    pub discriminant_ty: syn::Type,
     pub variants: Vec<EnumVariant>,
 }
 

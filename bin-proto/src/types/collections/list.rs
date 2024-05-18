@@ -1,11 +1,11 @@
 macro_rules! impl_list_type {
     ( $ty:ident => T: $( $ty_pred:ident ),* ) => {
-        impl<T> crate::ExternallyLengthPrefixed for $ty<T>
-            where T: $crate::Protocol $( + $ty_pred )*
+        impl<Ctx, T> crate::ExternallyLengthPrefixed<Ctx> for $ty<T>
+            where T: $crate::Protocol<Ctx> $( + $ty_pred )*
         {
             fn read(read: &mut dyn crate::BitRead,
                     byte_order: crate::ByteOrder,
-                    ctx: &mut dyn core::any::Any,
+                    ctx: &mut Ctx,
                     length: usize,
                     ) -> Result<Self, $crate::Error> {
                 let elements = crate::util::read_items(length, read, byte_order, ctx)?;
@@ -15,7 +15,7 @@ macro_rules! impl_list_type {
             fn write(&self,
                      write: &mut dyn crate::BitWrite,
                      byte_order: crate::ByteOrder,
-                     ctx: &mut dyn core::any::Any,
+                     ctx: &mut Ctx,
                      ) -> Result<(), $crate::Error> {
                 crate::util::write_items(self.iter(), write, byte_order, ctx)
             }

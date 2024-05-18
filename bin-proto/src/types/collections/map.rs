@@ -1,12 +1,12 @@
 macro_rules! impl_map_type {
     ( $ty:ident => K: $( $k_pred:ident ),+ ) => {
-        impl<K, V> crate::ExternallyLengthPrefixed for $ty<K, V>
-            where K: crate::Protocol + $( $k_pred +)+,
-                  V: crate::Protocol
+        impl<Ctx, K, V> crate::ExternallyLengthPrefixed<Ctx> for $ty<K, V>
+            where K: crate::Protocol<Ctx> + $( $k_pred +)+,
+                  V: crate::Protocol<Ctx>
         {
             fn read(read: &mut dyn crate::BitRead,
                     byte_order: crate::ByteOrder,
-                    ctx: &mut dyn core::any::Any,
+                    ctx: &mut Ctx,
                     length: usize,
                     ) -> Result<Self, crate::Error> {
                 let mut map = $ty::new();
@@ -23,7 +23,7 @@ macro_rules! impl_map_type {
 
             fn write(&self, write: &mut dyn crate::BitWrite,
                     byte_order: crate::ByteOrder,
-                    ctx: &mut dyn core::any::Any,
+                    ctx: &mut Ctx,
                     ) -> Result<(), crate::Error> {
                 for (key, value) in self.iter() {
                     key.write(write, byte_order, ctx)?;

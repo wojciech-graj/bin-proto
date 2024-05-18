@@ -4,6 +4,7 @@ use bin_proto::{ByteOrder, Protocol};
 
 #[derive(Debug, bin_proto::Protocol, PartialEq)]
 #[protocol(discriminant_type = "u8")]
+#[protocol(ctx = "()")]
 pub enum Enum<'a, T: Protocol> {
     #[protocol(discriminant = "1")]
     Variant1 {
@@ -24,7 +25,7 @@ fn read_enum_variant() {
             len: 2,
             arr: vec![1, 2]
         },
-        Enum::from_bytes(&[1, 64, 2, 1, 2], ByteOrder::BigEndian).unwrap()
+        Enum::from_bytes_ctx(&[1, 64, 2, 1, 2], ByteOrder::BigEndian, &mut ()).unwrap()
     );
 }
 
@@ -32,7 +33,7 @@ fn read_enum_variant() {
 fn write_enum_variant() {
     assert_eq!(
         Enum::Variant2::<u32>(20, true, PhantomData)
-            .bytes(ByteOrder::BigEndian)
+            .bytes_ctx(ByteOrder::BigEndian, &mut ())
             .unwrap(),
         vec![2, 0, 0, 0, 20, 1]
     );

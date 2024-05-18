@@ -1,13 +1,7 @@
 use crate::{BitField, BitRead, BitWrite, ByteOrder, Error, Protocol};
-use core::any::Any;
 
-impl BitField for bool {
-    fn read(
-        read: &mut dyn BitRead,
-        _: ByteOrder,
-        _: &mut dyn Any,
-        bits: u32,
-    ) -> Result<Self, Error> {
+impl<Ctx> BitField<Ctx> for bool {
+    fn read(read: &mut dyn BitRead, _: ByteOrder, _: &mut Ctx, bits: u32) -> Result<Self, Error> {
         if read.read_u8_bf(bits)? == 0 {
             Ok(false)
         } else {
@@ -19,7 +13,7 @@ impl BitField for bool {
         &self,
         write: &mut dyn BitWrite,
         _: ByteOrder,
-        _: &mut dyn Any,
+        _: &mut Ctx,
         bits: u32,
     ) -> Result<(), Error> {
         write.write_u8_bf(bits, if *self { 1 } else { 0 })?;
@@ -27,8 +21,8 @@ impl BitField for bool {
     }
 }
 
-impl Protocol for bool {
-    fn read(read: &mut dyn BitRead, _: ByteOrder, _: &mut dyn Any) -> Result<Self, Error> {
+impl<Ctx> Protocol<Ctx> for bool {
+    fn read(read: &mut dyn BitRead, _: ByteOrder, _: &mut Ctx) -> Result<Self, Error> {
         if read.read_u8()? == 0 {
             Ok(false)
         } else {
@@ -36,29 +30,29 @@ impl Protocol for bool {
         }
     }
 
-    fn write(&self, write: &mut dyn BitWrite, _: ByteOrder, _: &mut dyn Any) -> Result<(), Error> {
+    fn write(&self, write: &mut dyn BitWrite, _: ByteOrder, _: &mut Ctx) -> Result<(), Error> {
         write.write_u8(if *self { 1 } else { 0 })?;
         Ok(())
     }
 }
 
-impl Protocol for u8 {
-    fn read(read: &mut dyn BitRead, _: ByteOrder, _: &mut dyn Any) -> Result<Self, Error> {
+impl<Ctx> Protocol<Ctx> for u8 {
+    fn read(read: &mut dyn BitRead, _: ByteOrder, _: &mut Ctx) -> Result<Self, Error> {
         Ok(read.read_u8()?)
     }
 
-    fn write(&self, write: &mut dyn BitWrite, _: ByteOrder, _: &mut dyn Any) -> Result<(), Error> {
+    fn write(&self, write: &mut dyn BitWrite, _: ByteOrder, _: &mut Ctx) -> Result<(), Error> {
         write.write_u8(*self)?;
         Ok(())
     }
 }
 
-impl Protocol for i8 {
-    fn read(read: &mut dyn BitRead, _: ByteOrder, _: &mut dyn Any) -> Result<Self, Error> {
+impl<Ctx> Protocol<Ctx> for i8 {
+    fn read(read: &mut dyn BitRead, _: ByteOrder, _: &mut Ctx) -> Result<Self, Error> {
         Ok(read.read_i8()?)
     }
 
-    fn write(&self, write: &mut dyn BitWrite, _: ByteOrder, _: &mut dyn Any) -> Result<(), Error> {
+    fn write(&self, write: &mut dyn BitWrite, _: ByteOrder, _: &mut Ctx) -> Result<(), Error> {
         write.write_i8(*self)?;
         Ok(())
     }
@@ -66,11 +60,11 @@ impl Protocol for i8 {
 
 macro_rules! impl_parcel_for_numeric {
     ($ty:ident => [$read_fn:ident : $write_fn:ident]) => {
-        impl Protocol for $ty {
+        impl<Ctx> Protocol<Ctx> for $ty {
             fn read(
                 read: &mut dyn BitRead,
                 byte_order: ByteOrder,
-                _: &mut dyn Any,
+                _: &mut Ctx,
             ) -> Result<Self, Error> {
                 byte_order.$read_fn(read)
             }
@@ -79,7 +73,7 @@ macro_rules! impl_parcel_for_numeric {
                 &self,
                 write: &mut dyn BitWrite,
                 byte_order: ByteOrder,
-                _: &mut dyn Any,
+                _: &mut Ctx,
             ) -> Result<(), Error> {
                 byte_order.$write_fn(*self, write)?;
                 Ok(())
@@ -90,11 +84,11 @@ macro_rules! impl_parcel_for_numeric {
 
 macro_rules! impl_bitfield_for_numeric {
     ($ty:ident => [$read_fn:ident : $write_fn:ident]) => {
-        impl BitField for $ty {
+        impl<Ctx> BitField<Ctx> for $ty {
             fn read(
                 read: &mut dyn BitRead,
                 _: ByteOrder,
-                _: &mut dyn Any,
+                _: &mut Ctx,
                 bits: u32,
             ) -> Result<Self, Error> {
                 Ok(BitRead::$read_fn(read, bits)?)
@@ -104,7 +98,7 @@ macro_rules! impl_bitfield_for_numeric {
                 &self,
                 write: &mut dyn BitWrite,
                 _: ByteOrder,
-                _: &mut dyn Any,
+                _: &mut Ctx,
                 bits: u32,
             ) -> Result<(), Error> {
                 BitWrite::$write_fn(write, bits, *self)?;

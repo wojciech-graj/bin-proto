@@ -2,12 +2,13 @@ pub mod enums;
 
 use crate::attr::Attrs;
 use proc_macro2::TokenStream;
-use syn::{fold::Fold, Expr, ExprField};
 
-pub fn reads(fields: &syn::Fields) -> (TokenStream, TokenStream) {
+pub fn reads(fields: &syn::Fields, attrs: &Attrs) -> (TokenStream, TokenStream) {
     match *fields {
-        syn::Fields::Named(ref fields_named) => read_named_fields(fields_named),
-        syn::Fields::Unnamed(ref fields_unnamed) => (quote!(), read_unnamed_fields(fields_unnamed)),
+        syn::Fields::Named(ref fields_named) => read_named_fields(fields_named, attrs),
+        syn::Fields::Unnamed(ref fields_unnamed) => {
+            (quote!(), read_unnamed_fields(fields_unnamed, attrs))
+        }
         syn::Fields::Unit => (quote!(), quote!()),
     }
 }
@@ -22,7 +23,7 @@ pub fn writes(fields: &syn::Fields, self_prefix: bool) -> TokenStream {
     }
 }
 
-fn read_named_fields(fields_named: &syn::FieldsNamed) -> (TokenStream, TokenStream) {
+fn read_named_fields(fields_named: &syn::FieldsNamed, attrs: &Attrs) -> (TokenStream, TokenStream) {
     let fields: Vec<_> = fields_named
         .named
         .iter()
@@ -30,7 +31,7 @@ fn read_named_fields(fields_named: &syn::FieldsNamed) -> (TokenStream, TokenStre
             let field_name = &field.ident;
             let field_ty = &field.ty;
 
-            let read = read(field);
+            let read = read(field, attrs);
 
             quote!(
                 let #field_name : #field_ty = #read?;
@@ -56,12 +57,15 @@ fn read_named_fields(fields_named: &syn::FieldsNamed) -> (TokenStream, TokenStre
     )
 }
 
-fn read(field: &syn::Field) -> TokenStream {
+fn read(field: &syn::Field, parent_attribs: &Attrs) -> TokenStream {
     let attribs = Attrs::from(field.attrs.as_slice());
     attribs.validate_field();
+
+    let ctx_ty = parent_attribs.ctx_tok();
+
     if let Some(field_width) = attribs.bits {
         quote!(
-            bin_proto::BitField::read(__io_reader, __byte_order, __ctx, #field_width)
+            bin_proto::BitField::<#ctx_ty>::read(__io_reader, __byte_order, __ctx, #field_width)
         )
     } else if attribs.flexible_array_member {
         quote!(bin_proto::FlexibleArrayMember::read(
@@ -71,10 +75,14 @@ fn read(field: &syn::Field) -> TokenStream {
         ))
     } else if let Some(length) = attribs.length {
         quote!(
-            bin_proto::ExternallyLengthPrefixed::read(__io_reader, __byte_order, __ctx, #length)
+            bin_proto::ExternallyLengthPrefixed::<#ctx_ty>::read(__io_reader, __byte_order, __ctx, #length)
         )
     } else {
-        quote!(bin_proto::Protocol::read(__io_reader, __byte_order, __ctx))
+        quote!(bin_proto::Protocol::<#ctx_ty>::read(
+            __io_reader,
+            __byte_order,
+            __ctx
+        ))
     }
 }
 
@@ -138,13 +146,13 @@ fn write_named_fields(fields_named: &syn::FieldsNamed, self_prefix: bool) -> Tok
     quote!( #( #field_writers );* )
 }
 
-fn read_unnamed_fields(fields_unnamed: &syn::FieldsUnnamed) -> TokenStream {
+fn read_unnamed_fields(fields_unnamed: &syn::FieldsUnnamed, attrs: &Attrs) -> TokenStream {
     let field_initializers: Vec<_> = fields_unnamed
         .unnamed
         .iter()
         .map(|field| {
             let field_ty = &field.ty;
-            let read = read(field);
+            let read = read(field, attrs);
 
             quote!(
                 {

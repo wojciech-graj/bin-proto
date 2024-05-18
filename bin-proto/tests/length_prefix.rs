@@ -1,11 +1,11 @@
 use bin_proto::{ByteOrder, Protocol};
 
-#[derive(bin_proto::Protocol, Debug, PartialEq, Eq)]
+#[derive(Protocol, Debug, PartialEq, Eq)]
 pub struct Prefix {
     pub reason_length: u8,
 }
 
-#[derive(bin_proto::Protocol, Debug, PartialEq, Eq)]
+#[derive(Protocol, Debug, PartialEq, Eq)]
 pub struct WithElementsLength {
     pub count: u32,
     pub foo: bool,
@@ -13,7 +13,7 @@ pub struct WithElementsLength {
     pub data: Vec<u32>,
 }
 
-#[derive(bin_proto::Protocol, Debug, PartialEq, Eq)]
+#[derive(Protocol, Debug, PartialEq, Eq)]
 pub struct WithElementsLengthAuto {
     #[protocol(write_value = "self.data.len() as u32")]
     pub count: u32,
@@ -22,7 +22,7 @@ pub struct WithElementsLengthAuto {
     pub data: Vec<u32>,
 }
 
-#[derive(bin_proto::Protocol, Debug, PartialEq, Eq)]
+#[derive(Protocol, Debug, PartialEq, Eq)]
 #[protocol(discriminant_type = "u8")]
 pub enum WithElementsLengthAutoEnum {
     #[protocol(discriminant = "1")]
@@ -43,7 +43,7 @@ fn can_read_length_prefix_3_elements() {
             foo: true,
             data: vec![1, 2, 3],
         },
-        WithElementsLength::from_bytes(
+        WithElementsLength::from_bytes_ctx(
             &[
                 0, 0, 0, 3, // disjoint length prefix
                 1, // boolean true
@@ -51,7 +51,8 @@ fn can_read_length_prefix_3_elements() {
                 0, 0, 0, 2, // 2
                 0, 0, 0, 3 // 3
             ],
-            ByteOrder::BigEndian
+            ByteOrder::BigEndian,
+            &mut ()
         )
         .unwrap()
     );
@@ -65,7 +66,7 @@ fn can_write_auto_length_prefix_3_elements_enum() {
             foo: true,
             data: vec![1, 2, 3],
         }
-        .bytes(ByteOrder::BigEndian)
+        .bytes_ctx(ByteOrder::BigEndian, &mut ())
         .unwrap(),
         vec![
             0, 0, 0, 3, // disjoint length prefix
@@ -85,7 +86,7 @@ fn can_read_length_prefix_3_elements_enum() {
             foo: true,
             data: vec![1, 2, 3],
         },
-        WithElementsLengthAutoEnum::from_bytes(
+        WithElementsLengthAutoEnum::from_bytes_ctx(
             &[
                 1, // Discriminant
                 0, 0, 0, 3, // disjoint length prefix
@@ -94,7 +95,8 @@ fn can_read_length_prefix_3_elements_enum() {
                 0, 0, 0, 2, // 2
                 0, 0, 0, 3 // 3
             ],
-            ByteOrder::BigEndian
+            ByteOrder::BigEndian,
+            &mut ()
         )
         .unwrap()
     );
@@ -108,7 +110,7 @@ fn can_write_auto_length_prefix_3_elements() {
             foo: true,
             data: vec![1, 2, 3],
         }
-        .bytes(ByteOrder::BigEndian)
+        .bytes_ctx(ByteOrder::BigEndian, &mut ())
         .unwrap(),
         vec![
             1, // Discriminant

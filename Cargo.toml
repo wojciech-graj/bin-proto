@@ -6,3 +6,4 @@ members = [
 exclude = [
   "bench",
 ]
+resolver = "2"

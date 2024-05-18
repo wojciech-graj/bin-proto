@@ -1,17 +1,9 @@
 use crate::{util, BitRead, BitWrite, ByteOrder, Error, Protocol};
-use core::any::Any;
 use std::ffi::CString;
 
-impl Protocol for CString {
-    fn read(
-        read: &mut dyn BitRead,
-        byte_order: ByteOrder,
-        ctx: &mut dyn Any,
-    ) -> Result<Self, Error> {
+impl<Ctx> Protocol<Ctx> for CString {
+    fn read(read: &mut dyn BitRead, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<Self, Error> {
         let mut result = Vec::new();
-        // this logic is susceptible to DoS attacks by never providing
-        //   a null character and will be fixed by
-        //   https://github.com/dylanmckay/bin_proto/issues/14
         loop {
             let c: u8 = Protocol::read(read, byte_order, ctx)?;
             if c == 0x00 {
@@ -25,7 +17,7 @@ impl Protocol for CString {
         &self,
         write: &mut dyn BitWrite,
         byte_order: ByteOrder,
-        ctx: &mut dyn Any,
+        ctx: &mut Ctx,
     ) -> Result<(), Error> {
         util::write_items(
             self.clone().into_bytes_with_nul().iter(),

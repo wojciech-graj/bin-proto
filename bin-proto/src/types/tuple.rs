@@ -1,16 +1,16 @@
 macro_rules! impl_protocol_for_tuple {
     ($($idx:tt $t:tt),*) => {
-        impl<$($t,)*> crate::Protocol for ($($t,)*)
+        impl<Ctx, $($t,)*> crate::Protocol<Ctx> for ($($t,)*)
         where
-            $($t: crate::Protocol,)*
+            $($t: crate::Protocol<Ctx>,)*
         {
             #[allow(unused)]
             fn read(
                 read: &mut dyn crate::BitRead,
                 byte_order: crate::ByteOrder,
-                ctx: &mut dyn core::any::Any,
+                ctx: &mut Ctx,
             ) -> Result<Self, crate::Error> {
-                Ok(($(<$t as crate::Protocol>::read(read, byte_order, ctx)?,)*))
+                Ok(($(<$t as crate::Protocol<Ctx>>::read(read, byte_order, ctx)?,)*))
             }
 
             #[allow(unused)]
@@ -18,7 +18,7 @@ macro_rules! impl_protocol_for_tuple {
                 &self,
                 write: &mut dyn crate::BitWrite,
                 byte_order: crate::ByteOrder,
-                ctx: &mut dyn core::any::Any,
+                ctx: &mut Ctx,
             ) -> Result<(), crate::Error> {
                 $(
                     crate::Protocol::write(&self.$idx, write, byte_order, ctx)?;

@@ -2,18 +2,17 @@
 
 use crate::{BitRead, BitWrite, ByteOrder, Error, Protocol};
 
-use core::any::Any;
 use std::io;
 
 /// Reads a specified number of items from a stream.
-pub fn read_items<T>(
+pub fn read_items<Ctx, T>(
     item_count: usize,
     read: &mut dyn BitRead,
     byte_order: ByteOrder,
-    ctx: &mut dyn Any,
+    ctx: &mut Ctx,
 ) -> Result<impl Iterator<Item = T>, Error>
 where
-    T: Protocol,
+    T: Protocol<Ctx>,
 {
     let mut elements = Vec::with_capacity(item_count);
 
@@ -27,14 +26,14 @@ where
 /// BitWrites an iterator of parcels to the stream.
 ///
 /// Does not include a length prefix.
-pub fn write_items<'a, T>(
+pub fn write_items<'a, Ctx, T>(
     items: impl IntoIterator<Item = &'a T>,
     write: &mut dyn BitWrite,
     byte_order: ByteOrder,
-    ctx: &mut dyn Any,
+    ctx: &mut Ctx,
 ) -> Result<(), Error>
 where
-    T: Protocol + 'a,
+    T: Protocol<Ctx> + 'a,
 {
     for item in items.into_iter() {
         item.write(write, byte_order, ctx)?;
@@ -42,13 +41,13 @@ where
     Ok(())
 }
 
-pub fn read_items_to_eof<T>(
+pub fn read_items_to_eof<Ctx, T>(
     read: &mut dyn BitRead,
     byte_order: ByteOrder,
-    ctx: &mut dyn Any,
+    ctx: &mut Ctx,
 ) -> Result<Vec<T>, Error>
 where
-    T: Protocol,
+    T: Protocol<Ctx>,
 {
     let mut items = Vec::new();
     loop {

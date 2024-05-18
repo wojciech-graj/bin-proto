@@ -5,11 +5,11 @@ macro_rules! impl_smart_ptr_type {
             use super::*;
             use std::ops::Deref;
 
-            impl<T: crate::Protocol> crate::Protocol for $ty<T> {
+            impl<Ctx, T: crate::Protocol<Ctx>> crate::Protocol<Ctx> for $ty<T> {
                 fn read(
                     read: &mut dyn crate::BitRead,
                     byte_order: crate::ByteOrder,
-                    ctx: &mut dyn core::any::Any,
+                    ctx: &mut Ctx,
                 ) -> Result<Self, crate::Error> {
                     let value = T::read(read, byte_order, ctx)?;
                     Ok($ty::new(value))
@@ -19,7 +19,7 @@ macro_rules! impl_smart_ptr_type {
                     &self,
                     write: &mut dyn crate::BitWrite,
                     byte_order: crate::ByteOrder,
-                    ctx: &mut dyn core::any::Any,
+                    ctx: &mut Ctx,
                 ) -> Result<(), crate::Error> {
                     self.deref().write(write, byte_order, ctx)
                 }
@@ -34,7 +34,7 @@ macro_rules! impl_smart_ptr_type {
             #[test]
             fn read_protocol() {
                 assert_eq!(
-                    <$ty<u8> as crate::Protocol>::read(
+                    <$ty<u8> as crate::Protocol<()>>::read(
                         &mut bitstream_io::BitReader::endian(
                             [7u8].as_slice(),
                             bitstream_io::BigEndian

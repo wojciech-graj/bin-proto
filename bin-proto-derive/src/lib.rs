@@ -11,6 +11,8 @@ mod plan;
 
 use attr::Attrs;
 use proc_macro::TokenStream;
+use proc_macro2::Span;
+use syn::{punctuated::Punctuated, GenericParam, Ident, TypeParam};
 
 #[proc_macro_derive(Protocol, attributes(protocol))]
 pub fn protocol(input: TokenStream) -> TokenStream {
@@ -43,17 +45,19 @@ fn impl_parcel_for_struct(
     ast: &syn::DeriveInput,
     strukt: &syn::DataStruct,
 ) -> proc_macro2::TokenStream {
-    let (reads, initializers) = codegen::reads(&strukt.fields);
+    let attribs = Attrs::from(ast.attrs.as_slice());
+    let (reads, initializers) = codegen::reads(&strukt.fields, &attribs);
     let writes = codegen::writes(&strukt.fields, true);
 
-    impl_trait_for(
+    let ctx_ty = attribs.ctx_tok();
+
+    impl_protocol_for(
         ast,
-        quote!(bin_proto::Protocol),
         quote!(
             #[allow(unused_variables)]
             fn read(__io_reader: &mut dyn bin_proto::BitRead,
                           __byte_order: bin_proto::ByteOrder,
-                           __ctx: &mut dyn core::any::Any)
+                           __ctx: &mut #ctx_ty)
                 -> bin_proto::Result<Self> {
                 #reads
                 Ok(Self #initializers)
@@ -62,7 +66,7 @@ fn impl_parcel_for_struct(
             #[allow(unused_variables)]
             fn write(&self, __io_writer: &mut dyn bin_proto::BitWrite,
                            __byte_order: bin_proto::ByteOrder,
-                           __ctx: &mut dyn core::any::Any)
+                           __ctx: &mut #ctx_ty)
                 -> bin_proto::Result<()> {
                 #writes
                 Ok(())
@@ -75,18 +79,21 @@ fn impl_parcel_for_struct(
 fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro2::TokenStream {
     let discriminant_ty = plan.discriminant_ty.clone();
 
-    let (read_variant, write_variant) = if let Some(field_width) =
-        Attrs::from(ast.attrs.as_slice()).bits
-    {
+    let attribs = Attrs::from(ast.attrs.as_slice());
+
+    let ctx_ty = attribs.ctx_tok();
+
+    let (read_variant, write_variant) = if let Some(field_width) = attribs.bits {
         (
             codegen::enums::read_variant(
                 plan,
-                quote!(bin_proto::BitField::read(
+                quote!(bin_proto::BitField::<#ctx_ty>::read(
                     __io_reader,
                     __byte_order,
                     __ctx,
                     #field_width,
                 )?),
+                &attribs,
             ),
             codegen::enums::write_variant(plan, &|variant| {
                 let discriminant_expr = variant.discriminant_value.clone();
@@ -97,7 +104,7 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
 
                 quote!(
                     const _: () = assert!(#discriminant_expr < (1 as #discriminant_ty) << #field_width, #error_message);
-                    <#discriminant_ty as bin_proto::BitField>::write(&{#discriminant_expr}, __io_writer, __byte_order, __ctx, #field_width)?;
+                    <#discriminant_ty as bin_proto::BitField<#ctx_ty>>::write(&{#discriminant_expr}, __io_writer, __byte_order, __ctx, #field_width)?;
                 )
             }),
         )
@@ -105,23 +112,27 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
         (
             codegen::enums::read_variant(
                 plan,
-                quote!(bin_proto::Protocol::read(__io_reader, __byte_order, __ctx)?),
+                quote!(bin_proto::Protocol::<#ctx_ty>::read(
+                    __io_reader,
+                    __byte_order,
+                    __ctx
+                )?),
+                &attribs,
             ),
             codegen::enums::write_variant(plan, &|variant| {
                 let discriminant_expr = variant.discriminant_value.clone();
-                quote!( <#discriminant_ty as bin_proto::Protocol>::write(&{#discriminant_expr}, __io_writer, __byte_order, __ctx)?; )
+                quote!( <#discriminant_ty as bin_proto::Protocol<#ctx_ty>>::write(&{#discriminant_expr}, __io_writer, __byte_order, __ctx)?; )
             }),
         )
     };
 
-    impl_trait_for(
+    impl_protocol_for(
         ast,
-        quote!(bin_proto::Protocol),
         quote!(
             #[allow(unused_variables)]
             fn read(__io_reader: &mut dyn bin_proto::BitRead,
                           __byte_order: bin_proto::ByteOrder,
-                           __ctx: &mut dyn core::any::Any)
+                           __ctx: &mut #ctx_ty)
                 -> bin_proto::Result<Self> {
 
                 Ok(#read_variant)
@@ -130,7 +141,7 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
             #[allow(unused_variables)]
             fn write(&self, __io_writer: &mut dyn bin_proto::BitWrite,
                            __byte_order: bin_proto::ByteOrder,
-                           __ctx: &mut dyn core::any::Any)
+                           __ctx: &mut #ctx_ty)
                 -> bin_proto::Result<()> {
                 #write_variant
                 Ok(())
@@ -139,19 +150,37 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
     )
 }
 
-fn impl_trait_for(
+fn impl_protocol_for(
     ast: &syn::DeriveInput,
-    trait_name: proc_macro2::TokenStream,
     impl_body: proc_macro2::TokenStream,
 ) -> proc_macro2::TokenStream {
     let item_name = &ast.ident;
+    let attrs = Attrs::from(ast.attrs.as_slice());
 
     let generics = &ast.generics;
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
-    quote!(
-        impl #impl_generics #trait_name for #item_name #ty_generics #where_clause {
-            #impl_body
-        }
-    )
+    if let Some(ctx) = attrs.ctx {
+        quote!(
+            impl #impl_generics bin_proto::Protocol<#ctx> for #item_name #ty_generics #where_clause {
+                #impl_body
+            }
+        )
+    } else {
+        let mut generics = ast.generics.clone();
+        generics.params.push(GenericParam::Type(TypeParam {
+            attrs: Vec::new(),
+            ident: Ident::new("__Ctx", Span::call_site()),
+            colon_token: None,
+            bounds: attrs.ctx_bounds.unwrap_or(Punctuated::new()),
+            eq_token: None,
+            default: None,
+        }));
+        let (impl_generics, _, where_clause) = generics.split_for_impl();
+        quote!(
+            impl #impl_generics bin_proto::Protocol<__Ctx> for #item_name #ty_generics #where_clause {
+                #impl_body
+            }
+        )
+    }
 }

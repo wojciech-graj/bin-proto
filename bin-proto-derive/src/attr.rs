@@ -1,7 +1,12 @@
+use proc_macro2::TokenStream;
+use syn::{parse::Parser, punctuated::Punctuated, token::Add, TypeParamBound};
+
 #[derive(Debug, Default)]
 pub struct Attrs {
-    pub discriminant_type: Option<syn::Ident>,
+    pub discriminant_type: Option<syn::Type>,
     pub discriminant: Option<syn::Expr>,
+    pub ctx: Option<syn::Type>,
+    pub ctx_bounds: Option<Punctuated<TypeParamBound, Add>>,
     pub write_value: Option<syn::Expr>,
     pub bits: Option<u32>,
     pub flexible_array_member: bool,
@@ -15,6 +20,9 @@ impl Attrs {
         }
         if self.discriminant.is_some() {
             panic!("unexpected discriminant attribute for enum")
+        }
+        if self.ctx.is_some() && self.ctx_bounds.is_some() {
+            panic!("cannot specify ctx and ctx_bounds simultaneously")
         }
         if self.write_value.is_some() {
             panic!("unexpected write_value attribute for enum")
@@ -30,6 +38,12 @@ impl Attrs {
     pub fn validate_variant(&self) {
         if self.discriminant_type.is_some() {
             panic!("unexpected discriminant_type attribute for variant")
+        }
+        if self.ctx.is_some() {
+            panic!("unexpected ctx attribute for variant")
+        }
+        if self.ctx_bounds.is_some() {
+            panic!("unexpected ctx_bounds attribute for variant")
         }
         if self.write_value.is_some() {
             panic!("unexpected write_value attribute for variant")
@@ -52,6 +66,12 @@ impl Attrs {
         if self.discriminant.is_some() {
             panic!("unexpected discriminant attribute for field")
         }
+        if self.ctx.is_some() {
+            panic!("unexpected ctx attribute for variant")
+        }
+        if self.ctx_bounds.is_some() {
+            panic!("unexpected ctx_bounds attribute for variant")
+        }
         if [
             self.bits.is_some(),
             self.flexible_array_member,
@@ -64,6 +84,13 @@ impl Attrs {
         {
             panic!("bits, flexible_array_member, and length are mutually-exclusive attributes")
         }
+    }
+
+    pub fn ctx_tok(&self) -> TokenStream {
+        self.ctx
+            .clone()
+            .map(|ctx| quote!(#ctx))
+            .unwrap_or(quote!(__Ctx))
     }
 }
 
@@ -96,6 +123,11 @@ impl From<&[syn::Attribute]> for Attrs {
                                 "discriminant" => {
                                     attribs.discriminant =
                                         Some(meta_name_value_to_parse(name_value))
+                                }
+                                "ctx" => attribs.ctx = Some(meta_name_value_to_parse(name_value)),
+                                "ctx_bounds" => {
+                                    attribs.ctx_bounds =
+                                        Some(meta_name_value_to_punctuated(name_value))
                                 }
                                 "bits" => attribs.bits = Some(meta_name_value_to_u32(name_value)),
                                 "write_value" => {
@@ -147,5 +179,19 @@ fn meta_name_value_to_u32(name_value: syn::MetaNameValue) -> u32 {
             }
         },
         _ => panic!("bitfield size must be an integer"),
+    }
+}
+
+fn meta_name_value_to_punctuated<T: syn::parse::Parse, P: syn::parse::Parse>(
+    name_value: syn::MetaNameValue,
+) -> Punctuated<T, P> {
+    match name_value.lit {
+        syn::Lit::Str(s) => match Punctuated::parse_terminated.parse_str(s.value().as_str()) {
+            Ok(f) => f,
+            Err(_) => {
+                panic!("Failed to parse '{}'", s.value())
+            }
+        },
+        _ => panic!("#[protocol(... = \"...\")] must be string"),
     }
 }

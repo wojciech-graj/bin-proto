@@ -31,14 +31,14 @@
 //! }
 //!
 //! assert_eq!(
-//!     S::from_bytes(&[
+//!     S::from_bytes_ctx(&[
 //!         0b1000_0000 // bitflag: true (1)
 //!        | 0b101_0000 // bitfield: 5 (101)
 //!            | 0b0001, // enum_: V1 (0001)
 //!         0x02, // arr_len: 2
 //!         0x21, 0x37, // arr: [0x21, 0x37]
 //!         0x01, 0x02, 0x03, // read_to_end: [0x01, 0x02, 0x03]
-//!     ], bin_proto::ByteOrder::BigEndian).unwrap(),
+//!     ], bin_proto::ByteOrder::BigEndian, &mut ()).unwrap(),
 //!     S {
 //!         bitflag: true,
 //!         bitfield: 5,
@@ -64,7 +64,7 @@ pub use self::protocol::Protocol;
 /// # Attributes
 ///
 /// ## `#[protocol(discriminant_type = "<type>")]`
-/// - Applies to: `enum` with `#[derive(Protocol)]`.
+/// - Applies to: `enum`
 /// - `<type>`: an arbitrary type that implements `Protocol`
 ///
 /// Specify if enum variant should be determined by a string or interger
@@ -159,6 +159,95 @@ pub use self::protocol::Protocol;
 ///     #[protocol(length = "count as usize")]
 ///     pub data: Vec<u32>,
 /// }
+/// ```
+///
+/// ## `[#protocol(ctx = "<ty>")]`
+/// - Applies to: containers
+/// - `<ty>`: The type of the context. Either a concrete type, or one of the
+///   container's generics
+///
+/// Specify the type of context that will be passed to codec functions
+///
+/// ```
+/// # use bin_proto::{ByteOrder, Protocol};
+/// pub struct Ctx;
+///
+/// pub struct NeedsCtx;
+///
+/// impl Protocol<Ctx> for NeedsCtx {
+///     fn read(
+///         _read: &mut dyn bin_proto::BitRead,
+///         _byte_order: bin_proto::ByteOrder,
+///         _ctx: &mut Ctx,
+///     ) -> Result<Self, bin_proto::Error> {
+///         // Use ctx here
+///         Ok(Self)
+///     }
+///
+///     fn write(
+///         &self,
+///         _write: &mut dyn bin_proto::BitWrite,
+///         _byte_order: bin_proto::ByteOrder,
+///         _ctx: &mut Ctx,
+///     ) -> Result<(), bin_proto::Error> {
+///         // Use ctx here
+///         Ok(())
+///     }
+/// }
+///
+/// #[derive(Protocol)]
+/// #[protocol(ctx = "Ctx")]
+/// pub struct WithCtx(NeedsCtx);
+///
+/// WithCtx(NeedsCtx)
+///     .bytes_ctx(ByteOrder::LittleEndian, &mut Ctx)
+///     .unwrap();
+/// ```
+///
+/// ```
+/// # use bin_proto::Protocol;
+/// # use std::marker::PhantomData;
+/// #[derive(Protocol)]
+/// #[protocol(ctx = "Ctx")]
+/// pub struct NestedProtocol<Ctx, A: Protocol<Ctx>>(A, PhantomData<Ctx>);
+/// ```
+///
+/// ## `[#protocol(ctx_bounds = "<bounds>")]`
+/// - Applies to: containers
+/// - `<bounds>`: Trait bounds that must be satisfied by the context
+///
+/// Specify the trait bounds of context that will be passed to codec functions
+///
+/// ```
+/// # use bin_proto::{ByteOrder, Protocol};
+/// pub trait CtxTrait {};
+///
+/// pub struct NeedsCtx;
+///
+/// impl<Ctx: CtxTrait> Protocol<Ctx> for NeedsCtx {
+///     fn read(
+///         _read: &mut dyn bin_proto::BitRead,
+///         _byte_order: bin_proto::ByteOrder,
+///         _ctx: &mut Ctx,
+///     ) -> Result<Self, bin_proto::Error> {
+///         // Use ctx here
+///         Ok(Self)
+///     }
+///
+///     fn write(
+///         &self,
+///         _write: &mut dyn bin_proto::BitWrite,
+///         _byte_order: bin_proto::ByteOrder,
+///         _ctx: &mut Ctx,
+///     ) -> Result<(), bin_proto::Error> {
+///         // Use ctx here
+///         Ok(())
+///     }
+/// }
+///
+/// #[derive(Protocol)]
+/// #[protocol(ctx_bounds = "CtxTrait")]
+/// pub struct WithCtx(NeedsCtx);
 /// ```
 #[cfg(feature = "derive")]
 pub use bin_proto_derive::Protocol;

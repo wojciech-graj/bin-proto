@@ -17,6 +17,6 @@ keywords = ["protocol", "binary", "bit", "codec", "serde"]
 proc-macro = true
 
 [dependencies]
-syn = { version = "1.0.109", features = ["default", "extra-traits", "fold"] }
+syn = { version = "1.0.109", features = ["default", "extra-traits", "parsing"] }
 quote = "1.0.35"
 proc-macro2 = "1.0.79"

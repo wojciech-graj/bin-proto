@@ -2,6 +2,7 @@
 - Delete `EnumExt`
 - Bump rust version to 2021
 - Make lifetime generics work
+- Handle context using generics instead of `Any`
 # v0.3.4
 - Do not trigger https://github.com/rust-lang/rust/issues/120363 with generated code
 # v0.3.3

@@ -1,13 +1,8 @@
 use crate::{BitField, BitRead, BitWrite, ByteOrder, Error, Protocol};
-use core::any::Any;
 
-impl<T: Protocol> Protocol for Option<T> {
-    fn read(
-        read: &mut dyn BitRead,
-        byte_order: ByteOrder,
-        ctx: &mut dyn Any,
-    ) -> Result<Self, Error> {
-        let is_some = <bool as Protocol>::read(read, byte_order, ctx)?;
+impl<Ctx, T: Protocol<Ctx>> Protocol<Ctx> for Option<T> {
+    fn read(read: &mut dyn BitRead, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<Self, Error> {
+        let is_some = <bool as Protocol<Ctx>>::read(read, byte_order, ctx)?;
 
         if is_some {
             let value = T::read(read, byte_order, ctx)?;
@@ -21,7 +16,7 @@ impl<T: Protocol> Protocol for Option<T> {
         &self,
         write: &mut dyn BitWrite,
         byte_order: ByteOrder,
-        ctx: &mut dyn Any,
+        ctx: &mut Ctx,
     ) -> Result<(), Error> {
         Protocol::write(&self.is_some(), write, byte_order, ctx)?;
 
@@ -32,14 +27,14 @@ impl<T: Protocol> Protocol for Option<T> {
     }
 }
 
-impl<T: Protocol> BitField for Option<T> {
+impl<Ctx, T: Protocol<Ctx>> BitField<Ctx> for Option<T> {
     fn read(
         read: &mut dyn BitRead,
         byte_order: ByteOrder,
-        ctx: &mut dyn Any,
+        ctx: &mut Ctx,
         bits: u32,
     ) -> Result<Self, Error> {
-        let is_some = <bool as BitField>::read(read, byte_order, ctx, bits)?;
+        let is_some = <bool as BitField<Ctx>>::read(read, byte_order, ctx, bits)?;
 
         if is_some {
             let value = T::read(read, byte_order, ctx)?;
@@ -53,7 +48,7 @@ impl<T: Protocol> BitField for Option<T> {
         &self,
         write: &mut dyn BitWrite,
         byte_order: ByteOrder,
-        ctx: &mut dyn Any,
+        ctx: &mut Ctx,
         bits: u32,
     ) -> Result<(), Error> {
         BitField::write(&self.is_some(), write, byte_order, ctx, bits)?;
@@ -76,7 +71,7 @@ mod test {
     #[test]
     fn can_read_some() {
         assert_eq!(
-            Option::<u8>::from_bytes(&[1, 5], ByteOrder::BigEndian).unwrap(),
+            Option::<u8>::from_bytes_ctx(&[1, 5], ByteOrder::BigEndian, &mut ()).unwrap(),
             Some(5)
         )
     }
@@ -84,19 +79,25 @@ mod test {
     #[test]
     fn can_read_none() {
         assert_eq!(
-            Option::<u8>::from_bytes(&[0], ByteOrder::BigEndian).unwrap(),
+            Option::<u8>::from_bytes_ctx(&[0], ByteOrder::BigEndian, &mut ()).unwrap(),
             None
         )
     }
 
     #[test]
     fn can_write_some() {
-        assert_eq!(Some(5u8).bytes(ByteOrder::BigEndian).unwrap(), &[1, 5])
+        assert_eq!(
+            Some(5u8).bytes_ctx(ByteOrder::BigEndian, &mut ()).unwrap(),
+            &[1, 5]
+        )
     }
 
     #[test]
     fn can_write_none() {
-        assert_eq!(None::<u8>.bytes(ByteOrder::BigEndian).unwrap(), &[0])
+        assert_eq!(
+            None::<u8>.bytes_ctx(ByteOrder::BigEndian, &mut ()).unwrap(),
+            &[0]
+        )
     }
 
     #[test]

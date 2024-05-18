@@ -1,14 +1,13 @@
 //! Utilities for externally length prefixed fields
 
 use crate::{BitRead, BitWrite, ByteOrder, Error};
-use core::any::Any;
 
 /// A trait for variable-length types with a disjoint length prefix.
-pub trait ExternallyLengthPrefixed: Sized {
+pub trait ExternallyLengthPrefixed<Ctx = ()>: Sized {
     fn read(
         read: &mut dyn BitRead,
         byte_order: ByteOrder,
-        ctx: &mut dyn Any,
+        ctx: &mut Ctx,
         length: usize,
     ) -> Result<Self, Error>;
 
@@ -16,7 +15,7 @@ pub trait ExternallyLengthPrefixed: Sized {
         &self,
         write: &mut dyn BitWrite,
         byte_order: ByteOrder,
-        ctx: &mut dyn Any,
+        ctx: &mut Ctx,
     ) -> Result<(), Error>;
 }
 
