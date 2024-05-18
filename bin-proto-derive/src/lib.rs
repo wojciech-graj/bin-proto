@@ -33,9 +33,7 @@ fn impl_parcel(ast: &syn::DeriveInput) -> proc_macro2::TokenStream {
         syn::Data::Enum(ref e) => {
             let plan = plan::Enum::new(ast, e);
 
-            let mut stream = impl_parcel_for_enum(&plan, ast);
-            stream.extend(impl_enum_for_enum(&plan, ast));
-            stream
+            impl_parcel_for_enum(&plan, ast)
         }
         syn::Data::Union(..) => unimplemented!(),
     }
@@ -170,34 +168,6 @@ fn impl_parcel_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro
                 -> bin_proto::Result<()> {
                 #write_variant
                 Ok(())
-            }
-        ),
-    )
-}
-
-fn impl_enum_for_enum(plan: &plan::Enum, ast: &syn::DeriveInput) -> proc_macro2::TokenStream {
-    let discriminant = plan.discriminant_ty.clone();
-
-    let variant_matchers = plan.variants.iter().map(|variant| {
-        let variant_ident = &variant.ident;
-        let discriminant = variant.discriminant_value.clone();
-        let fields_expr = variant.ignore_fields_pattern_expr();
-
-        quote!(Self::#variant_ident #fields_expr => {
-            #discriminant
-        })
-    });
-
-    impl_trait_for(
-        ast,
-        quote!(bin_proto::EnumExt),
-        quote!(
-            type Discriminant = #discriminant;
-
-            fn discriminant(&self) -> Self::Discriminant {
-                match *self {
-                    #(#variant_matchers)*
-                }
             }
         ),
     )

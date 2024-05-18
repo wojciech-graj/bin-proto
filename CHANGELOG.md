@@ -1,3 +1,5 @@
+# v0.4.0
+- Delete `EnumExt`
 # v0.3.4
 - Do not trigger https://github.com/rust-lang/rust/issues/120363 with generated code
 # v0.3.3
@@ -6,7 +8,6 @@
 - Use `std::net` instead of `core::net`
 # v0.3.1
 - Implement `Protocol` on `i128`, `u128`, `PhantomPinned`, `BinaryHeap`
-- Implement `BitField` on `i128`, `u128`
 - Fix `length` attribute not working in enum variant
 # v0.3.0
 - Implement `ExternallyLengthPrefixed` on `HashMap`, `BTreeMap`, `String`

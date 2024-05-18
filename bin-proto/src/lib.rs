@@ -54,7 +54,6 @@ pub use self::bit_field::BitField;
 pub use self::bit_read::BitRead;
 pub use self::bit_write::BitWrite;
 pub use self::byte_order::ByteOrder;
-pub use self::enum_ext::EnumExt;
 pub use self::error::{Error, Result};
 pub use self::externally_length_prefixed::ExternallyLengthPrefixed;
 pub use self::flexible_array_member::FlexibleArrayMember;
@@ -173,7 +172,6 @@ mod byte_order;
 mod flexible_array_member;
 mod types;
 
-mod enum_ext;
 mod error;
 #[macro_use]
 mod protocol;
