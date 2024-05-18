@@ -22,6 +22,19 @@ pub struct WithElementsLengthAuto {
     pub data: Vec<u32>,
 }
 
+#[derive(bin_proto::Protocol, Debug, PartialEq, Eq)]
+#[protocol(discriminant_type = "u8")]
+pub enum WithElementsLengthAutoEnum {
+    #[protocol(discriminant = "1")]
+    Variant {
+        #[protocol(write_value = "data.len() as u32")]
+        count: u32,
+        foo: bool,
+        #[protocol(length = "count as usize")]
+        data: Vec<u32>,
+    },
+}
+
 #[test]
 fn can_read_length_prefix_3_elements() {
     assert_eq!(
@@ -45,7 +58,7 @@ fn can_read_length_prefix_3_elements() {
 }
 
 #[test]
-fn can_write_auto_length_prefix_3_elements() {
+fn can_write_auto_length_prefix_3_elements_enum() {
     assert_eq!(
         WithElementsLengthAuto {
             count: 0,
@@ -55,6 +68,50 @@ fn can_write_auto_length_prefix_3_elements() {
         .bytes(ByteOrder::BigEndian)
         .unwrap(),
         vec![
+            0, 0, 0, 3, // disjoint length prefix
+            1, // boolean true
+            0, 0, 0, 1, // 1
+            0, 0, 0, 2, // 2
+            0, 0, 0, 3 // 3
+        ],
+    );
+}
+
+#[test]
+fn can_read_length_prefix_3_elements_enum() {
+    assert_eq!(
+        WithElementsLengthAutoEnum::Variant {
+            count: 3,
+            foo: true,
+            data: vec![1, 2, 3],
+        },
+        WithElementsLengthAutoEnum::from_bytes(
+            &[
+                1, // Discriminant
+                0, 0, 0, 3, // disjoint length prefix
+                1, // boolean true
+                0, 0, 0, 1, // 1
+                0, 0, 0, 2, // 2
+                0, 0, 0, 3 // 3
+            ],
+            ByteOrder::BigEndian
+        )
+        .unwrap()
+    );
+}
+
+#[test]
+fn can_write_auto_length_prefix_3_elements() {
+    assert_eq!(
+        WithElementsLengthAutoEnum::Variant {
+            count: 0,
+            foo: true,
+            data: vec![1, 2, 3],
+        }
+        .bytes(ByteOrder::BigEndian)
+        .unwrap(),
+        vec![
+            1, // Discriminant
             0, 0, 0, 3, // disjoint length prefix
             1, // boolean true
             0, 0, 0, 1, // 1

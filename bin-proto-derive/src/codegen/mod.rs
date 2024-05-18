@@ -2,6 +2,7 @@ pub mod enums;
 
 use crate::attr::Attrs;
 use proc_macro2::TokenStream;
+use syn::{fold::Fold, Expr, ExprField};
 
 pub fn reads(fields: &syn::Fields) -> (TokenStream, TokenStream) {
     match *fields {

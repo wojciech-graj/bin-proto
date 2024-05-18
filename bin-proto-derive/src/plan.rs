@@ -1,13 +1,10 @@
 use crate::attr::Attrs;
 
-/// A plan for a Protocol implementation for an enum.
 pub struct Enum {
-    pub ident: syn::Ident,
     pub discriminant_ty: syn::Ident,
     pub variants: Vec<EnumVariant>,
 }
 
-/// An enum variant.
 pub struct EnumVariant {
     pub ident: syn::Ident,
     pub discriminant_value: syn::Expr,
@@ -15,12 +12,10 @@ pub struct EnumVariant {
 }
 
 impl Enum {
-    /// Creates a layout plan for an enum.
     pub fn new(ast: &syn::DeriveInput, e: &syn::DataEnum) -> Enum {
         let attrs = Attrs::from(ast.attrs.as_slice());
         attrs.validate_enum();
         let plan = Self {
-            ident: ast.ident.clone(),
             discriminant_ty: attrs.discriminant_type.unwrap(),
             variants: e
                 .variants

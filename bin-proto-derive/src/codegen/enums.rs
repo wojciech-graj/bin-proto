@@ -11,8 +11,6 @@ pub fn write_variant(
     plan: &plan::Enum,
     write_discriminant: &dyn Fn(&EnumVariant) -> TokenStream,
 ) -> TokenStream {
-    let enum_name = &plan.ident;
-
     let variant_match_branches: Vec<_> = plan
         .variants
         .iter()
@@ -26,7 +24,7 @@ pub fn write_variant(
 
             let writes = codegen::writes(&variant.fields, false);
 
-            quote!(#enum_name :: #fields_pattern => {
+            quote!(Self :: #fields_pattern => {
                 #write_discriminant
                 #writes
             })
