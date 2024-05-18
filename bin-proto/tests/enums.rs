@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use bin_proto::{ByteOrder, Protocol};
+use bin_proto::{ByteOrder, Protocol, ProtocolNoCtx};
 
 #[derive(Debug, bin_proto::Protocol, PartialEq)]
 #[protocol(discriminant_type = "u8")]
@@ -25,7 +25,7 @@ fn read_enum_variant() {
             len: 2,
             arr: vec![1, 2]
         },
-        Enum::from_bytes_ctx(&[1, 64, 2, 1, 2], ByteOrder::BigEndian, &mut ()).unwrap()
+        Enum::from_bytes(&[1, 64, 2, 1, 2], ByteOrder::BigEndian).unwrap()
     );
 }
 
@@ -33,7 +33,7 @@ fn read_enum_variant() {
 fn write_enum_variant() {
     assert_eq!(
         Enum::Variant2::<u32>(20, true, PhantomData)
-            .bytes_ctx(ByteOrder::BigEndian, &mut ())
+            .bytes(ByteOrder::BigEndian)
             .unwrap(),
         vec![2, 0, 0, 0, 20, 1]
     );

@@ -1,4 +1,4 @@
-use bin_proto::{ByteOrder, Protocol};
+use bin_proto::{ByteOrder, ProtocolNoCtx};
 
 #[derive(Debug, bin_proto::Protocol, PartialEq)]
 #[protocol(discriminant_type = "u8")]
@@ -85,13 +85,7 @@ fn can_encode_decode_ipv4() {
     };
     assert_eq!(
         parsed,
-        IPv4::from_bytes_ctx(&raw, ByteOrder::BigEndian, &mut ()).unwrap()
+        IPv4::from_bytes(&raw, ByteOrder::BigEndian).unwrap()
     );
-    assert_eq!(
-        raw,
-        parsed
-            .bytes_ctx(ByteOrder::BigEndian, &mut ())
-            .unwrap()
-            .as_slice()
-    )
+    assert_eq!(raw, parsed.bytes(ByteOrder::BigEndian).unwrap().as_slice())
 }

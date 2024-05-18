@@ -6,8 +6,6 @@ use std::io;
 /// A trait for bit-level co/dec.
 pub trait Protocol<Ctx = ()>: Sized {
     /// Reads self from a stream.
-    ///
-    /// Blocks until a value is received.
     fn read(read: &mut dyn BitRead, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<Self, Error>;
 
     /// Writes a value to a stream.
@@ -17,11 +15,6 @@ pub trait Protocol<Ctx = ()>: Sized {
         byte_order: ByteOrder,
         ctx: &mut Ctx,
     ) -> Result<(), Error>;
-
-    /// Parses a new value from its raw byte representation without context.
-    //fn from_bytes(bytes: &[u8], byte_order: ByteOrder) -> Result<Self, Error> {
-    //    Self::from_bytes_ctx(bytes, byte_order, &mut ())
-    //}
 
     /// Parses a new value from its raw byte representation with additional context.
     fn from_bytes_ctx(bytes: &[u8], byte_order: ByteOrder, ctx: &mut Ctx) -> Result<Self, Error> {
@@ -36,11 +29,6 @@ pub trait Protocol<Ctx = ()>: Sized {
             }
         }
     }
-
-    /// Gets the raw bytes of this type without context.
-    //fn bytes(&self, byte_order: ByteOrder) -> Result<Vec<u8>, Error> {
-    //    self.bytes_ctx(byte_order, &mut ())
-    //}
 
     /// Gets the raw bytes of this type with provided context.
     fn bytes_ctx(&self, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<Vec<u8>, Error> {
@@ -61,3 +49,18 @@ pub trait Protocol<Ctx = ()>: Sized {
         Ok(data)
     }
 }
+
+/// A trait with helper functions for contextless `Protocol`s
+pub trait ProtocolNoCtx: Protocol {
+    /// Parses a new value from its raw byte representation without context.
+    fn from_bytes(bytes: &[u8], byte_order: ByteOrder) -> Result<Self, Error> {
+        Self::from_bytes_ctx(bytes, byte_order, &mut ())
+    }
+
+    /// Gets the raw bytes of this type without context.
+    fn bytes(&self, byte_order: ByteOrder) -> Result<Vec<u8>, Error> {
+        self.bytes_ctx(byte_order, &mut ())
+    }
+}
+
+impl<T> ProtocolNoCtx for T where T: Protocol {}

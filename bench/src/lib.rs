@@ -6,7 +6,7 @@ mod vec {
 
     mod bench_bin_proto {
         use super::*;
-        use bin_proto::Protocol;
+        use bin_proto::{Protocol, ProtocolNoCtx};
 
         #[derive(Debug, Protocol, PartialEq)]
         struct V {
@@ -82,7 +82,7 @@ mod enum_ {
 
     mod bench_bin_proto {
         use super::*;
-        use bin_proto::Protocol;
+        use bin_proto::{Protocol, ProtocolNoCtx};
 
         #[derive(Debug, Protocol, PartialEq)]
         #[protocol(discriminant_type = "u8")]
@@ -161,7 +161,7 @@ mod ipv4 {
 
     mod bench_bin_proto {
         use super::*;
-        use bin_proto::Protocol;
+        use bin_proto::{Protocol, ProtocolNoCtx};
 
         #[derive(Debug, Protocol, PartialEq)]
         #[protocol(discriminant_type = "u8")]

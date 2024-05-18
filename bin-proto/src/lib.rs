@@ -5,7 +5,7 @@
 //! # Example
 //!
 //! ```
-//! # use bin_proto::Protocol;
+//! # use bin_proto::{Protocol, ProtocolNoCtx};
 //! #[derive(Debug, Protocol, PartialEq)]
 //! #[protocol(discriminant_type = "u8")]
 //! #[protocol(bits = 4)]
@@ -31,14 +31,14 @@
 //! }
 //!
 //! assert_eq!(
-//!     S::from_bytes_ctx(&[
+//!     S::from_bytes(&[
 //!         0b1000_0000 // bitflag: true (1)
 //!        | 0b101_0000 // bitfield: 5 (101)
 //!            | 0b0001, // enum_: V1 (0001)
 //!         0x02, // arr_len: 2
 //!         0x21, 0x37, // arr: [0x21, 0x37]
 //!         0x01, 0x02, 0x03, // read_to_end: [0x01, 0x02, 0x03]
-//!     ], bin_proto::ByteOrder::BigEndian, &mut ()).unwrap(),
+//!     ], bin_proto::ByteOrder::BigEndian).unwrap(),
 //!     S {
 //!         bitflag: true,
 //!         bitfield: 5,
@@ -58,6 +58,7 @@ pub use self::error::{Error, Result};
 pub use self::externally_length_prefixed::ExternallyLengthPrefixed;
 pub use self::flexible_array_member::FlexibleArrayMember;
 pub use self::protocol::Protocol;
+pub use self::protocol::ProtocolNoCtx;
 
 /// Derive the `Protocol` trait.
 ///

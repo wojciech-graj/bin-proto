@@ -66,12 +66,14 @@ mod test {
 
     use bitstream_io::{BigEndian, BitReader, BitWriter};
 
+    use crate::ProtocolNoCtx;
+
     use super::*;
 
     #[test]
     fn can_read_some() {
         assert_eq!(
-            Option::<u8>::from_bytes_ctx(&[1, 5], ByteOrder::BigEndian, &mut ()).unwrap(),
+            Option::<u8>::from_bytes(&[1, 5], ByteOrder::BigEndian).unwrap(),
             Some(5)
         )
     }
@@ -79,25 +81,19 @@ mod test {
     #[test]
     fn can_read_none() {
         assert_eq!(
-            Option::<u8>::from_bytes_ctx(&[0], ByteOrder::BigEndian, &mut ()).unwrap(),
+            Option::<u8>::from_bytes(&[0], ByteOrder::BigEndian).unwrap(),
             None
         )
     }
 
     #[test]
     fn can_write_some() {
-        assert_eq!(
-            Some(5u8).bytes_ctx(ByteOrder::BigEndian, &mut ()).unwrap(),
-            &[1, 5]
-        )
+        assert_eq!(Some(5u8).bytes(ByteOrder::BigEndian).unwrap(), &[1, 5])
     }
 
     #[test]
     fn can_write_none() {
-        assert_eq!(
-            None::<u8>.bytes_ctx(ByteOrder::BigEndian, &mut ()).unwrap(),
-            &[0]
-        )
+        assert_eq!(None::<u8>.bytes(ByteOrder::BigEndian).unwrap(), &[0])
     }
 
     #[test]

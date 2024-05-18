@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use bin_proto::{ByteOrder, Protocol};
+use bin_proto::{ByteOrder, Protocol, ProtocolNoCtx};
 
 #[derive(Protocol, Debug, PartialEq, Eq)]
 pub struct Foobar {
@@ -46,7 +46,7 @@ fn named_fields_are_correctly_written() {
             b: '2' as u8,
             c: 1,
         }
-        .bytes_ctx(ByteOrder::BigEndian, &mut ())
+        .bytes(ByteOrder::BigEndian)
         .unwrap()
     );
 }
@@ -59,7 +59,7 @@ fn named_fields_are_correctly_read() {
             b: '2' as u8,
             c: 1,
         },
-        Foobar::from_bytes_ctx(&[3, '2' as u8, 1], ByteOrder::BigEndian, &mut ()).unwrap()
+        Foobar::from_bytes(&[3, '2' as u8, 1], ByteOrder::BigEndian).unwrap()
     );
 }
 
@@ -67,9 +67,7 @@ fn named_fields_are_correctly_read() {
 fn unnamed_fields_are_correctly_written() {
     assert_eq!(
         vec![6, 1, 9],
-        BizBong(6, 1, 9)
-            .bytes_ctx(ByteOrder::BigEndian, &mut ())
-            .unwrap()
+        BizBong(6, 1, 9).bytes(ByteOrder::BigEndian).unwrap()
     );
 }
 
@@ -77,25 +75,20 @@ fn unnamed_fields_are_correctly_written() {
 fn unnamed_fields_are_correctly_read() {
     assert_eq!(
         BizBong(3, 1, 7),
-        BizBong::from_bytes_ctx(&[3, 1, 7], ByteOrder::BigEndian, &mut ()).unwrap()
+        BizBong::from_bytes(&[3, 1, 7], ByteOrder::BigEndian).unwrap()
     );
 }
 
 #[test]
 fn unit_structs_are_correctly_written() {
-    assert_eq!(
-        PartyInTheFront
-            .bytes_ctx(ByteOrder::BigEndian, &mut ())
-            .unwrap(),
-        &[]
-    );
+    assert_eq!(PartyInTheFront.bytes(ByteOrder::BigEndian).unwrap(), &[]);
 }
 
 #[test]
 fn unit_structs_are_correctly_read() {
     assert_eq!(
         PartyInTheFront,
-        PartyInTheFront::from_bytes_ctx(&[], ByteOrder::BigEndian, &mut ()).unwrap()
+        PartyInTheFront::from_bytes(&[], ByteOrder::BigEndian).unwrap()
     );
 }
 
@@ -108,7 +101,7 @@ fn ipv4() {
     }
 
     assert_eq!(
-        IPv4Header::from_bytes_ctx(&[0x45], ByteOrder::BigEndian, &mut ()).unwrap(),
+        IPv4Header::from_bytes(&[0x45], ByteOrder::BigEndian).unwrap(),
         IPv4Header { version: 4 }
     )
 }

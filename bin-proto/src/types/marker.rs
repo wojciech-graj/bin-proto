@@ -23,41 +23,33 @@ impl<Ctx> Protocol<Ctx> for PhantomPinned {
 
 #[cfg(test)]
 mod tests {
+    use crate::ProtocolNoCtx;
+
     use super::*;
 
     #[test]
     fn can_read_phantom_data() {
         assert_eq!(
-            PhantomData::<u8>::from_bytes_ctx(&[], ByteOrder::BigEndian, &mut ()).unwrap(),
+            PhantomData::<u8>::from_bytes(&[], ByteOrder::BigEndian).unwrap(),
             PhantomData
         )
     }
 
     #[test]
     fn can_write_phantom_data() {
-        assert_eq!(
-            PhantomData::<u8>
-                .bytes_ctx(ByteOrder::BigEndian, &mut ())
-                .unwrap(),
-            &[]
-        )
+        assert_eq!(PhantomData::<u8>.bytes(ByteOrder::BigEndian).unwrap(), &[])
     }
 
     #[test]
     fn can_read_phantom_pinned() {
         assert_eq!(
-            PhantomPinned::from_bytes_ctx(&[], ByteOrder::BigEndian, &mut ()).unwrap(),
+            PhantomPinned::from_bytes(&[], ByteOrder::BigEndian).unwrap(),
             PhantomPinned
         )
     }
 
     #[test]
     fn can_write_phantom_pinned() {
-        assert_eq!(
-            PhantomPinned
-                .bytes_ctx(ByteOrder::BigEndian, &mut ())
-                .unwrap(),
-            &[]
-        )
+        assert_eq!(PhantomPinned.bytes(ByteOrder::BigEndian).unwrap(), &[])
     }
 }
