@@ -1,5 +1,4 @@
 use crate::attr::Attrs;
-use proc_macro2::TokenStream;
 
 /// A plan for a Protocol implementation for an enum.
 pub struct Enum {
@@ -45,17 +44,5 @@ impl Enum {
                 .collect(),
         };
         plan
-    }
-}
-
-impl EnumVariant {
-    /// Gets a pattern expression that ignores the fields of
-    /// this variant.
-    pub fn ignore_fields_pattern_expr(&self) -> TokenStream {
-        match self.fields {
-            syn::Fields::Named(..) => quote!({ .. }),
-            syn::Fields::Unnamed(..) => quote!((..)),
-            syn::Fields::Unit => quote!(),
-        }
     }
 }

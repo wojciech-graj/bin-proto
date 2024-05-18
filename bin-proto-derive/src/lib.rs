@@ -18,16 +18,16 @@ pub fn protocol(input: TokenStream) -> TokenStream {
     let ast: syn::DeriveInput = syn::parse(input).expect("Failed to parse input");
 
     // Build the impl
-    let gen = impl_parcel(&ast);
+    let gen = impl_protocol(&ast);
 
     // Return the generated impl
     gen.to_string()
         .parse()
-        .expect("Could not parse generated parcel impl")
+        .unwrap_or_else(|e| panic!("Could not parse generated Protocol impl: {e}"))
 }
 
 // The `Protocol` trait is used for data that can be sent/received.
-fn impl_parcel(ast: &syn::DeriveInput) -> proc_macro2::TokenStream {
+fn impl_protocol(ast: &syn::DeriveInput) -> proc_macro2::TokenStream {
     match ast.data {
         syn::Data::Struct(ref s) => impl_parcel_for_struct(ast, s),
         syn::Data::Enum(ref e) => {
@@ -37,40 +37,6 @@ fn impl_parcel(ast: &syn::DeriveInput) -> proc_macro2::TokenStream {
         }
         syn::Data::Union(..) => unimplemented!(),
     }
-}
-
-/// Builds generics for a new impl.
-///
-/// Returns `(generics, where_predicates)`
-fn build_generics(
-    ast: &syn::DeriveInput,
-) -> (Vec<proc_macro2::TokenStream>, Vec<proc_macro2::TokenStream>) {
-    use quote::ToTokens;
-
-    let mut where_predicates = Vec::new();
-    let mut generics = Vec::new();
-
-    generics.extend(ast.generics.type_params().map(|t| {
-        let (ident, bounds) = (&t.ident, &t.bounds);
-        where_predicates.push(quote!(#ident : #bounds));
-        quote!(#ident)
-    }));
-
-    generics.extend(ast.generics.lifetimes().enumerate().map(|(i, _)| {
-        let letter = (b'a' + i as u8) as char;
-        quote!(#letter)
-    }));
-
-    if let Some(where_clause) = ast.generics.where_clause.clone() {
-        where_predicates.push(where_clause.predicates.into_token_stream());
-    }
-
-    assert!(
-        ast.generics.const_params().next().is_none(),
-        "constant parameters are not supported yet"
-    );
-
-    (generics, where_predicates)
 }
 
 fn impl_parcel_for_struct(
@@ -180,12 +146,11 @@ fn impl_trait_for(
 ) -> proc_macro2::TokenStream {
     let item_name = &ast.ident;
 
-    let (generics, where_predicates) = build_generics(ast);
-    let (generics, where_predicates) = (&generics, where_predicates);
+    let generics = &ast.generics;
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
     quote!(
-        impl < #(#generics),* > #trait_name for #item_name < #(#generics),* >
-            where #(#where_predicates),* {
+        impl #impl_generics #trait_name for #item_name #ty_generics #where_clause {
             #impl_body
         }
     )
