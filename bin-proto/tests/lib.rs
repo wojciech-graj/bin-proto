@@ -12,3 +12,5 @@ mod ipv4;
 mod length_prefix;
 #[cfg(test)]
 mod structs;
+#[cfg(test)]
+mod conditional;

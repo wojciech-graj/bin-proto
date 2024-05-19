@@ -1,4 +1,4 @@
-use crate::{BitField, BitRead, BitWrite, ByteOrder, Error, Protocol};
+use crate::{BitField, BitRead, BitWrite, ByteOrder, Conditional, Error, Protocol};
 
 impl<Ctx, T: Protocol<Ctx>> Protocol<Ctx> for Option<T> {
     fn read(read: &mut dyn BitRead, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<Self, Error> {
@@ -59,6 +59,82 @@ impl<Ctx, T: Protocol<Ctx>> BitField<Ctx> for Option<T> {
         Ok(())
     }
 }
+
+impl<Ctx, T: Protocol<Ctx>> Conditional<Ctx> for Option<T> {
+    fn read(
+        read: &mut dyn BitRead,
+        byte_order: ByteOrder,
+        ctx: &mut Ctx,
+        condition: bool,
+    ) -> Result<Self, Error> {
+        if !condition {
+            return Ok(None);
+        }
+
+        let is_some = <bool as Protocol<Ctx>>::read(read, byte_order, ctx)?;
+
+        if is_some {
+            let value = T::read(read, byte_order, ctx)?;
+            Ok(Some(value))
+        } else {
+            Ok(None)
+        }
+    }
+
+    fn write(
+        &self,
+        write: &mut dyn BitWrite,
+        byte_order: ByteOrder,
+        ctx: &mut Ctx,
+    ) -> Result<(), Error> {
+        Protocol::write(&self.is_some(), write, byte_order, ctx)?;
+
+        if let Some(ref value) = *self {
+            value.write(write, byte_order, ctx)?;
+        }
+        Ok(())
+    }
+}
+
+impl<Ctx, T: Protocol<Ctx>> Conditional<Ctx> for Option<T> {
+    fn read(
+        read: &mut dyn BitRead,
+        byte_order: ByteOrder,
+        ctx: &mut Ctx,
+        bits: u32,
+        condition: bool,
+    ) -> Result<Self, Error> {
+        if !condition {
+            return Ok(None);
+        }
+
+        let is_some = <bool as BitField<Ctx>>::read(read, byte_order, ctx, bits)?;
+
+        if is_some {
+            let value = T::read(read, byte_order, ctx)?;
+            Ok(Some(value))
+        } else {
+            Ok(None)
+        }
+    }
+
+    fn write(
+        &self,
+        write: &mut dyn BitWrite,
+        byte_order: ByteOrder,
+        ctx: &mut Ctx,
+        bits: u32,
+    ) -> Result<(), Error> {
+        BitField::write(&self.is_some(), write, byte_order, ctx, bits)?;
+
+        if let Some(ref value) = *self {
+            value.write(write, byte_order, ctx)?;
+        }
+        Ok(())
+    }
+}
+
+
 
 #[cfg(test)]
 mod test {
