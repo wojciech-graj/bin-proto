@@ -1,3 +1,5 @@
+# v0.4.1
+- Impose `Send + Sync` bounds on `Error::Other`
 # v0.4.0
 - Delete `EnumExt`
 - Bump dependencies, and rust version to 2021

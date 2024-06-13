@@ -13,5 +13,5 @@ pub enum Error {
     #[error("received unknown enum discriminant '{0}'")]
     UnknownEnumDiscriminant(String),
     #[error("{0}")]
-    Other(Box<dyn std::error::Error>),
+    Other(Box<dyn std::error::Error + Send + Sync>),
 }
