@@ -6,6 +6,7 @@ authors = [
     "Dylan McKay <me@dylanmckay.io>"
 ]
 edition = "2021"
+rust-version = "1.63.0"
 
 description = "Easy binary protocol definitions"
 license = "MIT"

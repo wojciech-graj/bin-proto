@@ -1,3 +1,5 @@
+# v0.4.2
+- Set MSRV at 1.63.0
 # v0.4.1
 - Impose `Send + Sync` bounds on `Error::Other`
 # v0.4.0

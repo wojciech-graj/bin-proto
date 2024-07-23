@@ -3,6 +3,7 @@
 [![crates](https://img.shields.io/crates/v/bin-proto.svg)](https://crates.io/crates/bin-proto)
 [![tests](https://github.com/wojciech-graj/bin-proto/actions/workflows/ci.yml/badge.svg)](https://github.com/wojciech-graj/bin-proto/actions/workflows/ci.yml)
 [![docs.rs](https://docs.rs/bin-proto/badge.svg)](https://docs.rs/bin-proto)
+![msrv](https://img.shields.io/crates/msrv/:bin-proto)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE.txt)
 
 Simple & fast structured bit-level binary co/dec in Rust.
