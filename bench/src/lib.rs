@@ -120,7 +120,7 @@ mod enum_ {
         use deku::prelude::*;
 
         #[derive(Debug, PartialEq, DekuRead, DekuWrite)]
-        #[deku(type = "u8")]
+        #[deku(id_type = "u8")]
         enum E {
             #[deku(id = "0")]
             V0,
@@ -270,7 +270,7 @@ mod ipv4 {
         use deku::prelude::*;
 
         #[derive(Debug, PartialEq, DekuRead, DekuWrite)]
-        #[deku(type = "u8")]
+        #[deku(id_type = "u8")]
         #[deku(bits = 4)]
         enum Version {
             #[deku(id = "4")]
