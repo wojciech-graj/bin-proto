@@ -11,7 +11,7 @@ macro_rules! impl_byte_order_helpers {
     ( $( $ty:ty => [ $read_name:ident : [ $read_le:ident, $read_be:ident ], $write_name:ident : [ $write_le:ident, $write_be:ident ] ] )* ) => {
         impl ByteOrder {
             $(
-                pub fn $read_name(&self, read: &mut dyn crate::BitRead) -> Result<$ty, crate::Error> {
+                pub fn $read_name(&self, read: &mut dyn crate::BitRead) -> crate::Result<$ty> {
                     Ok(match *self {
                         ByteOrder::LittleEndian => crate::BitRead::$read_le(read),
                         ByteOrder::BigEndian => crate::BitRead::$read_be(read),
@@ -19,7 +19,7 @@ macro_rules! impl_byte_order_helpers {
                 }
 
                 pub fn $write_name(&self, value: $ty,
-                                   write: &mut dyn crate::BitWrite) -> Result<(), crate::Error> {
+                                   write: &mut dyn crate::BitWrite) -> crate::Result<()> {
                     Ok(match *self {
                         ByteOrder::LittleEndian => crate::BitWrite::$write_le(write, value),
                         ByteOrder::BigEndian => crate::BitWrite::$write_be(write, value),

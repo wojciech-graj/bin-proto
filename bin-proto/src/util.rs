@@ -1,6 +1,6 @@
 //! Helper functions for dealing with sets or lists of parcels.
 
-use crate::{BitRead, BitWrite, ByteOrder, Error, Protocol};
+use crate::{BitRead, BitWrite, ByteOrder, Error, Protocol, Result};
 
 use std::io;
 
@@ -10,7 +10,7 @@ pub fn read_items<Ctx, T>(
     read: &mut dyn BitRead,
     byte_order: ByteOrder,
     ctx: &mut Ctx,
-) -> Result<impl Iterator<Item = T>, Error>
+) -> Result<impl Iterator<Item = T>>
 where
     T: Protocol<Ctx>,
 {
@@ -31,7 +31,7 @@ pub fn write_items<'a, Ctx, T>(
     write: &mut dyn BitWrite,
     byte_order: ByteOrder,
     ctx: &mut Ctx,
-) -> Result<(), Error>
+) -> Result<()>
 where
     T: Protocol<Ctx> + 'a,
 {
@@ -45,7 +45,7 @@ pub fn read_items_to_eof<Ctx, T>(
     read: &mut dyn BitRead,
     byte_order: ByteOrder,
     ctx: &mut Ctx,
-) -> Result<Vec<T>, Error>
+) -> Result<Vec<T>>
 where
     T: Protocol<Ctx>,
 {

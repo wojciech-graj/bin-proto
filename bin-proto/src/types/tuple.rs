@@ -9,7 +9,7 @@ macro_rules! impl_protocol_for_tuple {
                 read: &mut dyn crate::BitRead,
                 byte_order: crate::ByteOrder,
                 ctx: &mut Ctx,
-            ) -> Result<Self, crate::Error> {
+            ) -> crate::Result<Self> {
                 Ok(($(<$t as crate::Protocol<Ctx>>::read(read, byte_order, ctx)?,)*))
             }
 
@@ -19,7 +19,7 @@ macro_rules! impl_protocol_for_tuple {
                 write: &mut dyn crate::BitWrite,
                 byte_order: crate::ByteOrder,
                 ctx: &mut Ctx,
-            ) -> Result<(), crate::Error> {
+            ) -> crate::Result<()> {
                 $(
                     crate::Protocol::write(&self.$idx, write, byte_order, ctx)?;
                 )*

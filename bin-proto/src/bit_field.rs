@@ -1,4 +1,4 @@
-use crate::{BitRead, BitWrite, ByteOrder, Error};
+use crate::{BitRead, BitWrite, ByteOrder, Result};
 
 /// A trait for variable-width bit-level co/dec.
 ///
@@ -9,7 +9,7 @@ pub trait BitField<Ctx = ()>: Sized {
         byte_order: ByteOrder,
         ctx: &mut Ctx,
         bits: u32,
-    ) -> Result<Self, Error>;
+    ) -> Result<Self>;
 
     fn write(
         &self,
@@ -17,7 +17,7 @@ pub trait BitField<Ctx = ()>: Sized {
         byte_order: ByteOrder,
         ctx: &mut Ctx,
         bits: u32,
-    ) -> Result<(), Error>;
+    ) -> Result<()>;
 }
 
 /// ```compile_fail

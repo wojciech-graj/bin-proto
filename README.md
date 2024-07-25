@@ -90,7 +90,7 @@ impl Protocol<Ctx> for NeedsCtx {
         _read: &mut dyn bin_proto::BitRead,
         _byte_order: bin_proto::ByteOrder,
         _ctx: &mut Ctx,
-    ) -> Result<Self, bin_proto::Error> {
+    ) -> bin_proto::Result<Self> {
         // Use ctx here
         Ok(Self)
     }
@@ -100,7 +100,7 @@ impl Protocol<Ctx> for NeedsCtx {
         _write: &mut dyn bin_proto::BitWrite,
         _byte_order: bin_proto::ByteOrder,
         _ctx: &mut Ctx,
-    ) -> Result<(), bin_proto::Error> {
+    ) -> bin_proto::Result<()> {
         // Use ctx here
         Ok(())
     }

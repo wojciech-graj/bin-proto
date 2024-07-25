@@ -1,7 +1,10 @@
-use crate::{BitField, BitRead, BitWrite, ByteOrder, Error, Protocol};
+use crate::{BitField, BitRead, BitWrite, ByteOrder, Protocol, Result};
 
-impl<Ctx, T: Protocol<Ctx>> Protocol<Ctx> for Option<T> {
-    fn read(read: &mut dyn BitRead, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<Self, Error> {
+impl<Ctx, T> Protocol<Ctx> for Option<T>
+where
+    T: Protocol<Ctx>,
+{
+    fn read(read: &mut dyn BitRead, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<Self> {
         let is_some = <bool as Protocol<Ctx>>::read(read, byte_order, ctx)?;
 
         if is_some {
@@ -12,12 +15,7 @@ impl<Ctx, T: Protocol<Ctx>> Protocol<Ctx> for Option<T> {
         }
     }
 
-    fn write(
-        &self,
-        write: &mut dyn BitWrite,
-        byte_order: ByteOrder,
-        ctx: &mut Ctx,
-    ) -> Result<(), Error> {
+    fn write(&self, write: &mut dyn BitWrite, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<()> {
         Protocol::write(&self.is_some(), write, byte_order, ctx)?;
 
         if let Some(ref value) = *self {
@@ -27,13 +25,16 @@ impl<Ctx, T: Protocol<Ctx>> Protocol<Ctx> for Option<T> {
     }
 }
 
-impl<Ctx, T: Protocol<Ctx>> BitField<Ctx> for Option<T> {
+impl<Ctx, T> BitField<Ctx> for Option<T>
+where
+    T: Protocol<Ctx>,
+{
     fn read(
         read: &mut dyn BitRead,
         byte_order: ByteOrder,
         ctx: &mut Ctx,
         bits: u32,
-    ) -> Result<Self, Error> {
+    ) -> Result<Self> {
         let is_some = <bool as BitField<Ctx>>::read(read, byte_order, ctx, bits)?;
 
         if is_some {
@@ -50,7 +51,7 @@ impl<Ctx, T: Protocol<Ctx>> BitField<Ctx> for Option<T> {
         byte_order: ByteOrder,
         ctx: &mut Ctx,
         bits: u32,
-    ) -> Result<(), Error> {
+    ) -> Result<()> {
         BitField::write(&self.is_some(), write, byte_order, ctx, bits)?;
 
         if let Some(ref value) = *self {
@@ -61,7 +62,7 @@ impl<Ctx, T: Protocol<Ctx>> BitField<Ctx> for Option<T> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use std::io::Cursor;
 
     use bitstream_io::{BigEndian, BitReader, BitWriter};

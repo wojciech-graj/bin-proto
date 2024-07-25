@@ -15,3 +15,13 @@ pub enum Error {
     #[error("{0}")]
     Other(Box<dyn std::error::Error + Send + Sync>),
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[allow(unused)]
+    trait IsSized: Sized {}
+
+    impl IsSized for Error {}
+}

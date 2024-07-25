@@ -46,7 +46,10 @@ pub trait BitRead {
     fn read_i32_bf(&mut self, bits: u32) -> io::Result<i32>;
 }
 
-impl<T: bitstream_io::BitRead> BitRead for T {
+impl<T> BitRead for T
+where
+    T: bitstream_io::BitRead,
+{
     fn read_bit(&mut self) -> io::Result<bool> {
         bitstream_io::BitRead::read_bit(self)
     }

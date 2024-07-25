@@ -7,7 +7,7 @@ macro_rules! impl_list_type {
                     byte_order: crate::ByteOrder,
                     ctx: &mut Ctx,
                     length: usize,
-                    ) -> Result<Self, $crate::Error> {
+                    ) -> crate::Result<Self> {
                 let elements = crate::util::read_items(length, read, byte_order, ctx)?;
                 Ok(elements.into_iter().collect())
             }
@@ -16,7 +16,7 @@ macro_rules! impl_list_type {
                      write: &mut dyn crate::BitWrite,
                      byte_order: crate::ByteOrder,
                      ctx: &mut Ctx,
-                     ) -> Result<(), $crate::Error> {
+                     ) -> crate::Result<()> {
                 crate::util::write_items(self.iter(), write, byte_order, ctx)
             }
         }

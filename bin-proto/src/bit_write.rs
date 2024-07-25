@@ -44,7 +44,10 @@ pub trait BitWrite {
     fn write_i32_bf(&mut self, bits: u32, value: i32) -> io::Result<()>;
 }
 
-impl<T: bitstream_io::BitWrite> BitWrite for T {
+impl<T> BitWrite for T
+where
+    T: bitstream_io::BitWrite,
+{
     fn write_bit(&mut self, bit: bool) -> io::Result<()> {
         bitstream_io::BitWrite::write_bit(self, bit)
     }

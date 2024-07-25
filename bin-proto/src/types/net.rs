@@ -1,34 +1,21 @@
 use std::net::{Ipv4Addr, Ipv6Addr};
 
-use crate::Protocol;
+use crate::{BitRead, BitWrite, ByteOrder, Protocol, Result};
 
 impl<Ctx> Protocol<Ctx> for Ipv4Addr {
-    fn read(
-        read: &mut dyn crate::BitRead,
-        byte_order: crate::ByteOrder,
-        ctx: &mut Ctx,
-    ) -> Result<Self, crate::Error> {
+    fn read(read: &mut dyn BitRead, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<Self> {
         let bytes: [u8; 4] = Protocol::read(read, byte_order, ctx)?;
 
         Ok(Self::new(bytes[0], bytes[1], bytes[2], bytes[3]))
     }
 
-    fn write(
-        &self,
-        write: &mut dyn crate::BitWrite,
-        byte_order: crate::ByteOrder,
-        ctx: &mut Ctx,
-    ) -> Result<(), crate::Error> {
+    fn write(&self, write: &mut dyn BitWrite, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<()> {
         Protocol::write(&self.octets(), write, byte_order, ctx)
     }
 }
 
 impl<Ctx> Protocol<Ctx> for Ipv6Addr {
-    fn read(
-        read: &mut dyn crate::BitRead,
-        byte_order: crate::ByteOrder,
-        ctx: &mut Ctx,
-    ) -> Result<Self, crate::Error> {
+    fn read(read: &mut dyn BitRead, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<Self> {
         let bytes: [u16; 8] = Protocol::read(read, byte_order, ctx)?;
 
         Ok(Self::new(
@@ -36,12 +23,7 @@ impl<Ctx> Protocol<Ctx> for Ipv6Addr {
         ))
     }
 
-    fn write(
-        &self,
-        write: &mut dyn crate::BitWrite,
-        byte_order: crate::ByteOrder,
-        ctx: &mut Ctx,
-    ) -> Result<(), crate::Error> {
+    fn write(&self, write: &mut dyn BitWrite, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<()> {
         Protocol::write(&self.octets(), write, byte_order, ctx)
     }
 }
@@ -49,8 +31,6 @@ impl<Ctx> Protocol<Ctx> for Ipv6Addr {
 #[cfg(test)]
 mod tests {
     use bitstream_io::{BigEndian, BitReader, BitWriter};
-
-    use crate::ByteOrder;
 
     use super::*;
 

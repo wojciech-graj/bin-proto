@@ -1,8 +1,8 @@
-use crate::{util, BitRead, BitWrite, ByteOrder, Error, Protocol};
+use crate::{util, BitRead, BitWrite, ByteOrder, Protocol, Result};
 use std::ffi::CString;
 
 impl<Ctx> Protocol<Ctx> for CString {
-    fn read(read: &mut dyn BitRead, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<Self, Error> {
+    fn read(read: &mut dyn BitRead, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<Self> {
         let mut result = Vec::new();
         loop {
             let c: u8 = Protocol::read(read, byte_order, ctx)?;
@@ -13,12 +13,7 @@ impl<Ctx> Protocol<Ctx> for CString {
         }
     }
 
-    fn write(
-        &self,
-        write: &mut dyn BitWrite,
-        byte_order: ByteOrder,
-        ctx: &mut Ctx,
-    ) -> Result<(), Error> {
+    fn write(&self, write: &mut dyn BitWrite, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<()> {
         util::write_items(
             self.clone().into_bytes_with_nul().iter(),
             write,
@@ -29,11 +24,12 @@ impl<Ctx> Protocol<Ctx> for CString {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use bitstream_io::{BigEndian, BitReader, BitWriter};
 
-    use crate::{ByteOrder, Protocol};
     use std::ffi::CString;
+
+    use super::*;
 
     #[test]
     fn can_read_cstring() {

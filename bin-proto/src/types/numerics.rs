@@ -1,7 +1,7 @@
-use crate::{BitField, BitRead, BitWrite, ByteOrder, Error, Protocol};
+use crate::{BitField, BitRead, BitWrite, ByteOrder, Protocol, Result};
 
 impl<Ctx> BitField<Ctx> for bool {
-    fn read(read: &mut dyn BitRead, _: ByteOrder, _: &mut Ctx, bits: u32) -> Result<Self, Error> {
+    fn read(read: &mut dyn BitRead, _: ByteOrder, _: &mut Ctx, bits: u32) -> Result<Self> {
         if read.read_u8_bf(bits)? == 0 {
             Ok(false)
         } else {
@@ -9,20 +9,14 @@ impl<Ctx> BitField<Ctx> for bool {
         }
     }
 
-    fn write(
-        &self,
-        write: &mut dyn BitWrite,
-        _: ByteOrder,
-        _: &mut Ctx,
-        bits: u32,
-    ) -> Result<(), Error> {
+    fn write(&self, write: &mut dyn BitWrite, _: ByteOrder, _: &mut Ctx, bits: u32) -> Result<()> {
         write.write_u8_bf(bits, if *self { 1 } else { 0 })?;
         Ok(())
     }
 }
 
 impl<Ctx> Protocol<Ctx> for bool {
-    fn read(read: &mut dyn BitRead, _: ByteOrder, _: &mut Ctx) -> Result<Self, Error> {
+    fn read(read: &mut dyn BitRead, _: ByteOrder, _: &mut Ctx) -> Result<Self> {
         if read.read_u8()? == 0 {
             Ok(false)
         } else {
@@ -30,29 +24,29 @@ impl<Ctx> Protocol<Ctx> for bool {
         }
     }
 
-    fn write(&self, write: &mut dyn BitWrite, _: ByteOrder, _: &mut Ctx) -> Result<(), Error> {
+    fn write(&self, write: &mut dyn BitWrite, _: ByteOrder, _: &mut Ctx) -> Result<()> {
         write.write_u8(if *self { 1 } else { 0 })?;
         Ok(())
     }
 }
 
 impl<Ctx> Protocol<Ctx> for u8 {
-    fn read(read: &mut dyn BitRead, _: ByteOrder, _: &mut Ctx) -> Result<Self, Error> {
+    fn read(read: &mut dyn BitRead, _: ByteOrder, _: &mut Ctx) -> Result<Self> {
         Ok(read.read_u8()?)
     }
 
-    fn write(&self, write: &mut dyn BitWrite, _: ByteOrder, _: &mut Ctx) -> Result<(), Error> {
+    fn write(&self, write: &mut dyn BitWrite, _: ByteOrder, _: &mut Ctx) -> Result<()> {
         write.write_u8(*self)?;
         Ok(())
     }
 }
 
 impl<Ctx> Protocol<Ctx> for i8 {
-    fn read(read: &mut dyn BitRead, _: ByteOrder, _: &mut Ctx) -> Result<Self, Error> {
+    fn read(read: &mut dyn BitRead, _: ByteOrder, _: &mut Ctx) -> Result<Self> {
         Ok(read.read_i8()?)
     }
 
-    fn write(&self, write: &mut dyn BitWrite, _: ByteOrder, _: &mut Ctx) -> Result<(), Error> {
+    fn write(&self, write: &mut dyn BitWrite, _: ByteOrder, _: &mut Ctx) -> Result<()> {
         write.write_i8(*self)?;
         Ok(())
     }
@@ -60,21 +54,21 @@ impl<Ctx> Protocol<Ctx> for i8 {
 
 macro_rules! impl_parcel_for_numeric {
     ($ty:ident => [$read_fn:ident : $write_fn:ident]) => {
-        impl<Ctx> Protocol<Ctx> for $ty {
+        impl<Ctx> crate::Protocol<Ctx> for $ty {
             fn read(
-                read: &mut dyn BitRead,
-                byte_order: ByteOrder,
+                read: &mut dyn crate::BitRead,
+                byte_order: crate::ByteOrder,
                 _: &mut Ctx,
-            ) -> Result<Self, Error> {
+            ) -> crate::Result<Self> {
                 byte_order.$read_fn(read)
             }
 
             fn write(
                 &self,
-                write: &mut dyn BitWrite,
-                byte_order: ByteOrder,
+                write: &mut dyn crate::BitWrite,
+                byte_order: crate::ByteOrder,
                 _: &mut Ctx,
-            ) -> Result<(), Error> {
+            ) -> crate::Result<()> {
                 byte_order.$write_fn(*self, write)?;
                 Ok(())
             }
@@ -84,24 +78,24 @@ macro_rules! impl_parcel_for_numeric {
 
 macro_rules! impl_bitfield_for_numeric {
     ($ty:ident => [$read_fn:ident : $write_fn:ident]) => {
-        impl<Ctx> BitField<Ctx> for $ty {
+        impl<Ctx> crate::BitField<Ctx> for $ty {
             fn read(
-                read: &mut dyn BitRead,
-                _: ByteOrder,
+                read: &mut dyn crate::BitRead,
+                _: crate::ByteOrder,
                 _: &mut Ctx,
                 bits: u32,
-            ) -> Result<Self, Error> {
-                Ok(BitRead::$read_fn(read, bits)?)
+            ) -> crate::Result<Self> {
+                Ok(crate::BitRead::$read_fn(read, bits)?)
             }
 
             fn write(
                 &self,
-                write: &mut dyn BitWrite,
-                _: ByteOrder,
+                write: &mut dyn crate::BitWrite,
+                _: crate::ByteOrder,
                 _: &mut Ctx,
                 bits: u32,
-            ) -> Result<(), Error> {
-                BitWrite::$write_fn(write, bits, *self)?;
+            ) -> crate::Result<()> {
+                crate::BitWrite::$write_fn(write, bits, *self)?;
                 Ok(())
             }
         }

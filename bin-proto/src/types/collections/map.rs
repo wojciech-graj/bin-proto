@@ -8,7 +8,7 @@ macro_rules! impl_map_type {
                     byte_order: crate::ByteOrder,
                     ctx: &mut Ctx,
                     length: usize,
-                    ) -> Result<Self, crate::Error> {
+                    ) -> crate::Result<Self> {
                 let mut map = $ty::new();
 
                 for _ in 0..length {
@@ -24,7 +24,7 @@ macro_rules! impl_map_type {
             fn write(&self, write: &mut dyn crate::BitWrite,
                     byte_order: crate::ByteOrder,
                     ctx: &mut Ctx,
-                    ) -> Result<(), crate::Error> {
+                    ) -> crate::Result<()> {
                 for (key, value) in self.iter() {
                     key.write(write, byte_order, ctx)?;
                     value.write(write, byte_order, ctx)?;

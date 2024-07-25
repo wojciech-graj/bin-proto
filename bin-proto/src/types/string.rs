@@ -1,5 +1,5 @@
 use crate::{
-    util, BitRead, BitWrite, ByteOrder, Error, ExternallyLengthPrefixed, FlexibleArrayMember,
+    util, BitRead, BitWrite, ByteOrder, ExternallyLengthPrefixed, FlexibleArrayMember, Result,
 };
 
 impl<Ctx> ExternallyLengthPrefixed<Ctx> for String {
@@ -8,35 +8,25 @@ impl<Ctx> ExternallyLengthPrefixed<Ctx> for String {
         byte_order: ByteOrder,
         ctx: &mut Ctx,
         length: usize,
-    ) -> Result<Self, Error> {
+    ) -> Result<Self> {
         let bytes: Vec<u8> = util::read_items(length, read, byte_order, ctx)?.collect();
 
         Ok(String::from_utf8(bytes)?)
     }
 
-    fn write(
-        &self,
-        write: &mut dyn BitWrite,
-        byte_order: ByteOrder,
-        ctx: &mut Ctx,
-    ) -> Result<(), Error> {
+    fn write(&self, write: &mut dyn BitWrite, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<()> {
         let bytes: Vec<u8> = str::bytes(self).collect();
         util::write_items::<Ctx, u8>(&bytes, write, byte_order, ctx)
     }
 }
 
 impl<Ctx> FlexibleArrayMember<Ctx> for String {
-    fn read(read: &mut dyn BitRead, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<Self, Error> {
+    fn read(read: &mut dyn BitRead, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<Self> {
         let bytes: Vec<u8> = util::read_items_to_eof(read, byte_order, ctx)?;
         Ok(String::from_utf8(bytes)?)
     }
 
-    fn write(
-        &self,
-        write: &mut dyn BitWrite,
-        byte_order: ByteOrder,
-        ctx: &mut Ctx,
-    ) -> Result<(), Error> {
+    fn write(&self, write: &mut dyn BitWrite, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<()> {
         let bytes: Vec<u8> = str::bytes(self).collect();
         util::write_items::<Ctx, u8>(&bytes, write, byte_order, ctx)
     }
