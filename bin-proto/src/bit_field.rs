@@ -1,6 +1,6 @@
 use crate::{BitRead, BitWrite, ByteOrder, Result};
 
-/// A trait for variable-width bit-level co/dec.
+/// A trait for variable-width bit-level decoding.
 ///
 /// **WARNING**: This trait can and often will ignore the endianness.
 pub trait BitFieldRead<Ctx = ()>: Sized {
@@ -12,6 +12,9 @@ pub trait BitFieldRead<Ctx = ()>: Sized {
     ) -> Result<Self>;
 }
 
+/// A trait for variable-width bit-level encoding.
+///
+/// **WARNING**: This trait can and often will ignore the endianness.
 pub trait BitFieldWrite<Ctx = ()> {
     fn write(
         &self,

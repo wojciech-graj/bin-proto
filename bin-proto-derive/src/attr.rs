@@ -16,7 +16,10 @@ pub struct Attrs {
 #[derive(Debug)]
 pub enum Tag {
     External(syn::Expr),
-    Prepend { typ: syn::Type, value: syn::Expr },
+    Prepend {
+        typ: syn::Type,
+        write_value: syn::Expr,
+    },
 }
 
 impl Attrs {
@@ -203,26 +206,39 @@ impl TryFrom<&[syn::Attribute]> for Attrs {
                     },
                     syn::NestedMeta::Meta(syn::Meta::List(list)) => {
                         let mut typ = None;
-                        let mut value = None;
+                        let mut write_value = None;
                         for nested in list.nested.iter() {
                             let syn::NestedMeta::Meta(syn::Meta::NameValue(name_value)) = nested
                             else {
-                                return Err(Error::new(list.span(), "TODO"));
+                                return Err(Error::new(list.span(), "unrecognized attribute"));
                             };
                             let Some(ident) = name_value.path.get_ident() else {
-                                return Err(Error::new(name_value.span(), "TODO"));
+                                return Err(Error::new(
+                                    name_value.span(),
+                                    "unrecognized attribute",
+                                ));
                             };
                             match ident.to_string().as_str() {
                                 "type" => typ = Some(meta_name_value_to_parse(name_value)?),
-                                "value" => value = Some(meta_name_value_to_parse(name_value)?),
-                                _ => return Err(Error::new(nested.span(), "TODO")),
+                                "write_value" => {
+                                    write_value = Some(meta_name_value_to_parse(name_value)?)
+                                }
+                                _ => {
+                                    return Err(Error::new(
+                                        name_value.span(),
+                                        "unrecognized attribute",
+                                    ))
+                                }
                             }
                         }
-                        match (typ, value) {
+                        match (typ, write_value) {
                             (Some(typ), Some(value)) => {
-                                attribs.tag = Some(Tag::Prepend { typ, value })
+                                attribs.tag = Some(Tag::Prepend {
+                                    typ,
+                                    write_value: value,
+                                })
                             }
-                            _ => return Err(Error::new(list.span(), "TODO")),
+                            _ => return Err(Error::new(list.span(), "Tag lacks type or value.")),
                         }
                     }
                     _ => return Err(Error::new(meta_list.span(), "unrecognised attribute")),

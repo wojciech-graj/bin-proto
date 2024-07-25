@@ -27,12 +27,12 @@ Add this to your `Cargo.toml`:
 bin-proto = "0.4"
 ```
 
-And then define a type with the `#[derive(bin_proto::Protocol)]` attribute.
+And then define a type with the `#[derive(bin_proto::ProtocolRead, bin_proto::ProtocolWrite)]` attributes.
 
 ```rust
-use bin_proto::{Protocol, ProtocolNoCtx};
+use bin_proto::{ProtocolRead, ProtocolWrite, ProtocolNoCtx};
 
-#[derive(Debug, Protocol, PartialEq)]
+#[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq)]
 #[protocol(discriminant_type = "u8")]
 #[protocol(bits = 4)]
 enum E {
@@ -41,7 +41,7 @@ enum E {
     V4,
 }
 
-#[derive(Debug, Protocol, PartialEq)]
+#[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq)]
 struct S {
     #[protocol(bits = 1)]
     bitflag: bool,
@@ -52,6 +52,8 @@ struct S {
     arr_len: u8,
     #[protocol(tag = "arr_len as usize")]
     arr: Vec<u8>,
+    #[protocol(tag(type = "u16", write_value = "self.prefixed_arr.len() as u16"))]
+    prefixed_arr: Vec<u8>,
     #[protocol(flexible_array_member)]
     read_to_end: Vec<u8>,
 }
@@ -63,6 +65,7 @@ assert_eq!(
            | 0b0001, // enum_: V1 (0001)
         0x02, // arr_len: 2
         0x21, 0x37, // arr: [0x21, 0x37]
+	    0x00, 0x01, 0x33, // prefixed_arr: [0x33]
         0x01, 0x02, 0x03, // read_to_end: [0x01, 0x02, 0x03]
     ], bin_proto::ByteOrder::BigEndian).unwrap(),
     S {
@@ -71,6 +74,7 @@ assert_eq!(
         enum_: E::V1,
         arr_len: 2,
         arr: vec![0x21, 0x37],
+        prefixed_arr: vec![0x33],
         read_to_end: vec![0x01, 0x02, 0x03],
     }
 );
@@ -79,13 +83,13 @@ assert_eq!(
 You can implement `Protocol` on your own types, and parse with context:
 
 ```rust
-use bin_proto::Protocol;
+use bin_proto::{ProtocolRead, ProtocolWrite};
 
 pub struct Ctx;
 
 pub struct NeedsCtx;
 
-impl Protocol<Ctx> for NeedsCtx {
+impl ProtocolRead<Ctx> for NeedsCtx {
     fn read(
         _read: &mut dyn bin_proto::BitRead,
         _byte_order: bin_proto::ByteOrder,
@@ -94,7 +98,9 @@ impl Protocol<Ctx> for NeedsCtx {
         // Use ctx here
         Ok(Self)
     }
+}
 
+impl ProtocolWrite<Ctx> for NeedsCtx {
     fn write(
         &self,
         _write: &mut dyn bin_proto::BitWrite,
@@ -106,7 +112,7 @@ impl Protocol<Ctx> for NeedsCtx {
     }
 }
 
-#[derive(Protocol)]
+#[derive(ProtocolRead, ProtocolWrite)]
 #[protocol(ctx = "Ctx")]
 pub struct WithCtx(NeedsCtx);
 

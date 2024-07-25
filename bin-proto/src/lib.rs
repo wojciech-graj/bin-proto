@@ -1,6 +1,6 @@
 //! Simple & fast bit-level binary co/dec in Rust.
 //!
-//! For more information about `#[derive(Protocol)]` and its attributes, see [macro@Protocol].
+//! For more information about `#[derive(ProtocolRead, ProtocolWrite)]` and its attributes, see [macro@ProtocolRead] or [macro@ProtocolWrite].
 //!
 //! # Example
 //!
@@ -24,9 +24,10 @@
 //!     enum_: E,
 //!     #[protocol(write_value = "self.arr.len() as u8")]
 //!     arr_len: u8,
-//!     //#[protocol(tag(type = "usize", value = "self.arr.len()"))]
 //!     #[protocol(tag = "arr_len as usize")]
 //!     arr: Vec<u8>,
+//!	    #[protocol(tag(type = "u16", write_value = "self.prefixed_arr.len() as u16"))]
+//!     prefixed_arr: Vec<u8>,
 //!     #[protocol(flexible_array_member)]
 //!     read_to_end: Vec<u8>,
 //! }
@@ -38,6 +39,7 @@
 //!            | 0b0001, // enum_: V1 (0001)
 //!         0x02, // arr_len: 2
 //!         0x21, 0x37, // arr: [0x21, 0x37]
+//!		    0x00, 0x01, 0x33, // prefixed_arr: [0x33]
 //!         0x01, 0x02, 0x03, // read_to_end: [0x01, 0x02, 0x03]
 //!     ], bin_proto::ByteOrder::BigEndian).unwrap(),
 //!     S {
@@ -46,6 +48,7 @@
 //!         enum_: E::V1,
 //!         arr_len: 2,
 //!         arr: vec![0x21, 0x37],
+//!         prefixed_arr: vec![0x33],
 //!         read_to_end: vec![0x01, 0x02, 0x03],
 //!     }
 //! );
@@ -61,13 +64,13 @@ pub use self::flexible_array_member::FlexibleArrayMemberRead;
 pub use self::protocol::ProtocolNoCtx;
 pub use self::protocol::{ProtocolRead, ProtocolWrite};
 
-/// Derive the `Protocol` trait.
+/// Derive the `ProtocolRead` and `ProtocolWrite` traits.
 ///
 /// # Attributes
 ///
 /// ## `#[protocol(discriminant_type = "<type>")]`
 /// - Applies to: `enum`
-/// - `<type>`: an arbitrary type that implements `Protocol`
+/// - `<type>`: an arbitrary type that implements `ProtocolRead` or `ProtocolWrite`
 ///
 /// Specify if enum variant should be determined by a string or interger
 /// representation of its discriminant.
@@ -100,7 +103,7 @@ pub use self::protocol::{ProtocolRead, ProtocolWrite};
 /// Specify the discriminant for a variant.
 ///
 /// ## `#[protocol(bits = <width>)]`
-/// - Applies to: `impl BitField`, `enum` with discriminant that `impl BitField`
+/// - Applies to: `impl BitFieldRead`, `impl BitFieldWrite`, `enum` with discriminant that `impl BitField`
 ///
 /// Determine width of field in bits.
 ///
@@ -115,7 +118,7 @@ pub use self::protocol::{ProtocolRead, ProtocolWrite};
 /// ```
 ///
 /// ## `#[protocol(flexible_array_member)]`
-/// - Applies to: `impl FlexibleArrayMember`
+/// - Applies to: `impl FlexibleArrayMemberRead`
 ///
 /// Variable-length field is final field in container, hence lacks a length
 /// prefix and should be read until eof.
@@ -127,11 +130,12 @@ pub use self::protocol::{ProtocolRead, ProtocolWrite};
 /// ```
 ///
 /// ## `#[protocol(tag = "<expr>")]`
-/// - Applies to: `impl ExternallyTagged`
-/// - `<expr>`: arbitrary `usize` expression. Fields in parent container can be
-///   used without prefixing them with `self`.
+/// - Applies to: `impl ExternallyTaggedRead`
+/// - `<expr>`: arbitrary expression. Fields in parent container can be used
+///   without prefixing them with `self`.
 ///
-/// Specify length of variable-length field.
+/// Specify tag of field. The tag represents a length prefix for variable-length
+/// fields, and a boolean for `Option`.
 ///
 /// ```
 /// # use bin_proto::{ProtocolRead, ProtocolWrite};
@@ -140,6 +144,25 @@ pub use self::protocol::{ProtocolRead, ProtocolWrite};
 ///     pub count: u32,
 ///     pub foo: bool,
 ///     #[protocol(tag = "count as usize")]
+///     pub data: Vec<u32>,
+/// }
+/// ```
+///
+/// ## `#[protocol(tag(type = "<type>", write_value = "<expr>"))]`
+/// - Applies to: `impl ExternallyTaggedRead`
+/// - `<type>`: tag's type
+/// - `<expr>`: arbitrary expression. Fields in parent container should be
+///   prefixed with `self`.
+///
+/// Specify tag of field. The tag represents a length prefix for variable-length
+/// fields, and a boolean for `Option`. The tag is placed directly before the
+/// field.
+///
+/// ```
+/// # use bin_proto::{ProtocolRead, ProtocolWrite};
+/// #[derive(ProtocolRead, ProtocolWrite)]
+/// pub struct WithElementsLength {
+///     #[protocol(tag(type = "u16", write_value = "self.data.len() as u16"))]
 ///     pub data: Vec<u32>,
 /// }
 /// ```

@@ -37,7 +37,7 @@ pub enum WithElementsLengthAutoEnum {
 
 #[derive(ProtocolRead, ProtocolWrite, Debug, PartialEq, Eq)]
 pub struct Prepended {
-    #[protocol(tag(type = "u32", value = "self.data.len() as u32"))]
+    #[protocol(tag(type = "u32", write_value = "self.data.len() as u32"))]
     pub data: Vec<u32>,
 }
 
