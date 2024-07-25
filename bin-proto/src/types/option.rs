@@ -1,23 +1,32 @@
-use crate::{BitRead, BitWrite, ByteOrder, ExternallyTagged, Protocol, Result};
+use crate::{
+    BitRead, BitWrite, ByteOrder, Error, ExternallyTaggedRead, ExternallyTaggedWrite, Protocol,
+    Result,
+};
 
-impl<Ctx, T> ExternallyTagged<bool, Ctx> for Option<T>
+impl<Tag, Ctx, T> ExternallyTaggedRead<Tag, Ctx> for Option<T>
 where
     T: Protocol<Ctx>,
+    Tag: TryInto<bool>,
 {
     fn read(
         read: &mut dyn BitRead,
         byte_order: ByteOrder,
         ctx: &mut Ctx,
-        tag: bool,
+        tag: Tag,
     ) -> Result<Self> {
-        if tag {
+        if tag.try_into().map_err(|_| Error::TagConvert)? {
             let value = T::read(read, byte_order, ctx)?;
             Ok(Some(value))
         } else {
             Ok(None)
         }
     }
+}
 
+impl<Ctx, T> ExternallyTaggedWrite<Ctx> for Option<T>
+where
+    T: Protocol<Ctx>,
+{
     fn write(&self, write: &mut dyn BitWrite, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<()> {
         if let Some(ref value) = *self {
             value.write(write, byte_order, ctx)?;
@@ -25,47 +34,6 @@ where
         Ok(())
     }
 }
-
-macro_rules! impl_externally_tagged_for_option {
-    ($ty:ty) => {
-        impl<Ctx, T> crate::ExternallyTagged<$ty, Ctx> for Option<T>
-        where
-            T: crate::Protocol<Ctx>,
-        {
-            fn read(
-                read: &mut dyn crate::BitRead,
-                byte_order: crate::ByteOrder,
-                ctx: &mut Ctx,
-                tag: $ty,
-            ) -> Result<Self> {
-                <Option<T> as crate::ExternallyTagged<bool, Ctx>>::read(
-                    read,
-                    byte_order,
-                    ctx,
-                    tag != 0,
-                )
-            }
-
-            fn write(
-                &self,
-                write: &mut dyn crate::BitWrite,
-                byte_order: crate::ByteOrder,
-                ctx: &mut Ctx,
-            ) -> Result<()> {
-                <Option<T> as crate::ExternallyTagged<bool, Ctx>>::write(
-                    self, write, byte_order, ctx,
-                )
-            }
-        }
-    };
-}
-
-impl_externally_tagged_for_option!(u8);
-impl_externally_tagged_for_option!(u16);
-impl_externally_tagged_for_option!(u32);
-impl_externally_tagged_for_option!(u64);
-impl_externally_tagged_for_option!(u128);
-impl_externally_tagged_for_option!(usize);
 
 #[cfg(test)]
 mod tests {
@@ -76,7 +44,7 @@ mod tests {
     #[test]
     fn can_read_some() {
         assert_eq!(
-            <Option<u8> as ExternallyTagged<_, _>>::read(
+            <Option<u8> as ExternallyTaggedRead<_, _>>::read(
                 &mut BitReader::endian([5].as_slice(), BigEndian),
                 ByteOrder::BigEndian,
                 &mut (),
@@ -90,7 +58,7 @@ mod tests {
     #[test]
     fn can_read_none() {
         assert_eq!(
-            <Option<u8> as ExternallyTagged<_, _>>::read(
+            <Option<u8> as ExternallyTaggedRead<_, _>>::read(
                 &mut BitReader::endian([].as_slice(), BigEndian),
                 ByteOrder::BigEndian,
                 &mut (),
@@ -104,7 +72,7 @@ mod tests {
     #[test]
     fn can_write_some() {
         let mut data: Vec<u8> = Vec::new();
-        ExternallyTagged::<bool, _>::write(
+        ExternallyTaggedWrite::write(
             &Some(5u8),
             &mut BitWriter::endian(&mut data, BigEndian),
             ByteOrder::BigEndian,
@@ -117,7 +85,7 @@ mod tests {
     #[test]
     fn can_write_none() {
         let mut data: Vec<u8> = Vec::new();
-        ExternallyTagged::<bool, _>::write(
+        ExternallyTaggedWrite::write(
             &None::<u8>,
             &mut BitWriter::endian(&mut data, BigEndian),
             ByteOrder::BigEndian,

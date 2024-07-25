@@ -5,25 +5,25 @@ macro_rules! impl_smart_ptr_type {
             use super::*;
             use std::ops::Deref;
 
-            impl<Ctx, T> crate::Protocol<Ctx> for $ty<T>
+            impl<Ctx, T> $crate::Protocol<Ctx> for $ty<T>
             where
-                T: crate::Protocol<Ctx>,
+                T: $crate::Protocol<Ctx>,
             {
                 fn read(
-                    read: &mut dyn crate::BitRead,
-                    byte_order: crate::ByteOrder,
+                    read: &mut dyn $crate::BitRead,
+                    byte_order: $crate::ByteOrder,
                     ctx: &mut Ctx,
-                ) -> crate::Result<Self> {
+                ) -> $crate::Result<Self> {
                     let value = T::read(read, byte_order, ctx)?;
                     Ok($ty::new(value))
                 }
 
                 fn write(
                     &self,
-                    write: &mut dyn crate::BitWrite,
-                    byte_order: crate::ByteOrder,
+                    write: &mut dyn $crate::BitWrite,
+                    byte_order: $crate::ByteOrder,
                     ctx: &mut Ctx,
-                ) -> crate::Result<()> {
+                ) -> $crate::Result<()> {
                     self.deref().write(write, byte_order, ctx)
                 }
             }
@@ -37,12 +37,12 @@ macro_rules! impl_smart_ptr_type {
             #[test]
             fn read_protocol() {
                 assert_eq!(
-                    <$ty<u8> as crate::Protocol<()>>::read(
-                        &mut bitstream_io::BitReader::endian(
+                    <$ty<u8> as $crate::Protocol<()>>::read(
+                        &mut ::bitstream_io::BitReader::endian(
                             [7u8].as_slice(),
-                            bitstream_io::BigEndian
+                            ::bitstream_io::BigEndian
                         ),
-                        crate::ByteOrder::BigEndian,
+                        $crate::ByteOrder::BigEndian,
                         &mut ()
                     )
                     .unwrap(),
@@ -53,10 +53,10 @@ macro_rules! impl_smart_ptr_type {
             #[test]
             fn write_protocol() {
                 let mut data: Vec<u8> = Vec::new();
-                crate::Protocol::write(
+                $crate::Protocol::write(
                     &$ty::new(7u8),
-                    &mut bitstream_io::BitWriter::endian(&mut data, bitstream_io::BigEndian),
-                    crate::ByteOrder::BigEndian,
+                    &mut ::bitstream_io::BitWriter::endian(&mut data, bitstream_io::BigEndian),
+                    $crate::ByteOrder::BigEndian,
                     &mut (),
                 )
                 .unwrap();

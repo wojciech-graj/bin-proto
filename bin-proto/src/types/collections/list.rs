@@ -1,23 +1,29 @@
 macro_rules! impl_list_type {
     ($ty:ident => T: $( $ty_pred:ident ),*) => {
-        impl<Ctx, T> crate::ExternallyTagged<usize, Ctx> for $ty<T>
-            where T: $crate::Protocol<Ctx> $( + $ty_pred )*
+        impl<Tag, Ctx, T> $crate::ExternallyTaggedRead<Tag, Ctx> for $ty<T>
+            where
+                T: $crate::Protocol<Ctx> $( + $ty_pred )*,
+                Tag: TryInto<usize>,
         {
-            fn read(read: &mut dyn crate::BitRead,
-                    byte_order: crate::ByteOrder,
+            fn read(read: &mut dyn $crate::BitRead,
+                    byte_order: $crate::ByteOrder,
                     ctx: &mut Ctx,
-                    tag: usize,
-                    ) -> crate::Result<Self> {
-                let elements = $crate::util::read_items(tag.into(), read, byte_order, ctx)?;
+                    tag: Tag,
+                    ) -> $crate::Result<Self> {
+                let elements = $crate::util::read_items(tag.try_into().map_err(|_| crate::Error::TagConvert)?, read, byte_order, ctx)?;
                 Ok(elements.into_iter().collect())
             }
+        }
 
+        impl<Ctx, T> $crate::ExternallyTaggedWrite<Ctx> for $ty<T>
+            where T: $crate::Protocol<Ctx> $( + $ty_pred )*
+        {
             fn write(&self,
-                     write: &mut dyn crate::BitWrite,
-                     byte_order: crate::ByteOrder,
+                     write: &mut dyn $crate::BitWrite,
+                     byte_order: $crate::ByteOrder,
                      ctx: &mut Ctx,
-                     ) -> crate::Result<()> {
-                crate::util::write_items(self.iter(), write, byte_order, ctx)
+                     ) -> $crate::Result<()> {
+                $crate::util::write_items(self.iter(), write, byte_order, ctx)
             }
         }
     }

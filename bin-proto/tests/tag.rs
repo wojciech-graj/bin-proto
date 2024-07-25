@@ -35,6 +35,12 @@ pub enum WithElementsLengthAutoEnum {
     },
 }
 
+#[derive(Protocol, Debug, PartialEq, Eq)]
+pub struct Prepended {
+    #[protocol(tag(type = "u32", value = "self.data.len() as u32"))]
+    pub data: Vec<u32>,
+}
+
 #[test]
 fn can_read_length_prefix_3_elements() {
     assert_eq!(
@@ -114,6 +120,42 @@ fn can_write_auto_length_prefix_3_elements() {
             1, // Discriminant
             0, 0, 0, 3, // disjoint length prefix
             1, // boolean true
+            0, 0, 0, 1, // 1
+            0, 0, 0, 2, // 2
+            0, 0, 0, 3 // 3
+        ],
+    );
+}
+
+#[test]
+fn can_read_prepended_length_prefix_3_elements() {
+    assert_eq!(
+        Prepended {
+            data: vec![1, 2, 3],
+        },
+        Prepended::from_bytes(
+            &[
+                0, 0, 0, 3, // length prefix
+                0, 0, 0, 1, // 1
+                0, 0, 0, 2, // 2
+                0, 0, 0, 3 // 3
+            ],
+            ByteOrder::BigEndian,
+        )
+        .unwrap()
+    );
+}
+
+#[test]
+fn can_write_prepended_length_prefix_3_elements() {
+    assert_eq!(
+        Prepended {
+            data: vec![1, 2, 3],
+        }
+        .bytes(ByteOrder::BigEndian)
+        .unwrap(),
+        vec![
+            0, 0, 0, 3, // disjoint length prefix
             0, 0, 0, 1, // 1
             0, 0, 0, 2, // 2
             0, 0, 0, 3 // 3

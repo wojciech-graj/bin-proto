@@ -56,7 +56,7 @@ pub use self::bit_read::BitRead;
 pub use self::bit_write::BitWrite;
 pub use self::byte_order::ByteOrder;
 pub use self::error::{Error, Result};
-pub use self::externally_tagged::ExternallyTagged;
+pub use self::externally_tagged::{ExternallyTaggedRead, ExternallyTaggedWrite};
 pub use self::flexible_array_member::FlexibleArrayMember;
 pub use self::protocol::Protocol;
 pub use self::protocol::ProtocolNoCtx;

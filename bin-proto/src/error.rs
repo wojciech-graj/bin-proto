@@ -2,17 +2,19 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("{0}")]
+    #[error(transparent)]
     IO(#[from] std::io::Error),
-    #[error("{0}")]
+    #[error(transparent)]
     FromUtf8(#[from] std::string::FromUtf8Error),
-    #[error("{0}")]
+    #[error(transparent)]
     FromNulError(#[from] std::ffi::NulError),
-    #[error("{0}")]
+    #[error(transparent)]
     TryFromIntError(#[from] std::num::TryFromIntError),
-    #[error("received unknown enum discriminant '{0}'")]
+    #[error("Unknown enum discriminant: '{0}'")]
     UnknownEnumDiscriminant(String),
-    #[error("{0}")]
+    #[error("Failed to convert tag")]
+    TagConvert,
+    #[error(transparent)]
     Other(Box<dyn std::error::Error + Send + Sync>),
 }
 

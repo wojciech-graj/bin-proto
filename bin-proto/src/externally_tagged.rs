@@ -3,10 +3,12 @@
 use crate::{BitRead, BitWrite, ByteOrder, Result};
 
 /// A trait for variable-length types with a disjoint length prefix.
-pub trait ExternallyTagged<Tag, Ctx = ()>: Sized {
+pub trait ExternallyTaggedRead<Tag, Ctx = ()>: Sized {
     fn read(read: &mut dyn BitRead, byte_order: ByteOrder, ctx: &mut Ctx, tag: Tag)
         -> Result<Self>;
+}
 
+pub trait ExternallyTaggedWrite<Ctx = ()> {
     fn write(&self, write: &mut dyn BitWrite, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<()>;
 }
 
@@ -17,9 +19,9 @@ macro_rules! test_externally_tagged {
         fn read_externally_tagged() {
             let bytes: &[u8] = $bytes.as_slice();
             assert_eq!(
-                <$t as crate::ExternallyTagged<usize, _>>::read(
-                    &mut bitstream_io::BitReader::endian(bytes, bitstream_io::BigEndian),
-                    crate::ByteOrder::BigEndian,
+                <$t as $crate::ExternallyTaggedRead<_, _>>::read(
+                    &mut ::bitstream_io::BitReader::endian(bytes, bitstream_io::BigEndian),
+                    $crate::ByteOrder::BigEndian,
                     &mut (),
                     $value.len()
                 )
@@ -32,9 +34,9 @@ macro_rules! test_externally_tagged {
         fn write_externally_tagged() {
             let mut buffer: Vec<u8> = Vec::new();
             let value: $t = $value;
-            crate::ExternallyTagged::<usize, _>::write(
+            $crate::ExternallyTaggedWrite::<_>::write(
                 &value,
-                &mut bitstream_io::BitWriter::endian(&mut buffer, bitstream_io::BigEndian),
+                &mut ::bitstream_io::BitWriter::endian(&mut buffer, bitstream_io::BigEndian),
                 crate::ByteOrder::BigEndian,
                 &mut (),
             )

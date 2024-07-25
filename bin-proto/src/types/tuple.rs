@@ -1,27 +1,27 @@
 macro_rules! impl_protocol_for_tuple {
     ($($idx:tt $t:tt),*) => {
-        impl<Ctx, $($t,)*> crate::Protocol<Ctx> for ($($t,)*)
+        impl<Ctx, $($t,)*> $crate::Protocol<Ctx> for ($($t,)*)
         where
-            $($t: crate::Protocol<Ctx>,)*
+            $($t: $crate::Protocol<Ctx>,)*
         {
             #[allow(unused)]
             fn read(
-                read: &mut dyn crate::BitRead,
-                byte_order: crate::ByteOrder,
+                read: &mut dyn $crate::BitRead,
+                byte_order: $crate::ByteOrder,
                 ctx: &mut Ctx,
-            ) -> crate::Result<Self> {
-                Ok(($(<$t as crate::Protocol<Ctx>>::read(read, byte_order, ctx)?,)*))
+            ) -> $crate::Result<Self> {
+                Ok(($(<$t as $crate::Protocol<Ctx>>::read(read, byte_order, ctx)?,)*))
             }
 
             #[allow(unused)]
             fn write(
                 &self,
-                write: &mut dyn crate::BitWrite,
-                byte_order: crate::ByteOrder,
+                write: &mut dyn $crate::BitWrite,
+                byte_order: $crate::ByteOrder,
                 ctx: &mut Ctx,
-            ) -> crate::Result<()> {
+            ) -> $crate::Result<()> {
                 $(
-                    crate::Protocol::write(&self.$idx, write, byte_order, ctx)?;
+                    $crate::Protocol::write(&self.$idx, write, byte_order, ctx)?;
                 )*
                 Ok(())
             }

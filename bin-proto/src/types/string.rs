@@ -1,17 +1,31 @@
-use crate::{util, BitRead, BitWrite, ByteOrder, ExternallyTagged, FlexibleArrayMember, Result};
+use crate::{
+    util, BitRead, BitWrite, ByteOrder, Error, ExternallyTaggedRead, ExternallyTaggedWrite,
+    FlexibleArrayMember, Result,
+};
 
-impl<Ctx> ExternallyTagged<usize, Ctx> for String {
+impl<Tag, Ctx> ExternallyTaggedRead<Tag, Ctx> for String
+where
+    Tag: TryInto<usize>,
+{
     fn read(
         read: &mut dyn BitRead,
         byte_order: ByteOrder,
         ctx: &mut Ctx,
-        tag: usize,
+        tag: Tag,
     ) -> Result<Self> {
-        let bytes: Vec<u8> = util::read_items(tag, read, byte_order, ctx)?.collect();
+        let bytes: Vec<u8> = util::read_items(
+            tag.try_into().map_err(|_| Error::TagConvert)?,
+            read,
+            byte_order,
+            ctx,
+        )?
+        .collect();
 
         Ok(String::from_utf8(bytes)?)
     }
+}
 
+impl<Ctx> ExternallyTaggedWrite<Ctx> for String {
     fn write(&self, write: &mut dyn BitWrite, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<()> {
         let bytes: Vec<u8> = str::bytes(self).collect();
         util::write_items::<Ctx, u8>(&bytes, write, byte_order, ctx)

@@ -63,21 +63,21 @@ macro_rules! impl_for_numeric_cast {
 
 macro_rules! impl_protocol_for_numeric {
     ($ty:ty => [$read_fn:ident : $write_fn:ident] $(as $cast_ty:ty)?) => {
-        impl<Ctx> crate::Protocol<Ctx> for $ty {
+        impl<Ctx> $crate::Protocol<Ctx> for $ty {
             fn read(
-                read: &mut dyn crate::BitRead,
-                byte_order: crate::ByteOrder,
+                read: &mut dyn $crate::BitRead,
+                byte_order: $crate::ByteOrder,
                 _: &mut Ctx,
-            ) -> crate::Result<Self> {
+            ) -> $crate::Result<Self> {
                 Ok(impl_for_numeric_cast!(byte_order.$read_fn(read)?, $($ty, $cast_ty)?))
             }
 
             fn write(
                 &self,
-                write: &mut dyn crate::BitWrite,
-                byte_order: crate::ByteOrder,
+                write: &mut dyn $crate::BitWrite,
+                byte_order: $crate::ByteOrder,
                 _: &mut Ctx,
-            ) -> crate::Result<()> {
+            ) -> $crate::Result<()> {
                 byte_order.$write_fn(*self $(as $cast_ty)?, write)?;
                 Ok(())
             }
@@ -87,24 +87,24 @@ macro_rules! impl_protocol_for_numeric {
 
 macro_rules! impl_bitfield_for_numeric {
     ($ty:ty => [$read_fn:ident : $write_fn:ident] $(as $cast_ty:ty)?) => {
-        impl<Ctx> crate::BitField<Ctx> for $ty {
+        impl<Ctx> $crate::BitField<Ctx> for $ty {
             fn read(
-                read: &mut dyn crate::BitRead,
-                _: crate::ByteOrder,
+                read: &mut dyn $crate::BitRead,
+                _: $crate::ByteOrder,
                 _: &mut Ctx,
                 bits: u32,
-            ) -> crate::Result<Self> {
-                Ok(impl_for_numeric_cast!(crate::BitRead::$read_fn(read, bits)?, $($ty, $cast_ty)?))
+            ) -> $crate::Result<Self> {
+                Ok(impl_for_numeric_cast!($crate::BitRead::$read_fn(read, bits)?, $($ty, $cast_ty)?))
             }
 
             fn write(
                 &self,
-                write: &mut dyn crate::BitWrite,
-                _: crate::ByteOrder,
+                write: &mut dyn $crate::BitWrite,
+                _: $crate::ByteOrder,
                 _: &mut Ctx,
                 bits: u32,
-            ) -> crate::Result<()> {
-                crate::BitWrite::$write_fn(write, bits, *self $(as $cast_ty)?)?;
+            ) -> $crate::Result<()> {
+                $crate::BitWrite::$write_fn(write, bits, *self $(as $cast_ty)?)?;
                 Ok(())
             }
         }

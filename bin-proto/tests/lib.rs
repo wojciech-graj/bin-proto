@@ -9,6 +9,6 @@ mod flexible_array_member;
 #[cfg(test)]
 mod ipv4;
 #[cfg(test)]
-mod length_prefix;
-#[cfg(test)]
 mod structs;
+#[cfg(test)]
+mod tag;
