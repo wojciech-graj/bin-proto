@@ -6,8 +6,8 @@ use syn::{parse_quote, punctuated::Punctuated, Token};
 pub enum TraitImplType {
     ProtocolRead,
     ProtocolWrite,
-    ExternallyTaggedRead(syn::Type),
-    ExternallyTaggedWrite,
+    TaggedRead(syn::Type),
+    UntaggedWrite,
     Discriminable,
 }
 
@@ -31,7 +31,7 @@ pub fn impl_trait_for(
     let trait_name = match &typ {
         TraitImplType::ProtocolRead => quote!(ProtocolRead),
         TraitImplType::ProtocolWrite => quote!(ProtocolWrite),
-        TraitImplType::ExternallyTaggedRead(discriminant) => {
+        TraitImplType::TaggedRead(discriminant) => {
             let ident = syn::Ident::new("__Tag", Span::call_site());
             let mut bounds = Punctuated::new();
             bounds.push(parse_quote!(::std::convert::TryInto<#discriminant>));
@@ -46,9 +46,9 @@ pub fn impl_trait_for(
                     default: None,
                 }));
             trait_generics.push(quote!(#ident));
-            quote!(ExternallyTaggedRead)
+            quote!(TaggedRead)
         }
-        TraitImplType::ExternallyTaggedWrite => quote!(ExternallyTaggedWrite),
+        TraitImplType::UntaggedWrite => quote!(UntaggedWrite),
         TraitImplType::Discriminable => quote!(Discriminable),
     };
 
@@ -56,8 +56,8 @@ pub fn impl_trait_for(
         typ,
         TraitImplType::ProtocolRead
             | TraitImplType::ProtocolWrite
-            | TraitImplType::ExternallyTaggedRead(_)
-            | TraitImplType::ExternallyTaggedWrite
+            | TraitImplType::TaggedRead(_)
+            | TraitImplType::UntaggedWrite
     ) {
         trait_generics.push(if let Some(ctx) = attribs.ctx {
             quote!(#ctx)

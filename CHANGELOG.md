@@ -1,13 +1,15 @@
 # v0.5.0
 - Split `Protocol` into `ProtocolRead` and `ProtocolWrite`
-- Split `ExternallyLengthPrefixed` into `ExternallyTaggedRead` and `ExternallyTaggedWrite`
+- Split `ExternallyLengthPrefixed` into `TaggedRead` and `UntaggedWrite`
 - Convert `FlexibleArrayMember` to `FlexibleArrayMemberRead`
 - Split `BitField` into `BitFieldWrite` and `BitFieldRead`
-- Implement `ExternallyTaggedRead`, `ExternallyTaggedWrite` `FlexibleArrayMemberRead` on all list and map types and `Option`
-- Add `Error` variant for failed `TryFrom` conversion for `ExternallyLengthPrefixed` tags
-- Add generic `Tag` parameter to `ExternallyTaggedRead`
+- Implement `TaggedRead`, `UntaggedWrite` `FlexibleArrayMemberRead` on all list and map types and `Option`
+- Add `Error` variant for failed `TryFrom` conversion for `TaggedRead` tags
+- Add generic `Tag` parameter to `TaggedRead`
 - Allow for `#[protocol(tag(type = "<type>", write_value = "<expr>"))]` attribute macro
 - Unimplement `ProtocolRead` and `BitFieldRead` on `Option`
+- Create `Discriminable` trait for obtaining `enum` discriminants
+- Additionally derive `Discriminable`, `TaggedRead`, `UntaggedWrite`
 # v0.4.2
 - Set MSRV at 1.63.0
 # v0.4.1

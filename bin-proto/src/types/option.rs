@@ -1,9 +1,9 @@
 use crate::{
-    BitRead, BitWrite, ByteOrder, Error, ExternallyTaggedRead, ExternallyTaggedWrite, ProtocolRead,
+    BitRead, BitWrite, ByteOrder, Error, TaggedRead, UntaggedWrite, ProtocolRead,
     ProtocolWrite, Result,
 };
 
-impl<Tag, Ctx, T> ExternallyTaggedRead<Tag, Ctx> for Option<T>
+impl<Tag, Ctx, T> TaggedRead<Tag, Ctx> for Option<T>
 where
     T: ProtocolRead<Ctx>,
     Tag: TryInto<bool>,
@@ -23,7 +23,7 @@ where
     }
 }
 
-impl<Ctx, T> ExternallyTaggedWrite<Ctx> for Option<T>
+impl<Ctx, T> UntaggedWrite<Ctx> for Option<T>
 where
     T: ProtocolWrite<Ctx>,
 {
@@ -44,7 +44,7 @@ mod tests {
     #[test]
     fn can_read_some() {
         assert_eq!(
-            <Option<u8> as ExternallyTaggedRead<_, _>>::read(
+            <Option<u8> as TaggedRead<_, _>>::read(
                 &mut BitReader::endian([5].as_slice(), BigEndian),
                 ByteOrder::BigEndian,
                 &mut (),
@@ -58,7 +58,7 @@ mod tests {
     #[test]
     fn can_read_none() {
         assert_eq!(
-            <Option<u8> as ExternallyTaggedRead<_, _>>::read(
+            <Option<u8> as TaggedRead<_, _>>::read(
                 &mut BitReader::endian([].as_slice(), BigEndian),
                 ByteOrder::BigEndian,
                 &mut (),
@@ -72,7 +72,7 @@ mod tests {
     #[test]
     fn can_write_some() {
         let mut data: Vec<u8> = Vec::new();
-        ExternallyTaggedWrite::write(
+        UntaggedWrite::write(
             &Some(5u8),
             &mut BitWriter::endian(&mut data, BigEndian),
             ByteOrder::BigEndian,
@@ -85,7 +85,7 @@ mod tests {
     #[test]
     fn can_write_none() {
         let mut data: Vec<u8> = Vec::new();
-        ExternallyTaggedWrite::write(
+        UntaggedWrite::write(
             &None::<u8>,
             &mut BitWriter::endian(&mut data, BigEndian),
             ByteOrder::BigEndian,

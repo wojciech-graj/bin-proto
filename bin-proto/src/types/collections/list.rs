@@ -1,6 +1,6 @@
 macro_rules! impl_list_type {
     ($ty:ident => T: $( $ty_pred:ident ),*) => {
-        impl<Tag, Ctx, T> $crate::ExternallyTaggedRead<Tag, Ctx> for $ty<T>
+        impl<Tag, Ctx, T> $crate::TaggedRead<Tag, Ctx> for $ty<T>
             where
                 T: $crate::ProtocolRead<Ctx> $( + $ty_pred )*,
                 Tag: TryInto<usize>,
@@ -15,7 +15,7 @@ macro_rules! impl_list_type {
             }
         }
 
-        impl<Ctx, T> $crate::ExternallyTaggedWrite<Ctx> for $ty<T>
+        impl<Ctx, T> $crate::UntaggedWrite<Ctx> for $ty<T>
             where T: $crate::ProtocolWrite<Ctx> $( + $ty_pred )*
         {
             fn write(&self,

@@ -118,7 +118,7 @@ fn impl_for_enum(
             let externally_tagged_read_impl = impl_trait_for(
                 ast,
                 impl_body,
-                TraitImplType::ExternallyTaggedRead(discriminant_ty.clone()),
+                TraitImplType::TaggedRead(discriminant_ty.clone()),
             );
 
             let read_discriminant = read_discriminant(&attribs);
@@ -129,7 +129,7 @@ fn impl_for_enum(
                         __ctx: &mut #ctx_ty)
                         -> ::bin_proto::Result<Self> {
                     let __tag: #discriminant_ty = #read_discriminant?;
-                    <Self as ::bin_proto::ExternallyTaggedRead<_, _>>::read(__io_reader, __byte_order, __ctx, __tag)
+                    <Self as ::bin_proto::TaggedRead<_, _>>::read(__io_reader, __byte_order, __ctx, __tag)
                 }
             );
             let protocol_read_impl = impl_trait_for(ast, impl_body, TraitImplType::ProtocolRead);
@@ -153,7 +153,7 @@ fn impl_for_enum(
                 }
             );
             let externally_tagged_write_impl =
-                impl_trait_for(ast, impl_body, TraitImplType::ExternallyTaggedWrite);
+                impl_trait_for(ast, impl_body, TraitImplType::UntaggedWrite);
 
             let variant_discriminant = variant_discriminant(&plan, &attribs);
             let impl_body = quote!(
@@ -175,7 +175,7 @@ fn impl_for_enum(
                          __ctx: &mut #ctx_ty)
                          -> ::bin_proto::Result<()> {
                     #write_discriminant
-                    <Self as ::bin_proto::ExternallyTaggedWrite<_>>::write(self, __io_writer, __byte_order, __ctx)
+                    <Self as ::bin_proto::UntaggedWrite<_>>::write(self, __io_writer, __byte_order, __ctx)
                 }
             );
             let protocol_write_impl = impl_trait_for(ast, impl_body, TraitImplType::ProtocolWrite);

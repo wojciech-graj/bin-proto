@@ -75,7 +75,7 @@ fn read(field: &syn::Field, parent_attribs: &Attrs) -> TokenStream {
     } else if let Some(tag) = attribs.tag {
         match tag {
             Tag::External(tag) => {
-                quote!(::bin_proto::ExternallyTaggedRead::<_, #ctx_ty>::read(__io_reader, __byte_order, __ctx, #tag))
+                quote!(::bin_proto::TaggedRead::<_, #ctx_ty>::read(__io_reader, __byte_order, __ctx, #tag))
             }
             Tag::Prepend {
                 typ,
@@ -83,7 +83,7 @@ fn read(field: &syn::Field, parent_attribs: &Attrs) -> TokenStream {
             } => {
                 quote!({
                     let __tag = ::bin_proto::ProtocolRead::<#ctx_ty>::read(__io_reader, __byte_order, __ctx)?;
-                    ::bin_proto::ExternallyTaggedRead::<#typ, #ctx_ty>::read(__io_reader, __byte_order, __ctx, __tag)
+                    ::bin_proto::TaggedRead::<#typ, #ctx_ty>::read(__io_reader, __byte_order, __ctx, __tag)
                 })
             }
         }
@@ -117,14 +117,14 @@ fn write(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
     } else if attribs.flexible_array_member {
         quote!(
             {
-                ::bin_proto::ExternallyTaggedWrite::write(#field_ref, __io_writer, __byte_order, __ctx)?
+                ::bin_proto::UntaggedWrite::write(#field_ref, __io_writer, __byte_order, __ctx)?
             }
         )
     } else if let Some(tag) = attribs.tag {
         match tag {
             Tag::External(_) => quote!(
                 {
-                    ::bin_proto::ExternallyTaggedWrite::write(#field_ref, __io_writer, __byte_order, __ctx)?
+                    ::bin_proto::UntaggedWrite::write(#field_ref, __io_writer, __byte_order, __ctx)?
                 }
             ),
             Tag::Prepend {
@@ -133,7 +133,7 @@ fn write(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
             } => quote!(
                 {
                     <#typ as ::bin_proto::ProtocolWrite<_>>::write(&{#value}, __io_writer, __byte_order, __ctx)?;
-                    ::bin_proto::ExternallyTaggedWrite::write(#field_ref, __io_writer, __byte_order, __ctx)?
+                    ::bin_proto::UntaggedWrite::write(#field_ref, __io_writer, __byte_order, __ctx)?
                 }
             ),
         }

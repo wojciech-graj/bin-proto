@@ -1,6 +1,6 @@
 macro_rules! impl_map_type {
     ( $ty:ident => K: $( $k_pred:ident ),+ ) => {
-        impl<Tag, Ctx, K, V> $crate::ExternallyTaggedRead<Tag, Ctx> for $ty<K, V>
+        impl<Tag, Ctx, K, V> $crate::TaggedRead<Tag, Ctx> for $ty<K, V>
         where
             K: $crate::ProtocolRead<Ctx> + $( $k_pred +)+,
             V: $crate::ProtocolRead<Ctx>,
@@ -16,7 +16,7 @@ macro_rules! impl_map_type {
             }
         }
 
-        impl<Ctx, K, V> $crate::ExternallyTaggedWrite<Ctx> for $ty<K, V>
+        impl<Ctx, K, V> $crate::UntaggedWrite<Ctx> for $ty<K, V>
         where
             K: $crate::ProtocolWrite<Ctx> + $( $k_pred +)+,
             V: $crate::ProtocolWrite<Ctx>
