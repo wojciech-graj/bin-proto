@@ -6,9 +6,9 @@ mod vec {
 
     mod bench_bin_proto {
         use super::*;
-        use bin_proto::{Protocol, ProtocolNoCtx};
+        use bin_proto::{ProtocolNoCtx, ProtocolRead, ProtocolWrite};
 
-        #[derive(Debug, Protocol, PartialEq)]
+        #[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq)]
         struct V {
             #[protocol(write_value = "self.data.len() as u8")]
             count: u8,
@@ -82,9 +82,9 @@ mod enum_ {
 
     mod bench_bin_proto {
         use super::*;
-        use bin_proto::{Protocol, ProtocolNoCtx};
+        use bin_proto::{ProtocolNoCtx, ProtocolRead, ProtocolWrite};
 
-        #[derive(Debug, Protocol, PartialEq)]
+        #[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq)]
         #[protocol(discriminant_type = "u8")]
         enum E {
             V0 = 0,
@@ -161,16 +161,16 @@ mod ipv4 {
 
     mod bench_bin_proto {
         use super::*;
-        use bin_proto::{Protocol, ProtocolNoCtx};
+        use bin_proto::{ProtocolNoCtx, ProtocolRead, ProtocolWrite};
 
-        #[derive(Debug, Protocol, PartialEq)]
+        #[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq)]
         #[protocol(discriminant_type = "u8")]
         #[protocol(bits = 4)]
         enum Version {
             V4 = 4,
         }
 
-        #[derive(Debug, Protocol, PartialEq)]
+        #[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq)]
         struct Flags {
             #[protocol(bits = 1)]
             reserved: bool,
@@ -180,7 +180,7 @@ mod ipv4 {
             more_fragments: bool,
         }
 
-        #[derive(Debug, Protocol, PartialEq)]
+        #[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq)]
         struct IPv4 {
             version: Version,
             #[protocol(bits = 4)]
