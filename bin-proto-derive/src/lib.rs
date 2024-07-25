@@ -6,37 +6,29 @@ mod codegen;
 mod plan;
 
 use attr::Attrs;
-use proc_macro2::{Span, TokenStream};
-use syn::{parse_quote, punctuated::Punctuated, Token};
+use codegen::trait_impl::{impl_trait_for, TraitImplType};
+use proc_macro2::TokenStream;
 
-use crate::codegen::enums::bind_fields_pattern;
+use crate::codegen::enums::{read_discriminant, variant_discriminant, write_discriminant};
 
-enum ProtocolType {
+enum Operation {
     Read,
     Write,
-}
-
-enum ProtocolImplType {
-    ProtocolRead,
-    ProtocolWrite,
-    ExternallyTaggedRead(syn::Type),
-    ExternallyTaggedWrite,
-    Discriminable,
 }
 
 #[proc_macro_derive(ProtocolRead, attributes(protocol))]
 pub fn protocol_read(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let ast: syn::DeriveInput = syn::parse(input).expect("Failed to parse input");
-    impl_protocol(&ast, ProtocolType::Read).into()
+    impl_protocol(&ast, Operation::Read).into()
 }
 
 #[proc_macro_derive(ProtocolWrite, attributes(protocol))]
 pub fn protocol_write(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let ast: syn::DeriveInput = syn::parse(input).expect("Failed to parse input");
-    impl_protocol(&ast, ProtocolType::Write).into()
+    impl_protocol(&ast, Operation::Write).into()
 }
 
-fn impl_protocol(ast: &syn::DeriveInput, protocol_type: ProtocolType) -> TokenStream {
+fn impl_protocol(ast: &syn::DeriveInput, protocol_type: Operation) -> TokenStream {
     match ast.data {
         syn::Data::Struct(ref s) => impl_for_struct(ast, s, protocol_type),
         syn::Data::Enum(ref e) => impl_for_enum(ast, e, protocol_type),
@@ -47,7 +39,7 @@ fn impl_protocol(ast: &syn::DeriveInput, protocol_type: ProtocolType) -> TokenSt
 fn impl_for_struct(
     ast: &syn::DeriveInput,
     strukt: &syn::DataStruct,
-    protocol_type: ProtocolType,
+    protocol_type: Operation,
 ) -> TokenStream {
     let attribs = match Attrs::try_from(ast.attrs.as_slice()) {
         Ok(attribs) => attribs,
@@ -56,49 +48,48 @@ fn impl_for_struct(
 
     let ctx_ty = attribs.ctx_ty();
 
-    let impl_body = match protocol_type {
-        ProtocolType::Read => {
+    let (impl_body, trait_type) = match protocol_type {
+        Operation::Read => {
             let (reads, initializers) = codegen::reads(&strukt.fields, &attribs);
-            quote!(
-                #[allow(unused_variables)]
-                fn read(__io_reader: &mut dyn ::bin_proto::BitRead,
-                        __byte_order: ::bin_proto::ByteOrder,
-                        __ctx: &mut #ctx_ty)
-                        -> ::bin_proto::Result<Self> {
-                    #reads
-                    Ok(Self #initializers)
-                }
+            (
+                quote!(
+                    #[allow(unused_variables)]
+                    fn read(__io_reader: &mut dyn ::bin_proto::BitRead,
+                            __byte_order: ::bin_proto::ByteOrder,
+                            __ctx: &mut #ctx_ty)
+                            -> ::bin_proto::Result<Self> {
+                        #reads
+                        Ok(Self #initializers)
+                    }
+                ),
+                TraitImplType::ProtocolRead,
             )
         }
-        ProtocolType::Write => {
+        Operation::Write => {
             let writes = codegen::writes(&strukt.fields, true);
-            quote!(
-                #[allow(unused_variables)]
-                fn write(&self, __io_writer: &mut dyn ::bin_proto::BitWrite,
-                         __byte_order: ::bin_proto::ByteOrder,
-                         __ctx: &mut #ctx_ty)
-                         -> ::bin_proto::Result<()> {
-                    #writes
-                    Ok(())
-                }
+            (
+                quote!(
+                    #[allow(unused_variables)]
+                    fn write(&self, __io_writer: &mut dyn ::bin_proto::BitWrite,
+                             __byte_order: ::bin_proto::ByteOrder,
+                             __ctx: &mut #ctx_ty)
+                             -> ::bin_proto::Result<()> {
+                        #writes
+                        Ok(())
+                    }
+                ),
+                TraitImplType::ProtocolWrite,
             )
         }
     };
 
-    impl_protocol_for(
-        ast,
-        impl_body,
-        match protocol_type {
-            ProtocolType::Read => ProtocolImplType::ProtocolRead,
-            ProtocolType::Write => ProtocolImplType::ProtocolWrite,
-        },
-    )
+    impl_trait_for(ast, impl_body, trait_type)
 }
 
 fn impl_for_enum(
     ast: &syn::DeriveInput,
     e: &syn::DataEnum,
-    protocol_type: ProtocolType,
+    protocol_type: Operation,
 ) -> TokenStream {
     let plan = match plan::Enum::try_new(ast, e) {
         Ok(plan) => plan,
@@ -112,9 +103,8 @@ fn impl_for_enum(
     let ctx_ty = attribs.ctx_ty();
 
     match protocol_type {
-        ProtocolType::Read => {
-            let read_variant = codegen::enums::read_variant(&plan, &attribs);
-            let discriminant_ty = plan.discriminant_ty;
+        Operation::Read => {
+            let read_variant = codegen::enums::read_variant_fields(&plan, &attribs);
             let impl_body = quote!(
                 #[allow(unused_variables)]
                 fn read(__io_reader: &mut dyn ::bin_proto::BitRead,
@@ -125,22 +115,13 @@ fn impl_for_enum(
                     Ok(#read_variant)
                 }
             );
-            let externally_tagged_read_impl = impl_protocol_for(
+            let externally_tagged_read_impl = impl_trait_for(
                 ast,
                 impl_body,
-                ProtocolImplType::ExternallyTaggedRead(discriminant_ty.clone()),
+                TraitImplType::ExternallyTaggedRead(discriminant_ty.clone()),
             );
 
-            let read_discriminant = if let Some(bits) = attribs.bits {
-                quote!(::bin_proto::BitFieldRead::read(__io_reader, __byte_order, __ctx, #bits))
-            } else {
-                quote!(::bin_proto::ProtocolRead::read(
-                    __io_reader,
-                    __byte_order,
-                    __ctx
-                ))
-            };
-
+            let read_discriminant = read_discriminant(&attribs);
             let impl_body = quote!(
                 #[allow(unused_variables)]
                 fn read(__io_reader: &mut dyn ::bin_proto::BitRead,
@@ -151,17 +132,15 @@ fn impl_for_enum(
                     <Self as ::bin_proto::ExternallyTaggedRead<_, _>>::read(__io_reader, __byte_order, __ctx, __tag)
                 }
             );
-
-            let protocol_read_impl =
-                impl_protocol_for(ast, impl_body, ProtocolImplType::ProtocolRead);
+            let protocol_read_impl = impl_trait_for(ast, impl_body, TraitImplType::ProtocolRead);
 
             quote!(
                 #externally_tagged_read_impl
                 #protocol_read_impl
             )
         }
-        ProtocolType::Write => {
-            let write_variant = codegen::enums::write_variant(&plan);
+        Operation::Write => {
+            let write_variant = codegen::enums::write_variant_fields(&plan);
             let impl_body = quote!(
                 #[allow(unused_variables)]
                 fn write(&self,
@@ -174,58 +153,20 @@ fn impl_for_enum(
                 }
             );
             let externally_tagged_write_impl =
-                impl_protocol_for(ast, impl_body, ProtocolImplType::ExternallyTaggedWrite);
+                impl_trait_for(ast, impl_body, TraitImplType::ExternallyTaggedWrite);
 
-            let variant_match_branches: Vec<_> = plan
-                .variants
-                .iter()
-                .map(|variant| {
-                    let variant_name = &variant.ident;
-                    let fields_pattern = bind_fields_pattern(variant_name, &variant.fields);
-                    let discriminant_expr = &variant.discriminant_value;
-                    let write_variant = if let Some(field_width) = attribs.bits {
-                        let error_message = format!(
-                            "Discriminant for variant '{}' does not fit in bitfield with width {}.",
-                            variant.ident, field_width
-                        );
-                        quote!(
-                            const _: () = ::std::assert!(#discriminant_expr < (1 as #discriminant_ty) << #field_width, #error_message);
-                            #discriminant_expr
-                        )
-                    } else {
-                        quote!(#discriminant_expr)
-                    };
-
-                    quote!(Self :: #fields_pattern => {
-                        #write_variant
-                    })
-                })
-                .collect();
-
+            let variant_discriminant = variant_discriminant(&plan, &attribs);
             let impl_body = quote!(
                 type Discriminant = #discriminant_ty;
 
                 #[allow(unused_variables)]
                 fn discriminant(&self) -> Self::Discriminant {
-                    match *self {
-                        #(#variant_match_branches,)*
-                    }
+                    #variant_discriminant
                 }
             );
-            let discriminable_impl =
-                impl_protocol_for(ast, impl_body, ProtocolImplType::Discriminable);
+            let discriminable_impl = impl_trait_for(ast, impl_body, TraitImplType::Discriminable);
 
-            let write_tag = if let Some(bits) = attribs.bits {
-                quote!(::bin_proto::BitFieldWrite::write(&__tag, __io_writer, __byte_order, __ctx, #bits))
-            } else {
-                quote!(::bin_proto::ProtocolWrite::write(
-                    &__tag,
-                    __io_writer,
-                    __byte_order,
-                    __ctx
-                ))
-            };
-
+            let write_discriminant = write_discriminant(&attribs);
             let impl_body = quote!(
                 #[allow(unused_variables)]
                 fn write(&self,
@@ -233,15 +174,11 @@ fn impl_for_enum(
                          __byte_order: ::bin_proto::ByteOrder,
                          __ctx: &mut #ctx_ty)
                          -> ::bin_proto::Result<()> {
-                    {
-                        let __tag = <Self as ::bin_proto::Discriminable>::discriminant(self);
-                        #write_tag?;
-                    }
+                    #write_discriminant
                     <Self as ::bin_proto::ExternallyTaggedWrite<_>>::write(self, __io_writer, __byte_order, __ctx)
                 }
             );
-            let protocol_write_impl =
-                impl_protocol_for(ast, impl_body, ProtocolImplType::ProtocolWrite);
+            let protocol_write_impl = impl_trait_for(ast, impl_body, TraitImplType::ProtocolWrite);
 
             quote!(
                 #externally_tagged_write_impl
@@ -250,79 +187,4 @@ fn impl_for_enum(
             )
         }
     }
-}
-
-fn impl_protocol_for(
-    ast: &syn::DeriveInput,
-    impl_body: TokenStream,
-    protocol_type: ProtocolImplType,
-) -> TokenStream {
-    let name = &ast.ident;
-    let attribs = match Attrs::try_from(ast.attrs.as_slice()) {
-        Ok(attribs) => attribs,
-        Err(e) => return e.to_compile_error(),
-    };
-
-    let generics = &ast.generics;
-    let (_, ty_generics, _) = generics.split_for_impl();
-    let mut generics = ast.generics.clone();
-
-    let mut trait_generics: Punctuated<TokenStream, Token![,]> = Punctuated::new();
-
-    let trait_name = match &protocol_type {
-        ProtocolImplType::ProtocolRead => quote!(ProtocolRead),
-        ProtocolImplType::ProtocolWrite => quote!(ProtocolWrite),
-        ProtocolImplType::ExternallyTaggedRead(discriminant) => {
-            let ident = syn::Ident::new("__Tag", Span::call_site());
-            let mut bounds = Punctuated::new();
-            bounds.push(parse_quote!(::std::convert::TryInto<#discriminant>));
-            generics
-                .params
-                .push(syn::GenericParam::Type(syn::TypeParam {
-                    attrs: Vec::new(),
-                    ident: ident.clone(),
-                    colon_token: None,
-                    bounds,
-                    eq_token: None,
-                    default: None,
-                }));
-            trait_generics.push(quote!(#ident));
-            quote!(ExternallyTaggedRead)
-        }
-        ProtocolImplType::ExternallyTaggedWrite => quote!(ExternallyTaggedWrite),
-        ProtocolImplType::Discriminable => quote!(Discriminable),
-    };
-
-    if matches!(
-        protocol_type,
-        ProtocolImplType::ProtocolRead
-            | ProtocolImplType::ProtocolWrite
-            | ProtocolImplType::ExternallyTaggedRead(_)
-            | ProtocolImplType::ExternallyTaggedWrite
-    ) {
-        trait_generics.push(if let Some(ctx) = attribs.ctx {
-            quote!(#ctx)
-        } else {
-            let ident = syn::Ident::new("__Ctx", Span::call_site());
-            generics
-                .params
-                .push(syn::GenericParam::Type(syn::TypeParam {
-                    attrs: Vec::new(),
-                    ident: ident.clone(),
-                    colon_token: None,
-                    bounds: attribs.ctx_bounds.unwrap_or(Punctuated::new()),
-                    eq_token: None,
-                    default: None,
-                }));
-            quote!(#ident)
-        });
-    }
-
-    let (impl_generics, _, where_clause) = generics.split_for_impl();
-    quote!(
-        #[automatically_derived]
-        impl #impl_generics ::bin_proto::#trait_name<#trait_generics> for #name #ty_generics #where_clause {
-            #impl_body
-        }
-    )
 }

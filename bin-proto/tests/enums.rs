@@ -19,6 +19,7 @@ pub enum Enum<'a, T: ProtocolRead + ProtocolWrite> {
 
 #[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq)]
 #[protocol(discriminant_type = "u8")]
+#[protocol(bits = 2)]
 pub enum Enum2 {
     #[protocol(discriminant = "1")]
     Variant1(u8),
@@ -77,7 +78,7 @@ fn read_enum_variant_in_container() {
         EnumContainer {
             e: Enum2::Variant1(2)
         },
-        EnumContainer::from_bytes(&[1, 2], ByteOrder::BigEndian).unwrap()
+        EnumContainer::from_bytes(&[64, 128], ByteOrder::BigEndian).unwrap()
     );
 }
 
@@ -89,7 +90,7 @@ fn write_enum_variant_in_container() {
         }
         .bytes(ByteOrder::BigEndian)
         .unwrap(),
-        vec![2, 1, 255,]
+        vec![128, 127, 192]
     );
 }
 

@@ -1,11 +1,36 @@
-use crate::{
-    attr::Attrs,
-    codegen,
-    plan::{self},
-};
+use crate::{attr::Attrs, codegen, plan};
 use proc_macro2::{Span, TokenStream};
 
-pub fn write_variant(plan: &plan::Enum) -> TokenStream {
+pub fn read_discriminant(attribs: &Attrs) -> TokenStream {
+    if let Some(bits) = attribs.bits {
+        quote!(::bin_proto::BitFieldRead::read(__io_reader, __byte_order, __ctx, #bits))
+    } else {
+        quote!(::bin_proto::ProtocolRead::read(
+            __io_reader,
+            __byte_order,
+            __ctx
+        ))
+    }
+}
+
+pub fn write_discriminant(attribs: &Attrs) -> TokenStream {
+    let write_tag = if let Some(bits) = attribs.bits {
+        quote!(::bin_proto::BitFieldWrite::write(&__tag, __io_writer, __byte_order, __ctx, #bits))
+    } else {
+        quote!(::bin_proto::ProtocolWrite::write(
+            &__tag,
+            __io_writer,
+            __byte_order,
+            __ctx
+        ))
+    };
+    quote!({
+        let __tag = <Self as ::bin_proto::Discriminable>::discriminant(self);
+        #write_tag?;
+    })
+}
+
+pub fn write_variant_fields(plan: &plan::Enum) -> TokenStream {
     let variant_match_branches: Vec<_> = plan
         .variants
         .iter()
@@ -27,7 +52,39 @@ pub fn write_variant(plan: &plan::Enum) -> TokenStream {
     )
 }
 
-pub fn read_variant(plan: &plan::Enum, attribs: &Attrs) -> TokenStream {
+pub fn variant_discriminant(plan: &plan::Enum, attribs: &Attrs) -> TokenStream {
+    let discriminant_ty = &plan.discriminant_ty;
+    let variant_match_branches: Vec<_> = plan
+        .variants
+        .iter()
+        .map(|variant| {
+            let variant_name = &variant.ident;
+            let fields_pattern = bind_fields_pattern(variant_name, &variant.fields);
+            let discriminant_expr = &variant.discriminant_value;
+            let write_variant = if let Some(field_width) = attribs.bits {
+                let error_message = format!(
+                    "Discriminant for variant '{}' does not fit in bitfield with width {}.",
+                    variant.ident, field_width
+                );
+                quote!(
+                    const _: () = ::std::assert!(#discriminant_expr < (1 as #discriminant_ty) << #field_width, #error_message);
+                    #discriminant_expr
+                )
+            } else {
+                quote!(#discriminant_expr)
+            };
+
+            quote!(Self :: #fields_pattern => {
+                #write_variant
+            })
+        })
+        .collect();
+    quote!(match *self {
+        #(#variant_match_branches,)*
+    })
+}
+
+pub fn read_variant_fields(plan: &plan::Enum, attribs: &Attrs) -> TokenStream {
     let discriminant_match_branches = plan.variants.iter().map(|variant| {
         let variant_name = &variant.ident;
         let discriminant_literal = &variant.discriminant_value;

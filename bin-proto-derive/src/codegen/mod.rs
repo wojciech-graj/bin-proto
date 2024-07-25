@@ -1,4 +1,5 @@
 pub mod enums;
+pub mod trait_impl;
 
 use crate::attr::{Attrs, Tag};
 use proc_macro2::TokenStream;
