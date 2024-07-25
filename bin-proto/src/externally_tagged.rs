@@ -16,7 +16,7 @@ macro_rules! test_externally_tagged {
             let bytes: &[u8] = $bytes.as_slice();
             assert_eq!(
                 <$t as $crate::ExternallyTaggedRead<_, _>>::read(
-                    &mut ::bitstream_io::BitReader::endian(bytes, bitstream_io::BigEndian),
+                    &mut ::bitstream_io::BitReader::endian(bytes, ::bitstream_io::BigEndian),
                     $crate::ByteOrder::BigEndian,
                     &mut (),
                     $value.len()
@@ -32,8 +32,8 @@ macro_rules! test_externally_tagged {
             let value: $t = $value;
             $crate::ProtocolWrite::<_>::write(
                 &value,
-                &mut ::bitstream_io::BitWriter::endian(&mut buffer, bitstream_io::BigEndian),
-                crate::ByteOrder::BigEndian,
+                &mut ::bitstream_io::BitWriter::endian(&mut buffer, ::bitstream_io::BigEndian),
+                $crate::ByteOrder::BigEndian,
                 &mut (),
             )
             .unwrap();

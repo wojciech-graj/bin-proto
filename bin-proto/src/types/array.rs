@@ -1,4 +1,4 @@
-use crate::{BitRead, BitWrite, ByteOrder, ProtocolRead, ProtocolWrite, Result};
+use crate::{util, BitRead, BitWrite, ByteOrder, ProtocolRead, ProtocolWrite, Result};
 use std::convert::TryInto;
 
 impl<Ctx, T, const N: usize> ProtocolRead<Ctx> for [T; N]
@@ -6,7 +6,7 @@ where
     T: ProtocolRead<Ctx> + std::fmt::Debug,
 {
     fn read(read: &mut dyn BitRead, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<Self> {
-        let elements = crate::util::read_items(N, read, byte_order, ctx)?;
+        let elements = util::read_items(N, read, byte_order, ctx)?;
         Ok(elements.into_iter().collect::<Vec<T>>().try_into().unwrap())
     }
 }
@@ -16,7 +16,7 @@ where
     T: ProtocolWrite<Ctx> + std::fmt::Debug,
 {
     fn write(&self, write: &mut dyn BitWrite, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<()> {
-        crate::util::write_items(self.iter(), write, byte_order, ctx)
+        util::write_items(self.iter(), write, byte_order, ctx)
     }
 }
 

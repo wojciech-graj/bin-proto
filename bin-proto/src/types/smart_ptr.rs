@@ -60,7 +60,7 @@ macro_rules! impl_smart_ptr_type {
                 let mut data: Vec<u8> = Vec::new();
                 $crate::ProtocolWrite::write(
                     &$ty::new(7u8),
-                    &mut ::bitstream_io::BitWriter::endian(&mut data, bitstream_io::BigEndian),
+                    &mut ::bitstream_io::BitWriter::endian(&mut data, ::bitstream_io::BigEndian),
                     $crate::ByteOrder::BigEndian,
                     &mut (),
                 )

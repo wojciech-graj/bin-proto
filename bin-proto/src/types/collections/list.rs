@@ -10,7 +10,7 @@ macro_rules! impl_list_type {
                     ctx: &mut Ctx,
                     tag: Tag,
                     ) -> $crate::Result<Self> {
-                let elements = $crate::util::read_items(tag.try_into().map_err(|_| crate::Error::TagConvert)?, read, byte_order, ctx)?;
+                let elements = $crate::util::read_items(tag.try_into().map_err(|_| $crate::Error::TagConvert)?, read, byte_order, ctx)?;
                 Ok(elements.into_iter().collect())
             }
         }

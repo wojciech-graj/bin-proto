@@ -11,11 +11,11 @@ pub trait ProtocolRead<Ctx = ()>: Sized {
     /// Parses a new value from its raw byte representation with additional context.
     fn from_bytes_ctx(bytes: &[u8], byte_order: ByteOrder, ctx: &mut Ctx) -> Result<Self> {
         match byte_order {
-            crate::ByteOrder::LittleEndian => {
+            ByteOrder::LittleEndian => {
                 let mut buffer = BitReader::endian(io::Cursor::new(bytes), LittleEndian);
                 Self::read(&mut buffer, byte_order, ctx)
             }
-            crate::ByteOrder::BigEndian => {
+            ByteOrder::BigEndian => {
                 let mut buffer = BitReader::endian(io::Cursor::new(bytes), BigEndian);
                 Self::read(&mut buffer, byte_order, ctx)
             }
@@ -32,12 +32,12 @@ pub trait ProtocolWrite<Ctx = ()> {
     fn bytes_ctx(&self, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<Vec<u8>> {
         let mut data = Vec::new();
         match byte_order {
-            crate::ByteOrder::LittleEndian => {
+            ByteOrder::LittleEndian => {
                 let mut writer = BitWriter::endian(&mut data, LittleEndian);
                 self.write(&mut writer, byte_order, ctx)?;
                 writer.byte_align()?;
             }
-            crate::ByteOrder::BigEndian => {
+            ByteOrder::BigEndian => {
                 let mut writer = BitWriter::endian(&mut data, BigEndian);
                 self.write(&mut writer, byte_order, ctx)?;
                 writer.byte_align()?;
