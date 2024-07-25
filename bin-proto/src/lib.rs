@@ -24,7 +24,7 @@
 //!     enum_: E,
 //!     #[protocol(write_value = "self.arr.len() as u8")]
 //!     arr_len: u8,
-//!     #[protocol(length = "arr_len as usize")]
+//!     #[protocol(tag = "arr_len as usize")]
 //!     arr: Vec<u8>,
 //!     #[protocol(flexible_array_member)]
 //!     read_to_end: Vec<u8>,
@@ -125,7 +125,7 @@ pub use self::protocol::ProtocolNoCtx;
 /// struct ReadToEnd(#[protocol(flexible_array_member)] Vec<u8>);
 /// ```
 ///
-/// ## `#[protocol(length = "<expr>")]`
+/// ## `#[protocol(tag = "<expr>")]`
 /// - Applies to: `impl ExternallyTagged`
 /// - `<expr>`: arbitrary `usize` expression. Fields in parent container can be
 ///   used without prefixing them with `self`.
@@ -138,7 +138,7 @@ pub use self::protocol::ProtocolNoCtx;
 /// pub struct WithElementsLength {
 ///     pub count: u32,
 ///     pub foo: bool,
-///     #[protocol(length = "count as usize")]
+///     #[protocol(tag = "count as usize")]
 ///     pub data: Vec<u32>,
 /// }
 /// ```
@@ -157,7 +157,7 @@ pub use self::protocol::ProtocolNoCtx;
 ///     #[protocol(write_value = "self.data.len() as u32")]
 ///     pub count: u32,
 ///     pub foo: bool,
-///     #[protocol(length = "count as usize")]
+///     #[protocol(tag = "count as usize")]
 ///     pub data: Vec<u32>,
 /// }
 /// ```
@@ -273,7 +273,7 @@ pub extern crate bitstream_io;
 /// struct MutuallyExclusiveAttrs {
 ///     pub length: u8,
 ///     #[protocol(flexible_array_member)]
-///     #[protocol(length = "length as usize")]
+///     #[protocol(tag = "length as usize")]
 ///     pub reason: String,
 /// }
 /// ```

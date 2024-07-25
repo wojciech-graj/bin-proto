@@ -1,17 +1,17 @@
 macro_rules! impl_map_type {
     ( $ty:ident => K: $( $k_pred:ident ),+ ) => {
-        impl<Ctx, K, V> crate::ExternallyTagged<Ctx> for $ty<K, V>
+        impl<Ctx, K, V> crate::ExternallyTagged<usize, Ctx> for $ty<K, V>
             where K: crate::Protocol<Ctx> + $( $k_pred +)+,
                   V: crate::Protocol<Ctx>
         {
             fn read(read: &mut dyn crate::BitRead,
                     byte_order: crate::ByteOrder,
                     ctx: &mut Ctx,
-                    length: usize,
+                    tag: usize,
                     ) -> crate::Result<Self> {
                 let mut map = $ty::new();
 
-                for _ in 0..length {
+                for _ in 0..tag {
                     let key = K::read(read, byte_order, ctx)?;
                     let value = V::read(read, byte_order, ctx)?;
 

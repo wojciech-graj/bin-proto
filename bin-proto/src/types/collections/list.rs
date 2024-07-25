@@ -1,14 +1,14 @@
 macro_rules! impl_list_type {
     ( $ty:ident => T: $( $ty_pred:ident ),* ) => {
-        impl<Ctx, T> crate::ExternallyTagged<Ctx> for $ty<T>
+        impl<Ctx, T> crate::ExternallyTagged<usize, Ctx> for $ty<T>
             where T: $crate::Protocol<Ctx> $( + $ty_pred )*
         {
             fn read(read: &mut dyn crate::BitRead,
                     byte_order: crate::ByteOrder,
                     ctx: &mut Ctx,
-                    length: usize,
+                    tag: usize,
                     ) -> crate::Result<Self> {
-                let elements = crate::util::read_items(length, read, byte_order, ctx)?;
+                let elements = crate::util::read_items(tag, read, byte_order, ctx)?;
                 Ok(elements.into_iter().collect())
             }
 

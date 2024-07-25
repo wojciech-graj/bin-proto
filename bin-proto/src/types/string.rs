@@ -1,13 +1,13 @@
 use crate::{util, BitRead, BitWrite, ByteOrder, ExternallyTagged, FlexibleArrayMember, Result};
 
-impl<Ctx> ExternallyTagged<Ctx> for String {
+impl<Ctx> ExternallyTagged<usize, Ctx> for String {
     fn read(
         read: &mut dyn BitRead,
         byte_order: ByteOrder,
         ctx: &mut Ctx,
-        length: usize,
+        tag: usize,
     ) -> Result<Self> {
-        let bytes: Vec<u8> = util::read_items(length, read, byte_order, ctx)?.collect();
+        let bytes: Vec<u8> = util::read_items(tag, read, byte_order, ctx)?.collect();
 
         Ok(String::from_utf8(bytes)?)
     }

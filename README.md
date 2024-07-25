@@ -50,7 +50,7 @@ struct S {
     enum_: E,
     #[protocol(write_value = "self.arr.len() as u8")]
     arr_len: u8,
-    #[protocol(length = "arr_len as usize")]
+    #[protocol(tag = "arr_len as usize")]
     arr: Vec<u8>,
     #[protocol(flexible_array_member)]
     read_to_end: Vec<u8>,

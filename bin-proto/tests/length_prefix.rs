@@ -9,7 +9,7 @@ pub struct Prefix {
 pub struct WithElementsLength {
     pub count: u32,
     pub foo: bool,
-    #[protocol(length = "count as usize")]
+    #[protocol(tag = "count as usize")]
     pub data: Vec<u32>,
 }
 
@@ -18,7 +18,7 @@ pub struct WithElementsLengthAuto {
     #[protocol(write_value = "self.data.len() as u32")]
     pub count: u32,
     pub foo: bool,
-    #[protocol(length = "count as usize")]
+    #[protocol(tag = "count as usize")]
     pub data: Vec<u32>,
 }
 
@@ -30,7 +30,7 @@ pub enum WithElementsLengthAutoEnum {
         #[protocol(write_value = "data.len() as u32")]
         count: u32,
         foo: bool,
-        #[protocol(length = "count as usize")]
+        #[protocol(tag = "count as usize")]
         data: Vec<u32>,
     },
 }

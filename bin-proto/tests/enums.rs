@@ -10,7 +10,7 @@ pub enum Enum<'a, T: Protocol> {
     Variant1 {
         a: T,
         len: u8,
-        #[protocol(length = "len as usize")]
+        #[protocol(tag = "len as usize")]
         arr: Vec<u8>,
     },
     #[protocol(discriminant = "2")]

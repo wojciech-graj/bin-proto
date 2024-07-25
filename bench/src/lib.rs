@@ -12,7 +12,7 @@ mod vec {
         struct V {
             #[protocol(write_value = "self.data.len() as u8")]
             count: u8,
-            #[protocol(length = "count as usize")]
+            #[protocol(tag = "count as usize")]
             data: Vec<u8>,
         }
 

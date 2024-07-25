@@ -10,7 +10,7 @@ pub struct Attrs {
     pub write_value: Option<syn::Expr>,
     pub bits: Option<u32>,
     pub flexible_array_member: bool,
-    pub length: Option<syn::Expr>,
+    pub tag: Option<syn::Expr>,
 }
 
 impl Attrs {
@@ -45,7 +45,7 @@ impl Attrs {
                 "unexpected flexible_array_member attribute for enum",
             ));
         }
-        if self.length.is_some() {
+        if self.tag.is_some() {
             return Err(Error::new(span, "unexpected length attribute for enum"));
         }
         Ok(())
@@ -82,7 +82,7 @@ impl Attrs {
                 "unexpected flexible_array_member attribute for variant",
             ));
         }
-        if self.length.is_some() {
+        if self.tag.is_some() {
             return Err(Error::new(span, "unexpected length attribute for variant"));
         }
         Ok(())
@@ -113,7 +113,7 @@ impl Attrs {
         if [
             self.bits.is_some(),
             self.flexible_array_member,
-            self.length.is_some(),
+            self.tag.is_some(),
         ]
         .iter()
         .filter(|b| **b)
@@ -178,9 +178,7 @@ impl TryFrom<&[syn::Attribute]> for Attrs {
                             "write_value" => {
                                 attribs.write_value = Some(meta_name_value_to_parse(name_value)?)
                             }
-                            "length" => {
-                                attribs.length = Some(meta_name_value_to_parse(name_value)?)
-                            }
+                            "tag" => attribs.tag = Some(meta_name_value_to_parse(name_value)?),
                             _ => {
                                 return Err(Error::new(meta_list.span(), "unrecognised attribute"))
                             }
