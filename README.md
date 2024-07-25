@@ -125,7 +125,7 @@ WithCtx(NeedsCtx)
 
 This crate's main alternative is [deku](https://crates.io/crates/deku), and [binrw](https://crates.io/crates/binrw) for byte-level protocols.
 
-`bin-proto` is significantly faster than `deku` in almost most of the tested scenarios.
+`bin-proto` is significantly faster than `deku` in most of the tested scenarios.
 The units for the below table are `ns`, taken from
 [github CI](https://github.com/wojciech-graj/bin-proto/actions/runs/10098075855/job/27924670834).
 You can find the benchmarks in the `bench` directory.
