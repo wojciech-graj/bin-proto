@@ -24,7 +24,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-bin-proto = "0.4"
+bin-proto = "0.5"
 ```
 
 And then define a type with the `#[derive(bin_proto::ProtocolRead, bin_proto::ProtocolWrite)]` attributes.
@@ -125,15 +125,15 @@ WithCtx(NeedsCtx)
 
 This crate's main alternative is [deku](https://crates.io/crates/deku), and [binrw](https://crates.io/crates/binrw) for byte-level protocols.
 
-`bin-proto` is significantly faster than `deku` in all of the tested scenarios.
-The units for the below table are `ns/iter`, taken from
-[github CI](https://github.com/wojciech-graj/bin-proto/actions/runs/9143081499/job/25139334328).
+`bin-proto` is significantly faster than `deku` in almost most of the tested scenarios.
+The units for the below table are `ns`, taken from
+[github CI](https://github.com/wojciech-graj/bin-proto/actions/runs/10098075855/job/27924670834).
 You can find the benchmarks in the `bench` directory.
 
 |             | Read `enum` | Write `enum` | Read `Vec` | Write `Vec` | Read IPv4 header | Write IPv4 header |
 |-------------|-------------|--------------|------------|-------------|------------------|-------------------|
-| `bin-proto` | 21          | 93           | 738        | 821         | 151              | 141               |
-| `deku`      | 67          | 227          | 3,041      | 9,705       | 2,468            | 821               |
+| `bin-proto` | 29          | 62           | 1,327      | 557         | 173              | 138               |
+| `deku`      | 1           | 92           | 582        | 937         | 3,234            | 633               |
 
 ## Roadmap
 
