@@ -1,11 +1,11 @@
 use std::marker::PhantomData;
 
-use bin_proto::{ByteOrder, Protocol, ProtocolNoCtx};
+use bin_proto::{ByteOrder, ProtocolNoCtx, ProtocolRead, ProtocolWrite};
 
-#[derive(Debug, bin_proto::Protocol, PartialEq)]
+#[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq)]
 #[protocol(discriminant_type = "u8")]
 #[protocol(ctx = "()")]
-pub enum Enum<'a, T: Protocol> {
+pub enum Enum<'a, T: ProtocolRead + ProtocolWrite> {
     #[protocol(discriminant = "1")]
     Variant1 {
         a: T,

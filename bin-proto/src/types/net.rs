@@ -1,30 +1,34 @@
 use std::net::{Ipv4Addr, Ipv6Addr};
 
-use crate::{BitRead, BitWrite, ByteOrder, Protocol, Result};
+use crate::{BitRead, BitWrite, ByteOrder, ProtocolRead, ProtocolWrite, Result};
 
-impl<Ctx> Protocol<Ctx> for Ipv4Addr {
+impl<Ctx> ProtocolRead<Ctx> for Ipv4Addr {
     fn read(read: &mut dyn BitRead, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<Self> {
-        let bytes: [u8; 4] = Protocol::read(read, byte_order, ctx)?;
+        let bytes: [u8; 4] = ProtocolRead::read(read, byte_order, ctx)?;
 
         Ok(Self::new(bytes[0], bytes[1], bytes[2], bytes[3]))
     }
+}
 
+impl<Ctx> ProtocolWrite<Ctx> for Ipv4Addr {
     fn write(&self, write: &mut dyn BitWrite, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<()> {
-        Protocol::write(&self.octets(), write, byte_order, ctx)
+        ProtocolWrite::write(&self.octets(), write, byte_order, ctx)
     }
 }
 
-impl<Ctx> Protocol<Ctx> for Ipv6Addr {
+impl<Ctx> ProtocolRead<Ctx> for Ipv6Addr {
     fn read(read: &mut dyn BitRead, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<Self> {
-        let bytes: [u16; 8] = Protocol::read(read, byte_order, ctx)?;
+        let bytes: [u16; 8] = ProtocolRead::read(read, byte_order, ctx)?;
 
         Ok(Self::new(
             bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
         ))
     }
+}
 
+impl<Ctx> ProtocolWrite<Ctx> for Ipv6Addr {
     fn write(&self, write: &mut dyn BitWrite, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<()> {
-        Protocol::write(&self.octets(), write, byte_order, ctx)
+        ProtocolWrite::write(&self.octets(), write, byte_order, ctx)
     }
 }
 
@@ -37,7 +41,7 @@ mod tests {
     #[test]
     fn read_ipv4_addr() {
         assert_eq!(
-            <Ipv4Addr as Protocol>::read(
+            <Ipv4Addr as ProtocolRead>::read(
                 &mut BitReader::endian([192u8, 168, 1, 0].as_slice(), BigEndian),
                 ByteOrder::BigEndian,
                 &mut ()
@@ -50,7 +54,7 @@ mod tests {
     #[test]
     fn write_ipv4_addr() {
         let mut data: Vec<u8> = Vec::new();
-        Protocol::write(
+        ProtocolWrite::write(
             &Ipv4Addr::new(192, 168, 1, 0),
             &mut BitWriter::endian(&mut data, BigEndian),
             ByteOrder::BigEndian,
@@ -63,7 +67,7 @@ mod tests {
     #[test]
     fn read_ipv6_addr() {
         assert_eq!(
-            <Ipv6Addr as Protocol>::read(
+            <Ipv6Addr as ProtocolRead>::read(
                 &mut BitReader::endian(
                     [
                         0x20, 0x01, 0x0d, 0xb8, 0x85, 0xa3, 0x00, 0x00, 0x00, 0x00, 0x8a, 0x2e,
@@ -83,7 +87,7 @@ mod tests {
     #[test]
     fn write_ipv6_addr() {
         let mut data: Vec<u8> = Vec::new();
-        Protocol::write(
+        ProtocolWrite::write(
             &Ipv6Addr::new(
                 0x2001, 0x0db8, 0x85a3, 0x0000, 0x0000, 0x8a2e, 0x0370, 0x7334,
             ),

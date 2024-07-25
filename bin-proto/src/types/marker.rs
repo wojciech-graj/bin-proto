@@ -1,21 +1,25 @@
-use crate::{BitRead, BitWrite, ByteOrder, Protocol, Result};
+use crate::{BitRead, BitWrite, ByteOrder, ProtocolRead, ProtocolWrite, Result};
 use std::marker::{PhantomData, PhantomPinned};
 
-impl<Ctx, T> Protocol<Ctx> for PhantomData<T> {
+impl<Ctx, T> ProtocolRead<Ctx> for PhantomData<T> {
     fn read(_: &mut dyn BitRead, _: ByteOrder, _: &mut Ctx) -> Result<Self> {
         Ok(PhantomData)
     }
+}
 
+impl<Ctx, T> ProtocolWrite<Ctx> for PhantomData<T> {
     fn write(&self, _: &mut dyn BitWrite, _: ByteOrder, _: &mut Ctx) -> Result<()> {
         Ok(())
     }
 }
 
-impl<Ctx> Protocol<Ctx> for PhantomPinned {
+impl<Ctx> ProtocolRead<Ctx> for PhantomPinned {
     fn read(_: &mut dyn BitRead, _: ByteOrder, _: &mut Ctx) -> Result<Self> {
         Ok(PhantomPinned)
     }
+}
 
+impl<Ctx> ProtocolWrite<Ctx> for PhantomPinned {
     fn write(&self, _: &mut dyn BitWrite, _: ByteOrder, _: &mut Ctx) -> Result<()> {
         Ok(())
     }

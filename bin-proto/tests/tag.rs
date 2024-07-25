@@ -1,11 +1,11 @@
-use bin_proto::{ByteOrder, Protocol, ProtocolNoCtx};
+use bin_proto::{ByteOrder, ProtocolNoCtx, ProtocolRead, ProtocolWrite};
 
-#[derive(Protocol, Debug, PartialEq, Eq)]
+#[derive(ProtocolRead, ProtocolWrite, Debug, PartialEq, Eq)]
 pub struct Prefix {
     pub reason_length: u8,
 }
 
-#[derive(Protocol, Debug, PartialEq, Eq)]
+#[derive(ProtocolRead, ProtocolWrite, Debug, PartialEq, Eq)]
 pub struct WithElementsLength {
     pub count: u32,
     pub foo: bool,
@@ -13,7 +13,7 @@ pub struct WithElementsLength {
     pub data: Vec<u32>,
 }
 
-#[derive(Protocol, Debug, PartialEq, Eq)]
+#[derive(ProtocolRead, ProtocolWrite, Debug, PartialEq, Eq)]
 pub struct WithElementsLengthAuto {
     #[protocol(write_value = "self.data.len() as u32")]
     pub count: u32,
@@ -22,7 +22,7 @@ pub struct WithElementsLengthAuto {
     pub data: Vec<u32>,
 }
 
-#[derive(Protocol, Debug, PartialEq, Eq)]
+#[derive(ProtocolRead, ProtocolWrite, Debug, PartialEq, Eq)]
 #[protocol(discriminant_type = "u8")]
 pub enum WithElementsLengthAutoEnum {
     #[protocol(discriminant = "1")]
@@ -35,7 +35,7 @@ pub enum WithElementsLengthAutoEnum {
     },
 }
 
-#[derive(Protocol, Debug, PartialEq, Eq)]
+#[derive(ProtocolRead, ProtocolWrite, Debug, PartialEq, Eq)]
 pub struct Prepended {
     #[protocol(tag(type = "u32", value = "self.data.len() as u32"))]
     pub data: Vec<u32>,

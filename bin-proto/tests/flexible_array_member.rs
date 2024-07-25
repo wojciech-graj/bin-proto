@@ -1,7 +1,6 @@
-use bin_proto::ByteOrder;
-use bin_proto::ProtocolNoCtx;
+use bin_proto::{ByteOrder, ProtocolNoCtx, ProtocolRead, ProtocolWrite};
 
-#[derive(Debug, bin_proto::Protocol, PartialEq)]
+#[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq)]
 struct WithFlexibleArrayMember(#[protocol(flexible_array_member)] Vec<u8>);
 
 #[test]

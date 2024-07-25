@@ -1,39 +1,41 @@
 use std::marker::PhantomData;
 
-use bin_proto::{ByteOrder, Protocol, ProtocolNoCtx};
+use bin_proto::{ByteOrder, ProtocolNoCtx, ProtocolRead, ProtocolWrite};
 
-#[derive(Protocol, Debug, PartialEq, Eq)]
+#[derive(ProtocolRead, ProtocolWrite, Debug, PartialEq, Eq)]
 pub struct Foobar {
     a: u8,
     b: u8,
     c: u8,
 }
 
-#[derive(Protocol, Debug, PartialEq, Eq)]
+#[derive(ProtocolRead, ProtocolWrite, Debug, PartialEq, Eq)]
 pub struct BizBong(u8, u8, pub u8);
 
-#[derive(Protocol, Debug, PartialEq, Eq)]
+#[derive(ProtocolRead, ProtocolWrite, Debug, PartialEq, Eq)]
 pub struct PartyInTheFront;
 
-#[derive(Protocol, Debug, PartialEq, Eq)]
+#[derive(ProtocolRead, ProtocolWrite, Debug, PartialEq, Eq)]
 #[protocol(ctx = "()")]
-pub struct NamedFieldsWithGenerics<A: Protocol, D: Protocol> {
+pub struct NamedFieldsWithGenerics<A: ProtocolRead + ProtocolWrite, D: ProtocolRead + ProtocolWrite>
+{
     pub value: A,
     pub del: D,
 }
 
-#[derive(Protocol, Debug, PartialEq, Eq)]
+#[derive(ProtocolRead, ProtocolWrite, Debug, PartialEq, Eq)]
 #[protocol(ctx = "Ctx")]
-pub struct UnnamedFieldsWithGenerics<Ctx, A: Protocol<Ctx>, D: Protocol<Ctx>>(
-    A,
-    D,
-    PhantomData<Ctx>,
-);
+pub struct UnnamedFieldsWithGenerics<
+    Ctx,
+    A: ProtocolRead<Ctx> + ProtocolWrite<Ctx>,
+    D: ProtocolRead<Ctx> + ProtocolWrite<Ctx>,
+>(A, D, PhantomData<Ctx>);
 
-#[derive(Protocol, Debug, PartialEq, Eq)]
+#[derive(ProtocolRead, ProtocolWrite, Debug, PartialEq, Eq)]
 #[protocol(ctx = "()")]
-pub struct StructWithExistingBoundedGenerics<A: ::std::fmt::Display + ::std::fmt::Debug + Protocol>
-{
+pub struct StructWithExistingBoundedGenerics<
+    A: ::std::fmt::Display + ::std::fmt::Debug + ProtocolRead + ProtocolWrite,
+> {
     foo: A,
 }
 
@@ -94,7 +96,7 @@ fn unit_structs_are_correctly_read() {
 
 #[test]
 fn ipv4() {
-    #[derive(Debug, bin_proto::Protocol, PartialEq, Eq)]
+    #[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq, Eq)]
     struct IPv4Header {
         #[protocol(bits = 4)]
         version: u8,

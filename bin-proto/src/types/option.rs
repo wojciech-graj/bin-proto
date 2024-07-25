@@ -1,11 +1,10 @@
 use crate::{
-    BitRead, BitWrite, ByteOrder, Error, ExternallyTaggedRead, ExternallyTaggedWrite, Protocol,
-    Result,
+    BitRead, BitWrite, ByteOrder, Error, ExternallyTaggedRead, ProtocolRead, ProtocolWrite, Result,
 };
 
 impl<Tag, Ctx, T> ExternallyTaggedRead<Tag, Ctx> for Option<T>
 where
-    T: Protocol<Ctx>,
+    T: ProtocolRead<Ctx>,
     Tag: TryInto<bool>,
 {
     fn read(
@@ -23,9 +22,9 @@ where
     }
 }
 
-impl<Ctx, T> ExternallyTaggedWrite<Ctx> for Option<T>
+impl<Ctx, T> ProtocolWrite<Ctx> for Option<T>
 where
-    T: Protocol<Ctx>,
+    T: ProtocolWrite<Ctx>,
 {
     fn write(&self, write: &mut dyn BitWrite, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<()> {
         if let Some(ref value) = *self {
@@ -72,7 +71,7 @@ mod tests {
     #[test]
     fn can_write_some() {
         let mut data: Vec<u8> = Vec::new();
-        ExternallyTaggedWrite::write(
+        ProtocolWrite::write(
             &Some(5u8),
             &mut BitWriter::endian(&mut data, BigEndian),
             ByteOrder::BigEndian,
@@ -85,7 +84,7 @@ mod tests {
     #[test]
     fn can_write_none() {
         let mut data: Vec<u8> = Vec::new();
-        ExternallyTaggedWrite::write(
+        ProtocolWrite::write(
             &None::<u8>,
             &mut BitWriter::endian(&mut data, BigEndian),
             ByteOrder::BigEndian,

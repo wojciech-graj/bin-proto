@@ -9,55 +9,80 @@ use attr::Attrs;
 use proc_macro2::{Span, TokenStream};
 use syn::punctuated::Punctuated;
 
-#[proc_macro_derive(Protocol, attributes(protocol))]
-pub fn protocol(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    let ast: syn::DeriveInput = syn::parse(input).expect("Failed to parse input");
-    impl_protocol(&ast).into()
+enum ProtocolType {
+    Read,
+    Write,
 }
 
-fn impl_protocol(ast: &syn::DeriveInput) -> TokenStream {
+#[proc_macro_derive(ProtocolRead, attributes(protocol))]
+pub fn protocol_read(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let ast: syn::DeriveInput = syn::parse(input).expect("Failed to parse input");
+    impl_protocol(&ast, ProtocolType::Read).into()
+}
+
+#[proc_macro_derive(ProtocolWrite, attributes(protocol))]
+pub fn protocol_write(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let ast: syn::DeriveInput = syn::parse(input).expect("Failed to parse input");
+    impl_protocol(&ast, ProtocolType::Write).into()
+}
+
+fn impl_protocol(ast: &syn::DeriveInput, protocol_type: ProtocolType) -> TokenStream {
     match ast.data {
-        syn::Data::Struct(ref s) => impl_parcel_for_struct(ast, s),
-        syn::Data::Enum(ref e) => impl_parcel_for_enum(ast, e),
+        syn::Data::Struct(ref s) => impl_parcel_for_struct(ast, s, protocol_type),
+        syn::Data::Enum(ref e) => impl_parcel_for_enum(ast, e, protocol_type),
         syn::Data::Union(..) => unimplemented!("Protocol is unimplemented on Unions"),
     }
 }
 
-fn impl_parcel_for_struct(ast: &syn::DeriveInput, strukt: &syn::DataStruct) -> TokenStream {
+fn impl_parcel_for_struct(
+    ast: &syn::DeriveInput,
+    strukt: &syn::DataStruct,
+    protocol_type: ProtocolType,
+) -> TokenStream {
     let attribs = match Attrs::try_from(ast.attrs.as_slice()) {
         Ok(attribs) => attribs,
         Err(e) => return e.to_compile_error(),
     };
-    let (reads, initializers) = codegen::reads(&strukt.fields, &attribs);
-    let writes = codegen::writes(&strukt.fields, true);
 
     let ctx_ty = attribs.ctx_ty();
 
-    impl_protocol_for(
-        ast,
-        quote!(
-            #[allow(unused_variables)]
-            fn read(__io_reader: &mut dyn ::bin_proto::BitRead,
-                    __byte_order: ::bin_proto::ByteOrder,
-                    __ctx: &mut #ctx_ty)
-                    -> ::bin_proto::Result<Self> {
-                #reads
-                Ok(Self #initializers)
-            }
+    let impl_body = match protocol_type {
+        ProtocolType::Read => {
+            let (reads, initializers) = codegen::reads(&strukt.fields, &attribs);
+            quote!(
+                #[allow(unused_variables)]
+                fn read(__io_reader: &mut dyn ::bin_proto::BitRead,
+                        __byte_order: ::bin_proto::ByteOrder,
+                        __ctx: &mut #ctx_ty)
+                        -> ::bin_proto::Result<Self> {
+                    #reads
+                    Ok(Self #initializers)
+                }
+            )
+        }
+        ProtocolType::Write => {
+            let writes = codegen::writes(&strukt.fields, true);
+            quote!(
+                #[allow(unused_variables)]
+                fn write(&self, __io_writer: &mut dyn ::bin_proto::BitWrite,
+                         __byte_order: ::bin_proto::ByteOrder,
+                         __ctx: &mut #ctx_ty)
+                         -> ::bin_proto::Result<()> {
+                    #writes
+                    Ok(())
+                }
+            )
+        }
+    };
 
-            #[allow(unused_variables)]
-            fn write(&self, __io_writer: &mut dyn ::bin_proto::BitWrite,
-                     __byte_order: ::bin_proto::ByteOrder,
-                     __ctx: &mut #ctx_ty)
-                     -> ::bin_proto::Result<()> {
-                #writes
-                Ok(())
-            }
-        ),
-    )
+    impl_protocol_for(ast, impl_body, protocol_type)
 }
 
-fn impl_parcel_for_enum(ast: &syn::DeriveInput, e: &syn::DataEnum) -> TokenStream {
+fn impl_parcel_for_enum(
+    ast: &syn::DeriveInput,
+    e: &syn::DataEnum,
+    protocol_type: ProtocolType,
+) -> TokenStream {
     let plan = match plan::Enum::try_new(ast, e) {
         Ok(plan) => plan,
         Err(e) => return e.to_compile_error(),
@@ -69,75 +94,83 @@ fn impl_parcel_for_enum(ast: &syn::DeriveInput, e: &syn::DataEnum) -> TokenStrea
     let discriminant_ty = &plan.discriminant_ty;
     let ctx_ty = attribs.ctx_ty();
 
-    let (read_variant, write_variant) = if let Some(field_width) = attribs.bits {
-        (
-            codegen::enums::read_variant(
-                &plan,
-                quote!(::bin_proto::BitField::<#ctx_ty>::read(
+    let impl_body = match protocol_type {
+        ProtocolType::Read => {
+            let read_variant = if let Some(field_width) = attribs.bits {
+                codegen::enums::read_variant(
+                    &plan,
+                    quote!(::bin_proto::BitFieldRead::<#ctx_ty>::read(
                     __io_reader,
                     __byte_order,
                     __ctx,
                     #field_width,
                 )?),
-                &attribs,
-            ),
-            codegen::enums::write_variant(&plan, &|variant| {
-                let discriminant_expr = &variant.discriminant_value;
-                let error_message = format!(
-                    "Discriminant for variant '{}' does not fit in bitfield with width {}.",
-                    variant.ident, field_width
-                );
-
-                quote!(
-                    const _: () = ::std::assert!(#discriminant_expr < (1 as #discriminant_ty) << #field_width, #error_message);
-                    <#discriminant_ty as ::bin_proto::BitField<#ctx_ty>>::write(&{#discriminant_expr}, __io_writer, __byte_order, __ctx, #field_width)?;
+                    &attribs,
                 )
-            }),
-        )
-    } else {
-        (
-            codegen::enums::read_variant(
-                &plan,
-                quote!(::bin_proto::Protocol::<#ctx_ty>::read(
+            } else {
+                codegen::enums::read_variant(
+                    &plan,
+                    quote!(::bin_proto::ProtocolRead::<#ctx_ty>::read(
                     __io_reader,
                     __byte_order,
                     __ctx
                 )?),
-                &attribs,
-            ),
-            codegen::enums::write_variant(&plan, &|variant| {
-                let discriminant_expr = &variant.discriminant_value;
-                quote!( <#discriminant_ty as ::bin_proto::Protocol<#ctx_ty>>::write(&{#discriminant_expr}, __io_writer, __byte_order, __ctx)?; )
-            }),
-        )
+                    &attribs,
+                )
+            };
+            quote!(
+                #[allow(unused_variables)]
+                fn read(__io_reader: &mut dyn ::bin_proto::BitRead,
+                        __byte_order: ::bin_proto::ByteOrder,
+                        __ctx: &mut #ctx_ty)
+                        -> ::bin_proto::Result<Self> {
+
+                    Ok(#read_variant)
+                }
+            )
+        }
+        ProtocolType::Write => {
+            let write_variant = if let Some(field_width) = attribs.bits {
+                codegen::enums::write_variant(&plan, &|variant| {
+                    let discriminant_expr = &variant.discriminant_value;
+                    let error_message = format!(
+                        "Discriminant for variant '{}' does not fit in bitfield with width {}.",
+                        variant.ident, field_width
+                    );
+
+                    quote!(
+                        const _: () = ::std::assert!(#discriminant_expr < (1 as #discriminant_ty) << #field_width, #error_message);
+                        <#discriminant_ty as ::bin_proto::BitFieldWrite<#ctx_ty>>::write(&{#discriminant_expr}, __io_writer, __byte_order, __ctx, #field_width)?;
+                    )
+                })
+            } else {
+                codegen::enums::write_variant(&plan, &|variant| {
+                    let discriminant_expr = &variant.discriminant_value;
+                    quote!( <#discriminant_ty as ::bin_proto::ProtocolWrite<#ctx_ty>>::write(&{#discriminant_expr}, __io_writer, __byte_order, __ctx)?; )
+                })
+            };
+            quote!(
+                #[allow(unused_variables)]
+                fn write(&self,
+                         __io_writer: &mut dyn ::bin_proto::BitWrite,
+                         __byte_order: ::bin_proto::ByteOrder,
+                         __ctx: &mut #ctx_ty)
+                         -> ::bin_proto::Result<()> {
+                    #write_variant
+                    Ok(())
+                }
+            )
+        }
     };
 
-    impl_protocol_for(
-        ast,
-        quote!(
-            #[allow(unused_variables)]
-            fn read(__io_reader: &mut dyn ::bin_proto::BitRead,
-                    __byte_order: ::bin_proto::ByteOrder,
-                    __ctx: &mut #ctx_ty)
-                    -> ::bin_proto::Result<Self> {
-
-                Ok(#read_variant)
-            }
-
-            #[allow(unused_variables)]
-            fn write(&self,
-                     __io_writer: &mut dyn ::bin_proto::BitWrite,
-                     __byte_order: ::bin_proto::ByteOrder,
-                     __ctx: &mut #ctx_ty)
-                     -> ::bin_proto::Result<()> {
-                #write_variant
-                Ok(())
-            }
-        ),
-    )
+    impl_protocol_for(ast, impl_body, protocol_type)
 }
 
-fn impl_protocol_for(ast: &syn::DeriveInput, impl_body: TokenStream) -> TokenStream {
+fn impl_protocol_for(
+    ast: &syn::DeriveInput,
+    impl_body: TokenStream,
+    protocol_type: ProtocolType,
+) -> TokenStream {
     let name = &ast.ident;
     let attribs = match Attrs::try_from(ast.attrs.as_slice()) {
         Ok(attribs) => attribs,
@@ -147,10 +180,15 @@ fn impl_protocol_for(ast: &syn::DeriveInput, impl_body: TokenStream) -> TokenStr
     let generics = &ast.generics;
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
+    let trait_name = match protocol_type {
+        ProtocolType::Read => quote!(ProtocolRead),
+        ProtocolType::Write => quote!(ProtocolWrite),
+    };
+
     if let Some(ctx) = attribs.ctx {
         quote!(
             #[automatically_derived]
-            impl #impl_generics ::bin_proto::Protocol<#ctx> for #name #ty_generics #where_clause {
+            impl #impl_generics ::bin_proto::#trait_name<#ctx> for #name #ty_generics #where_clause {
                 #impl_body
             }
         )
@@ -169,7 +207,7 @@ fn impl_protocol_for(ast: &syn::DeriveInput, impl_body: TokenStream) -> TokenStr
         let (impl_generics, _, where_clause) = generics.split_for_impl();
         quote!(
             #[automatically_derived]
-            impl #impl_generics ::bin_proto::Protocol<__Ctx> for #name #ty_generics #where_clause {
+            impl #impl_generics ::bin_proto::#trait_name<__Ctx> for #name #ty_generics #where_clause {
                 #impl_body
             }
         )

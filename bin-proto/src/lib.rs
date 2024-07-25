@@ -5,8 +5,8 @@
 //! # Example
 //!
 //! ```
-//! # use bin_proto::{Protocol, ProtocolNoCtx};
-//! #[derive(Debug, Protocol, PartialEq)]
+//! # use bin_proto::{ProtocolRead, ProtocolWrite, ProtocolNoCtx};
+//! #[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq)]
 //! #[protocol(discriminant_type = "u8")]
 //! #[protocol(bits = 4)]
 //! enum E {
@@ -15,7 +15,7 @@
 //!     V4,
 //! }
 //!
-//! #[derive(Debug, Protocol, PartialEq)]
+//! #[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq)]
 //! struct S {
 //!     #[protocol(bits = 1)]
 //!     bitflag: bool,
@@ -51,15 +51,15 @@
 //! );
 //! ```
 
-pub use self::bit_field::BitField;
+pub use self::bit_field::{BitFieldRead, BitFieldWrite};
 pub use self::bit_read::BitRead;
 pub use self::bit_write::BitWrite;
 pub use self::byte_order::ByteOrder;
 pub use self::error::{Error, Result};
-pub use self::externally_tagged::{ExternallyTaggedRead, ExternallyTaggedWrite};
-pub use self::flexible_array_member::FlexibleArrayMember;
-pub use self::protocol::Protocol;
+pub use self::externally_tagged::ExternallyTaggedRead;
+pub use self::flexible_array_member::FlexibleArrayMemberRead;
 pub use self::protocol::ProtocolNoCtx;
+pub use self::protocol::{ProtocolRead, ProtocolWrite};
 
 /// Derive the `Protocol` trait.
 ///
@@ -73,8 +73,8 @@ pub use self::protocol::ProtocolNoCtx;
 /// representation of its discriminant.
 ///
 /// ```
-/// # use bin_proto::Protocol;
-/// #[derive(Protocol)]
+/// # use bin_proto::{ProtocolRead, ProtocolWrite};
+/// #[derive(ProtocolRead, ProtocolWrite)]
 /// #[protocol(discriminant_type = "u8")]
 /// enum Example {
 ///     Variant1 = 1,
@@ -87,8 +87,8 @@ pub use self::protocol::ProtocolNoCtx;
 /// - `<value>`: unique value of the discriminant's type
 ///
 /// ```
-/// # use bin_proto::Protocol;
-/// #[derive(Protocol)]
+/// # use bin_proto::{ProtocolRead, ProtocolWrite};
+/// #[derive(ProtocolRead, ProtocolWrite)]
 /// #[protocol(discriminant_type = "u8")]
 /// enum Example {
 ///     #[protocol(discriminant = "1")]
@@ -109,8 +109,8 @@ pub use self::protocol::ProtocolNoCtx;
 /// using bitfields, you almost always want a big endian stream.
 ///
 /// ```
-/// # use bin_proto::Protocol;
-/// #[derive(Protocol)]
+/// # use bin_proto::{ProtocolRead, ProtocolWrite};
+/// #[derive(ProtocolRead, ProtocolWrite)]
 /// struct Nibble(#[protocol(bits = 4)] u8);
 /// ```
 ///
@@ -121,8 +121,8 @@ pub use self::protocol::ProtocolNoCtx;
 /// prefix and should be read until eof.
 ///
 /// ```
-/// # use bin_proto::Protocol;
-/// #[derive(Protocol)]
+/// # use bin_proto::{ProtocolRead, ProtocolWrite};
+/// #[derive(ProtocolRead, ProtocolWrite)]
 /// struct ReadToEnd(#[protocol(flexible_array_member)] Vec<u8>);
 /// ```
 ///
@@ -134,8 +134,8 @@ pub use self::protocol::ProtocolNoCtx;
 /// Specify length of variable-length field.
 ///
 /// ```
-/// # use bin_proto::Protocol;
-/// #[derive(Protocol)]
+/// # use bin_proto::{ProtocolRead, ProtocolWrite};
+/// #[derive(ProtocolRead, ProtocolWrite)]
 /// pub struct WithElementsLength {
 ///     pub count: u32,
 ///     pub foo: bool,
@@ -152,8 +152,8 @@ pub use self::protocol::ProtocolNoCtx;
 /// Specify an expression that should be used as the field's value for writing.
 ///
 /// ```
-/// # use bin_proto::Protocol;
-/// #[derive(Protocol)]
+/// # use bin_proto::{ProtocolRead, ProtocolWrite};
+/// #[derive(ProtocolRead, ProtocolWrite)]
 /// pub struct WithElementsLengthAuto {
 ///     #[protocol(write_value = "self.data.len() as u32")]
 ///     pub count: u32,
@@ -171,12 +171,12 @@ pub use self::protocol::ProtocolNoCtx;
 /// Specify the type of context that will be passed to codec functions
 ///
 /// ```
-/// # use bin_proto::{ByteOrder, Protocol};
+/// # use bin_proto::{ByteOrder, ProtocolRead, ProtocolWrite};
 /// pub struct Ctx;
 ///
 /// pub struct NeedsCtx;
 ///
-/// impl Protocol<Ctx> for NeedsCtx {
+/// impl ProtocolRead<Ctx> for NeedsCtx {
 ///     fn read(
 ///         _read: &mut dyn bin_proto::BitRead,
 ///         _byte_order: bin_proto::ByteOrder,
@@ -185,7 +185,9 @@ pub use self::protocol::ProtocolNoCtx;
 ///         // Use ctx here
 ///         Ok(Self)
 ///     }
+/// }
 ///
+/// impl ProtocolWrite<Ctx> for NeedsCtx {
 ///     fn write(
 ///         &self,
 ///         _write: &mut dyn bin_proto::BitWrite,
@@ -197,7 +199,7 @@ pub use self::protocol::ProtocolNoCtx;
 ///     }
 /// }
 ///
-/// #[derive(Protocol)]
+/// #[derive(ProtocolRead, ProtocolWrite)]
 /// #[protocol(ctx = "Ctx")]
 /// pub struct WithCtx(NeedsCtx);
 ///
@@ -207,11 +209,11 @@ pub use self::protocol::ProtocolNoCtx;
 /// ```
 ///
 /// ```
-/// # use bin_proto::Protocol;
+/// # use bin_proto::{ProtocolRead, ProtocolWrite};
 /// # use std::marker::PhantomData;
-/// #[derive(Protocol)]
+/// #[derive(ProtocolRead, ProtocolWrite)]
 /// #[protocol(ctx = "Ctx")]
-/// pub struct NestedProtocol<Ctx, A: Protocol<Ctx>>(A, PhantomData<Ctx>);
+/// pub struct NestedProtocol<Ctx, A: ProtocolRead<Ctx> + ProtocolWrite<Ctx>>(A, PhantomData<Ctx>);
 /// ```
 ///
 /// ## `[#protocol(ctx_bounds = "<bounds>")]`
@@ -221,12 +223,12 @@ pub use self::protocol::ProtocolNoCtx;
 /// Specify the trait bounds of context that will be passed to codec functions
 ///
 /// ```
-/// # use bin_proto::{ByteOrder, Protocol};
+/// # use bin_proto::{ByteOrder, ProtocolRead, ProtocolWrite};
 /// pub trait CtxTrait {};
 ///
 /// pub struct NeedsCtx;
 ///
-/// impl<Ctx: CtxTrait> Protocol<Ctx> for NeedsCtx {
+/// impl<Ctx: CtxTrait> ProtocolRead<Ctx> for NeedsCtx {
 ///     fn read(
 ///         _read: &mut dyn bin_proto::BitRead,
 ///         _byte_order: bin_proto::ByteOrder,
@@ -235,7 +237,9 @@ pub use self::protocol::ProtocolNoCtx;
 ///         // Use ctx here
 ///         Ok(Self)
 ///     }
+///}
 ///
+/// impl<Ctx: CtxTrait> ProtocolWrite<Ctx> for NeedsCtx {
 ///     fn write(
 ///         &self,
 ///         _write: &mut dyn bin_proto::BitWrite,
@@ -247,12 +251,12 @@ pub use self::protocol::ProtocolNoCtx;
 ///     }
 /// }
 ///
-/// #[derive(Protocol)]
+/// #[derive(ProtocolRead, ProtocolWrite)]
 /// #[protocol(ctx_bounds = "CtxTrait")]
 /// pub struct WithCtx(NeedsCtx);
 /// ```
 #[cfg(feature = "derive")]
-pub use bin_proto_derive::Protocol;
+pub use bin_proto_derive::{ProtocolRead, ProtocolWrite};
 
 mod bit_field;
 mod bit_read;
@@ -270,7 +274,8 @@ mod util;
 pub extern crate bitstream_io;
 
 /// ```compile_fail
-/// #[derive(bin_proto::Protocol)]
+/// # use bin_proto::{ProtocolRead, ProtocolWrite};
+/// #[derive(ProtocolRead, ProtocolWrite)]
 /// struct MutuallyExclusiveAttrs {
 ///     pub length: u8,
 ///     #[protocol(flexible_array_member)]

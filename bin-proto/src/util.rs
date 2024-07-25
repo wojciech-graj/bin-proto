@@ -1,6 +1,6 @@
 //! Helper functions for dealing with sets or lists of parcels.
 
-use crate::{BitRead, BitWrite, ByteOrder, Error, Protocol, Result};
+use crate::{BitRead, BitWrite, ByteOrder, Error, ProtocolRead, ProtocolWrite, Result};
 
 use std::io;
 
@@ -12,7 +12,7 @@ pub fn read_items<Ctx, T>(
     ctx: &mut Ctx,
 ) -> Result<impl Iterator<Item = T>>
 where
-    T: Protocol<Ctx>,
+    T: ProtocolRead<Ctx>,
 {
     let mut elements = Vec::with_capacity(item_count);
 
@@ -33,7 +33,7 @@ pub fn write_items<'a, Ctx, T>(
     ctx: &mut Ctx,
 ) -> Result<()>
 where
-    T: Protocol<Ctx> + 'a,
+    T: ProtocolWrite<Ctx> + 'a,
 {
     for item in items.into_iter() {
         item.write(write, byte_order, ctx)?;
@@ -47,7 +47,7 @@ pub fn read_items_to_eof<Ctx, T>(
     ctx: &mut Ctx,
 ) -> Result<Vec<T>>
 where
-    T: Protocol<Ctx>,
+    T: ProtocolRead<Ctx>,
 {
     let mut items = Vec::new();
     loop {

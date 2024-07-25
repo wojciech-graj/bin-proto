@@ -3,14 +3,16 @@ use crate::{BitRead, BitWrite, ByteOrder, Result};
 /// A trait for variable-width bit-level co/dec.
 ///
 /// **WARNING**: This trait can and often will ignore the endianness.
-pub trait BitField<Ctx = ()>: Sized {
+pub trait BitFieldRead<Ctx = ()>: Sized {
     fn read(
         read: &mut dyn BitRead,
         byte_order: ByteOrder,
         ctx: &mut Ctx,
         bits: u32,
     ) -> Result<Self>;
+}
 
+pub trait BitFieldWrite<Ctx = ()> {
     fn write(
         &self,
         write: &mut dyn BitWrite,
@@ -21,7 +23,8 @@ pub trait BitField<Ctx = ()>: Sized {
 }
 
 /// ```compile_fail
-/// #[derive(bin_proto::Protocol)]
+/// # use bin_proto::{ProtocolRead, ProtocolWrite};
+/// #[derive(ProtocolRead, ProtocolWrite)]
 /// #[protocol(discriminant_type = "u8")]
 /// #[protocol(bits = 1)]
 /// enum WontFit {

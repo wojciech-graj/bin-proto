@@ -1,4 +1,4 @@
-use bin_proto::{ByteOrder, Protocol};
+use bin_proto::{ByteOrder, ProtocolRead, ProtocolWrite};
 
 trait CtxTrait {
     fn call(&mut self);
@@ -16,7 +16,7 @@ impl CtxTrait for CtxStruct {
 #[derive(Debug)]
 struct CtxCheck;
 
-impl<Ctx: CtxTrait> Protocol<Ctx> for CtxCheck {
+impl<Ctx: CtxTrait> ProtocolRead<Ctx> for CtxCheck {
     fn read(
         _: &mut dyn bin_proto::BitRead,
         _: bin_proto::ByteOrder,
@@ -25,7 +25,9 @@ impl<Ctx: CtxTrait> Protocol<Ctx> for CtxCheck {
         ctx.call();
         Ok(Self)
     }
+}
 
+impl<Ctx: CtxTrait> ProtocolWrite<Ctx> for CtxCheck {
     fn write(
         &self,
         _: &mut dyn bin_proto::BitWrite,
@@ -37,11 +39,11 @@ impl<Ctx: CtxTrait> Protocol<Ctx> for CtxCheck {
     }
 }
 
-#[derive(Debug, Protocol)]
+#[derive(Debug, ProtocolRead, ProtocolWrite)]
 #[protocol(ctx = "CtxStruct")]
 struct CtxCheckStructWrapper(CtxCheck);
 
-#[derive(Debug, Protocol)]
+#[derive(Debug, ProtocolRead, ProtocolWrite)]
 #[protocol(ctx_bounds = "CtxTrait")]
 struct CtxCheckTraitWrapper(CtxCheck);
 

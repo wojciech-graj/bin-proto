@@ -1,8 +1,9 @@
 macro_rules! impl_map_type {
     ( $ty:ident => K: $( $k_pred:ident ),+ ) => {
         impl<Tag, Ctx, K, V> $crate::ExternallyTaggedRead<Tag, Ctx> for $ty<K, V>
-        where K: $crate::Protocol<Ctx> + $( $k_pred +)+,
-            V: $crate::Protocol<Ctx>,
+        where
+            K: $crate::ProtocolRead<Ctx> + $( $k_pred +)+,
+            V: $crate::ProtocolRead<Ctx>,
             Tag: TryInto<usize>,
         {
             fn read(read: &mut dyn $crate::BitRead,
@@ -23,9 +24,10 @@ macro_rules! impl_map_type {
             }
         }
 
-        impl<Ctx, K, V> $crate::ExternallyTaggedWrite<Ctx> for $ty<K, V>
-        where K: $crate::Protocol<Ctx> + $( $k_pred +)+,
-            V: $crate::Protocol<Ctx>
+        impl<Ctx, K, V> $crate::ProtocolWrite<Ctx> for $ty<K, V>
+        where
+            K: $crate::ProtocolWrite<Ctx> + $( $k_pred +)+,
+            V: $crate::ProtocolWrite<Ctx>
         {
             fn write(&self, write: &mut dyn $crate::BitWrite,
                     byte_order: $crate::ByteOrder,

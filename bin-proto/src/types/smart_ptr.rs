@@ -5,9 +5,9 @@ macro_rules! impl_smart_ptr_type {
             use super::*;
             use std::ops::Deref;
 
-            impl<Ctx, T> $crate::Protocol<Ctx> for $ty<T>
+            impl<Ctx, T> $crate::ProtocolRead<Ctx> for $ty<T>
             where
-                T: $crate::Protocol<Ctx>,
+                T: $crate::ProtocolRead<Ctx>,
             {
                 fn read(
                     read: &mut dyn $crate::BitRead,
@@ -17,7 +17,12 @@ macro_rules! impl_smart_ptr_type {
                     let value = T::read(read, byte_order, ctx)?;
                     Ok($ty::new(value))
                 }
+            }
 
+            impl<Ctx, T> $crate::ProtocolWrite<Ctx> for $ty<T>
+            where
+                T: $crate::ProtocolWrite<Ctx>,
+            {
                 fn write(
                     &self,
                     write: &mut dyn $crate::BitWrite,
@@ -37,7 +42,7 @@ macro_rules! impl_smart_ptr_type {
             #[test]
             fn read_protocol() {
                 assert_eq!(
-                    <$ty<u8> as $crate::Protocol<()>>::read(
+                    <$ty<u8> as $crate::ProtocolRead<()>>::read(
                         &mut ::bitstream_io::BitReader::endian(
                             [7u8].as_slice(),
                             ::bitstream_io::BigEndian
@@ -53,7 +58,7 @@ macro_rules! impl_smart_ptr_type {
             #[test]
             fn write_protocol() {
                 let mut data: Vec<u8> = Vec::new();
-                $crate::Protocol::write(
+                $crate::ProtocolWrite::write(
                     &$ty::new(7u8),
                     &mut ::bitstream_io::BitWriter::endian(&mut data, bitstream_io::BigEndian),
                     $crate::ByteOrder::BigEndian,

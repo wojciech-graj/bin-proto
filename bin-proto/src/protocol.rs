@@ -3,13 +3,10 @@ use bitstream_io::{BigEndian, BitReader, BitWriter, LittleEndian};
 use crate::{BitRead, BitWrite, ByteOrder, Result};
 use std::io;
 
-/// A trait for bit-level co/dec.
-pub trait Protocol<Ctx = ()>: Sized {
+/// A trait for bit-level decoding.
+pub trait ProtocolRead<Ctx = ()>: Sized {
     /// Reads self from a stream.
     fn read(read: &mut dyn BitRead, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<Self>;
-
-    /// Writes a value to a stream.
-    fn write(&self, write: &mut dyn BitWrite, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<()>;
 
     /// Parses a new value from its raw byte representation with additional context.
     fn from_bytes_ctx(bytes: &[u8], byte_order: ByteOrder, ctx: &mut Ctx) -> Result<Self> {
@@ -24,6 +21,12 @@ pub trait Protocol<Ctx = ()>: Sized {
             }
         }
     }
+}
+
+/// A trait for bit-level encoding.
+pub trait ProtocolWrite<Ctx = ()> {
+    /// Writes a value to a stream.
+    fn write(&self, write: &mut dyn BitWrite, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<()>;
 
     /// Gets the raw bytes of this type with provided context.
     fn bytes_ctx(&self, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<Vec<u8>> {
@@ -46,7 +49,7 @@ pub trait Protocol<Ctx = ()>: Sized {
 }
 
 /// A trait with helper functions for contextless `Protocol`s
-pub trait ProtocolNoCtx: Protocol {
+pub trait ProtocolNoCtx: ProtocolRead + ProtocolWrite {
     /// Parses a new value from its raw byte representation without context.
     fn from_bytes(bytes: &[u8], byte_order: ByteOrder) -> Result<Self> {
         Self::from_bytes_ctx(bytes, byte_order, &mut ())
@@ -58,4 +61,4 @@ pub trait ProtocolNoCtx: Protocol {
     }
 }
 
-impl<T> ProtocolNoCtx for T where T: Protocol {}
+impl<T> ProtocolNoCtx for T where T: ProtocolRead + ProtocolWrite {}

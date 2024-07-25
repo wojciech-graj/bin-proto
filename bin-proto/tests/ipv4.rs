@@ -1,13 +1,13 @@
-use bin_proto::{ByteOrder, ProtocolNoCtx};
+use bin_proto::{ByteOrder, ProtocolNoCtx, ProtocolRead, ProtocolWrite};
 
-#[derive(Debug, bin_proto::Protocol, PartialEq)]
+#[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq)]
 #[protocol(discriminant_type = "u8")]
 #[protocol(bits = 4)]
 enum Version {
     V4 = 4,
 }
 
-#[derive(Debug, bin_proto::Protocol, PartialEq)]
+#[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq)]
 struct Flags {
     #[protocol(bits = 1)]
     reserved: bool,
@@ -17,7 +17,7 @@ struct Flags {
     more_fragments: bool,
 }
 
-#[derive(Debug, bin_proto::Protocol, PartialEq)]
+#[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq)]
 struct IPv4 {
     version: Version,
     #[protocol(bits = 4)]

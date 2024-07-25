@@ -64,9 +64,9 @@ fn read(field: &syn::Field, parent_attribs: &Attrs) -> TokenStream {
     let ctx_ty = parent_attribs.ctx_ty();
 
     if let Some(field_width) = attribs.bits {
-        quote!(::bin_proto::BitField::<#ctx_ty>::read(__io_reader, __byte_order, __ctx, #field_width))
+        quote!(::bin_proto::BitFieldRead::<#ctx_ty>::read(__io_reader, __byte_order, __ctx, #field_width))
     } else if attribs.flexible_array_member {
-        quote!(::bin_proto::FlexibleArrayMember::read(
+        quote!(::bin_proto::FlexibleArrayMemberRead::read(
             __io_reader,
             __byte_order,
             __ctx
@@ -78,13 +78,13 @@ fn read(field: &syn::Field, parent_attribs: &Attrs) -> TokenStream {
             }
             Tag::Prepend { typ, value: _ } => {
                 quote!({
-                    let __tag = ::bin_proto::Protocol::<#ctx_ty>::read(__io_reader, __byte_order, __ctx)?;
+                    let __tag = ::bin_proto::ProtocolRead::<#ctx_ty>::read(__io_reader, __byte_order, __ctx)?;
                     ::bin_proto::ExternallyTaggedRead::<#typ, #ctx_ty>::read(__io_reader, __byte_order, __ctx, __tag)
                 })
             }
         }
     } else {
-        quote!(::bin_proto::Protocol::<#ctx_ty>::read(__io_reader, __byte_order, __ctx))
+        quote!(::bin_proto::ProtocolRead::<#ctx_ty>::read(__io_reader, __byte_order, __ctx))
     }
 }
 
@@ -107,33 +107,27 @@ fn write(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
     if let Some(field_width) = attribs.bits {
         quote!(
             {
-                ::bin_proto::BitField::write(#field_ref, __io_writer, __byte_order, __ctx, #field_width)?
-            }
-        )
-    } else if attribs.flexible_array_member {
-        quote!(
-            {
-                ::bin_proto::FlexibleArrayMember::write(#field_ref, __io_writer, __byte_order, __ctx)?
+                ::bin_proto::BitFieldWrite::write(#field_ref, __io_writer, __byte_order, __ctx, #field_width)?
             }
         )
     } else if let Some(tag) = attribs.tag {
         match tag {
             Tag::External(_) => quote!(
                 {
-                    ::bin_proto::ExternallyTaggedWrite::write(#field_ref, __io_writer, __byte_order, __ctx)?
+                    ::bin_proto::ProtocolWrite::write(#field_ref, __io_writer, __byte_order, __ctx)?
                 }
             ),
             Tag::Prepend { typ, value } => quote!(
                 {
-                    <#typ as ::bin_proto::Protocol<_>>::write(&{#value}, __io_writer, __byte_order, __ctx)?;
-                    ::bin_proto::ExternallyTaggedWrite::write(#field_ref, __io_writer, __byte_order, __ctx)?
+                    <#typ as ::bin_proto::ProtocolWrite<_>>::write(&{#value}, __io_writer, __byte_order, __ctx)?;
+                    ::bin_proto::ProtocolWrite::write(#field_ref, __io_writer, __byte_order, __ctx)?
                 }
             ),
         }
     } else {
         quote!(
             {
-                ::bin_proto::Protocol::write(#field_ref, __io_writer, __byte_order, __ctx)?
+                ::bin_proto::ProtocolWrite::write(#field_ref, __io_writer, __byte_order, __ctx)?
             }
         )
     }
