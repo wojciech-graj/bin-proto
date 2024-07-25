@@ -208,11 +208,17 @@ impl TryFrom<&[syn::Attribute]> for Attrs {
                         let mut typ = None;
                         let mut write_value = None;
                         for nested in list.nested.iter() {
-                            let syn::NestedMeta::Meta(syn::Meta::NameValue(name_value)) = nested
-                            else {
-                                return Err(Error::new(list.span(), "unrecognized attribute"));
-                            };
-                            let Some(ident) = name_value.path.get_ident() else {
+                            let name_value =
+                                if let syn::NestedMeta::Meta(syn::Meta::NameValue(name_value)) =
+                                    nested
+                                {
+                                    name_value
+                                } else {
+                                    return Err(Error::new(list.span(), "unrecognized attribute"));
+                                };
+                            let ident = if let Some(ident) = name_value.path.get_ident() {
+                                ident
+                            } else {
                                 return Err(Error::new(
                                     name_value.span(),
                                     "unrecognized attribute",

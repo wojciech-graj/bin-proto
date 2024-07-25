@@ -10,4 +10,3 @@ mod option;
 mod smart_ptr;
 mod string;
 mod tuple;
-mod vec;

@@ -28,13 +28,13 @@ pub fn protocol_write(input: proc_macro::TokenStream) -> proc_macro::TokenStream
 
 fn impl_protocol(ast: &syn::DeriveInput, protocol_type: ProtocolType) -> TokenStream {
     match ast.data {
-        syn::Data::Struct(ref s) => impl_parcel_for_struct(ast, s, protocol_type),
-        syn::Data::Enum(ref e) => impl_parcel_for_enum(ast, e, protocol_type),
+        syn::Data::Struct(ref s) => impl_for_struct(ast, s, protocol_type),
+        syn::Data::Enum(ref e) => impl_for_enum(ast, e, protocol_type),
         syn::Data::Union(..) => unimplemented!("Protocol is unimplemented on Unions"),
     }
 }
 
-fn impl_parcel_for_struct(
+fn impl_for_struct(
     ast: &syn::DeriveInput,
     strukt: &syn::DataStruct,
     protocol_type: ProtocolType,
@@ -78,7 +78,7 @@ fn impl_parcel_for_struct(
     impl_protocol_for(ast, impl_body, protocol_type)
 }
 
-fn impl_parcel_for_enum(
+fn impl_for_enum(
     ast: &syn::DeriveInput,
     e: &syn::DataEnum,
     protocol_type: ProtocolType,

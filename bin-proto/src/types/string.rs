@@ -34,7 +34,7 @@ impl<Ctx> ProtocolWrite<Ctx> for String {
 
 impl<Ctx> FlexibleArrayMemberRead<Ctx> for String {
     fn read(read: &mut dyn BitRead, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<Self> {
-        let bytes: Vec<u8> = util::read_items_to_eof(read, byte_order, ctx)?;
+        let bytes: Vec<u8> = util::read_items_to_eof(read, byte_order, ctx)?.collect();
         Ok(String::from_utf8(bytes)?)
     }
 }

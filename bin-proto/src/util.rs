@@ -45,7 +45,7 @@ pub fn read_items_to_eof<Ctx, T>(
     read: &mut dyn BitRead,
     byte_order: ByteOrder,
     ctx: &mut Ctx,
-) -> Result<Vec<T>>
+) -> Result<impl Iterator<Item = T>>
 where
     T: ProtocolRead<Ctx>,
 {
@@ -55,7 +55,7 @@ where
             Ok(item) => item,
             Err(Error::IO(e)) => {
                 return if e.kind() == io::ErrorKind::UnexpectedEof {
-                    Ok(items)
+                    Ok(items.into_iter())
                 } else {
                     Err(e.into())
                 }

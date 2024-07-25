@@ -11,16 +11,8 @@ macro_rules! impl_map_type {
                     ctx: &mut Ctx,
                     tag: Tag,
                     ) -> $crate::Result<Self> {
-                let mut map = $ty::new();
-
-                for _ in 0..tag.try_into().map_err(|_| $crate::Error::TagConvert)? {
-                    let key = K::read(read, byte_order, ctx)?;
-                    let value = V::read(read, byte_order, ctx)?;
-
-                    map.insert(key, value);
-                }
-
-                Ok(map)
+                let elements = $crate::util::read_items(tag.try_into().map_err(|_| crate::Error::TagConvert)?, read, byte_order, ctx)?;
+                Ok(elements.into_iter().collect())
             }
         }
 
@@ -39,6 +31,19 @@ macro_rules! impl_map_type {
                 }
 
                 Ok(())
+            }
+        }
+
+        impl<Ctx, K, V> $crate::FlexibleArrayMemberRead<Ctx> for $ty<K, V>
+        where
+            K: $crate::ProtocolRead<Ctx> + $( $k_pred +)+,
+            V: $crate::ProtocolRead<Ctx>,
+        {
+            fn read(read: &mut dyn $crate::BitRead,
+                    byte_order: $crate::ByteOrder,
+                    ctx: &mut Ctx,
+                    ) -> $crate::Result<Self> {
+                Ok($crate::util::read_items_to_eof(read, byte_order, ctx)?.collect())
             }
         }
     }
