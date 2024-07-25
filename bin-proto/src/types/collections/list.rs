@@ -15,7 +15,7 @@ macro_rules! impl_list_type {
             }
         }
 
-        impl<Ctx, T> $crate::ProtocolWrite<Ctx> for $ty<T>
+        impl<Ctx, T> $crate::ExternallyTaggedWrite<Ctx> for $ty<T>
             where T: $crate::ProtocolWrite<Ctx> $( + $ty_pred )*
         {
             fn write(&self,

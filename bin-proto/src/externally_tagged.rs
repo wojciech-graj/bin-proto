@@ -1,11 +1,16 @@
 //! Utilities for externally length prefixed fields
 
-use crate::{BitRead, ByteOrder, Result};
+use crate::{BitRead, BitWrite, ByteOrder, Result};
 
 /// A trait for variable-length types with a disjoint length prefix.
 pub trait ExternallyTaggedRead<Tag, Ctx = ()>: Sized {
     fn read(read: &mut dyn BitRead, byte_order: ByteOrder, ctx: &mut Ctx, tag: Tag)
         -> Result<Self>;
+}
+
+/// A trait for variable-length types with a disjoint length prefix.
+pub trait ExternallyTaggedWrite<Ctx = ()>: Sized {
+    fn write(&self, write: &mut dyn BitWrite, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<()>;
 }
 
 #[cfg(test)]
@@ -30,7 +35,7 @@ macro_rules! test_externally_tagged {
         fn write_externally_tagged() {
             let mut buffer: Vec<u8> = Vec::new();
             let value: $t = $value;
-            $crate::ProtocolWrite::<_>::write(
+            $crate::ExternallyTaggedWrite::<_>::write(
                 &value,
                 &mut ::bitstream_io::BitWriter::endian(&mut buffer, ::bitstream_io::BigEndian),
                 $crate::ByteOrder::BigEndian,

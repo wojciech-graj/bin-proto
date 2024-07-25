@@ -1,7 +1,7 @@
 use proc_macro2::{Span, TokenStream};
 use syn::{parse::Parser, punctuated::Punctuated, spanned::Spanned, token::Add, Error, Result};
 
-#[derive(Debug, Default)]
+#[derive(Default)]
 pub struct Attrs {
     pub discriminant_type: Option<syn::Type>,
     pub discriminant: Option<syn::Expr>,
@@ -13,7 +13,6 @@ pub struct Attrs {
     pub tag: Option<Tag>,
 }
 
-#[derive(Debug)]
 pub enum Tag {
     External(syn::Expr),
     Prepend {
@@ -201,7 +200,10 @@ impl TryFrom<&[syn::Attribute]> for Attrs {
                             _ => return Err(Error::new(ident.span(), "unrecognised attribute")),
                         },
                         None => {
-                            return Err(Error::new(path.get_ident().span(), "expected identifier"))
+                            return Err(Error::new(
+                                path.get_ident().span(),
+                                "expected identifier 1234",
+                            ));
                         }
                     },
                     syn::NestedMeta::Meta(syn::Meta::List(list)) => {
@@ -258,7 +260,7 @@ impl TryFrom<&[syn::Attribute]> for Attrs {
 fn meta_name_value_to_parse<T: syn::parse::Parse>(name_value: &syn::MetaNameValue) -> Result<T> {
     match name_value.lit {
         syn::Lit::Str(ref s) => syn::parse_str::<T>(s.value().as_str())
-            .map_err(|_| Error::new(name_value.span(), "Failed to parse")),
+            .map_err(|e| Error::new(name_value.span(), format!("Failed to parse: {e}"))),
 
         _ => Err(Error::new(name_value.span(), "Expected string")),
     }
@@ -268,7 +270,7 @@ fn meta_name_value_to_u32(name_value: &syn::MetaNameValue) -> Result<u32> {
     match name_value.lit {
         syn::Lit::Int(ref i) => i
             .base10_parse()
-            .map_err(|_| Error::new(name_value.span(), "Failed to parse u32")),
+            .map_err(|e| Error::new(name_value.span(), format!("Failed to parse u32: {e}"))),
         _ => Err(Error::new(name_value.span(), "Expected integer")),
     }
 }
@@ -279,7 +281,7 @@ fn meta_name_value_to_punctuated<T: syn::parse::Parse, P: syn::parse::Parse>(
     match name_value.lit {
         syn::Lit::Str(ref s) => Punctuated::parse_terminated
             .parse_str(s.value().as_str())
-            .map_err(|_| Error::new(name_value.span(), "Failed to parse")),
+            .map_err(|e| Error::new(name_value.span(), format!("Failed to parse: {e}"))),
         _ => Err(Error::new(name_value.span(), "Expected string")),
     }
 }

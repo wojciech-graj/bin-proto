@@ -58,8 +58,9 @@ pub use self::bit_field::{BitFieldRead, BitFieldWrite};
 pub use self::bit_read::BitRead;
 pub use self::bit_write::BitWrite;
 pub use self::byte_order::ByteOrder;
+pub use self::discriminable::Discriminable;
 pub use self::error::{Error, Result};
-pub use self::externally_tagged::ExternallyTaggedRead;
+pub use self::externally_tagged::{ExternallyTaggedRead, ExternallyTaggedWrite};
 pub use self::flexible_array_member::FlexibleArrayMemberRead;
 pub use self::protocol::ProtocolNoCtx;
 pub use self::protocol::{ProtocolRead, ProtocolWrite};
@@ -130,7 +131,7 @@ pub use self::protocol::{ProtocolRead, ProtocolWrite};
 /// ```
 ///
 /// ## `#[protocol(tag = "<expr>")]`
-/// - Applies to: `impl ExternallyTaggedRead`
+/// - Applies to: `impl ExternallyTaggedRead` or `impl ExternallyTaggedWrite`
 /// - `<expr>`: arbitrary expression. Fields in parent container can be used
 ///   without prefixing them with `self`.
 ///
@@ -149,7 +150,7 @@ pub use self::protocol::{ProtocolRead, ProtocolWrite};
 /// ```
 ///
 /// ## `#[protocol(tag(type = "<type>", write_value = "<expr>"))]`
-/// - Applies to: `impl ExternallyTaggedRead`
+/// - Applies to: `impl ExternallyTaggedRead` or `impl ExternallyTaggedWrite`
 /// - `<type>`: tag's type
 /// - `<expr>`: arbitrary expression. Fields in parent container should be
 ///   prefixed with `self`.
@@ -292,6 +293,7 @@ mod flexible_array_member;
 mod types;
 #[macro_use]
 mod protocol;
+mod discriminable;
 mod util;
 
 pub extern crate bitstream_io;

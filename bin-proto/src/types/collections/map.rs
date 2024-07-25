@@ -16,7 +16,7 @@ macro_rules! impl_map_type {
             }
         }
 
-        impl<Ctx, K, V> $crate::ProtocolWrite<Ctx> for $ty<K, V>
+        impl<Ctx, K, V> $crate::ExternallyTaggedWrite<Ctx> for $ty<K, V>
         where
             K: $crate::ProtocolWrite<Ctx> + $( $k_pred +)+,
             V: $crate::ProtocolWrite<Ctx>

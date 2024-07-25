@@ -113,11 +113,17 @@ fn write(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
                 ::bin_proto::BitFieldWrite::write(#field_ref, __io_writer, __byte_order, __ctx, #field_width)?
             }
         )
+    } else if attribs.flexible_array_member {
+        quote!(
+            {
+                ::bin_proto::ExternallyTaggedWrite::write(#field_ref, __io_writer, __byte_order, __ctx)?
+            }
+        )
     } else if let Some(tag) = attribs.tag {
         match tag {
             Tag::External(_) => quote!(
                 {
-                    ::bin_proto::ProtocolWrite::write(#field_ref, __io_writer, __byte_order, __ctx)?
+                    ::bin_proto::ExternallyTaggedWrite::write(#field_ref, __io_writer, __byte_order, __ctx)?
                 }
             ),
             Tag::Prepend {
@@ -126,7 +132,7 @@ fn write(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
             } => quote!(
                 {
                     <#typ as ::bin_proto::ProtocolWrite<_>>::write(&{#value}, __io_writer, __byte_order, __ctx)?;
-                    ::bin_proto::ProtocolWrite::write(#field_ref, __io_writer, __byte_order, __ctx)?
+                    ::bin_proto::ExternallyTaggedWrite::write(#field_ref, __io_writer, __byte_order, __ctx)?
                 }
             ),
         }

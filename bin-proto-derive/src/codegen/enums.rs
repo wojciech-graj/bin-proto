@@ -1,25 +1,20 @@
 use crate::{
     attr::Attrs,
     codegen,
-    plan::{self, EnumVariant},
+    plan::{self},
 };
 use proc_macro2::{Span, TokenStream};
 
-pub fn write_variant(
-    plan: &plan::Enum,
-    write_discriminant: &dyn Fn(&EnumVariant) -> TokenStream,
-) -> TokenStream {
+pub fn write_variant(plan: &plan::Enum) -> TokenStream {
     let variant_match_branches: Vec<_> = plan
         .variants
         .iter()
         .map(|variant| {
             let variant_name = &variant.ident;
-            let write_discriminant = write_discriminant(variant);
             let fields_pattern = bind_fields_pattern(variant_name, &variant.fields);
             let writes = codegen::writes(&variant.fields, false);
 
             quote!(Self :: #fields_pattern => {
-                #write_discriminant
                 #writes
             })
         })
@@ -32,13 +27,7 @@ pub fn write_variant(
     )
 }
 
-pub fn read_variant(
-    plan: &plan::Enum,
-    read_discriminant: TokenStream,
-    attribs: &Attrs,
-) -> TokenStream {
-    let discriminant_ty = &plan.discriminant_ty;
-
+pub fn read_variant(plan: &plan::Enum, attribs: &Attrs) -> TokenStream {
     let discriminant_match_branches = plan.variants.iter().map(|variant| {
         let variant_name = &variant.ident;
         let discriminant_literal = &variant.discriminant_value;
@@ -54,9 +43,7 @@ pub fn read_variant(
 
     quote!(
         {
-            let discriminant: #discriminant_ty = #read_discriminant;
-
-            match discriminant {
+            match __tag.try_into().map_err(|_| ::bin_proto::Error::TagConvert)? {
                 #(#discriminant_match_branches,)*
                 unknown_discriminant => {
                     return Err(::bin_proto::Error::UnknownEnumDiscriminant(

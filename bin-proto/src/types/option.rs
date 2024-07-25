@@ -1,5 +1,6 @@
 use crate::{
-    BitRead, BitWrite, ByteOrder, Error, ExternallyTaggedRead, ProtocolRead, ProtocolWrite, Result,
+    BitRead, BitWrite, ByteOrder, Error, ExternallyTaggedRead, ExternallyTaggedWrite, ProtocolRead,
+    ProtocolWrite, Result,
 };
 
 impl<Tag, Ctx, T> ExternallyTaggedRead<Tag, Ctx> for Option<T>
@@ -22,7 +23,7 @@ where
     }
 }
 
-impl<Ctx, T> ProtocolWrite<Ctx> for Option<T>
+impl<Ctx, T> ExternallyTaggedWrite<Ctx> for Option<T>
 where
     T: ProtocolWrite<Ctx>,
 {
@@ -71,7 +72,7 @@ mod tests {
     #[test]
     fn can_write_some() {
         let mut data: Vec<u8> = Vec::new();
-        ProtocolWrite::write(
+        ExternallyTaggedWrite::write(
             &Some(5u8),
             &mut BitWriter::endian(&mut data, BigEndian),
             ByteOrder::BigEndian,
@@ -84,7 +85,7 @@ mod tests {
     #[test]
     fn can_write_none() {
         let mut data: Vec<u8> = Vec::new();
-        ProtocolWrite::write(
+        ExternallyTaggedWrite::write(
             &None::<u8>,
             &mut BitWriter::endian(&mut data, BigEndian),
             ByteOrder::BigEndian,

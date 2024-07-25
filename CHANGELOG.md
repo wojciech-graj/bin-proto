@@ -1,4 +1,13 @@
 # v0.5.0
+- Split `Protocol` into `ProtocolRead` and `ProtocolWrite`
+- Convert `ExternallyLengthPrefixed` to `ExternallyTaggedRead`
+- Convert `FlexibleArrayMember` to `FlexibleArrayMemberRead`
+- Split `BitField` into `BitFieldWrite` and `BitFieldRead`
+- Implement `ExternallyTaggedRead` and `FlexibleArrayMemberRead` on all list and map types and `Option`
+- Add `Error` variant for failed `TryFrom` conversion for `ExternallyLengthPrefixed` tags
+- Add generic `Tag` parameter to `ExternallyTaggedRead`
+- Allow for `#[protocol(tag(type = "<type>", write_value = "<expr>"))]` attribute macro
+- Unimplement `ProtocolRead` and `BitFieldRead` on `Option`
 # v0.4.2
 - Set MSRV at 1.63.0
 # v0.4.1

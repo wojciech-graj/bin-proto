@@ -1,6 +1,6 @@
 use crate::{
-    util, BitRead, BitWrite, ByteOrder, Error, ExternallyTaggedRead, FlexibleArrayMemberRead,
-    ProtocolWrite, Result,
+    util, BitRead, BitWrite, ByteOrder, Error, ExternallyTaggedRead, ExternallyTaggedWrite,
+    FlexibleArrayMemberRead, Result,
 };
 
 impl<Tag, Ctx> ExternallyTaggedRead<Tag, Ctx> for String
@@ -25,7 +25,7 @@ where
     }
 }
 
-impl<Ctx> ProtocolWrite<Ctx> for String {
+impl<Ctx> ExternallyTaggedWrite<Ctx> for String {
     fn write(&self, write: &mut dyn BitWrite, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<()> {
         let bytes: Vec<u8> = str::bytes(self).collect();
         util::write_items::<Ctx, u8>(&bytes, write, byte_order, ctx)
