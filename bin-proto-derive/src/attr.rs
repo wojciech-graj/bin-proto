@@ -11,6 +11,7 @@ pub struct Attrs {
     pub bits: Option<u32>,
     pub flexible_array_member: bool,
     pub length: Option<syn::Expr>,
+    pub condition: Option<syn::Expr>,
 }
 
 impl Attrs {
@@ -48,6 +49,9 @@ impl Attrs {
         if self.length.is_some() {
             return Err(Error::new(span, "unexpected length attribute for enum"));
         }
+        if self.condition.is_some() {
+            return Err(Error::new(span, "unexpected condition attribute for enum"));
+        }
         Ok(())
     }
 
@@ -84,6 +88,9 @@ impl Attrs {
         }
         if self.length.is_some() {
             return Err(Error::new(span, "unexpected length attribute for variant"));
+        }
+        if self.condition.is_some() {
+            return Err(Error::new(span, "unexpected condition attribute for variant"));
         }
         Ok(())
     }
@@ -180,6 +187,9 @@ impl TryFrom<&[syn::Attribute]> for Attrs {
                             }
                             "length" => {
                                 attribs.length = Some(meta_name_value_to_parse(name_value)?)
+                            }
+                            "condition" => {
+                                attribs.condition = Some(meta_name_value_to_parse(name_value)?)
                             }
                             _ => {
                                 return Err(Error::new(meta_list.span(), "unrecognised attribute"))

@@ -56,6 +56,7 @@ pub use self::bit_write::BitWrite;
 pub use self::byte_order::ByteOrder;
 pub use self::error::{Error, Result};
 pub use self::externally_length_prefixed::ExternallyLengthPrefixed;
+pub use self::conditional::Conditional;
 pub use self::flexible_array_member::FlexibleArrayMember;
 pub use self::protocol::Protocol;
 pub use self::protocol::ProtocolNoCtx;
@@ -258,6 +259,7 @@ mod bit_read;
 mod bit_write;
 #[macro_use]
 mod externally_length_prefixed;
+mod conditional;
 mod byte_order;
 mod flexible_array_member;
 mod types;
