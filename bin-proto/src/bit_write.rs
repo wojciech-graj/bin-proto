@@ -42,6 +42,8 @@ pub trait BitWrite {
     fn write_i16_bf(&mut self, bits: u32, value: i16) -> io::Result<()>;
     fn write_u32_bf(&mut self, bits: u32, value: u32) -> io::Result<()>;
     fn write_i32_bf(&mut self, bits: u32, value: i32) -> io::Result<()>;
+    fn write_u64_bf(&mut self, bits: u32, value: u64) -> io::Result<()>;
+    fn write_i64_bf(&mut self, bits: u32, value: i64) -> io::Result<()>;
 }
 
 impl<T> BitWrite for T
@@ -181,6 +183,14 @@ where
     }
 
     fn write_i32_bf(&mut self, bits: u32, value: i32) -> io::Result<()> {
+        bitstream_io::BitWrite::write_signed(self, bits, value)
+    }
+
+    fn write_u64_bf(&mut self, bits: u32, value: u64) -> io::Result<()> {
+        bitstream_io::BitWrite::write(self, bits, value)
+    }
+
+    fn write_i64_bf(&mut self, bits: u32, value: i64) -> io::Result<()> {
         bitstream_io::BitWrite::write_signed(self, bits, value)
     }
 }

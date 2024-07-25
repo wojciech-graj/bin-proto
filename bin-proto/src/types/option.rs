@@ -26,6 +26,47 @@ where
     }
 }
 
+macro_rules! impl_externally_tagged_for_option {
+    ($ty:ty) => {
+        impl<Ctx, T> crate::ExternallyTagged<$ty, Ctx> for Option<T>
+        where
+            T: crate::Protocol<Ctx>,
+        {
+            fn read(
+                read: &mut dyn crate::BitRead,
+                byte_order: crate::ByteOrder,
+                ctx: &mut Ctx,
+                tag: $ty,
+            ) -> Result<Self> {
+                <Option<T> as crate::ExternallyTagged<bool, Ctx>>::read(
+                    read,
+                    byte_order,
+                    ctx,
+                    tag != 0,
+                )
+            }
+
+            fn write(
+                &self,
+                write: &mut dyn crate::BitWrite,
+                byte_order: crate::ByteOrder,
+                ctx: &mut Ctx,
+            ) -> Result<()> {
+                <Option<T> as crate::ExternallyTagged<bool, Ctx>>::write(
+                    self, write, byte_order, ctx,
+                )
+            }
+        }
+    };
+}
+
+impl_externally_tagged_for_option!(u8);
+impl_externally_tagged_for_option!(u16);
+impl_externally_tagged_for_option!(u32);
+impl_externally_tagged_for_option!(u64);
+impl_externally_tagged_for_option!(u128);
+impl_externally_tagged_for_option!(usize);
+
 #[cfg(test)]
 mod tests {
     use bitstream_io::{BigEndian, BitReader, BitWriter};
@@ -63,7 +104,7 @@ mod tests {
     #[test]
     fn can_write_some() {
         let mut data: Vec<u8> = Vec::new();
-        ExternallyTagged::write(
+        ExternallyTagged::<bool, _>::write(
             &Some(5u8),
             &mut BitWriter::endian(&mut data, BigEndian),
             ByteOrder::BigEndian,
@@ -76,7 +117,7 @@ mod tests {
     #[test]
     fn can_write_none() {
         let mut data: Vec<u8> = Vec::new();
-        ExternallyTagged::write(
+        ExternallyTagged::<bool, _>::write(
             &None::<u8>,
             &mut BitWriter::endian(&mut data, BigEndian),
             ByteOrder::BigEndian,

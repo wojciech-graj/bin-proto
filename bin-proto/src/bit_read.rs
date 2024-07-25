@@ -44,6 +44,8 @@ pub trait BitRead {
     fn read_i16_bf(&mut self, bits: u32) -> io::Result<i16>;
     fn read_u32_bf(&mut self, bits: u32) -> io::Result<u32>;
     fn read_i32_bf(&mut self, bits: u32) -> io::Result<i32>;
+    fn read_u64_bf(&mut self, bits: u32) -> io::Result<u64>;
+    fn read_i64_bf(&mut self, bits: u32) -> io::Result<i64>;
 }
 
 impl<T> BitRead for T
@@ -191,6 +193,14 @@ where
     }
 
     fn read_i32_bf(&mut self, bits: u32) -> io::Result<i32> {
+        bitstream_io::BitRead::read_signed(self, bits)
+    }
+
+    fn read_u64_bf(&mut self, bits: u32) -> io::Result<u64> {
+        bitstream_io::BitRead::read(self, bits)
+    }
+
+    fn read_i64_bf(&mut self, bits: u32) -> io::Result<i64> {
         bitstream_io::BitRead::read_signed(self, bits)
     }
 }

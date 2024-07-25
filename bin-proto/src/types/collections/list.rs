@@ -1,5 +1,5 @@
 macro_rules! impl_list_type {
-    ( $ty:ident => T: $( $ty_pred:ident ),* ) => {
+    ($ty:ident => T: $( $ty_pred:ident ),*) => {
         impl<Ctx, T> crate::ExternallyTagged<usize, Ctx> for $ty<T>
             where T: $crate::Protocol<Ctx> $( + $ty_pred )*
         {
@@ -8,7 +8,7 @@ macro_rules! impl_list_type {
                     ctx: &mut Ctx,
                     tag: usize,
                     ) -> crate::Result<Self> {
-                let elements = crate::util::read_items(tag, read, byte_order, ctx)?;
+                let elements = $crate::util::read_items(tag.into(), read, byte_order, ctx)?;
                 Ok(elements.into_iter().collect())
             }
 
@@ -50,14 +50,14 @@ mod linked_list {
 mod vec_deque {
     use std::collections::VecDeque;
 
-    impl_list_type!(VecDeque   => T: );
+    impl_list_type!(VecDeque => T: );
     test_list_type!(VecDeque);
 }
 
 mod b_tree_set {
     use std::collections::BTreeSet;
 
-    impl_list_type!(BTreeSet   => T: Ord);
+    impl_list_type!(BTreeSet => T: Ord);
     test_list_type!(BTreeSet);
 }
 

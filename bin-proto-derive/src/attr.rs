@@ -10,7 +10,13 @@ pub struct Attrs {
     pub write_value: Option<syn::Expr>,
     pub bits: Option<u32>,
     pub flexible_array_member: bool,
-    pub tag: Option<syn::Expr>,
+    pub tag: Option<Tag>,
+}
+
+#[derive(Debug)]
+pub enum Tag {
+    External(syn::Expr),
+    Prepend { typ: syn::Type, value: syn::Expr },
 }
 
 impl Attrs {
@@ -46,7 +52,7 @@ impl Attrs {
             ));
         }
         if self.tag.is_some() {
-            return Err(Error::new(span, "unexpected length attribute for enum"));
+            return Err(Error::new(span, "unexpected tag attribute for enum"));
         }
         Ok(())
     }
@@ -83,7 +89,7 @@ impl Attrs {
             ));
         }
         if self.tag.is_some() {
-            return Err(Error::new(span, "unexpected length attribute for variant"));
+            return Err(Error::new(span, "unexpected tag attribute for variant"));
         }
         Ok(())
     }
@@ -122,7 +128,7 @@ impl Attrs {
         {
             return Err(Error::new(
                 span,
-                "bits, flexible_array_member, and length are mutually-exclusive attributes",
+                "bits, flexible_array_member, and tag are mutually-exclusive attributes",
             ));
         }
         Ok(())
@@ -178,26 +184,47 @@ impl TryFrom<&[syn::Attribute]> for Attrs {
                             "write_value" => {
                                 attribs.write_value = Some(meta_name_value_to_parse(name_value)?)
                             }
-                            "tag" => attribs.tag = Some(meta_name_value_to_parse(name_value)?),
-                            _ => {
-                                return Err(Error::new(meta_list.span(), "unrecognised attribute"))
+                            "tag" => {
+                                attribs.tag =
+                                    Some(Tag::External(meta_name_value_to_parse(name_value)?))
                             }
+                            _ => return Err(Error::new(ident.span(), "unrecognised attribute")),
                         },
-                        None => {
-                            return Err(Error::new(meta_list.span(), "failed to parse attribute"))
-                        }
+                        None => return Err(Error::new(meta.span(), "failed to parse attribute")),
                     },
                     syn::NestedMeta::Meta(syn::Meta::Path(path)) => match path.get_ident() {
                         Some(ident) => match ident.to_string().as_str() {
                             "flexible_array_member" => attribs.flexible_array_member = true,
-                            _ => {
-                                return Err(Error::new(meta_list.span(), "unrecognised attribute"))
-                            }
+                            _ => return Err(Error::new(ident.span(), "unrecognised attribute")),
                         },
                         None => {
                             return Err(Error::new(path.get_ident().span(), "expected identifier"))
                         }
                     },
+                    syn::NestedMeta::Meta(syn::Meta::List(list)) => {
+                        let mut typ = None;
+                        let mut value = None;
+                        for nested in list.nested.iter() {
+                            let syn::NestedMeta::Meta(syn::Meta::NameValue(name_value)) = nested
+                            else {
+                                return Err(Error::new(list.span(), "TODO"));
+                            };
+                            let Some(ident) = name_value.path.get_ident() else {
+                                return Err(Error::new(name_value.span(), "TODO"));
+                            };
+                            match ident.to_string().as_str() {
+                                "type" => typ = Some(meta_name_value_to_parse(name_value)?),
+                                "value" => value = Some(meta_name_value_to_parse(name_value)?),
+                                _ => return Err(Error::new(nested.span(), "TODO")),
+                            }
+                        }
+                        match (typ, value) {
+                            (Some(typ), Some(value)) => {
+                                attribs.tag = Some(Tag::Prepend { typ, value })
+                            }
+                            _ => return Err(Error::new(list.span(), "TODO")),
+                        }
+                    }
                     _ => return Err(Error::new(meta_list.span(), "unrecognised attribute")),
                 };
             }

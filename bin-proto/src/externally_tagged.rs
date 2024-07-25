@@ -17,7 +17,7 @@ macro_rules! test_externally_tagged {
         fn read_externally_tagged() {
             let bytes: &[u8] = $bytes.as_slice();
             assert_eq!(
-                <$t as crate::ExternallyTagged<usize, ()>>::read(
+                <$t as crate::ExternallyTagged<usize, _>>::read(
                     &mut bitstream_io::BitReader::endian(bytes, bitstream_io::BigEndian),
                     crate::ByteOrder::BigEndian,
                     &mut (),
@@ -32,7 +32,7 @@ macro_rules! test_externally_tagged {
         fn write_externally_tagged() {
             let mut buffer: Vec<u8> = Vec::new();
             let value: $t = $value;
-            crate::ExternallyTagged::write(
+            crate::ExternallyTagged::<usize, _>::write(
                 &value,
                 &mut bitstream_io::BitWriter::endian(&mut buffer, bitstream_io::BigEndian),
                 crate::ByteOrder::BigEndian,
