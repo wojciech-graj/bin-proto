@@ -1,6 +1,6 @@
 macro_rules! impl_map_type {
     ( $ty:ident => K: $( $k_pred:ident ),+ ) => {
-        impl<Ctx, K, V> crate::ExternallyLengthPrefixed<Ctx> for $ty<K, V>
+        impl<Ctx, K, V> crate::ExternallyTagged<Ctx> for $ty<K, V>
             where K: crate::Protocol<Ctx> + $( $k_pred +)+,
                   V: crate::Protocol<Ctx>
         {
@@ -43,7 +43,7 @@ macro_rules! test_map_type {
         mod tests {
             use super::*;
 
-            test_externally_length_prefixed!($t<u8, u16> => [[0x01, 0x00, 0x02, 0x03, 0x00, 0x04], $t::from([(1, 2), (3, 4)])]);
+            test_externally_tagged!($t<u8, u16> => [[0x01, 0x00, 0x02, 0x03, 0x00, 0x04], $t::from([(1, 2), (3, 4)])]);
         }
     }
 }

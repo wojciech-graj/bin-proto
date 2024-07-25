@@ -1,8 +1,6 @@
-use crate::{
-    util, BitRead, BitWrite, ByteOrder, ExternallyLengthPrefixed, FlexibleArrayMember, Result,
-};
+use crate::{util, BitRead, BitWrite, ByteOrder, ExternallyTagged, FlexibleArrayMember, Result};
 
-impl<Ctx> ExternallyLengthPrefixed<Ctx> for String {
+impl<Ctx> ExternallyTagged<Ctx> for String {
     fn read(
         read: &mut dyn BitRead,
         byte_order: ByteOrder,
@@ -34,5 +32,5 @@ impl<Ctx> FlexibleArrayMember<Ctx> for String {
 
 #[cfg(test)]
 mod tests {
-    test_externally_length_prefixed!(String => [[b'a', b'b', b'c', b'd'], String::from("abcd")]);
+    test_externally_tagged!(String => [[b'a', b'b', b'c', b'd'], String::from("abcd")]);
 }

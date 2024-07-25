@@ -72,7 +72,7 @@ fn read(field: &syn::Field, parent_attribs: &Attrs) -> TokenStream {
             __ctx
         ))
     } else if let Some(length) = attribs.length {
-        quote!(::bin_proto::ExternallyLengthPrefixed::<#ctx_ty>::read(__io_reader, __byte_order, __ctx, #length))
+        quote!(::bin_proto::ExternallyTagged::<#ctx_ty>::read(__io_reader, __byte_order, __ctx, #length))
     } else {
         quote!(::bin_proto::Protocol::<#ctx_ty>::read(
             __io_reader,
@@ -113,7 +113,7 @@ fn write(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
     } else if attribs.length.is_some() {
         quote!(
             {
-                ::bin_proto::ExternallyLengthPrefixed::write(#field_ref, __io_writer, __byte_order, __ctx)?
+                ::bin_proto::ExternallyTagged::write(#field_ref, __io_writer, __byte_order, __ctx)?
             }
         )
     } else {

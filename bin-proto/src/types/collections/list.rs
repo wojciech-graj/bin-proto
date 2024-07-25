@@ -1,6 +1,6 @@
 macro_rules! impl_list_type {
     ( $ty:ident => T: $( $ty_pred:ident ),* ) => {
-        impl<Ctx, T> crate::ExternallyLengthPrefixed<Ctx> for $ty<T>
+        impl<Ctx, T> crate::ExternallyTagged<Ctx> for $ty<T>
             where T: $crate::Protocol<Ctx> $( + $ty_pred )*
         {
             fn read(read: &mut dyn crate::BitRead,
@@ -30,7 +30,7 @@ macro_rules! test_list_type {
         mod tests {
             use super::*;
 
-            test_externally_length_prefixed!($t<u16> => [[0x00, 0x01, 0x00, 0x02, 0x00, 0x03], $t::from([1, 2, 3])]);
+            test_externally_tagged!($t<u16> => [[0x00, 0x01, 0x00, 0x02, 0x00, 0x03], $t::from([1, 2, 3])]);
         }
     }
 }

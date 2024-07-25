@@ -3,7 +3,7 @@
 use crate::{BitRead, BitWrite, ByteOrder, Result};
 
 /// A trait for variable-length types with a disjoint length prefix.
-pub trait ExternallyLengthPrefixed<Ctx = ()>: Sized {
+pub trait ExternallyTagged<Ctx = ()>: Sized {
     fn read(
         read: &mut dyn BitRead,
         byte_order: ByteOrder,
@@ -15,13 +15,13 @@ pub trait ExternallyLengthPrefixed<Ctx = ()>: Sized {
 }
 
 #[cfg(test)]
-macro_rules! test_externally_length_prefixed {
+macro_rules! test_externally_tagged {
     ($t:ty => [$bytes:expr, $value:expr]) => {
         #[test]
-        fn read_externally_length_prefixed() {
+        fn read_externally_tagged() {
             let bytes: &[u8] = $bytes.as_slice();
             assert_eq!(
-                <$t as crate::ExternallyLengthPrefixed>::read(
+                <$t as crate::ExternallyTagged>::read(
                     &mut bitstream_io::BitReader::endian(bytes, bitstream_io::BigEndian),
                     crate::ByteOrder::BigEndian,
                     &mut (),
@@ -33,10 +33,10 @@ macro_rules! test_externally_length_prefixed {
         }
 
         #[test]
-        fn write_externally_length_prefixed() {
+        fn write_externally_tagged() {
             let mut buffer: Vec<u8> = Vec::new();
             let value: $t = $value;
-            crate::ExternallyLengthPrefixed::write(
+            crate::ExternallyTagged::write(
                 &value,
                 &mut bitstream_io::BitWriter::endian(&mut buffer, bitstream_io::BigEndian),
                 crate::ByteOrder::BigEndian,

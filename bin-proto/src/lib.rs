@@ -55,7 +55,7 @@ pub use self::bit_read::BitRead;
 pub use self::bit_write::BitWrite;
 pub use self::byte_order::ByteOrder;
 pub use self::error::{Error, Result};
-pub use self::externally_length_prefixed::ExternallyLengthPrefixed;
+pub use self::externally_tagged::ExternallyTagged;
 pub use self::flexible_array_member::FlexibleArrayMember;
 pub use self::protocol::Protocol;
 pub use self::protocol::ProtocolNoCtx;
@@ -126,7 +126,7 @@ pub use self::protocol::ProtocolNoCtx;
 /// ```
 ///
 /// ## `#[protocol(length = "<expr>")]`
-/// - Applies to: `impl ExternallyLengthPrefixed`
+/// - Applies to: `impl ExternallyTagged`
 /// - `<expr>`: arbitrary `usize` expression. Fields in parent container can be
 ///   used without prefixing them with `self`.
 ///
@@ -257,12 +257,11 @@ mod bit_field;
 mod bit_read;
 mod bit_write;
 #[macro_use]
-mod externally_length_prefixed;
+mod externally_tagged;
 mod byte_order;
+mod error;
 mod flexible_array_member;
 mod types;
-
-mod error;
 #[macro_use]
 mod protocol;
 mod util;
