@@ -108,7 +108,7 @@ pub use self::tagged::{TaggedRead, UntaggedWrite};
 ///
 /// Determine width of field in bits.
 ///
-/// **WARNING**: Bitfields disregard ByteOrder and instead have the same
+/// **WARNING**: Bitfields disregard `ByteOrder` and instead have the same
 /// endianness as the underlying `BitRead` / `BitWrite` instance. If you're
 /// using bitfields, you almost always want a big endian stream.
 ///
@@ -187,9 +187,9 @@ pub use self::tagged::{TaggedRead, UntaggedWrite};
 /// }
 /// ```
 ///
-/// ## `[#protocol(ctx = "<ty>")]`
+/// ## `[#protocol(ctx = "<type>")]`
 /// - Applies to: containers
-/// - `<ty>`: The type of the context. Either a concrete type, or one of the
+/// - `<type>`: The type of the context. Either a concrete type, or one of the
 ///   container's generics
 ///
 /// Specify the type of context that will be passed to codec functions

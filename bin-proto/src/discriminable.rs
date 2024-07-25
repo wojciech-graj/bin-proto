@@ -1,4 +1,4 @@
-/// A trait for types with discriminants (typically Enums).
+/// A trait for types with discriminants. Automatically derived for `enum`s.
 pub trait Discriminable {
     type Discriminant;
 

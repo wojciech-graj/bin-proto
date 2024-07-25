@@ -2,13 +2,13 @@
 
 use crate::{BitRead, BitWrite, ByteOrder, Result};
 
-/// A trait for variable-length types with a disjoint length prefix.
+/// A trait for decoding variable-length types with a disjoint length prefix.
 pub trait TaggedRead<Tag, Ctx = ()>: Sized {
     fn read(read: &mut dyn BitRead, byte_order: ByteOrder, ctx: &mut Ctx, tag: Tag)
         -> Result<Self>;
 }
 
-/// A trait for variable-length types with a disjoint length prefix.
+/// A trait for encoding variable-length types with a disjoint length prefix.
 pub trait UntaggedWrite<Ctx = ()>: Sized {
     fn write(&self, write: &mut dyn BitWrite, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<()>;
 }
