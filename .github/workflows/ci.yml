@@ -31,3 +31,12 @@ jobs:
     - name: Bench
       working-directory: bench
       run: cargo +nightly bench
+
+    - name: Install cargo-msrv
+      run: cargo install cargo-msrv
+
+    - name: MSRV
+      run: |
+        cargo +nightly generate-lockfile -Z minimal-versions
+        cd bin-proto
+        cargo msrv --verify

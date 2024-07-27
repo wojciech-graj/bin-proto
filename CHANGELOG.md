@@ -10,6 +10,7 @@
 - Unimplement `ProtocolRead` and `BitFieldRead` on `Option`
 - Create `Discriminable` trait for obtaining `enum` discriminants
 - Additionally derive `Discriminable`, `TaggedRead`, `UntaggedWrite`
+- Implement number-related traits on `usize` and `isize`
 # v0.4.2
 - Set MSRV at 1.63.0
 # v0.4.1
