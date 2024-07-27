@@ -31,7 +31,7 @@ macro_rules! impl_list_type {
             where T: $crate::ProtocolRead<Ctx> $( + $ty_pred )*
         {
             fn read(read: &mut dyn $crate::BitRead, byte_order: $crate::ByteOrder, ctx: &mut Ctx) -> $crate::Result<Self> {
-                Ok($crate::util::read_items_to_eof(read, byte_order, ctx)?.collect())
+                Ok($crate::util::read_items_to_eof(read, byte_order, ctx)?.into_iter().collect())
             }
         }
     }

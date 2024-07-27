@@ -43,7 +43,7 @@ macro_rules! impl_map_type {
                     byte_order: $crate::ByteOrder,
                     ctx: &mut Ctx,
                     ) -> $crate::Result<Self> {
-                Ok($crate::util::read_items_to_eof(read, byte_order, ctx)?.collect())
+                Ok($crate::util::read_items_to_eof(read, byte_order, ctx)?.into_iter().collect())
             }
         }
     }

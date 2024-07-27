@@ -10,17 +10,16 @@ pub fn read_items<Ctx, T>(
     read: &mut dyn BitRead,
     byte_order: ByteOrder,
     ctx: &mut Ctx,
-) -> Result<impl Iterator<Item = T>>
+) -> Result<Vec<T>>
 where
     T: ProtocolRead<Ctx>,
 {
     let mut elements = Vec::with_capacity(item_count);
-
     for _ in 0..item_count {
         let element = T::read(read, byte_order, ctx)?;
         elements.push(element);
     }
-    Ok(elements.into_iter())
+    Ok(elements)
 }
 
 /// BitWrites an iterator of parcels to the stream.
@@ -45,7 +44,7 @@ pub fn read_items_to_eof<Ctx, T>(
     read: &mut dyn BitRead,
     byte_order: ByteOrder,
     ctx: &mut Ctx,
-) -> Result<impl Iterator<Item = T>>
+) -> Result<Vec<T>>
 where
     T: ProtocolRead<Ctx>,
 {
@@ -55,7 +54,7 @@ where
             Ok(item) => item,
             Err(Error::IO(e)) => {
                 return if e.kind() == io::ErrorKind::UnexpectedEof {
-                    Ok(items.into_iter())
+                    Ok(items)
                 } else {
                     Err(e.into())
                 }

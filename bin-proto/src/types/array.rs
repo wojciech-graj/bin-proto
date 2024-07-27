@@ -7,7 +7,7 @@ where
 {
     fn read(read: &mut dyn BitRead, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<Self> {
         let elements = util::read_items(N, read, byte_order, ctx)?;
-        Ok(elements.into_iter().collect::<Vec<T>>().try_into().unwrap())
+        Ok(elements.try_into().unwrap())
     }
 }
 
