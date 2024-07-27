@@ -13,8 +13,8 @@ pub enum TraitImplType {
 
 pub fn impl_trait_for(
     ast: &syn::DeriveInput,
-    impl_body: TokenStream,
-    typ: TraitImplType,
+    impl_body: &TokenStream,
+    typ: &TraitImplType,
 ) -> TokenStream {
     let name = &ast.ident;
     let attribs = match Attrs::try_from(ast.attrs.as_slice()) {

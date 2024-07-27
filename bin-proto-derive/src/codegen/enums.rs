@@ -126,7 +126,7 @@ pub fn bind_fields_pattern(parent_name: &syn::Ident, fields: &syn::Fields) -> To
         }
         syn::Fields::Unnamed(ref fields_unnamed) => {
             let binding_names: Vec<_> = (0..fields_unnamed.unnamed.len())
-                .map(|i| syn::Ident::new(&format!("field_{}", i), Span::call_site()))
+                .map(|i| syn::Ident::new(format!("field_{i}").as_str(), Span::call_site()))
                 .collect();
 
             let field_refs: Vec<_> = binding_names.iter().map(|i| quote!( ref #i )).collect();

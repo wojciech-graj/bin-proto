@@ -26,7 +26,7 @@
 //!     arr_len: u8,
 //!     #[protocol(tag = "arr_len as usize")]
 //!     arr: Vec<u8>,
-//!	    #[protocol(tag(type = "u16", write_value = "self.prefixed_arr.len() as u16"))]
+//!     #[protocol(tag(type = "u16", write_value = "self.prefixed_arr.len() as u16"))]
 //!     prefixed_arr: Vec<u8>,
 //!     #[protocol(flexible_array_member)]
 //!     read_to_end: Vec<u8>,
@@ -39,7 +39,7 @@
 //!            | 0b0001, // enum_: V1 (0001)
 //!         0x02, // arr_len: 2
 //!         0x21, 0x37, // arr: [0x21, 0x37]
-//!		    0x00, 0x01, 0x33, // prefixed_arr: [0x33]
+//!         0x00, 0x01, 0x33, // prefixed_arr: [0x33]
 //!         0x01, 0x02, 0x03, // read_to_end: [0x01, 0x02, 0x03]
 //!     ], bin_proto::ByteOrder::BigEndian).unwrap(),
 //!     S {
@@ -54,6 +54,12 @@
 //! );
 //! ```
 
+#![deny(clippy::pedantic)]
+#![allow(
+    clippy::module_name_repetitions,
+    clippy::missing_errors_doc,
+    clippy::implicit_hasher
+)]
 pub use self::bit_field::{BitFieldRead, BitFieldWrite};
 pub use self::bit_read::BitRead;
 pub use self::bit_write::BitWrite;

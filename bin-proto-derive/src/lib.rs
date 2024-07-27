@@ -1,3 +1,6 @@
+#![deny(clippy::pedantic)]
+#![allow(clippy::module_name_repetitions)]
+
 #[macro_use]
 extern crate quote;
 
@@ -8,9 +11,11 @@ mod plan;
 use attr::Attrs;
 use codegen::trait_impl::{impl_trait_for, TraitImplType};
 use proc_macro2::TokenStream;
+use syn::parse_macro_input;
 
 use crate::codegen::enums::{read_discriminant, variant_discriminant, write_discriminant};
 
+#[derive(Clone, Copy)]
 enum Operation {
     Read,
     Write,
@@ -18,13 +23,13 @@ enum Operation {
 
 #[proc_macro_derive(ProtocolRead, attributes(protocol))]
 pub fn protocol_read(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    let ast: syn::DeriveInput = syn::parse(input).expect("Failed to parse input");
+    let ast: syn::DeriveInput = parse_macro_input!(input as syn::DeriveInput);
     impl_protocol(&ast, Operation::Read).into()
 }
 
 #[proc_macro_derive(ProtocolWrite, attributes(protocol))]
 pub fn protocol_write(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    let ast: syn::DeriveInput = syn::parse(input).expect("Failed to parse input");
+    let ast: syn::DeriveInput = parse_macro_input!(input as syn::DeriveInput);
     impl_protocol(&ast, Operation::Write).into()
 }
 
@@ -83,7 +88,7 @@ fn impl_for_struct(
         }
     };
 
-    impl_trait_for(ast, impl_body, trait_type)
+    impl_trait_for(ast, &impl_body, &trait_type)
 }
 
 fn impl_for_enum(
@@ -117,8 +122,8 @@ fn impl_for_enum(
             );
             let externally_tagged_read_impl = impl_trait_for(
                 ast,
-                impl_body,
-                TraitImplType::TaggedRead(discriminant_ty.clone()),
+                &impl_body,
+                &TraitImplType::TaggedRead(discriminant_ty.clone()),
             );
 
             let read_discriminant = read_discriminant(&attribs);
@@ -132,7 +137,7 @@ fn impl_for_enum(
                     <Self as ::bin_proto::TaggedRead<_, _>>::read(__io_reader, __byte_order, __ctx, __tag)
                 }
             );
-            let protocol_read_impl = impl_trait_for(ast, impl_body, TraitImplType::ProtocolRead);
+            let protocol_read_impl = impl_trait_for(ast, &impl_body, &TraitImplType::ProtocolRead);
 
             quote!(
                 #externally_tagged_read_impl
@@ -153,7 +158,7 @@ fn impl_for_enum(
                 }
             );
             let externally_tagged_write_impl =
-                impl_trait_for(ast, impl_body, TraitImplType::UntaggedWrite);
+                impl_trait_for(ast, &impl_body, &TraitImplType::UntaggedWrite);
 
             let variant_discriminant = variant_discriminant(&plan, &attribs);
             let impl_body = quote!(
@@ -164,7 +169,7 @@ fn impl_for_enum(
                     #variant_discriminant
                 }
             );
-            let discriminable_impl = impl_trait_for(ast, impl_body, TraitImplType::Discriminable);
+            let discriminable_impl = impl_trait_for(ast, &impl_body, &TraitImplType::Discriminable);
 
             let write_discriminant = write_discriminant(&attribs);
             let impl_body = quote!(
@@ -178,7 +183,8 @@ fn impl_for_enum(
                     <Self as ::bin_proto::UntaggedWrite<_>>::write(self, __io_writer, __byte_order, __ctx)
                 }
             );
-            let protocol_write_impl = impl_trait_for(ast, impl_body, TraitImplType::ProtocolWrite);
+            let protocol_write_impl =
+                impl_trait_for(ast, &impl_body, &TraitImplType::ProtocolWrite);
 
             quote!(
                 #externally_tagged_write_impl

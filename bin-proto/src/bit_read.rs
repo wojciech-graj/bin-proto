@@ -81,7 +81,7 @@ where
     }
 
     fn byte_align(&mut self) {
-        bitstream_io::BitRead::byte_align(self)
+        bitstream_io::BitRead::byte_align(self);
     }
 
     fn read_u8(&mut self) -> io::Result<u8> {

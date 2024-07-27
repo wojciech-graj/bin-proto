@@ -18,6 +18,7 @@ jobs:
       with:
         toolchain: stable
         profile: minimal
+        components: clippy
 
     - name: Set up Rust - Nightly
       uses: actions-rs/toolchain@v1
@@ -27,6 +28,9 @@ jobs:
 
     - name: Test
       run: cargo test
+
+    - name: Clippy
+      run: cargo clippy
 
     - name: Bench
       working-directory: bench

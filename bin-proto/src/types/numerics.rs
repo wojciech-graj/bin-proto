@@ -14,7 +14,7 @@ impl<Ctx> BitFieldRead<Ctx> for bool {
 
 impl<Ctx> BitFieldWrite<Ctx> for bool {
     fn write(&self, write: &mut dyn BitWrite, _: ByteOrder, _: &mut Ctx, bits: u32) -> Result<()> {
-        write.write_u8_bf(bits, if *self { 1 } else { 0 })?;
+        write.write_u8_bf(bits, (*self).into())?;
         Ok(())
     }
 }
@@ -31,7 +31,7 @@ impl<Ctx> ProtocolRead<Ctx> for bool {
 
 impl<Ctx> ProtocolWrite<Ctx> for bool {
     fn write(&self, write: &mut dyn BitWrite, _: ByteOrder, _: &mut Ctx) -> Result<()> {
-        write.write_u8(if *self { 1 } else { 0 })?;
+        write.write_u8((*self).into())?;
         Ok(())
     }
 }
@@ -62,24 +62,16 @@ impl<Ctx> ProtocolWrite<Ctx> for i8 {
     }
 }
 
-macro_rules! impl_for_numeric_cast {
-    ($e:expr, $ty:ty, $cast_ty:ty) => {
-        $e as $ty
-    };
-    ($e:expr,) => {
-        $e
-    };
-}
-
 macro_rules! impl_protocol_for_numeric {
-    ($ty:ty => [$read_fn:ident : $write_fn:ident] $(as $cast_ty:ty)?) => {
+    ($ty:ty => [$read_fn:ident : $write_fn:ident]) => {
         impl<Ctx> $crate::ProtocolRead<Ctx> for $ty {
+            #[allow(clippy::needless_question_mark)]
             fn read(
                 read: &mut dyn $crate::BitRead,
                 byte_order: $crate::ByteOrder,
                 _: &mut Ctx,
             ) -> $crate::Result<Self> {
-                Ok(impl_for_numeric_cast!(byte_order.$read_fn(read)?, $($ty, $cast_ty)?))
+                Ok(byte_order.$read_fn(read)?.try_into().unwrap())
             }
         }
 
@@ -90,7 +82,7 @@ macro_rules! impl_protocol_for_numeric {
                 byte_order: $crate::ByteOrder,
                 _: &mut Ctx,
             ) -> $crate::Result<()> {
-                byte_order.$write_fn(*self $(as $cast_ty)?, write)?;
+                byte_order.$write_fn((*self).try_into().unwrap(), write)?;
                 Ok(())
             }
         }
@@ -98,7 +90,7 @@ macro_rules! impl_protocol_for_numeric {
 }
 
 macro_rules! impl_bitfield_for_numeric {
-    ($ty:ty => [$read_fn:ident : $write_fn:ident] $(as $cast_ty:ty)?) => {
+    ($ty:ty => [$read_fn:ident : $write_fn:ident]) => {
         impl<Ctx> $crate::BitFieldRead<Ctx> for $ty {
             fn read(
                 read: &mut dyn $crate::BitRead,
@@ -106,7 +98,7 @@ macro_rules! impl_bitfield_for_numeric {
                 _: &mut Ctx,
                 bits: u32,
             ) -> $crate::Result<Self> {
-                Ok(impl_for_numeric_cast!($crate::BitRead::$read_fn(read, bits)?, $($ty, $cast_ty)?))
+                Ok($crate::BitRead::$read_fn(read, bits)?.try_into().unwrap())
             }
         }
 
@@ -118,7 +110,7 @@ macro_rules! impl_bitfield_for_numeric {
                 _: &mut Ctx,
                 bits: u32,
             ) -> $crate::Result<()> {
-                $crate::BitWrite::$write_fn(write, bits, *self $(as $cast_ty)?)?;
+                $crate::BitWrite::$write_fn(write, bits, (*self).try_into().unwrap())?;
                 Ok(())
             }
         }
@@ -145,24 +137,24 @@ impl_bitfield_for_numeric!(i32 => [read_i32_bf : write_i32_bf]);
 
 #[cfg(target_pointer_width = "16")]
 mod size {
-    impl_protocol_for_numeric!(usize => [read_u16 : write_u16] as u16);
-    impl_bitfield_for_numeric!(usize => [read_u16_bf : write_u16_bf] as u16);
-    impl_protocol_for_numeric!(isize => [read_i16 : write_i16] as i16);
-    impl_bitfield_for_numeric!(isize => [read_i16_bf : write_i16_bf] as i16);
+    impl_protocol_for_numeric!(usize => [read_u16 : write_u16]);
+    impl_bitfield_for_numeric!(usize => [read_u16_bf : write_u16_bf]);
+    impl_protocol_for_numeric!(isize => [read_i16 : write_i16]);
+    impl_bitfield_for_numeric!(isize => [read_i16_bf : write_i16_bf]);
 }
 
 #[cfg(target_pointer_width = "32")]
 mod size {
-    impl_protocol_for_numeric!(usize => [read_u32 : write_u32] as u32);
-    impl_bitfield_for_numeric!(usize => [read_u32_bf : write_u32_bf] as u32);
-    impl_protocol_for_numeric!(isize => [read_i32 : write_i32] as i32);
-    impl_bitfield_for_numeric!(isize => [read_i32_bf : write_i32_bf] as i32);
+    impl_protocol_for_numeric!(usize => [read_u32 : write_u32]);
+    impl_bitfield_for_numeric!(usize => [read_u32_bf : write_u32_bf]);
+    impl_protocol_for_numeric!(isize => [read_i32 : write_i32]);
+    impl_bitfield_for_numeric!(isize => [read_i32_bf : write_i32_bf]);
 }
 
 #[cfg(target_pointer_width = "64")]
 mod size {
-    impl_protocol_for_numeric!(usize => [read_u64 : write_u64] as u64);
-    impl_bitfield_for_numeric!(usize => [read_u64_bf : write_u64_bf] as u64);
-    impl_protocol_for_numeric!(isize => [read_i64 : write_i64] as i64);
-    impl_bitfield_for_numeric!(isize => [read_i64_bf : write_i64_bf] as i64);
+    impl_protocol_for_numeric!(usize => [read_u64 : write_u64]);
+    impl_bitfield_for_numeric!(usize => [read_u64_bf : write_u64_bf]);
+    impl_protocol_for_numeric!(isize => [read_i64 : write_i64]);
+    impl_bitfield_for_numeric!(isize => [read_i64_bf : write_i64_bf]);
 }

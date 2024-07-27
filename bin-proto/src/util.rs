@@ -22,7 +22,7 @@ where
     Ok(elements)
 }
 
-/// BitWrites an iterator of parcels to the stream.
+/// `BitWrites` an iterator of parcels to the stream.
 ///
 /// Does not include a length prefix.
 pub fn write_items<'a, Ctx, T>(
@@ -34,7 +34,7 @@ pub fn write_items<'a, Ctx, T>(
 where
     T: ProtocolWrite<Ctx> + 'a,
 {
-    for item in items.into_iter() {
+    for item in items {
         item.write(write, byte_order, ctx)?;
     }
     Ok(())

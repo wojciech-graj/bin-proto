@@ -22,6 +22,7 @@ pub enum Tag {
 }
 
 impl Attrs {
+    #[allow(clippy::too_many_lines)]
     pub fn validate_enum(&self, span: Span) -> Result<()> {
         if self.discriminant_type.is_none() {
             return Err(Error::new(
@@ -147,6 +148,7 @@ impl Attrs {
 impl TryFrom<&[syn::Attribute]> for Attrs {
     type Error = syn::Error;
 
+    #[allow(clippy::too_many_lines)]
     fn try_from(value: &[syn::Attribute]) -> Result<Self> {
         let meta_lists = value.iter().filter_map(|attr| match attr.parse_meta() {
             Ok(syn::Meta::List(meta_list)) => {
@@ -163,7 +165,7 @@ impl TryFrom<&[syn::Attribute]> for Attrs {
 
         let mut attribs = Attrs::default();
         for meta_list in meta_lists {
-            for meta in meta_list.nested.iter() {
+            for meta in &meta_list.nested {
                 match meta {
                     syn::NestedMeta::Meta(syn::Meta::NameValue(name_value)) => match name_value
                         .path
@@ -172,23 +174,23 @@ impl TryFrom<&[syn::Attribute]> for Attrs {
                         Some(ident) => match ident.to_string().as_str() {
                             "discriminant_type" => {
                                 attribs.discriminant_type =
-                                    Some(meta_name_value_to_parse(name_value)?)
+                                    Some(meta_name_value_to_parse(name_value)?);
                             }
                             "discriminant" => {
-                                attribs.discriminant = Some(meta_name_value_to_parse(name_value)?)
+                                attribs.discriminant = Some(meta_name_value_to_parse(name_value)?);
                             }
                             "ctx" => attribs.ctx = Some(meta_name_value_to_parse(name_value)?),
                             "ctx_bounds" => {
                                 attribs.ctx_bounds =
-                                    Some(meta_name_value_to_punctuated(name_value)?)
+                                    Some(meta_name_value_to_punctuated(name_value)?);
                             }
                             "bits" => attribs.bits = Some(meta_name_value_to_u32(name_value)?),
                             "write_value" => {
-                                attribs.write_value = Some(meta_name_value_to_parse(name_value)?)
+                                attribs.write_value = Some(meta_name_value_to_parse(name_value)?);
                             }
                             "tag" => {
                                 attribs.tag =
-                                    Some(Tag::External(meta_name_value_to_parse(name_value)?))
+                                    Some(Tag::External(meta_name_value_to_parse(name_value)?));
                             }
                             _ => return Err(Error::new(ident.span(), "unrecognised attribute")),
                         },
@@ -209,7 +211,7 @@ impl TryFrom<&[syn::Attribute]> for Attrs {
                     syn::NestedMeta::Meta(syn::Meta::List(list)) => {
                         let mut typ = None;
                         let mut write_value = None;
-                        for nested in list.nested.iter() {
+                        for nested in &list.nested {
                             let name_value =
                                 if let syn::NestedMeta::Meta(syn::Meta::NameValue(name_value)) =
                                     nested
@@ -229,7 +231,7 @@ impl TryFrom<&[syn::Attribute]> for Attrs {
                             match ident.to_string().as_str() {
                                 "type" => typ = Some(meta_name_value_to_parse(name_value)?),
                                 "write_value" => {
-                                    write_value = Some(meta_name_value_to_parse(name_value)?)
+                                    write_value = Some(meta_name_value_to_parse(name_value)?);
                                 }
                                 _ => {
                                     return Err(Error::new(
@@ -244,7 +246,7 @@ impl TryFrom<&[syn::Attribute]> for Attrs {
                                 attribs.tag = Some(Tag::Prepend {
                                     typ,
                                     write_value: value,
-                                })
+                                });
                             }
                             _ => return Err(Error::new(list.span(), "Tag lacks type or value.")),
                         }
