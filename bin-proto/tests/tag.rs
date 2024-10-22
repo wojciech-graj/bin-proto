@@ -13,6 +13,12 @@ pub struct WithElementsLength {
     pub data: Vec<u32>,
 }
 
+#[derive(ProtocolRead, Debug, PartialEq, Eq)]
+pub struct OptionalWriteValue {
+    #[protocol(tag(type = "u8"))]
+    pub data: Vec<u32>,
+}
+
 #[derive(ProtocolRead, ProtocolWrite, Debug, PartialEq, Eq)]
 pub struct WithElementsLengthAuto {
     #[protocol(write_value = "self.data.len() as u32")]

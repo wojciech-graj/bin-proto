@@ -155,7 +155,7 @@ pub use self::tagged::{TaggedRead, UntaggedWrite};
 /// }
 /// ```
 ///
-/// ## `#[protocol(tag(type = "<type>", write_value = "<expr>"))]`
+/// ## `#[protocol(tag(type = "<type>"[, write_value = "<expr>"]?))]`
 /// - Applies to: `impl TaggedRead` or `impl UntaggedWrite`
 /// - `<type>`: tag's type
 /// - `<expr>`: arbitrary expression. Fields in parent container should be
@@ -163,7 +163,8 @@ pub use self::tagged::{TaggedRead, UntaggedWrite};
 ///
 /// Specify tag of field. The tag represents a length prefix for variable-length
 /// fields, and a boolean for `Option`. The tag is placed directly before the
-/// field.
+/// field. The `write_value` only has to be specified when deriving
+/// `ProtocolWrite`.
 ///
 /// ```
 /// # use bin_proto::{ProtocolRead, ProtocolWrite};

@@ -3,7 +3,7 @@ pub mod trait_impl;
 
 use crate::attr::{Attrs, Tag};
 use proc_macro2::TokenStream;
-use syn::spanned::Spanned;
+use syn::{spanned::Spanned, Error};
 
 pub fn reads(fields: &syn::Fields, attrs: &Attrs) -> (TokenStream, TokenStream) {
     match *fields {
@@ -129,13 +129,20 @@ fn write(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
             ),
             Tag::Prepend {
                 typ,
-                write_value: value,
+                write_value: Some(value),
             } => quote!(
                 {
                     <#typ as ::bin_proto::ProtocolWrite<_>>::write(&{#value}, __io_writer, __byte_order, __ctx)?;
                     ::bin_proto::UntaggedWrite::write(#field_ref, __io_writer, __byte_order, __ctx)?
                 }
             ),
+            Tag::Prepend {
+                typ: _,
+                write_value: None,
+            } => {
+                return Error::new(field.span(), "Tag must specify 'write_value'")
+                    .to_compile_error();
+            }
         }
     } else {
         quote!(

@@ -1,3 +1,5 @@
+# v0.5.1
+- Make `write_value` field in `#[protocol(tag(...))]` only required when deriving `ProtocolWrite`
 # v0.5.0
 - Split `Protocol` into `ProtocolRead` and `ProtocolWrite`
 - Split `ExternallyLengthPrefixed` into `TaggedRead` and `UntaggedWrite`

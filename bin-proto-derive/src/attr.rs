@@ -17,7 +17,7 @@ pub enum Tag {
     External(syn::Expr),
     Prepend {
         typ: syn::Type,
-        write_value: syn::Expr,
+        write_value: Option<syn::Expr>,
     },
 }
 
@@ -241,14 +241,10 @@ impl TryFrom<&[syn::Attribute]> for Attrs {
                                 }
                             }
                         }
-                        match (typ, write_value) {
-                            (Some(typ), Some(value)) => {
-                                attribs.tag = Some(Tag::Prepend {
-                                    typ,
-                                    write_value: value,
-                                });
-                            }
-                            _ => return Err(Error::new(list.span(), "Tag lacks type or value.")),
+                        if let Some(typ) = typ {
+                            attribs.tag = Some(Tag::Prepend { typ, write_value });
+                        } else {
+                            return Err(Error::new(list.span(), "Tag lacks type."));
                         }
                     }
                     _ => return Err(Error::new(meta_list.span(), "unrecognised attribute")),
