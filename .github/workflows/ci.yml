@@ -43,4 +43,4 @@ jobs:
       run: |
         cargo +nightly generate-lockfile -Z minimal-versions
         cd bin-proto
-        cargo msrv --verify
+        cargo msrv verify
