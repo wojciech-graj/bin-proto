@@ -55,7 +55,7 @@ fn impl_for_struct(
 
     let (impl_body, trait_type) = match protocol_type {
         Operation::Read => {
-            let (reads, initializers) = codegen::reads(&strukt.fields, &attribs);
+            let (reads, initializers) = codegen::reads(&strukt.fields);
             (
                 quote!(
                     #[allow(unused_variables)]
@@ -109,7 +109,7 @@ fn impl_for_enum(
 
     match protocol_type {
         Operation::Read => {
-            let read_variant = codegen::enums::read_variant_fields(&plan, &attribs);
+            let read_variant = codegen::enums::read_variant_fields(&plan);
             let impl_body = quote!(
                 #[allow(unused_variables)]
                 fn read(__io_reader: &mut dyn ::bin_proto::BitRead,

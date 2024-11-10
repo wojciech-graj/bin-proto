@@ -1,6 +1,8 @@
 # v0.6.0
 - Allow multiple attributes in a single `#[protocol(...)]`
 - Require unquoted expressions in attributes
+- Use nested metas for all lists in attributes
+- Add `#[protocol(ctx_generics(...))]`
 - Impose `non_exhaustive` on `Error`
 # v0.5.0
 - Split `Protocol` into `ProtocolRead` and `ProtocolWrite`

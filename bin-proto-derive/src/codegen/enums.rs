@@ -84,11 +84,11 @@ pub fn variant_discriminant(plan: &plan::Enum, attribs: &Attrs) -> TokenStream {
     })
 }
 
-pub fn read_variant_fields(plan: &plan::Enum, attribs: &Attrs) -> TokenStream {
+pub fn read_variant_fields(plan: &plan::Enum) -> TokenStream {
     let discriminant_match_branches = plan.variants.iter().map(|variant| {
         let variant_name = &variant.ident;
         let discriminant_literal = &variant.discriminant_value;
-        let (reader, initializer) = codegen::reads(&variant.fields, attribs);
+        let (reader, initializer) = codegen::reads(&variant.fields);
 
         quote!(
             #discriminant_literal => {

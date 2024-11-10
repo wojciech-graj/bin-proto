@@ -1,12 +1,13 @@
 use proc_macro2::{Span, TokenStream};
-use syn::{punctuated::Punctuated, spanned::Spanned, token::Plus, Error, Result};
+use syn::{parenthesized, punctuated::Punctuated, spanned::Spanned, token::Comma, Error, Result};
 
 #[derive(Default)]
 pub struct Attrs {
     pub discriminant_type: Option<syn::Type>,
     pub discriminant: Option<syn::Expr>,
     pub ctx: Option<syn::Type>,
-    pub ctx_bounds: Option<Punctuated<syn::TypeParamBound, Plus>>,
+    pub ctx_generics: Option<Vec<syn::GenericParam>>,
+    pub ctx_bounds: Option<Vec<syn::TypeParamBound>>,
     pub write_value: Option<syn::Expr>,
     pub bits: Option<syn::Expr>,
     pub flexible_array_member: bool,
@@ -165,9 +166,26 @@ impl TryFrom<&[syn::Attribute]> for Attrs {
                         attribs.discriminant = Some(meta.value()?.parse()?);
                     } else if meta.path.is_ident("ctx") {
                         attribs.ctx = Some(meta.value()?.parse()?);
+                    } else if meta.path.is_ident("ctx_generics") {
+                        let content;
+                        parenthesized!(content in meta.input);
+                        attribs.ctx_generics = Some(
+                            Punctuated::<syn::GenericParam, Comma>::parse_separated_nonempty(
+                                &content,
+                            )?
+                            .into_iter()
+                            .collect(),
+                        );
                     } else if meta.path.is_ident("ctx_bounds") {
-                        attribs.ctx_bounds =
-                            Some(Punctuated::parse_separated_nonempty(meta.value()?)?);
+                        let content;
+                        parenthesized!(content in meta.input);
+                        attribs.ctx_bounds = Some(
+                            Punctuated::<syn::TypeParamBound, Comma>::parse_separated_nonempty(
+                                &content,
+                            )?
+                            .into_iter()
+                            .collect(),
+                        );
                     } else if meta.path.is_ident("bits") {
                         attribs.bits = Some(meta.value()?.parse()?);
                     } else if meta.path.is_ident("write_value") {

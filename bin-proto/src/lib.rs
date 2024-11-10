@@ -283,7 +283,7 @@ pub use self::tagged::{TaggedRead, UntaggedWrite};
 /// }
 ///
 /// #[derive(ProtocolRead, ProtocolWrite)]
-/// #[protocol(ctx_bounds = CtxTrait)]
+/// #[protocol(ctx_bounds(CtxTrait))]
 /// pub struct WithCtx(NeedsCtx);
 /// ```
 #[cfg(feature = "derive")]

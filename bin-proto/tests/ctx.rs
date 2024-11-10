@@ -1,5 +1,15 @@
 use bin_proto::{ByteOrder, ProtocolRead, ProtocolWrite};
 
+trait Boolean {
+    fn set(&mut self);
+}
+
+impl Boolean for bool {
+    fn set(&mut self) {
+        *self = true
+    }
+}
+
 trait CtxTrait {
     fn call(&mut self);
 }
@@ -10,6 +20,18 @@ struct CtxStruct(bool);
 impl CtxTrait for CtxStruct {
     fn call(&mut self) {
         self.0 = true
+    }
+}
+
+#[derive(Debug)]
+struct CtxStructWithGenerics<'a, T>(&'a mut T);
+
+impl<'a, T> CtxTrait for CtxStructWithGenerics<'a, T>
+where
+    T: Boolean,
+{
+    fn call(&mut self) {
+        self.0.set()
     }
 }
 
@@ -44,7 +66,15 @@ impl<Ctx: CtxTrait> ProtocolWrite<Ctx> for CtxCheck {
 struct CtxCheckStructWrapper(CtxCheck);
 
 #[derive(Debug, ProtocolRead, ProtocolWrite)]
-#[protocol(ctx_bounds = CtxTrait)]
+#[protocol(ctx = CtxStructWithGenerics<'a, bool>, ctx_generics('a))]
+struct CtxCheckStructWrapperWithGenericsConcreteBool(CtxCheck);
+
+#[derive(Debug, ProtocolRead, ProtocolWrite)]
+#[protocol(ctx = CtxStructWithGenerics<'a, T>, ctx_generics('a, T: Boolean))]
+struct CtxCheckStructWrapperWithGenerics(CtxCheck);
+
+#[derive(Debug, ProtocolRead, ProtocolWrite)]
+#[protocol(ctx_bounds(CtxTrait))]
 struct CtxCheckTraitWrapper(CtxCheck);
 
 #[test]

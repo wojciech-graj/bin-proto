@@ -60,6 +60,9 @@ pub fn impl_trait_for(
             | TraitImplType::UntaggedWrite
     ) {
         trait_generics.push(if let Some(ctx) = attribs.ctx {
+            if let Some(ctx_generics) = attribs.ctx_generics {
+                generics.params.extend(ctx_generics);
+            }
             quote!(#ctx)
         } else {
             let ident = syn::Ident::new("__Ctx", Span::call_site());
@@ -69,7 +72,10 @@ pub fn impl_trait_for(
                     attrs: Vec::new(),
                     ident: ident.clone(),
                     colon_token: None,
-                    bounds: attribs.ctx_bounds.unwrap_or(Punctuated::new()),
+                    bounds: attribs
+                        .ctx_bounds
+                        .map(|ctx_bounds| ctx_bounds.into_iter().collect())
+                        .unwrap_or_default(),
                     eq_token: None,
                     default: None,
                 }));

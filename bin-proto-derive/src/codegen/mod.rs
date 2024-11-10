@@ -5,10 +5,10 @@ use crate::attr::{Attrs, Tag};
 use proc_macro2::TokenStream;
 use syn::{spanned::Spanned, Error};
 
-pub fn reads(fields: &syn::Fields, attrs: &Attrs) -> (TokenStream, TokenStream) {
+pub fn reads(fields: &syn::Fields) -> (TokenStream, TokenStream) {
     match *fields {
-        syn::Fields::Named(ref fields) => read_named_fields(fields, attrs),
-        syn::Fields::Unnamed(ref fields) => (quote!(), read_unnamed_fields(fields, attrs)),
+        syn::Fields::Named(ref fields) => read_named_fields(fields),
+        syn::Fields::Unnamed(ref fields) => (quote!(), read_unnamed_fields(fields)),
         syn::Fields::Unit => (quote!(), quote!()),
     }
 }
@@ -21,7 +21,7 @@ pub fn writes(fields: &syn::Fields, self_prefix: bool) -> TokenStream {
     }
 }
 
-fn read_named_fields(fields_named: &syn::FieldsNamed, attrs: &Attrs) -> (TokenStream, TokenStream) {
+fn read_named_fields(fields_named: &syn::FieldsNamed) -> (TokenStream, TokenStream) {
     let fields: Vec<_> = fields_named
         .named
         .iter()
@@ -29,7 +29,7 @@ fn read_named_fields(fields_named: &syn::FieldsNamed, attrs: &Attrs) -> (TokenSt
             let field_name = &field.ident;
             let field_ty = &field.ty;
 
-            let read = read(field, attrs);
+            let read = read(field);
 
             quote!(
                 let #field_name : #field_ty = #read?;
@@ -53,7 +53,7 @@ fn read_named_fields(fields_named: &syn::FieldsNamed, attrs: &Attrs) -> (TokenSt
     )
 }
 
-fn read(field: &syn::Field, parent_attribs: &Attrs) -> TokenStream {
+fn read(field: &syn::Field) -> TokenStream {
     let attribs = match Attrs::try_from(field.attrs.as_slice()) {
         Ok(attribs) => attribs,
         Err(e) => return e.to_compile_error(),
@@ -62,10 +62,8 @@ fn read(field: &syn::Field, parent_attribs: &Attrs) -> TokenStream {
         return e.to_compile_error();
     };
 
-    let ctx_ty = parent_attribs.ctx_ty();
-
     if let Some(field_width) = attribs.bits {
-        quote!(::bin_proto::BitFieldRead::<#ctx_ty>::read(__io_reader, __byte_order, __ctx, #field_width))
+        quote!(::bin_proto::BitFieldRead::read(__io_reader, __byte_order, __ctx, #field_width))
     } else if attribs.flexible_array_member {
         quote!(::bin_proto::FlexibleArrayMemberRead::read(
             __io_reader,
@@ -75,20 +73,24 @@ fn read(field: &syn::Field, parent_attribs: &Attrs) -> TokenStream {
     } else if let Some(tag) = attribs.tag {
         match tag {
             Tag::External(tag) => {
-                quote!(::bin_proto::TaggedRead::<_, #ctx_ty>::read(__io_reader, __byte_order, __ctx, #tag))
+                quote!(::bin_proto::TaggedRead::read(__io_reader, __byte_order, __ctx, #tag))
             }
             Tag::Prepend {
                 typ,
                 write_value: _,
             } => {
                 quote!({
-                    let __tag = ::bin_proto::ProtocolRead::<#ctx_ty>::read(__io_reader, __byte_order, __ctx)?;
-                    ::bin_proto::TaggedRead::<#typ, #ctx_ty>::read(__io_reader, __byte_order, __ctx, __tag)
+                    let __tag = ::bin_proto::ProtocolRead::read(__io_reader, __byte_order, __ctx)?;
+                    ::bin_proto::TaggedRead::<#typ, _>::read(__io_reader, __byte_order, __ctx, __tag)
                 })
             }
         }
     } else {
-        quote!(::bin_proto::ProtocolRead::<#ctx_ty>::read(__io_reader, __byte_order, __ctx))
+        quote!(::bin_proto::ProtocolRead::read(
+            __io_reader,
+            __byte_order,
+            __ctx
+        ))
     }
 }
 
@@ -173,13 +175,13 @@ fn write_named_fields(fields_named: &syn::FieldsNamed, self_prefix: bool) -> Tok
     quote!( #( #field_writers );* )
 }
 
-fn read_unnamed_fields(fields_unnamed: &syn::FieldsUnnamed, attrs: &Attrs) -> TokenStream {
+fn read_unnamed_fields(fields_unnamed: &syn::FieldsUnnamed) -> TokenStream {
     let field_initializers: Vec<_> = fields_unnamed
         .unnamed
         .iter()
         .map(|field| {
             let field_ty = &field.ty;
-            let read = read(field, attrs);
+            let read = read(field);
 
             quote!(
                 {
