@@ -10,9 +10,9 @@ mod vec {
 
         #[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq)]
         struct V {
-            #[protocol(write_value = "self.data.len() as u8")]
+            #[protocol(write_value = self.data.len() as u8)]
             count: u8,
-            #[protocol(tag = "count as usize")]
+            #[protocol(tag = count as usize)]
             data: Vec<u8>,
         }
 
@@ -85,7 +85,7 @@ mod enum_ {
         use bin_proto::{ProtocolNoCtx, ProtocolRead, ProtocolWrite};
 
         #[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq)]
-        #[protocol(discriminant_type = "u8")]
+        #[protocol(discriminant_type = u8)]
         enum E {
             V0 = 0,
             V1 = 1,
@@ -164,7 +164,7 @@ mod ipv4 {
         use bin_proto::{ProtocolNoCtx, ProtocolRead, ProtocolWrite};
 
         #[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq)]
-        #[protocol(discriminant_type = "u8")]
+        #[protocol(discriminant_type = u8)]
         #[protocol(bits = 4)]
         enum Version {
             V4 = 4,
