@@ -40,11 +40,11 @@ impl<Ctx: CtxTrait> ProtocolWrite<Ctx> for CtxCheck {
 }
 
 #[derive(Debug, ProtocolRead, ProtocolWrite)]
-#[protocol(ctx = "CtxStruct")]
+#[protocol(ctx = CtxStruct)]
 struct CtxCheckStructWrapper(CtxCheck);
 
 #[derive(Debug, ProtocolRead, ProtocolWrite)]
-#[protocol(ctx_bounds = "CtxTrait")]
+#[protocol(ctx_bounds = CtxTrait)]
 struct CtxCheckTraitWrapper(CtxCheck);
 
 #[test]

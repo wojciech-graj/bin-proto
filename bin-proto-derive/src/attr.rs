@@ -1,14 +1,14 @@
 use proc_macro2::{Span, TokenStream};
-use syn::{parse::Parser, punctuated::Punctuated, spanned::Spanned, token::Add, Error, Result};
+use syn::{punctuated::Punctuated, spanned::Spanned, token::Plus, Error, Result};
 
 #[derive(Default)]
 pub struct Attrs {
     pub discriminant_type: Option<syn::Type>,
     pub discriminant: Option<syn::Expr>,
     pub ctx: Option<syn::Type>,
-    pub ctx_bounds: Option<Punctuated<syn::TypeParamBound, Add>>,
+    pub ctx_bounds: Option<Punctuated<syn::TypeParamBound, Plus>>,
     pub write_value: Option<syn::Expr>,
-    pub bits: Option<u32>,
+    pub bits: Option<syn::Expr>,
     pub flexible_array_member: bool,
     pub tag: Option<Tag>,
 }
@@ -148,138 +148,56 @@ impl Attrs {
 impl TryFrom<&[syn::Attribute]> for Attrs {
     type Error = syn::Error;
 
-    #[allow(clippy::too_many_lines)]
-    fn try_from(value: &[syn::Attribute]) -> Result<Self> {
-        let meta_lists = value.iter().filter_map(|attr| match attr.parse_meta() {
-            Ok(syn::Meta::List(meta_list)) => {
-                if meta_list.path.get_ident()
-                    == Some(&syn::Ident::new("protocol", Span::call_site()))
-                {
-                    Some(meta_list)
-                } else {
-                    None
-                }
-            }
-            _ => None,
-        });
-
+    fn try_from(attrs: &[syn::Attribute]) -> Result<Self> {
         let mut attribs = Attrs::default();
-        for meta_list in meta_lists {
-            for meta in &meta_list.nested {
-                match meta {
-                    syn::NestedMeta::Meta(syn::Meta::NameValue(name_value)) => match name_value
-                        .path
-                        .get_ident()
-                    {
-                        Some(ident) => match ident.to_string().as_str() {
-                            "discriminant_type" => {
-                                attribs.discriminant_type =
-                                    Some(meta_name_value_to_parse(name_value)?);
-                            }
-                            "discriminant" => {
-                                attribs.discriminant = Some(meta_name_value_to_parse(name_value)?);
-                            }
-                            "ctx" => attribs.ctx = Some(meta_name_value_to_parse(name_value)?),
-                            "ctx_bounds" => {
-                                attribs.ctx_bounds =
-                                    Some(meta_name_value_to_punctuated(name_value)?);
-                            }
-                            "bits" => attribs.bits = Some(meta_name_value_to_u32(name_value)?),
-                            "write_value" => {
-                                attribs.write_value = Some(meta_name_value_to_parse(name_value)?);
-                            }
-                            "tag" => {
-                                attribs.tag =
-                                    Some(Tag::External(meta_name_value_to_parse(name_value)?));
-                            }
-                            _ => return Err(Error::new(ident.span(), "unrecognised attribute")),
-                        },
-                        None => return Err(Error::new(meta.span(), "failed to parse attribute")),
-                    },
-                    syn::NestedMeta::Meta(syn::Meta::Path(path)) => match path.get_ident() {
-                        Some(ident) => match ident.to_string().as_str() {
-                            "flexible_array_member" => attribs.flexible_array_member = true,
-                            _ => return Err(Error::new(ident.span(), "unrecognised attribute")),
-                        },
-                        None => {
-                            return Err(Error::new(
-                                path.get_ident().span(),
-                                "expected identifier 1234",
-                            ));
-                        }
-                    },
-                    syn::NestedMeta::Meta(syn::Meta::List(list)) => {
-                        let mut typ = None;
-                        let mut write_value = None;
-                        for nested in &list.nested {
-                            let name_value =
-                                if let syn::NestedMeta::Meta(syn::Meta::NameValue(name_value)) =
-                                    nested
-                                {
-                                    name_value
-                                } else {
-                                    return Err(Error::new(list.span(), "unrecognized attribute"));
-                                };
-                            let ident = if let Some(ident) = name_value.path.get_ident() {
-                                ident
-                            } else {
-                                return Err(Error::new(
-                                    name_value.span(),
-                                    "unrecognized attribute",
-                                ));
-                            };
-                            match ident.to_string().as_str() {
-                                "type" => typ = Some(meta_name_value_to_parse(name_value)?),
-                                "write_value" => {
-                                    write_value = Some(meta_name_value_to_parse(name_value)?);
-                                }
-                                _ => {
-                                    return Err(Error::new(
-                                        name_value.span(),
-                                        "unrecognized attribute",
-                                    ))
-                                }
-                            }
-                        }
-                        if let Some(typ) = typ {
-                            attribs.tag = Some(Tag::Prepend { typ, write_value });
-                        } else {
-                            return Err(Error::new(list.span(), "Tag lacks type."));
-                        }
+        let mut tag = None;
+        let mut tag_type = None;
+        let mut tag_value = None;
+
+        for attr in attrs {
+            if attr.path().is_ident("protocol") {
+                attr.parse_nested_meta(|meta| {
+                    if meta.path.is_ident("flexible_array_member") {
+                        attribs.flexible_array_member = true;
+                    } else if meta.path.is_ident("discriminant_type") {
+                        attribs.discriminant_type = Some(meta.value()?.parse()?);
+                    } else if meta.path.is_ident("discriminant") {
+                        attribs.discriminant = Some(meta.value()?.parse()?);
+                    } else if meta.path.is_ident("ctx") {
+                        attribs.ctx = Some(meta.value()?.parse()?);
+                    } else if meta.path.is_ident("ctx_bounds") {
+                        attribs.ctx_bounds =
+                            Some(Punctuated::parse_separated_nonempty(meta.value()?)?);
+                    } else if meta.path.is_ident("bits") {
+                        attribs.bits = Some(meta.value()?.parse()?);
+                    } else if meta.path.is_ident("write_value") {
+                        attribs.write_value = Some(meta.value()?.parse()?);
+                    } else if meta.path.is_ident("tag") {
+                        tag = Some(meta.value()?.parse()?);
+                    } else if meta.path.is_ident("tag_type") {
+                        tag_type = Some(meta.value()?.parse()?);
+                    } else if meta.path.is_ident("tag_value") {
+                        tag_value = Some(meta.value()?.parse()?);
+                    } else {
+                        return Err(meta.error("unrecognized protocol"));
                     }
-                    _ => return Err(Error::new(meta_list.span(), "unrecognised attribute")),
-                };
+                    Ok(())
+                })?;
             }
         }
+
+        match (tag, tag_type, tag_value) {
+            (Some(tag), None, None) => attribs.tag = Some(Tag::External(tag)),
+            (None, Some(tag_type), tag_value) => {
+                attribs.tag = Some(Tag::Prepend {
+                    typ: tag_type,
+                    write_value: tag_value,
+                })
+            }
+            (None, None, None) => {}
+            _ => return Err(Error::new(attrs[0].span(), "TODO")),
+        }
+
         Ok(attribs)
-    }
-}
-
-fn meta_name_value_to_parse<T: syn::parse::Parse>(name_value: &syn::MetaNameValue) -> Result<T> {
-    match name_value.lit {
-        syn::Lit::Str(ref s) => syn::parse_str::<T>(s.value().as_str())
-            .map_err(|e| Error::new(name_value.span(), format!("Failed to parse: {e}"))),
-
-        _ => Err(Error::new(name_value.span(), "Expected string")),
-    }
-}
-
-fn meta_name_value_to_u32(name_value: &syn::MetaNameValue) -> Result<u32> {
-    match name_value.lit {
-        syn::Lit::Int(ref i) => i
-            .base10_parse()
-            .map_err(|e| Error::new(name_value.span(), format!("Failed to parse u32: {e}"))),
-        _ => Err(Error::new(name_value.span(), "Expected integer")),
-    }
-}
-
-fn meta_name_value_to_punctuated<T: syn::parse::Parse, P: syn::parse::Parse>(
-    name_value: &syn::MetaNameValue,
-) -> Result<Punctuated<T, P>> {
-    match name_value.lit {
-        syn::Lit::Str(ref s) => Punctuated::parse_terminated
-            .parse_str(s.value().as_str())
-            .map_err(|e| Error::new(name_value.span(), format!("Failed to parse: {e}"))),
-        _ => Err(Error::new(name_value.span(), "Expected string")),
     }
 }

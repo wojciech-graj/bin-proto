@@ -3,27 +3,27 @@ use std::marker::PhantomData;
 use bin_proto::{ByteOrder, ProtocolNoCtx, ProtocolRead, ProtocolWrite};
 
 #[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq)]
-#[protocol(discriminant_type = "u8")]
-#[protocol(ctx = "()")]
+#[protocol(discriminant_type = u8)]
+#[protocol(ctx = ())]
 pub enum Enum<'a, T: ProtocolRead + ProtocolWrite> {
-    #[protocol(discriminant = "1")]
+    #[protocol(discriminant = 1)]
     Variant1 {
         a: T,
         len: u8,
-        #[protocol(tag = "len as usize")]
+        #[protocol(tag = len as usize)]
         arr: Vec<u8>,
     },
-    #[protocol(discriminant = "2")]
+    #[protocol(discriminant = 2)]
     Variant2(u32, bool, PhantomData<&'a T>),
 }
 
 #[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq)]
-#[protocol(discriminant_type = "u8")]
+#[protocol(discriminant_type = u8)]
 #[protocol(bits = 2)]
 pub enum Enum2 {
-    #[protocol(discriminant = "1")]
+    #[protocol(discriminant = 1)]
     Variant1(u8),
-    #[protocol(discriminant = "2")]
+    #[protocol(discriminant = 2)]
     Variant2(u16),
 }
 
@@ -34,19 +34,16 @@ pub struct EnumContainer {
 
 #[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq)]
 pub struct TaggedEnumContainer {
-    #[protocol(tag(
-        type = "u16",
-        write_value = "::bin_proto::Discriminable::discriminant(&self.e) as u16"
-    ))]
+    #[protocol(tag_type = u16, tag_value = ::bin_proto::Discriminable::discriminant(&self.e) as u16)]
     e: Enum2,
 }
 
 #[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq)]
 pub struct BitFieldTaggedEnumContainer {
-    #[protocol(write_value = "::bin_proto::Discriminable::discriminant(&self.e)")]
+    #[protocol(write_value = ::bin_proto::Discriminable::discriminant(&self.e))]
     #[protocol(bits = 3)]
     discriminant: u8,
-    #[protocol(tag = "discriminant")]
+    #[protocol(tag = discriminant)]
     e: Enum2,
 }
 

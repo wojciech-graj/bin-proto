@@ -9,41 +9,41 @@ pub struct Prefix {
 pub struct WithElementsLength {
     pub count: u32,
     pub foo: bool,
-    #[protocol(tag = "count as usize")]
+    #[protocol(tag = count as usize)]
     pub data: Vec<u32>,
 }
 
 #[derive(ProtocolRead, Debug, PartialEq, Eq)]
 pub struct OptionalWriteValue {
-    #[protocol(tag(type = "u8"))]
+    #[protocol(tag_type = u8)]
     pub data: Vec<u32>,
 }
 
 #[derive(ProtocolRead, ProtocolWrite, Debug, PartialEq, Eq)]
 pub struct WithElementsLengthAuto {
-    #[protocol(write_value = "self.data.len() as u32")]
+    #[protocol(write_value = self.data.len() as u32)]
     pub count: u32,
     pub foo: bool,
-    #[protocol(tag = "count as usize")]
+    #[protocol(tag = count as usize)]
     pub data: Vec<u32>,
 }
 
 #[derive(ProtocolRead, ProtocolWrite, Debug, PartialEq, Eq)]
-#[protocol(discriminant_type = "u8")]
+#[protocol(discriminant_type = u8)]
 pub enum WithElementsLengthAutoEnum {
-    #[protocol(discriminant = "1")]
+    #[protocol(discriminant = 1)]
     Variant {
-        #[protocol(write_value = "data.len() as u32")]
+        #[protocol(write_value = data.len() as u32)]
         count: u32,
         foo: bool,
-        #[protocol(tag = "count as usize")]
+        #[protocol(tag = count as usize)]
         data: Vec<u32>,
     },
 }
 
 #[derive(ProtocolRead, ProtocolWrite, Debug, PartialEq, Eq)]
 pub struct Prepended {
-    #[protocol(tag(type = "u32", write_value = "self.data.len() as u32"))]
+    #[protocol(tag_type = u32, tag_value = self.data.len() as u32)]
     pub data: Vec<u32>,
 }
 

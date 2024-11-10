@@ -2,7 +2,7 @@ use crate::{attr::Attrs, codegen, plan};
 use proc_macro2::{Span, TokenStream};
 
 pub fn read_discriminant(attribs: &Attrs) -> TokenStream {
-    if let Some(bits) = attribs.bits {
+    if let Some(bits) = &attribs.bits {
         quote!(::bin_proto::BitFieldRead::read(__io_reader, __byte_order, __ctx, #bits))
     } else {
         quote!(::bin_proto::ProtocolRead::read(
@@ -14,7 +14,7 @@ pub fn read_discriminant(attribs: &Attrs) -> TokenStream {
 }
 
 pub fn write_discriminant(attribs: &Attrs) -> TokenStream {
-    let write_tag = if let Some(bits) = attribs.bits {
+    let write_tag = if let Some(bits) = &attribs.bits {
         quote!(::bin_proto::BitFieldWrite::write(&__tag, __io_writer, __byte_order, __ctx, #bits))
     } else {
         quote!(::bin_proto::ProtocolWrite::write(
@@ -61,10 +61,10 @@ pub fn variant_discriminant(plan: &plan::Enum, attribs: &Attrs) -> TokenStream {
             let variant_name = &variant.ident;
             let fields_pattern = bind_fields_pattern(variant_name, &variant.fields);
             let discriminant_expr = &variant.discriminant_value;
-            let write_variant = if let Some(field_width) = attribs.bits {
+            let write_variant = if let Some(field_width) = &attribs.bits {
                 let error_message = format!(
-                    "Discriminant for variant '{}' does not fit in bitfield with width {}.",
-                    variant.ident, field_width
+                    "Discriminant for variant '{}' does not fit in bitfield.",
+                    variant.ident
                 );
                 quote!(
                     const _: () = ::std::assert!(#discriminant_expr < (1 as #discriminant_ty) << #field_width, #error_message);

@@ -1,7 +1,7 @@
 use bin_proto::{ByteOrder, ProtocolNoCtx, ProtocolRead, ProtocolWrite};
 
 #[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq)]
-#[protocol(discriminant_type = "u8")]
+#[protocol(discriminant_type = u8)]
 #[protocol(bits = 4)]
 enum Version {
     V4 = 4,

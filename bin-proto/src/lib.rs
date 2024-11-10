@@ -7,11 +7,11 @@
 //! ```
 //! # use bin_proto::{ProtocolRead, ProtocolWrite, ProtocolNoCtx};
 //! #[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq)]
-//! #[protocol(discriminant_type = "u8")]
+//! #[protocol(discriminant_type = u8)]
 //! #[protocol(bits = 4)]
 //! enum E {
 //!     V1 = 1,
-//!     #[protocol(discriminant = "4")]
+//!     #[protocol(discriminant = 4)]
 //!     V4,
 //! }
 //!
@@ -22,11 +22,11 @@
 //!     #[protocol(bits = 3)]
 //!     bitfield: u8,
 //!     enum_: E,
-//!     #[protocol(write_value = "self.arr.len() as u8")]
+//!     #[protocol(write_value = self.arr.len() as u8)]
 //!     arr_len: u8,
-//!     #[protocol(tag = "arr_len as usize")]
+//!     #[protocol(tag = arr_len as usize)]
 //!     arr: Vec<u8>,
-//!     #[protocol(tag(type = "u16", write_value = "self.prefixed_arr.len() as u16"))]
+//!     #[protocol(tag_type = u16, tag_value = self.prefixed_arr.len() as u16)]
 //!     prefixed_arr: Vec<u8>,
 //!     #[protocol(flexible_array_member)]
 //!     read_to_end: Vec<u8>,
@@ -85,7 +85,7 @@ pub use self::tagged::{TaggedRead, UntaggedWrite};
 /// ```
 /// # use bin_proto::{ProtocolRead, ProtocolWrite};
 /// #[derive(ProtocolRead, ProtocolWrite)]
-/// #[protocol(discriminant_type = "u8")]
+/// #[protocol(discriminant_type = u8)]
 /// enum Example {
 ///     Variant1 = 1,
 ///     Variant5 = 5,
@@ -99,9 +99,9 @@ pub use self::tagged::{TaggedRead, UntaggedWrite};
 /// ```
 /// # use bin_proto::{ProtocolRead, ProtocolWrite};
 /// #[derive(ProtocolRead, ProtocolWrite)]
-/// #[protocol(discriminant_type = "u8")]
+/// #[protocol(discriminant_type = u8)]
 /// enum Example {
-///     #[protocol(discriminant = "1")]
+///     #[protocol(discriminant = 1)]
 ///     Variant1,
 ///     Variant5 = 5,
 /// }
@@ -150,7 +150,7 @@ pub use self::tagged::{TaggedRead, UntaggedWrite};
 /// pub struct WithElementsLength {
 ///     pub count: u32,
 ///     pub foo: bool,
-///     #[protocol(tag = "count as usize")]
+///     #[protocol(tag = count as usize)]
 ///     pub data: Vec<u32>,
 /// }
 /// ```
@@ -170,7 +170,7 @@ pub use self::tagged::{TaggedRead, UntaggedWrite};
 /// # use bin_proto::{ProtocolRead, ProtocolWrite};
 /// #[derive(ProtocolRead, ProtocolWrite)]
 /// pub struct WithElementsLength {
-///     #[protocol(tag(type = "u16", write_value = "self.data.len() as u16"))]
+///     #[protocol(tag_type = u16, tag_value = self.data.len() as u16)]
 ///     pub data: Vec<u32>,
 /// }
 /// ```
@@ -186,10 +186,10 @@ pub use self::tagged::{TaggedRead, UntaggedWrite};
 /// # use bin_proto::{ProtocolRead, ProtocolWrite};
 /// #[derive(ProtocolRead, ProtocolWrite)]
 /// pub struct WithElementsLengthAuto {
-///     #[protocol(write_value = "self.data.len() as u32")]
+///     #[protocol(write_value = self.data.len() as u32)]
 ///     pub count: u32,
 ///     pub foo: bool,
-///     #[protocol(tag = "count as usize")]
+///     #[protocol(tag = count as usize)]
 ///     pub data: Vec<u32>,
 /// }
 /// ```
@@ -231,7 +231,7 @@ pub use self::tagged::{TaggedRead, UntaggedWrite};
 /// }
 ///
 /// #[derive(ProtocolRead, ProtocolWrite)]
-/// #[protocol(ctx = "Ctx")]
+/// #[protocol(ctx = Ctx)]
 /// pub struct WithCtx(NeedsCtx);
 ///
 /// WithCtx(NeedsCtx)
@@ -243,7 +243,7 @@ pub use self::tagged::{TaggedRead, UntaggedWrite};
 /// # use bin_proto::{ProtocolRead, ProtocolWrite};
 /// # use std::marker::PhantomData;
 /// #[derive(ProtocolRead, ProtocolWrite)]
-/// #[protocol(ctx = "Ctx")]
+/// #[protocol(ctx = Ctx)]
 /// pub struct NestedProtocol<Ctx, A: ProtocolRead<Ctx> + ProtocolWrite<Ctx>>(A, PhantomData<Ctx>);
 /// ```
 ///
@@ -283,7 +283,7 @@ pub use self::tagged::{TaggedRead, UntaggedWrite};
 /// }
 ///
 /// #[derive(ProtocolRead, ProtocolWrite)]
-/// #[protocol(ctx_bounds = "CtxTrait")]
+/// #[protocol(ctx_bounds = CtxTrait)]
 /// pub struct WithCtx(NeedsCtx);
 /// ```
 #[cfg(feature = "derive")]

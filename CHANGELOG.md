@@ -1,5 +1,6 @@
-# v0.5.1
-- Make `write_value` field in `#[protocol(tag(...))]` only required when deriving `ProtocolWrite`
+# v0.6.0
+- Allow multiple attributes in a single `#[protocol(...)]`
+- Require unquoted expressions in attributes
 - Impose `non_exhaustive` on `Error`
 # v0.5.0
 - Split `Protocol` into `ProtocolRead` and `ProtocolWrite`

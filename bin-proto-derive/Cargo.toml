@@ -1,6 +1,6 @@
 [package]
 name = "bin-proto-derive"
-version = "0.5.0"
+version = "0.6.0"
 authors = [
     "Wojciech Graj <wojtek.graj.2004@gmail.com>",
     "Dylan McKay <me@dylanmckay.io>"
@@ -18,6 +18,6 @@ keywords = ["protocol", "binary", "bit", "codec", "serde"]
 proc-macro = true
 
 [dependencies]
-syn = { version = "1.0.109", features = ["full"] }
-quote = "1.0.36"
-proc-macro2 = "1.0.82"
+syn = { version = "2.0.87", features = ["full"] }
+quote = "1.0.37"
+proc-macro2 = "1.0.89"

@@ -16,7 +16,7 @@ pub struct BizBong(u8, u8, pub u8);
 pub struct PartyInTheFront;
 
 #[derive(ProtocolRead, ProtocolWrite, Debug, PartialEq, Eq)]
-#[protocol(ctx = "()")]
+#[protocol(ctx = ())]
 pub struct NamedFieldsWithGenerics<A: ProtocolRead + ProtocolWrite, D: ProtocolRead + ProtocolWrite>
 {
     pub value: A,
@@ -24,7 +24,7 @@ pub struct NamedFieldsWithGenerics<A: ProtocolRead + ProtocolWrite, D: ProtocolR
 }
 
 #[derive(ProtocolRead, ProtocolWrite, Debug, PartialEq, Eq)]
-#[protocol(ctx = "Ctx")]
+#[protocol(ctx = Ctx)]
 pub struct UnnamedFieldsWithGenerics<
     Ctx,
     A: ProtocolRead<Ctx> + ProtocolWrite<Ctx>,
@@ -32,7 +32,7 @@ pub struct UnnamedFieldsWithGenerics<
 >(A, D, PhantomData<Ctx>);
 
 #[derive(ProtocolRead, ProtocolWrite, Debug, PartialEq, Eq)]
-#[protocol(ctx = "()")]
+#[protocol(ctx = ())]
 pub struct StructWithExistingBoundedGenerics<
     A: ::std::fmt::Display + ::std::fmt::Debug + ProtocolRead + ProtocolWrite,
 > {
