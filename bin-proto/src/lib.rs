@@ -311,7 +311,7 @@ pub extern crate bitstream_io;
 /// struct MutuallyExclusiveAttrs {
 ///     pub length: u8,
 ///     #[protocol(flexible_array_member)]
-///     #[protocol(tag = "length as usize")]
+///     #[protocol(tag = length as usize)]
 ///     pub reason: String,
 /// }
 /// ```

@@ -210,7 +210,7 @@ impl TryFrom<&[syn::Attribute]> for Attrs {
                 attribs.tag = Some(Tag::Prepend {
                     typ: tag_type,
                     write_value: tag_value,
-                })
+                });
             }
             (None, None, None) => {}
             _ => return Err(Error::new(attrs[0].span(), "TODO")),

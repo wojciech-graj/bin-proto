@@ -28,7 +28,7 @@ pub trait BitFieldWrite<Ctx = ()> {
 /// ```compile_fail
 /// # use bin_proto::{ProtocolRead, ProtocolWrite};
 /// #[derive(ProtocolRead, ProtocolWrite)]
-/// #[protocol(discriminant_type = "u8")]
+/// #[protocol(discriminant_type = u8)]
 /// #[protocol(bits = 1)]
 /// enum WontFit {
 ///     Variant = 2,
