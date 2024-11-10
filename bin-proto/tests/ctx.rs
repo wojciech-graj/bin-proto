@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use bin_proto::{ByteOrder, ProtocolRead, ProtocolWrite};
 
 trait Boolean {
@@ -8,6 +10,12 @@ impl Boolean for bool {
     fn set(&mut self) {
         *self = true
     }
+}
+
+trait TraitWithGeneric<'a, T>
+where
+    T: Boolean,
+{
 }
 
 trait CtxTrait {
@@ -72,6 +80,14 @@ struct CtxCheckStructWrapperWithGenericsConcreteBool(CtxCheck);
 #[derive(Debug, ProtocolRead, ProtocolWrite)]
 #[protocol(ctx = CtxStructWithGenerics<'a, T>, ctx_generics('a, T: Boolean))]
 struct CtxCheckStructWrapperWithGenerics(CtxCheck);
+
+#[derive(Debug, ProtocolRead, ProtocolWrite)]
+#[protocol(ctx_bounds(TraitWithGeneric<'a, bool>, CtxTrait), ctx_generics('a))]
+struct CtxCheckBoundsWithGenericsConcreteBool(CtxCheck);
+
+#[derive(Debug, ProtocolRead, ProtocolWrite)]
+#[protocol(ctx_bounds(TraitWithGeneric<'a, T>, CtxTrait), ctx_generics('a))]
+struct CtxCheckBoundsWithGenerics<T: Boolean>(CtxCheck, PhantomData<T>);
 
 #[derive(Debug, ProtocolRead, ProtocolWrite)]
 #[protocol(ctx_bounds(CtxTrait))]

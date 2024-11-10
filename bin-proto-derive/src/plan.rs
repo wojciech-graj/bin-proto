@@ -1,4 +1,4 @@
-use crate::attr::Attrs;
+use crate::attr::{AttrKind, Attrs};
 use syn::{spanned::Spanned, Error, Result};
 
 pub struct Enum {
@@ -14,8 +14,7 @@ pub struct EnumVariant {
 
 impl Enum {
     pub fn try_new(ast: &syn::DeriveInput, e: &syn::DataEnum) -> Result<Self> {
-        let attrs = Attrs::try_from(ast.attrs.as_slice())?;
-        attrs.validate_enum(ast.span())?;
+        let attrs = Attrs::for_kind(ast.attrs.as_slice(), Some(AttrKind::Enum))?;
 
         let plan = Self {
             discriminant_ty: attrs.discriminant_type.unwrap(),
@@ -23,8 +22,7 @@ impl Enum {
                 .variants
                 .iter()
                 .map(|variant| {
-                    let attrs = Attrs::try_from(variant.attrs.as_slice())?;
-                    attrs.validate_variant(variant.span())?;
+                    let attrs = Attrs::for_kind(variant.attrs.as_slice(), Some(AttrKind::Variant))?;
 
                     let discriminant_value = match variant.discriminant.as_ref().map(|a| &a.1) {
                         Some(expr_lit) => expr_lit.clone(),

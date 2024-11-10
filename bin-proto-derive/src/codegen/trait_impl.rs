@@ -1,4 +1,4 @@
-use crate::attr::Attrs;
+use crate::attr::{Attrs, Ctx};
 
 use proc_macro2::{Span, TokenStream};
 use syn::{parse_quote, punctuated::Punctuated, Token};
@@ -17,7 +17,7 @@ pub fn impl_trait_for(
     typ: &TraitImplType,
 ) -> TokenStream {
     let name = &ast.ident;
-    let attribs = match Attrs::try_from(ast.attrs.as_slice()) {
+    let attribs = match Attrs::for_kind(ast.attrs.as_slice(), None) {
         Ok(attribs) => attribs,
         Err(e) => return e.to_compile_error(),
     };
@@ -59,23 +59,26 @@ pub fn impl_trait_for(
             | TraitImplType::TaggedRead(_)
             | TraitImplType::UntaggedWrite
     ) {
-        trait_generics.push(if let Some(ctx) = attribs.ctx {
-            if let Some(ctx_generics) = attribs.ctx_generics {
-                generics.params.extend(ctx_generics);
-            }
+        if let Some(ctx_generics) = attribs.ctx_generics {
+            generics.params.extend(ctx_generics);
+        }
+
+        trait_generics.push(if let Some(Ctx::Concrete(ctx)) = attribs.ctx {
             quote!(#ctx)
         } else {
             let ident = syn::Ident::new("__Ctx", Span::call_site());
+            let bounds = if let Some(Ctx::Bounds(bounds)) = attribs.ctx {
+                bounds.into_iter().collect()
+            } else {
+                Punctuated::new()
+            };
             generics
                 .params
                 .push(syn::GenericParam::Type(syn::TypeParam {
                     attrs: Vec::new(),
                     ident: ident.clone(),
                     colon_token: None,
-                    bounds: attribs
-                        .ctx_bounds
-                        .map(|ctx_bounds| ctx_bounds.into_iter().collect())
-                        .unwrap_or_default(),
+                    bounds,
                     eq_token: None,
                     default: None,
                 }));

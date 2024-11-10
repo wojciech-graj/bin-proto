@@ -1,7 +1,7 @@
 pub mod enums;
 pub mod trait_impl;
 
-use crate::attr::{Attrs, Tag};
+use crate::attr::{AttrKind, Attrs, Tag};
 use proc_macro2::TokenStream;
 use syn::{spanned::Spanned, Error};
 
@@ -54,12 +54,9 @@ fn read_named_fields(fields_named: &syn::FieldsNamed) -> (TokenStream, TokenStre
 }
 
 fn read(field: &syn::Field) -> TokenStream {
-    let attribs = match Attrs::try_from(field.attrs.as_slice()) {
+    let attribs = match Attrs::for_kind(field.attrs.as_slice(), Some(AttrKind::Field)) {
         Ok(attribs) => attribs,
         Err(e) => return e.to_compile_error(),
-    };
-    if let Err(e) = attribs.validate_field(field.span()) {
-        return e.to_compile_error();
     };
 
     if let Some(field_width) = attribs.bits {
@@ -95,7 +92,7 @@ fn read(field: &syn::Field) -> TokenStream {
 }
 
 fn write(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
-    let attribs = match Attrs::try_from(field.attrs.as_slice()) {
+    let attribs = match Attrs::for_kind(field.attrs.as_slice(), Some(AttrKind::Field)) {
         Ok(attribs) => attribs,
         Err(e) => return e.to_compile_error(),
     };
