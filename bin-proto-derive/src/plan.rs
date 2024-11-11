@@ -14,7 +14,7 @@ pub struct EnumVariant {
 
 impl Enum {
     pub fn try_new(ast: &syn::DeriveInput, e: &syn::DataEnum) -> Result<Self> {
-        let attrs = Attrs::for_kind(ast.attrs.as_slice(), Some(AttrKind::Enum))?;
+        let attrs = Attrs::parse(ast.attrs.as_slice(), Some(AttrKind::Enum), ast.span())?;
 
         let plan = Self {
             discriminant_ty: attrs.discriminant_type.unwrap(),
@@ -22,7 +22,11 @@ impl Enum {
                 .variants
                 .iter()
                 .map(|variant| {
-                    let attrs = Attrs::for_kind(variant.attrs.as_slice(), Some(AttrKind::Variant))?;
+                    let attrs = Attrs::parse(
+                        variant.attrs.as_slice(),
+                        Some(AttrKind::Variant),
+                        variant.span(),
+                    )?;
 
                     let discriminant_value = match variant.discriminant.as_ref().map(|a| &a.1) {
                         Some(expr_lit) => expr_lit.clone(),

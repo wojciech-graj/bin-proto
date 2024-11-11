@@ -15,6 +15,10 @@ repository = "https://github.com/wojciech-graj/bin-proto"
 documentation = "https://docs.rs/bin-proto"
 keywords = ["protocol", "binary", "bit", "codec", "serde"]
 
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
 [features]
 default = ["derive"]
 derive = ["bin-proto-derive"]

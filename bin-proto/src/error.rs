@@ -24,7 +24,7 @@ mod tests {
     use super::*;
 
     #[allow(unused)]
-    trait IsSized: Sized {}
+    trait IsSizedSendSync: Sized + Send + Sync {}
 
-    impl IsSized for Error {}
+    impl IsSizedSendSync for Error {}
 }

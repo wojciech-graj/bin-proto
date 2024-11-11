@@ -6,4 +6,4 @@ publish = false
 
 [dependencies]
 bin-proto = { path = "../bin-proto" }
-deku = "0.17"
+deku = "0.18.1"

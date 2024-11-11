@@ -24,7 +24,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-bin-proto = "0.5"
+bin-proto = "0.6"
 ```
 
 And then define a type with the `#[derive(bin_proto::ProtocolRead, bin_proto::ProtocolWrite)]` attributes.
@@ -33,11 +33,11 @@ And then define a type with the `#[derive(bin_proto::ProtocolRead, bin_proto::Pr
 use bin_proto::{ProtocolRead, ProtocolWrite, ProtocolNoCtx};
 
 #[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq)]
-#[protocol(discriminant_type = "u8")]
+#[protocol(discriminant_type = u8)]
 #[protocol(bits = 4)]
 enum E {
     V1 = 1,
-    #[protocol(discriminant = "4")]
+    #[protocol(discriminant = 4)]
     V4,
 }
 
@@ -48,11 +48,11 @@ struct S {
     #[protocol(bits = 3)]
     bitfield: u8,
     enum_: E,
-    #[protocol(write_value = "self.arr.len() as u8")]
+    #[protocol(write_value = self.arr.len() as u8)]
     arr_len: u8,
-    #[protocol(tag = "arr_len as usize")]
+    #[protocol(tag = arr_len as usize)]
     arr: Vec<u8>,
-    #[protocol(tag(type = "u16", write_value = "self.prefixed_arr.len() as u16"))]
+    #[protocol(tag_type = u16, tag_value = self.prefixed_arr.len() as u16)]
     prefixed_arr: Vec<u8>,
     #[protocol(flexible_array_member)]
     read_to_end: Vec<u8>,
@@ -65,7 +65,7 @@ assert_eq!(
            | 0b0001, // enum_: V1 (0001)
         0x02, // arr_len: 2
         0x21, 0x37, // arr: [0x21, 0x37]
-	    0x00, 0x01, 0x33, // prefixed_arr: [0x33]
+        0x00, 0x01, 0x33, // prefixed_arr: [0x33]
         0x01, 0x02, 0x03, // read_to_end: [0x01, 0x02, 0x03]
     ], bin_proto::ByteOrder::BigEndian).unwrap(),
     S {
@@ -113,7 +113,7 @@ impl ProtocolWrite<Ctx> for NeedsCtx {
 }
 
 #[derive(ProtocolRead, ProtocolWrite)]
-#[protocol(ctx = "Ctx")]
+#[protocol(ctx = Ctx)]
 pub struct WithCtx(NeedsCtx);
 
 WithCtx(NeedsCtx)

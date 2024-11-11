@@ -3,6 +3,7 @@
 - Require unquoted expressions in attributes
 - Use nested metas for all lists in attributes
 - Add `#[protocol(ctx_generics(...))]`
+- Improve attribute parsing and validation
 - Impose `non_exhaustive` on `Error`
 # v0.5.0
 - Split `Protocol` into `ProtocolRead` and `ProtocolWrite`

@@ -11,7 +11,7 @@ mod plan;
 use attr::{AttrKind, Attrs};
 use codegen::trait_impl::{impl_trait_for, TraitImplType};
 use proc_macro2::TokenStream;
-use syn::parse_macro_input;
+use syn::{parse_macro_input, spanned::Spanned};
 
 use crate::codegen::enums::{read_discriminant, variant_discriminant, write_discriminant};
 
@@ -46,7 +46,7 @@ fn impl_for_struct(
     strukt: &syn::DataStruct,
     protocol_type: Operation,
 ) -> TokenStream {
-    let attribs = match Attrs::for_kind(ast.attrs.as_slice(), Some(AttrKind::Struct)) {
+    let attribs = match Attrs::parse(ast.attrs.as_slice(), Some(AttrKind::Struct), ast.span()) {
         Ok(attribs) => attribs,
         Err(e) => return e.to_compile_error(),
     };
@@ -100,7 +100,7 @@ fn impl_for_enum(
         Ok(plan) => plan,
         Err(e) => return e.to_compile_error(),
     };
-    let attribs = match Attrs::for_kind(ast.attrs.as_slice(), Some(AttrKind::Enum)) {
+    let attribs = match Attrs::parse(ast.attrs.as_slice(), Some(AttrKind::Enum), ast.span()) {
         Ok(attribs) => attribs,
         Err(e) => return e.to_compile_error(),
     };

@@ -54,7 +54,7 @@ fn read_named_fields(fields_named: &syn::FieldsNamed) -> (TokenStream, TokenStre
 }
 
 fn read(field: &syn::Field) -> TokenStream {
-    let attribs = match Attrs::for_kind(field.attrs.as_slice(), Some(AttrKind::Field)) {
+    let attribs = match Attrs::parse(field.attrs.as_slice(), Some(AttrKind::Field), field.span()) {
         Ok(attribs) => attribs,
         Err(e) => return e.to_compile_error(),
     };
@@ -92,7 +92,7 @@ fn read(field: &syn::Field) -> TokenStream {
 }
 
 fn write(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
-    let attribs = match Attrs::for_kind(field.attrs.as_slice(), Some(AttrKind::Field)) {
+    let attribs = match Attrs::parse(field.attrs.as_slice(), Some(AttrKind::Field), field.span()) {
         Ok(attribs) => attribs,
         Err(e) => return e.to_compile_error(),
     };

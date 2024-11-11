@@ -1,6 +1,7 @@
 //! Simple & fast bit-level binary co/dec in Rust.
 //!
-//! For more information about `#[derive(ProtocolRead, ProtocolWrite)]` and its attributes, see [macro@ProtocolRead] or [macro@ProtocolWrite].
+//! For more information about `#[derive(ProtocolRead, ProtocolWrite)]` and its attributes, see
+//! [macro@ProtocolRead] or [macro@ProtocolWrite].
 //!
 //! # Example
 //!
@@ -54,12 +55,14 @@
 //! );
 //! ```
 
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![deny(clippy::pedantic)]
 #![allow(
     clippy::module_name_repetitions,
     clippy::missing_errors_doc,
     clippy::implicit_hasher
 )]
+
 pub use self::bit_field::{BitFieldRead, BitFieldWrite};
 pub use self::bit_read::BitRead;
 pub use self::bit_write::BitWrite;
@@ -75,12 +78,12 @@ pub use self::tagged::{TaggedRead, UntaggedWrite};
 ///
 /// # Attributes
 ///
-/// ## `#[protocol(discriminant_type = "<type>")]`
+/// ## `#[protocol(discriminant_type = <type>)]`
 /// - Applies to: `enum`
 /// - `<type>`: an arbitrary type that implements `ProtocolRead` or `ProtocolWrite`
 ///
-/// Specify if enum variant should be determined by a string or interger
-/// representation of its discriminant.
+/// Specify if enum variant should be determined by a string or interger representation of its
+/// discriminant.
 ///
 /// ```
 /// # use bin_proto::{ProtocolRead, ProtocolWrite};
@@ -92,7 +95,7 @@ pub use self::tagged::{TaggedRead, UntaggedWrite};
 /// }
 /// ```
 ///
-/// ## `#[protocol(discriminant = "<value>")]`
+/// ## `#[protocol(discriminant = <value>)]`
 /// - Applies to: `enum` variant
 /// - `<value>`: unique value of the discriminant's type
 ///
@@ -110,13 +113,14 @@ pub use self::tagged::{TaggedRead, UntaggedWrite};
 /// Specify the discriminant for a variant.
 ///
 /// ## `#[protocol(bits = <width>)]`
-/// - Applies to: `impl BitFieldRead`, `impl BitFieldWrite`, `enum` with discriminant that `impl BitField`
+/// - Applies to: `impl BitFieldRead`, `impl BitFieldWrite`, `enum` with discriminant that
+///   `impl BitField`
 ///
 /// Determine width of field in bits.
 ///
-/// **WARNING**: Bitfields disregard `ByteOrder` and instead have the same
-/// endianness as the underlying `BitRead` / `BitWrite` instance. If you're
-/// using bitfields, you almost always want a big endian stream.
+/// **WARNING**: Bitfields disregard `ByteOrder` and instead have the same endianness as the
+/// underlying `BitRead` / `BitWrite` instance. If you're using bitfields, you almost always want a
+/// big endian stream.
 ///
 /// ```
 /// # use bin_proto::{ProtocolRead, ProtocolWrite};
@@ -127,8 +131,8 @@ pub use self::tagged::{TaggedRead, UntaggedWrite};
 /// ## `#[protocol(flexible_array_member)]`
 /// - Applies to: `impl FlexibleArrayMemberRead`
 ///
-/// Variable-length field is final field in container, hence lacks a length
-/// prefix and should be read until eof.
+/// Variable-length field is final field in container, hence lacks a length prefix and should be
+/// read until eof.
 ///
 /// ```
 /// # use bin_proto::{ProtocolRead, ProtocolWrite};
@@ -136,13 +140,13 @@ pub use self::tagged::{TaggedRead, UntaggedWrite};
 /// struct ReadToEnd(#[protocol(flexible_array_member)] Vec<u8>);
 /// ```
 ///
-/// ## `#[protocol(tag = "<expr>")]`
+/// ## `#[protocol(tag = <expr>)]`
 /// - Applies to: `impl TaggedRead` or `impl UntaggedWrite`
 /// - `<expr>`: arbitrary expression. Fields in parent container can be used
 ///   without prefixing them with `self`.
 ///
-/// Specify tag of field. The tag represents a length prefix for variable-length
-/// fields, and a boolean for `Option`.
+/// Specify tag of field. The tag represents a length prefix for variable-length fields, and a
+/// boolean for `Option`.
 ///
 /// ```
 /// # use bin_proto::{ProtocolRead, ProtocolWrite};
@@ -155,16 +159,15 @@ pub use self::tagged::{TaggedRead, UntaggedWrite};
 /// }
 /// ```
 ///
-/// ## `#[protocol(tag(type = "<type>"[, write_value = "<expr>"]?))]`
+/// ## `#[protocol(tag_type = <type>[, tag_value = <expr>]?)]`
 /// - Applies to: `impl TaggedRead` or `impl UntaggedWrite`
 /// - `<type>`: tag's type
 /// - `<expr>`: arbitrary expression. Fields in parent container should be
 ///   prefixed with `self`.
 ///
-/// Specify tag of field. The tag represents a length prefix for variable-length
-/// fields, and a boolean for `Option`. The tag is placed directly before the
-/// field. The `write_value` only has to be specified when deriving
-/// `ProtocolWrite`.
+/// Specify tag of field. The tag represents a length prefix for variable-length fields, and a
+/// boolean for `Option`. The tag is placed directly before the field. The `tag_value` only has
+/// to be specified when deriving `ProtocolWrite`.
 ///
 /// ```
 /// # use bin_proto::{ProtocolRead, ProtocolWrite};
@@ -175,10 +178,9 @@ pub use self::tagged::{TaggedRead, UntaggedWrite};
 /// }
 /// ```
 ///
-/// ## `#[protocol(write_value = "<expr>")]`
+/// ## `#[protocol(write_value = <expr>)]`
 /// - Applies to: fields
-/// - `<expr>`: An expression that can be coerced to the field type, potentially
-///   using `self`
+/// - `<expr>`: An expression that can be coerced to the field type, potentially using `self`
 ///
 /// Specify an expression that should be used as the field's value for writing.
 ///
@@ -194,12 +196,13 @@ pub use self::tagged::{TaggedRead, UntaggedWrite};
 /// }
 /// ```
 ///
-/// ## `[#protocol(ctx = "<type>")]`
+/// ## `[#protocol(ctx = <type>)[, ctx_generics(<generic>[, <generic>]*)]?]`
 /// - Applies to: containers
-/// - `<type>`: The type of the context. Either a concrete type, or one of the
-///   container's generics
+/// - `<type>`: The type of the context. Either a concrete type, or one of the container's generics
+/// - `<generic>`: Any generics used by the context type, with optional bounds. E.g.
+///   `T: Copy` for a `Vec<T>` context.
 ///
-/// Specify the type of context that will be passed to codec functions
+/// Specify the type of context that will be passed to codec functions.
 ///
 /// ```
 /// # use bin_proto::{ByteOrder, ProtocolRead, ProtocolWrite};
@@ -247,11 +250,22 @@ pub use self::tagged::{TaggedRead, UntaggedWrite};
 /// pub struct NestedProtocol<Ctx, A: ProtocolRead<Ctx> + ProtocolWrite<Ctx>>(A, PhantomData<Ctx>);
 /// ```
 ///
-/// ## `[#protocol(ctx_bounds = "<bounds>")]`
+/// ```
+/// # use bin_proto::{ProtocolRead, ProtocolWrite};
+/// pub struct Ctx<'a, T: Copy>(&'a T);
+///
+/// #[derive(ProtocolRead, ProtocolWrite)]
+/// #[protocol(ctx = Ctx<'a, T>, ctx_generics('a, T: Copy))]
+/// pub struct WithCtx;
+/// ```
+///
+/// ## `[#protocol(ctx_bounds(<bound>[, <bound>]*)[, ctx_generics(<generic>[, <generic>]*)]?)]`
 /// - Applies to: containers
 /// - `<bounds>`: Trait bounds that must be satisfied by the context
+/// - `<generic>`: Any generics used by the context type. E.g. `'a` for a context with a
+///   `From<&'a i32>` bound.
 ///
-/// Specify the trait bounds of context that will be passed to codec functions
+/// Specify the trait bounds of context that will be passed to codec functions.
 ///
 /// ```
 /// # use bin_proto::{ByteOrder, ProtocolRead, ProtocolWrite};
@@ -286,6 +300,14 @@ pub use self::tagged::{TaggedRead, UntaggedWrite};
 /// #[protocol(ctx_bounds(CtxTrait))]
 /// pub struct WithCtx(NeedsCtx);
 /// ```
+///
+/// ```
+/// # use bin_proto::{ProtocolRead, ProtocolWrite};
+/// #[derive(ProtocolRead, ProtocolWrite)]
+/// #[protocol(ctx_bounds(From<&'a i32>), ctx_generics('a))]
+/// pub struct WithCtx;
+/// ```
+#[cfg_attr(docsrs, doc(cfg(feature = "derive")))]
 #[cfg(feature = "derive")]
 pub use bin_proto_derive::{ProtocolRead, ProtocolWrite};
 

@@ -1,7 +1,7 @@
 use crate::attr::{Attrs, Ctx};
 
 use proc_macro2::{Span, TokenStream};
-use syn::{parse_quote, punctuated::Punctuated, Token};
+use syn::{parse_quote, punctuated::Punctuated, spanned::Spanned, Token};
 
 pub enum TraitImplType {
     ProtocolRead,
@@ -17,7 +17,7 @@ pub fn impl_trait_for(
     typ: &TraitImplType,
 ) -> TokenStream {
     let name = &ast.ident;
-    let attribs = match Attrs::for_kind(ast.attrs.as_slice(), None) {
+    let attribs = match Attrs::parse(ast.attrs.as_slice(), None, ast.span()) {
         Ok(attribs) => attribs,
         Err(e) => return e.to_compile_error(),
     };

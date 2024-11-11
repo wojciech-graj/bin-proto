@@ -1,7 +1,7 @@
 use std::fmt;
 
-use proc_macro2::TokenStream;
-use syn::{parenthesized, punctuated::Punctuated, spanned::Spanned, Error, Result, Token};
+use proc_macro2::{Span, TokenStream};
+use syn::{parenthesized, punctuated::Punctuated, Error, Result, Token};
 
 #[derive(Default)]
 pub struct Attrs {
@@ -47,7 +47,7 @@ impl fmt::Display for AttrKind {
     }
 }
 
-macro_rules! validate_attr_kind {
+macro_rules! expect_attr_kind {
     ($pat:pat, $kind:expr, $meta:expr, $attr:expr) => {
         if let Some(kind) = $kind {
             if !matches!(kind, $pat) {
@@ -70,7 +70,7 @@ impl Attrs {
     }
 
     #[allow(clippy::too_many_lines)]
-    pub fn for_kind(attrs: &[syn::Attribute], kind: Option<AttrKind>) -> Result<Self> {
+    pub fn parse(attrs: &[syn::Attribute], kind: Option<AttrKind>, span: Span) -> Result<Self> {
         let mut attribs = Attrs::default();
 
         let mut tag = None;
@@ -84,19 +84,19 @@ impl Attrs {
             if attr.path().is_ident("protocol") {
                 attr.parse_nested_meta(|meta| {
                     if meta.path.is_ident("flexible_array_member") {
-                        validate_attr_kind!(AttrKind::Field, kind, meta, "flexible_array_member");
+                        expect_attr_kind!(AttrKind::Field, kind, meta, "flexible_array_member");
                         attribs.flexible_array_member = true;
                     } else if meta.path.is_ident("discriminant_type") {
-                        validate_attr_kind!(AttrKind::Enum, kind, meta, "discriminant_type");
+                        expect_attr_kind!(AttrKind::Enum, kind, meta, "discriminant_type");
                         attribs.discriminant_type = Some(meta.value()?.parse()?);
                     } else if meta.path.is_ident("discriminant") {
-                        validate_attr_kind!(AttrKind::Variant, kind, meta, "discriminant");
+                        expect_attr_kind!(AttrKind::Variant, kind, meta, "discriminant");
                         attribs.discriminant = Some(meta.value()?.parse()?);
                     } else if meta.path.is_ident("ctx") {
-                        validate_attr_kind!(AttrKind::Enum | AttrKind::Struct, kind, meta, "ctx");
+                        expect_attr_kind!(AttrKind::Enum | AttrKind::Struct, kind, meta, "ctx");
                         ctx = Some(meta.value()?.parse()?);
                     } else if meta.path.is_ident("ctx_generics") {
-                        validate_attr_kind!(
+                        expect_attr_kind!(
                             AttrKind::Enum | AttrKind::Struct,
                             kind,
                             meta,
@@ -112,7 +112,7 @@ impl Attrs {
                             .collect(),
                         );
                     } else if meta.path.is_ident("ctx_bounds") {
-                        validate_attr_kind!(
+                        expect_attr_kind!(
                             AttrKind::Enum | AttrKind::Struct,
                             kind,
                             meta,
@@ -128,19 +128,19 @@ impl Attrs {
                             .collect(),
                         );
                     } else if meta.path.is_ident("bits") {
-                        validate_attr_kind!(AttrKind::Enum | AttrKind::Field, kind, meta, "bits");
+                        expect_attr_kind!(AttrKind::Enum | AttrKind::Field, kind, meta, "bits");
                         attribs.bits = Some(meta.value()?.parse()?);
                     } else if meta.path.is_ident("write_value") {
-                        validate_attr_kind!(AttrKind::Field, kind, meta, "write_value");
+                        expect_attr_kind!(AttrKind::Field, kind, meta, "write_value");
                         attribs.write_value = Some(meta.value()?.parse()?);
                     } else if meta.path.is_ident("tag") {
-                        validate_attr_kind!(AttrKind::Field, kind, meta, "tag");
+                        expect_attr_kind!(AttrKind::Field, kind, meta, "tag");
                         tag = Some(meta.value()?.parse()?);
                     } else if meta.path.is_ident("tag_type") {
-                        validate_attr_kind!(AttrKind::Field, kind, meta, "tag_type");
+                        expect_attr_kind!(AttrKind::Field, kind, meta, "tag_type");
                         tag_type = Some(meta.value()?.parse()?);
                     } else if meta.path.is_ident("tag_value") {
-                        validate_attr_kind!(AttrKind::Field, kind, meta, "tag_value");
+                        expect_attr_kind!(AttrKind::Field, kind, meta, "tag_value");
                         tag_value = Some(meta.value()?.parse()?);
                     } else {
                         return Err(meta.error("unrecognized protocol"));
@@ -159,14 +159,24 @@ impl Attrs {
                 });
             }
             (None, None, None) => {}
-            _ => return Err(Error::new(attrs[0].span(), "TODO")),
+            _ => {
+                return Err(Error::new(
+                    span,
+                    "invalid configuration of 'tag', 'tag_type', or 'tag_value' attributes.",
+                ))
+            }
         }
 
         match (ctx, ctx_bounds) {
             (Some(ctx), None) => attribs.ctx = Some(Ctx::Concrete(ctx)),
             (None, Some(ctx_bounds)) => attribs.ctx = Some(Ctx::Bounds(ctx_bounds)),
             (None, None) => {}
-            _ => return Err(Error::new(attrs[0].span(), "TODO")),
+            _ => {
+                return Err(Error::new(
+                    span,
+                    "use of mutually exclusive 'ctx' and 'ctx_bounds' attributes.",
+                ))
+            }
         }
 
         if [
@@ -180,7 +190,7 @@ impl Attrs {
             > 1
         {
             return Err(Error::new(
-                attrs[0].span(),
+                span,
                 "bits, flexible_array_member, and tag are mutually-exclusive attributes",
             ));
         }
