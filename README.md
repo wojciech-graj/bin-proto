@@ -127,13 +127,13 @@ This crate's main alternative is [deku](https://crates.io/crates/deku), and [bin
 
 `bin-proto` is significantly faster than `deku` in most of the tested scenarios.
 The units for the below table are `ns`, taken from
-[github CI](https://github.com/wojciech-graj/bin-proto/actions/runs/10098075855/job/27924670834).
+[github CI](https://github.com/wojciech-graj/bin-proto/actions/runs/11773934114/job/32791647324).
 You can find the benchmarks in the `bench` directory.
 
 |             | Read `enum` | Write `enum` | Read `Vec` | Write `Vec` | Read IPv4 header | Write IPv4 header |
 |-------------|-------------|--------------|------------|-------------|------------------|-------------------|
-| `bin-proto` | 29          | 62           | 1,327      | 557         | 173              | 138               |
-| `deku`      | 1           | 92           | 582        | 937         | 3,234            | 633               |
+| `bin-proto` | 27          | 63           | 1,368      | 704         | 154              | 136               |
+| `deku`      | 1           | 96           | 854        | 1,014       | 4,150            | 746               |
 
 ## Roadmap
 
