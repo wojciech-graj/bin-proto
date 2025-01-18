@@ -4,13 +4,13 @@ pub type Result<T> = std::result::Result<T, Error>;
 #[non_exhaustive]
 pub enum Error {
     #[error(transparent)]
-    IO(#[from] std::io::Error),
+    Io(#[from] std::io::Error),
     #[error(transparent)]
     FromUtf8(#[from] std::string::FromUtf8Error),
     #[error(transparent)]
-    FromNulError(#[from] std::ffi::NulError),
+    Nul(#[from] std::ffi::NulError),
     #[error(transparent)]
-    TryFromIntError(#[from] std::num::TryFromIntError),
+    TryFromInt(#[from] std::num::TryFromIntError),
     #[error("Unknown enum discriminant: '{0}'")]
     UnknownEnumDiscriminant(String),
     #[error("Failed to convert tag")]

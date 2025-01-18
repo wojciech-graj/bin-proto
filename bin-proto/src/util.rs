@@ -52,7 +52,7 @@ where
     loop {
         let item = match T::read(read, byte_order, ctx) {
             Ok(item) => item,
-            Err(Error::IO(e)) => {
+            Err(Error::Io(e)) => {
                 return if e.kind() == io::ErrorKind::UnexpectedEof {
                     Ok(items)
                 } else {

@@ -1,3 +1,5 @@
+# v0.7.0
+- Rename `Error` variants
 # v0.6.0
 - Allow multiple attributes in a single `#[protocol(...)]`
 - Require unquoted expressions in attributes
