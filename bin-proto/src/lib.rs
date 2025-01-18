@@ -56,7 +56,7 @@
 //! ```
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![deny(clippy::pedantic)]
+#![deny(clippy::pedantic, clippy::nursery, clippy::cargo)]
 #![allow(
     clippy::module_name_repetitions,
     clippy::missing_errors_doc,
@@ -314,15 +314,15 @@ pub use bin_proto_derive::{ProtocolRead, ProtocolWrite};
 mod bit_field;
 mod bit_read;
 mod bit_write;
-#[macro_use]
-mod tagged;
 mod byte_order;
+mod discriminable;
 mod error;
 mod flexible_array_member;
-mod types;
 #[macro_use]
 mod protocol;
-mod discriminable;
+#[macro_use]
+mod tagged;
+mod types;
 mod util;
 
 pub extern crate bitstream_io;

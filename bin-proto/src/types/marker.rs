@@ -3,7 +3,7 @@ use std::marker::{PhantomData, PhantomPinned};
 
 impl<Ctx, T> ProtocolRead<Ctx> for PhantomData<T> {
     fn read(_: &mut dyn BitRead, _: ByteOrder, _: &mut Ctx) -> Result<Self> {
-        Ok(PhantomData)
+        Ok(Self)
     }
 }
 
@@ -15,7 +15,7 @@ impl<Ctx, T> ProtocolWrite<Ctx> for PhantomData<T> {
 
 impl<Ctx> ProtocolRead<Ctx> for PhantomPinned {
     fn read(_: &mut dyn BitRead, _: ByteOrder, _: &mut Ctx) -> Result<Self> {
-        Ok(PhantomPinned)
+        Ok(Self)
     }
 }
 

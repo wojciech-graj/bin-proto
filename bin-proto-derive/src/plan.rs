@@ -30,9 +30,9 @@ impl Enum {
 
                     let discriminant_value = match variant.discriminant.as_ref().map(|a| &a.1) {
                         Some(expr_lit) => expr_lit.clone(),
-                        None => attrs
-                            .discriminant
-                            .ok_or(Error::new(variant.span(), "No discriminant for variant"))?,
+                        None => attrs.discriminant.ok_or_else(|| {
+                            Error::new(variant.span(), "No discriminant for variant")
+                        })?,
                     };
 
                     let variant = EnumVariant {

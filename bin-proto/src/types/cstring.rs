@@ -7,7 +7,7 @@ impl<Ctx> ProtocolRead<Ctx> for CString {
         loop {
             let c: u8 = ProtocolRead::read(read, byte_order, ctx)?;
             if c == 0x00 {
-                return Ok(CString::new(result)?);
+                return Ok(Self::new(result)?);
             }
             result.push(c);
         }

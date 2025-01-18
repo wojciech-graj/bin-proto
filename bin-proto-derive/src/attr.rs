@@ -39,10 +39,10 @@ pub enum AttrKind {
 impl fmt::Display for AttrKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            AttrKind::Enum => write!(f, "enum"),
-            AttrKind::Struct => write!(f, "struct"),
-            AttrKind::Variant => write!(f, "variant"),
-            AttrKind::Field => write!(f, "field"),
+            Self::Enum => write!(f, "enum"),
+            Self::Struct => write!(f, "struct"),
+            Self::Variant => write!(f, "variant"),
+            Self::Field => write!(f, "field"),
         }
     }
 }
@@ -69,9 +69,9 @@ impl Attrs {
         }
     }
 
-    #[allow(clippy::too_many_lines)]
+    #[allow(clippy::too_many_lines, clippy::cognitive_complexity)]
     pub fn parse(attrs: &[syn::Attribute], kind: Option<AttrKind>, span: Span) -> Result<Self> {
-        let mut attribs = Attrs::default();
+        let mut attribs = Self::default();
 
         let mut tag = None;
         let mut tag_type = None;

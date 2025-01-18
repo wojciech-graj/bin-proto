@@ -20,7 +20,7 @@ where
             ctx,
         )?;
 
-        Ok(String::from_utf8(bytes)?)
+        Ok(Self::from_utf8(bytes)?)
     }
 }
 
@@ -34,7 +34,7 @@ impl<Ctx> UntaggedWrite<Ctx> for String {
 impl<Ctx> FlexibleArrayMemberRead<Ctx> for String {
     fn read(read: &mut dyn BitRead, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<Self> {
         let bytes = util::read_items_to_eof(read, byte_order, ctx)?;
-        Ok(String::from_utf8(bytes)?)
+        Ok(Self::from_utf8(bytes)?)
     }
 }
 

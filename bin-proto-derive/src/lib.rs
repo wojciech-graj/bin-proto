@@ -1,5 +1,5 @@
-#![deny(clippy::pedantic)]
-#![allow(clippy::module_name_repetitions)]
+#![deny(clippy::pedantic, clippy::nursery, clippy::cargo)]
+#![allow(clippy::module_name_repetitions, clippy::option_if_let_else)]
 
 #[macro_use]
 extern crate quote;

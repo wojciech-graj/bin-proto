@@ -10,9 +10,11 @@ rust-version = "1.63.0"
 
 description = "Derive macros for bin-proto"
 license = "MIT"
+readme = "../README.md"
 repository = "https://github.com/wojciech-graj/bin-proto"
 documentation = "https://docs.rs/bin-proto"
 keywords = ["protocol", "binary", "bit", "codec", "serde"]
+categories = ["encoding", "parsing"]
 
 [lib]
 proc-macro = true

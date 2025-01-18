@@ -1,8 +1,9 @@
 //! Utility types
 
 mod array;
-mod collections;
 mod cstring;
+mod list;
+mod map;
 mod marker;
 mod net;
 mod numerics;
