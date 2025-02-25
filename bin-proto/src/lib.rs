@@ -62,6 +62,10 @@
     clippy::cargo,
     clippy::unwrap_used,
     clippy::expect_used,
+    clippy::suspicious,
+    clippy::complexity,
+    clippy::perf,
+    clippy::style,
     unsafe_code
 )]
 #![allow(
