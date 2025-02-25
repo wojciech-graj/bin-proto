@@ -204,7 +204,9 @@ fn write_unnamed_fields(fields_unnamed: &syn::FieldsUnnamed, self_prefix: bool) 
                 &if self_prefix {
                     quote!(&self. #field_index)
                 } else {
-                    format!("field_{}", field_index.index).parse().unwrap()
+                    format!("field_{}", field_index.index)
+                        .parse()
+                        .unwrap_or_else(|e| Error::from(e).into_compile_error())
                 },
             )
         })

@@ -32,6 +32,9 @@ jobs:
     - name: Test
       run: cargo test
 
+    - name: Test (no_std)
+      run: cargo test --no-default-features --features derive
+
     - name: Clippy
       run: cargo clippy
 

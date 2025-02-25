@@ -1,4 +1,11 @@
-#![deny(clippy::pedantic, clippy::nursery, clippy::cargo)]
+#![deny(
+    clippy::pedantic,
+    clippy::nursery,
+    clippy::cargo,
+    clippy::unwrap_used,
+    clippy::expect_used,
+    unsafe_code
+)]
 #![allow(clippy::module_name_repetitions, clippy::option_if_let_else)]
 
 #[macro_use]

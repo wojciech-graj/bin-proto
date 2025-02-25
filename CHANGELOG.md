@@ -3,6 +3,7 @@
 - Change MSRV to 1.83.0, matching bitstream_io
 - Remove `BitRead::read_unaryX` and `BitWrite::write_unaryX` functions
 - Rename `Error` variants
+- Deny unwrap, expect, and unsafe
 # v0.6.0
 - Allow multiple attributes in a single `#[protocol(...)]`
 - Require unquoted expressions in attributes

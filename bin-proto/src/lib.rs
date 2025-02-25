@@ -56,7 +56,14 @@
 //! ```
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![deny(clippy::pedantic, clippy::nursery, clippy::cargo)]
+#![deny(
+    clippy::pedantic,
+    clippy::nursery,
+    clippy::cargo,
+    clippy::unwrap_used,
+    clippy::expect_used,
+    unsafe_code
+)]
 #![allow(
     clippy::module_name_repetitions,
     clippy::missing_errors_doc,

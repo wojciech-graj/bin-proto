@@ -17,7 +17,9 @@ impl Enum {
         let attrs = Attrs::parse(ast.attrs.as_slice(), Some(AttrKind::Enum), ast.span())?;
 
         let plan = Self {
-            discriminant_ty: attrs.discriminant_type.unwrap(),
+            discriminant_ty: attrs.discriminant_type.ok_or_else(|| {
+                Error::new(ast.span(), "enum missing 'discriminant_type' attribute.")
+            })?,
             variants: e
                 .variants
                 .iter()
