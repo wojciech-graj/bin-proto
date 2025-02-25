@@ -29,4 +29,3 @@ std = ["bitstream-io/std"]
 bin-proto-derive = { version = "0.7.0", path = "../bin-proto-derive", optional = true }
 bitstream-io = { version = "3.0.0-alpha5", git = "https://github.com/tuffy/bitstream-io", rev = "a8b9192", default-features = false }
 core2 = "0.4.0"
-thiserror = "2.0.11"
