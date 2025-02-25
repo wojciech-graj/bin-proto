@@ -56,6 +56,9 @@
 //! ```
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
+#![cfg_attr(docsrs, feature(rustdoc_internals))]
+#![cfg_attr(docsrs, allow(internal_features))]
+#![no_std]
 #![deny(
     clippy::pedantic,
     clippy::nursery,
@@ -73,7 +76,6 @@
     clippy::missing_errors_doc,
     clippy::implicit_hasher
 )]
-#![no_std]
 
 extern crate alloc;
 #[cfg(feature = "std")]

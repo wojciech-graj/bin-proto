@@ -1,10 +1,12 @@
 # v0.7.0
 - Add `std` feature, support `no_std`
 - Remove `thiserror` dependency
+- Implement `BitRead` and `BitWrite` on tuples with up to 16 items
 - Change MSRV to 1.83.0, matching `bitstream_io`
 - Remove `BitRead::read_unaryX` and `BitWrite::write_unaryX` functions
 - Rename `Error` variants
 - Deny unwrap, expect, and unsafe
+- Clean up documentation for tuple impls with `doc(fake_variadic)`
 # v0.6.0
 - Allow multiple attributes in a single `#[protocol(...)]`
 - Require unquoted expressions in attributes
