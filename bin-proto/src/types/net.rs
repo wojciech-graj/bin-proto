@@ -1,4 +1,4 @@
-use std::net::{Ipv4Addr, Ipv6Addr};
+use core::net::{Ipv4Addr, Ipv6Addr};
 
 use crate::{BitRead, BitWrite, ByteOrder, ProtocolRead, ProtocolWrite, Result};
 
@@ -34,6 +34,8 @@ impl<Ctx> ProtocolWrite<Ctx> for Ipv6Addr {
 
 #[cfg(test)]
 mod tests {
+    use alloc::{vec, vec::Vec};
+
     use bitstream_io::{BigEndian, BitReader, BitWriter};
 
     use super::*;

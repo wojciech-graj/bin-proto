@@ -1,5 +1,5 @@
 use crate::{BitRead, BitWrite, ByteOrder, ProtocolRead, ProtocolWrite, Result};
-use std::marker::{PhantomData, PhantomPinned};
+use core::marker::{PhantomData, PhantomPinned};
 
 impl<Ctx, T> ProtocolRead<Ctx> for PhantomData<T> {
     fn read(_: &mut dyn BitRead, _: ByteOrder, _: &mut Ctx) -> Result<Self> {

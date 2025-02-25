@@ -1,12 +1,12 @@
 [package]
 name = "bin-proto"
-version = "0.6.0"
+version = "0.7.0"
 authors = [
     "Wojciech Graj <wojtek.graj.2004@gmail.com>",
     "Dylan McKay <me@dylanmckay.io>"
 ]
 edition = "2021"
-rust-version = "1.63.0"
+rust-version = "1.83.0"
 
 description = "Easy binary protocol definitions"
 license = "MIT"
@@ -23,8 +23,10 @@ rustdoc-args = ["--cfg", "docsrs"]
 [features]
 default = ["derive"]
 derive = ["bin-proto-derive"]
+std = ["bitstream-io/std"]
 
 [dependencies]
-bin-proto-derive = { version = "0.6.0", path = "../bin-proto-derive", optional = true }
-bitstream-io = "2.3.0"
-thiserror = "2.0.3"
+bin-proto-derive = { version = "0.7.0", path = "../bin-proto-derive", optional = true }
+bitstream-io = { version = "3.0.0-alpha5", git = "https://github.com/tuffy/bitstream-io", rev = "a8b9192", default-features = false }
+core2 = "0.4.0"
+thiserror = "2.0.11"

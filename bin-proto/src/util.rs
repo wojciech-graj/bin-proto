@@ -2,7 +2,12 @@
 
 use crate::{BitRead, BitWrite, ByteOrder, Error, ProtocolRead, ProtocolWrite, Result};
 
+use alloc::vec::Vec;
+#[cfg(feature = "std")]
 use std::io;
+
+#[cfg(not(feature = "std"))]
+use core2::io;
 
 /// Reads a specified number of items from a stream.
 pub fn read_items<Ctx, T>(

@@ -1,6 +1,6 @@
 use crate::{
-    BitRead, BitWrite, ByteOrder, Error, TaggedRead, UntaggedWrite, ProtocolRead,
-    ProtocolWrite, Result,
+    BitRead, BitWrite, ByteOrder, Error, ProtocolRead, ProtocolWrite, Result, TaggedRead,
+    UntaggedWrite,
 };
 
 impl<Tag, Ctx, T> TaggedRead<Tag, Ctx> for Option<T>
@@ -37,6 +37,8 @@ where
 
 #[cfg(test)]
 mod tests {
+    use alloc::{vec, vec::Vec};
+
     use bitstream_io::{BigEndian, BitReader, BitWriter};
 
     use super::*;

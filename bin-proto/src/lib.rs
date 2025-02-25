@@ -62,6 +62,11 @@
     clippy::missing_errors_doc,
     clippy::implicit_hasher
 )]
+#![no_std]
+
+extern crate alloc;
+#[cfg(feature = "std")]
+extern crate std;
 
 pub use self::bit_field::{BitFieldRead, BitFieldWrite};
 pub use self::bit_read::BitRead;

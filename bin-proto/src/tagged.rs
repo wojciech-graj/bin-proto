@@ -33,7 +33,7 @@ macro_rules! test_externally_tagged {
 
         #[test]
         fn write_externally_tagged() {
-            let mut buffer: Vec<u8> = Vec::new();
+            let mut buffer: ::alloc::vec::Vec<u8> = ::alloc::vec::Vec::new();
             let value: $t = $value;
             $crate::UntaggedWrite::<_>::write(
                 &value,

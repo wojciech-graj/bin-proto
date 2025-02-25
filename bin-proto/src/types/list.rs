@@ -50,31 +50,34 @@ macro_rules! test_list_type {
 }
 
 mod vec {
+    use alloc::vec::Vec;
+
     impl_list_type!(Vec => T: );
     test_list_type!(Vec);
 }
 
 mod linked_list {
-    use std::collections::LinkedList;
+    use alloc::collections::linked_list::LinkedList;
 
     impl_list_type!(LinkedList => T: );
     test_list_type!(LinkedList);
 }
 
 mod vec_deque {
-    use std::collections::VecDeque;
+    use alloc::collections::vec_deque::VecDeque;
 
     impl_list_type!(VecDeque => T: );
     test_list_type!(VecDeque);
 }
 
 mod b_tree_set {
-    use std::collections::BTreeSet;
+    use alloc::collections::btree_set::BTreeSet;
 
     impl_list_type!(BTreeSet => T: Ord);
     test_list_type!(BTreeSet);
 }
 
+#[cfg(feature = "std")]
 mod hash_set {
     use std::collections::HashSet;
     use std::hash::Hash;
@@ -83,7 +86,7 @@ mod hash_set {
 }
 
 mod binary_heap {
-    use std::collections::BinaryHeap;
+    use alloc::collections::binary_heap::BinaryHeap;
 
     impl_list_type!(BinaryHeap => T: Ord);
 }

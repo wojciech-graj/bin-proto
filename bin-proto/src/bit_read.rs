@@ -1,6 +1,9 @@
+#[cfg(feature = "std")]
 use std::io;
 
 use bitstream_io::{BE, LE};
+#[cfg(not(feature = "std"))]
+use core2::io;
 
 /// A bit-level equivalent of `std::io::Read`. An object-safe wrapper over
 /// `bitstream_io::BitRead`.
@@ -8,9 +11,6 @@ pub trait BitRead {
     fn read_bit(&mut self) -> io::Result<bool>;
     fn skip(&mut self, bits: u32) -> io::Result<()>;
     fn read_bytes(&mut self, buf: &mut [u8]) -> io::Result<()>;
-    fn read_to_vec(&mut self, bytes: usize) -> io::Result<Vec<u8>>;
-    fn read_unary0(&mut self) -> io::Result<u32>;
-    fn read_unary1(&mut self) -> io::Result<u32>;
     fn byte_aligned(&self) -> bool;
     fn byte_align(&mut self);
 
@@ -62,18 +62,6 @@ where
 
     fn read_bytes(&mut self, buf: &mut [u8]) -> io::Result<()> {
         bitstream_io::BitRead::read_bytes(self, buf)
-    }
-
-    fn read_to_vec(&mut self, bytes: usize) -> io::Result<Vec<u8>> {
-        bitstream_io::BitRead::read_to_vec(self, bytes)
-    }
-
-    fn read_unary0(&mut self) -> io::Result<u32> {
-        bitstream_io::BitRead::read_unary0(self)
-    }
-
-    fn read_unary1(&mut self) -> io::Result<u32> {
-        bitstream_io::BitRead::read_unary1(self)
     }
 
     fn byte_aligned(&self) -> bool {

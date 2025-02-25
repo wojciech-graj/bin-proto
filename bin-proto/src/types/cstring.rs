@@ -1,5 +1,5 @@
 use crate::{util, BitRead, BitWrite, ByteOrder, ProtocolRead, ProtocolWrite, Result};
-use std::ffi::CString;
+use alloc::{ffi::CString, vec::Vec};
 
 impl<Ctx> ProtocolRead<Ctx> for CString {
     fn read(read: &mut dyn BitRead, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<Self> {
@@ -27,9 +27,9 @@ impl<Ctx> ProtocolWrite<Ctx> for CString {
 
 #[cfg(test)]
 mod tests {
-    use bitstream_io::{BigEndian, BitReader, BitWriter};
+    use alloc::vec;
 
-    use std::ffi::CString;
+    use bitstream_io::{BigEndian, BitReader, BitWriter};
 
     use super::*;
 

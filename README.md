@@ -134,9 +134,3 @@ You can find the benchmarks in the `bench` directory.
 |-------------|-------------|--------------|------------|-------------|------------------|-------------------|
 | `bin-proto` | 27          | 63           | 1,368      | 704         | 154              | 136               |
 | `deku`      | 1           | 96           | 854        | 1,014       | 4,150            | 746               |
-
-## Roadmap
-
-The following features are planned:
-- Bit/byte alignment
-- `no_std` support (only after `bitstream_io` supports it)

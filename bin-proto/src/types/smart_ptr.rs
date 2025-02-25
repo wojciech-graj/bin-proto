@@ -3,7 +3,7 @@ macro_rules! impl_smart_ptr_type {
         #[allow(unused_imports)]
         mod impl_protocol {
             use super::*;
-            use std::ops::Deref;
+            use core::ops::Deref;
 
             impl<Ctx, T> $crate::ProtocolRead<Ctx> for $ty<T>
             where
@@ -57,7 +57,7 @@ macro_rules! impl_smart_ptr_type {
 
             #[test]
             fn write_protocol() {
-                let mut data: Vec<u8> = Vec::new();
+                let mut data: ::alloc::vec::Vec<u8> = ::alloc::vec::Vec::new();
                 $crate::ProtocolWrite::write(
                     &$ty::new(7u8),
                     &mut ::bitstream_io::BitWriter::endian(&mut data, ::bitstream_io::BigEndian),
@@ -65,24 +65,26 @@ macro_rules! impl_smart_ptr_type {
                     &mut (),
                 )
                 .unwrap();
-                assert_eq!(vec![7], data);
+                assert_eq!(::alloc::vec![7], data);
             }
         }
     };
 }
 
 mod box_ {
+    use alloc::boxed::Box;
+
     impl_smart_ptr_type!(Box);
 }
 
 mod rc {
-    use std::rc::Rc;
+    use alloc::rc::Rc;
 
     impl_smart_ptr_type!(Rc);
 }
 
 mod arc {
-    use std::sync::Arc;
+    use alloc::sync::Arc;
 
     impl_smart_ptr_type!(Arc);
 }

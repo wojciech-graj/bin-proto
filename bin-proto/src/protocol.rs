@@ -1,7 +1,12 @@
+use alloc::vec::Vec;
+#[cfg(feature = "std")]
+use std::io;
+
 use bitstream_io::{BigEndian, BitReader, BitWriter, LittleEndian};
+#[cfg(not(feature = "std"))]
+use core2::io;
 
 use crate::{BitRead, BitWrite, ByteOrder, Result};
-use std::io;
 
 /// A trait for bit-level decoding.
 pub trait ProtocolRead<Ctx = ()>: Sized {

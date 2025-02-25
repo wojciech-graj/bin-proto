@@ -1,14 +1,15 @@
+#[cfg(feature = "std")]
 use std::io;
 
 use bitstream_io::{BE, LE};
+#[cfg(not(feature = "std"))]
+use core2::io;
 
 /// A bit-level equivalent of `std::io::Write`. An object-safe wrapper over
 /// `bitstream_io::BitWrite`.
 pub trait BitWrite {
     fn write_bit(&mut self, bit: bool) -> io::Result<()>;
     fn write_bytes(&mut self, buf: &[u8]) -> io::Result<()>;
-    fn write_unary0(&mut self, value: u32) -> io::Result<()>;
-    fn write_unary1(&mut self, value: u32) -> io::Result<()>;
     fn byte_aligned(&self) -> bool;
     fn byte_align(&mut self) -> io::Result<()>;
 
@@ -56,14 +57,6 @@ where
 
     fn write_bytes(&mut self, buf: &[u8]) -> io::Result<()> {
         bitstream_io::BitWrite::write_bytes(self, buf)
-    }
-
-    fn write_unary0(&mut self, value: u32) -> io::Result<()> {
-        bitstream_io::BitWrite::write_unary0(self, value)
-    }
-
-    fn write_unary1(&mut self, value: u32) -> io::Result<()> {
-        bitstream_io::BitWrite::write_unary1(self, value)
     }
 
     fn byte_aligned(&self) -> bool {

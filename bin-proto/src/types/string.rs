@@ -3,6 +3,8 @@ use crate::{
     UntaggedWrite,
 };
 
+use alloc::{string::String, vec::Vec};
+
 impl<Tag, Ctx> TaggedRead<Tag, Ctx> for String
 where
     Tag: TryInto<usize>,
@@ -40,5 +42,7 @@ impl<Ctx> FlexibleArrayMemberRead<Ctx> for String {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     test_externally_tagged!(String => [[b'a', b'b', b'c', b'd'], String::from("abcd")]);
 }

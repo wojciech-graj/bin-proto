@@ -1,4 +1,7 @@
 # v0.7.0
+- Add `std` feature, support `no_std`
+- Change MSRV to 1.83.0, matching bitstream_io
+- Remove `BitRead::read_unaryX` and `BitWrite::write_unaryX` functions
 - Rename `Error` variants
 # v0.6.0
 - Allow multiple attributes in a single `#[protocol(...)]`

@@ -61,6 +61,7 @@ macro_rules! test_map_type {
     }
 }
 
+#[cfg(feature = "std")]
 mod hash_map {
     use std::collections::HashMap;
     use std::hash::Hash;
@@ -69,7 +70,7 @@ mod hash_map {
 }
 
 mod b_tree_map {
-    use std::collections::BTreeMap;
+    use alloc::collections::btree_map::BTreeMap;
 
     impl_map_type!(BTreeMap => K: Ord);
     test_map_type!(BTreeMap);
