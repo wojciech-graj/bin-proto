@@ -3,28 +3,24 @@ macro_rules! impl_container_write {
         $ty:ident<$($a:lifetime,)? T $(: $tbound0:ident $(+ ?$tbound1:ident + $tbound2:lifetime)?)?>
         $(=> $f:ident)?
     ) => {
-        mod impl_write {
-            use core::ops::Deref;
+        impl<$($a,)? Ctx, T> $crate::ProtocolWrite<Ctx> for $ty<$($a,)? T>
+        where
+            T: $crate::ProtocolWrite<Ctx> $(+ $tbound0 $(+ ?$tbound1 + $tbound2)?)?,
+        {
+            fn write(
+                &self,
+                write: &mut dyn $crate::BitWrite,
+                byte_order: $crate::ByteOrder,
+                ctx: &mut Ctx,
+            ) -> $crate::Result<()> {
+                use core::ops::Deref;
 
-            use super::*;
-
-            impl<$($a,)? Ctx, T> $crate::ProtocolWrite<Ctx> for $ty<$($a,)? T>
-            where
-                T: $crate::ProtocolWrite<Ctx> $(+ $tbound0 $(+ ?$tbound1 + $tbound2)?)?,
-            {
-                fn write(
-                    &self,
-                    write: &mut dyn $crate::BitWrite,
-                    byte_order: $crate::ByteOrder,
-                    ctx: &mut Ctx,
-                ) -> $crate::Result<()> {
-                    $crate::ProtocolWrite::write(
-                        self $(.$f()?)? .deref(),
-                        write,
-                        byte_order,
-                        ctx,
-                    )
-                }
+                $crate::ProtocolWrite::write(
+                    self $(.$f()?)? .deref(),
+                    write,
+                    byte_order,
+                    ctx,
+                )
             }
         }
     };
@@ -52,6 +48,7 @@ mod box_ {
 
     impl_container_write!(Box<T>);
     impl_container_read!(Box<T>);
+    test_protocol!(Box<u8>: Box::new(1) => [0x01]);
 }
 
 mod rc {
@@ -59,6 +56,7 @@ mod rc {
 
     impl_container_write!(Rc<T>);
     impl_container_read!(Rc<T>);
+    test_protocol!(Rc<u8>: Rc::new(1) => [0x01]);
 }
 
 mod arc {
@@ -66,12 +64,14 @@ mod arc {
 
     impl_container_write!(Arc<T>);
     impl_container_read!(Arc<T>);
+    test_protocol!(Arc<u8>: Arc::new(1) => [0x01]);
 }
 
 mod cow {
     use alloc::borrow::{Cow, ToOwned};
 
     impl_container_write!(Cow<'a, T: ToOwned + ?Sized + 'a>);
+    test_protocol_write!(Cow<u8>: Cow::Owned(1) => [0x01]);
 }
 
 mod cell {
@@ -92,6 +92,8 @@ mod cell {
             self.get().write(write, byte_order, ctx)
         }
     }
+
+    test_protocol_write!(Cell<u8>: Cell::new(1) => [0x01]);
 }
 
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
@@ -100,6 +102,30 @@ mod rwlock {
     use std::sync::RwLock;
 
     impl_container_write!(RwLock<T> => read);
+
+    #[cfg(test)]
+    mod tests {
+        use alloc::vec::Vec;
+
+        use bitstream_io::{BigEndian, BitWriter};
+
+        use crate::{ByteOrder, ProtocolWrite};
+
+        use super::*;
+
+        #[test]
+        fn protocol_write() {
+            let mut buffer: Vec<u8> = Vec::new();
+            ProtocolWrite::write(
+                &RwLock::new(1u8),
+                &mut BitWriter::endian(&mut buffer, BigEndian),
+                ByteOrder::BigEndian,
+                &mut (),
+            )
+            .unwrap();
+            assert_eq!([1], *buffer);
+        }
+    }
 }
 
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
@@ -108,10 +134,12 @@ mod mutex {
     use std::sync::Mutex;
 
     impl_container_write!(Mutex<T> => lock);
+    test_protocol_write!(Mutex<u8>: Mutex::new(1) => [0x01]);
 }
 
 mod ref_cell {
     use core::cell::RefCell;
 
     impl_container_write!(RefCell<T> => try_borrow);
+    test_protocol_write!(RefCell<u8>: RefCell::new(1) => [0x01]);
 }

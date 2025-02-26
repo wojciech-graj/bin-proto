@@ -72,18 +72,7 @@ mod hash_map {
 
     impl_write_map!(HashMap<K: Eq + Hash, V, H>);
     impl_read_map!(HashMap<K: Eq + Hash, V, H: BuildHasher + Default>);
-
-    #[cfg(test)]
-    mod tests {
-        use super::*;
-
-        test_externally_tagged!(
-            HashMap<u8, u16> => [
-                [0x01, 0x00, 0x02],
-                Into::<HashMap<_, _>>::into([(1, 2)])
-            ]
-        );
-    }
+    test_flexible_array_member_read_and_tagged!(HashMap<u8, u8>| 1: [(1, 2)].into() => [0x01, 0x02]);
 }
 
 mod b_tree_map {
@@ -91,16 +80,5 @@ mod b_tree_map {
 
     impl_write_map!(BTreeMap<K: Ord, V>);
     impl_read_map!(BTreeMap<K: Ord, V>);
-
-    #[cfg(test)]
-    mod tests {
-        use super::*;
-
-        test_externally_tagged!(
-            BTreeMap<u8, u16> => [
-                [0x01, 0x00, 0x02, 0x03, 0x00, 0x04],
-                Into::<BTreeMap<_, _>>::into([(1, 2), (3, 4)])
-            ]
-        );
-    }
+    test_flexible_array_member_read_and_tagged!(BTreeMap<u8, u8>| 3: [(1, 2), (3, 4), (5, 6)].into() => [0x01, 0x02, 0x03, 0x04, 0x05, 0x06]);
 }

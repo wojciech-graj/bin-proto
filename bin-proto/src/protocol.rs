@@ -67,3 +67,50 @@ pub trait ProtocolNoCtx: ProtocolRead + ProtocolWrite {
 }
 
 impl<T> ProtocolNoCtx for T where T: ProtocolRead + ProtocolWrite {}
+
+macro_rules! test_protocol_read {
+    ($ty:ty: $bytes:expr => $exp:expr) => {
+        #[cfg(test)]
+        #[test]
+        fn protocol_read() {
+            let bytes: &[u8] = &$bytes;
+            let exp: $ty = $exp;
+            let read: $ty = $crate::ProtocolRead::read(
+                &mut ::bitstream_io::BitReader::endian(bytes, ::bitstream_io::BigEndian),
+                $crate::ByteOrder::BigEndian,
+                &mut (),
+            )
+            .unwrap();
+            assert_eq!(exp, read);
+        }
+    };
+}
+
+macro_rules! test_protocol_write {
+    ($ty:ty: $value:expr => $exp:expr) => {
+        #[cfg(test)]
+        #[test]
+        fn protocol_write() {
+            use $crate::ProtocolWrite;
+
+            let mut buffer: ::alloc::vec::Vec<u8> = ::alloc::vec::Vec::new();
+            let exp: &[u8] = &$exp;
+            let value: $ty = $value;
+            value
+                .write(
+                    &mut ::bitstream_io::BitWriter::endian(&mut buffer, ::bitstream_io::BigEndian),
+                    $crate::ByteOrder::BigEndian,
+                    &mut (),
+                )
+                .unwrap();
+            assert_eq!(exp, &buffer);
+        }
+    };
+}
+
+macro_rules! test_protocol {
+    ($ty:ty: $value:expr => $bytes:expr) => {
+        test_protocol_read!($ty: $bytes => $value);
+        test_protocol_write!($ty: $value => $bytes);
+    }
+}

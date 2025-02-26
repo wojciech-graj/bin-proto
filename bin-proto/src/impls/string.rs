@@ -39,16 +39,4 @@ impl<Ctx> FlexibleArrayMemberRead<Ctx> for String {
     }
 }
 
-impl<Ctx> UntaggedWrite<Ctx> for str {
-    fn write(&self, write: &mut dyn BitWrite, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<()> {
-        let bytes: Vec<_> = self.bytes().collect();
-        util::write_items(&bytes, write, byte_order, ctx)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    test_externally_tagged!(String => [[b'a', b'b', b'c', b'd'], String::from("abcd")]);
-}
+test_flexible_array_member_read_and_tagged!(String| 3: "abc".into() => [b'a', b'b', b'c']);

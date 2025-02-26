@@ -331,12 +331,13 @@ mod bit_write;
 mod byte_order;
 mod discriminable;
 mod error;
+#[macro_use]
 mod flexible_array_member;
 #[macro_use]
 mod protocol;
 #[macro_use]
 mod tagged;
-mod types;
+mod impls;
 mod util;
 
 pub extern crate bitstream_io;

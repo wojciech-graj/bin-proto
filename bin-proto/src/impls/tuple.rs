@@ -64,18 +64,6 @@ where
     }
 }
 
-impl<Ctx> ProtocolRead<Ctx> for () {
-    fn read(_: &mut dyn BitRead, _: ByteOrder, _: &mut Ctx) -> Result<Self> {
-        Ok(())
-    }
-}
-
-impl<Ctx> ProtocolWrite<Ctx> for () {
-    fn write(&self, _: &mut dyn BitWrite, _: ByteOrder, _: &mut Ctx) -> Result<()> {
-        Ok(())
-    }
-}
-
 impl_tuple!(0 A, 1 B, 2 C, 3 D, 4 E, 5 F, 6 G, 7 H, 8 I, 9 K, 10 L, 11 M, 12 N, 13 O, 14 P, 15 Q);
 impl_tuple!(0 A, 1 B, 2 C, 3 D, 4 E, 5 F, 6 G, 7 H, 8 I, 9 K, 10 L, 11 M, 12 N, 13 O, 14 P);
 impl_tuple!(0 A, 1 B, 2 C, 3 D, 4 E, 5 F, 6 G, 7 H, 8 I, 9 K, 10 L, 11 M, 12 N, 13 O);
@@ -91,3 +79,5 @@ impl_tuple!(0 A, 1 B, 2 C, 3 D, 4 E);
 impl_tuple!(0 A, 1 B, 2 C, 3 D);
 impl_tuple!(0 A, 1 B, 2 C);
 impl_tuple!(0 A, 1 B);
+
+test_protocol!((u8,): (1,) => [0x01]);

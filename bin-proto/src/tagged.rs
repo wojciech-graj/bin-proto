@@ -13,36 +13,50 @@ pub trait UntaggedWrite<Ctx = ()> {
     fn write(&self, write: &mut dyn BitWrite, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<()>;
 }
 
-#[cfg(test)]
-macro_rules! test_externally_tagged {
-    ($t:ty => [$bytes:expr, $value:expr]) => {
+macro_rules! test_tagged_read {
+    ($ty:ty | $tag:literal: $bytes:expr => $exp:expr) => {
+        #[cfg(test)]
         #[test]
-        fn read_externally_tagged() {
-            let bytes: &[u8] = $bytes.as_slice();
-            assert_eq!(
-                <$t as $crate::TaggedRead<_, _>>::read(
-                    &mut ::bitstream_io::BitReader::endian(bytes, ::bitstream_io::BigEndian),
-                    $crate::ByteOrder::BigEndian,
-                    &mut (),
-                    $value.len()
-                )
-                .unwrap(),
-                $value
-            )
-        }
-
-        #[test]
-        fn write_externally_tagged() {
-            let mut buffer: ::alloc::vec::Vec<u8> = ::alloc::vec::Vec::new();
-            let value: $t = $value;
-            $crate::UntaggedWrite::<_>::write(
-                &value,
-                &mut ::bitstream_io::BitWriter::endian(&mut buffer, ::bitstream_io::BigEndian),
+        fn tagged_read() {
+            let bytes: &[u8] = &$bytes;
+            let exp: $ty = $exp;
+            let read: $ty = $crate::TaggedRead::read(
+                &mut ::bitstream_io::BitReader::endian(bytes, ::bitstream_io::BigEndian),
                 $crate::ByteOrder::BigEndian,
                 &mut (),
+                $tag,
             )
             .unwrap();
-            assert_eq!(buffer.as_slice(), $bytes)
+            assert_eq!(exp, read);
         }
     };
+}
+
+macro_rules! test_untagged_write {
+    ($ty:ty: $value:expr => $exp:expr) => {
+        #[cfg(test)]
+        #[test]
+        fn untagged_write() {
+            use $crate::UntaggedWrite;
+
+            let mut buffer: ::alloc::vec::Vec<u8> = ::alloc::vec::Vec::new();
+            let exp: &[u8] = &$exp;
+            let value: $ty = $value;
+            value
+                .write(
+                    &mut ::bitstream_io::BitWriter::endian(&mut buffer, ::bitstream_io::BigEndian),
+                    $crate::ByteOrder::BigEndian,
+                    &mut (),
+                )
+                .unwrap();
+            assert_eq!(exp, &buffer);
+        }
+    };
+}
+
+macro_rules! test_tagged {
+    ($ty:ty | $tag:literal: $value:expr => $bytes:expr) => {
+        test_tagged_read!($ty | $tag: $bytes => $value);
+        test_untagged_write!($ty: $value => $bytes);
+    }
 }

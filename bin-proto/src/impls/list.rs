@@ -61,28 +61,12 @@ macro_rules! impl_write_list {
     }
 }
 
-macro_rules! test_list {
-    ( $t:ident ) => {
-        #[cfg(test)]
-        mod tests {
-            use super::*;
-
-            test_externally_tagged!(
-                $t<u16> => [
-                    [0x00, 0x01, 0x00, 0x02, 0x00, 0x03],
-                    ::core::convert::Into::<$t<_>>::into([1, 2, 3])
-                ]
-            );
-        }
-    }
-}
-
 mod vec {
     use alloc::vec::Vec;
 
     impl_read_list!(Vec<T>);
     impl_write_list!(Vec<T>);
-    test_list!(Vec);
+    test_flexible_array_member_read_and_tagged!(Vec<u8>| 3: alloc::vec![1, 2, 3] => [0x01, 0x02, 0x03]);
 }
 
 mod linked_list {
@@ -90,7 +74,7 @@ mod linked_list {
 
     impl_read_list!(LinkedList<T>);
     impl_write_list!(LinkedList<T>);
-    test_list!(LinkedList);
+    test_flexible_array_member_read_and_tagged!(LinkedList<u8>| 3: [1, 2, 3].into() => [0x01, 0x02, 0x03]);
 }
 
 mod vec_deque {
@@ -98,7 +82,7 @@ mod vec_deque {
 
     impl_read_list!(VecDeque<T>);
     impl_write_list!(VecDeque<T>);
-    test_list!(VecDeque);
+    test_flexible_array_member_read_and_tagged!(VecDeque<u8>| 3: [1, 2, 3].into() => [0x01, 0x02, 0x03]);
 }
 
 mod b_tree_set {
@@ -106,7 +90,7 @@ mod b_tree_set {
 
     impl_read_list!(BTreeSet<T: Ord>);
     impl_write_list!(BTreeSet<T: Ord>);
-    test_list!(BTreeSet);
+    test_flexible_array_member_read_and_tagged!(BTreeSet<u8>| 3: [1, 2, 3].into() => [0x01, 0x02, 0x03]);
 }
 
 mod binary_heap {
@@ -123,13 +107,5 @@ mod hash_set {
 
     impl_read_list!(HashSet<T: Hash + Eq, H: BuildHasher + Default>);
     impl_write_list!(HashSet<T: Hash + Eq, H>);
-
-    #[cfg(test)]
-    mod tests {
-        use super::*;
-
-        test_externally_tagged!(
-            HashSet<u16> => [[0x00, 0x01], Into::<HashSet<_>>::into([1])]
-        );
-    }
+    test_flexible_array_member_read_and_tagged!(HashSet<u8>| 1: [1].into() => [0x01]);
 }
