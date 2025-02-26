@@ -1,50 +1,78 @@
-macro_rules! impl_list_type {
-    ($ty:ident => T: $( $ty_pred:ident ),*) => {
-        impl<Tag, Ctx, T> $crate::TaggedRead<Tag, Ctx> for $ty<T>
-            where
-                T: $crate::ProtocolRead<Ctx> $( + $ty_pred )*,
-                Tag: TryInto<usize>,
+macro_rules! impl_read_list {
+    (
+        $ty:ident<T $(: $tbound0:ident $(+ $tbound1:ident)?)?
+        $(, $h:ident: $hbound0:ident + $hbound1:ident)?>
+    ) => {
+        impl<Tag, Ctx, T, $($h)?> $crate::TaggedRead<Tag, Ctx> for $ty<T, $($h)?>
+        where
+            T: $crate::ProtocolRead<Ctx> $(+ $tbound0 $(+ $tbound1)?)?,
+            Tag: ::core::convert::TryInto<usize>,
+            $($h: $hbound0 + $hbound1)?
         {
             fn read(read: &mut dyn $crate::BitRead,
-                    byte_order: $crate::ByteOrder,
-                    ctx: &mut Ctx,
-                    tag: Tag,
-                    ) -> $crate::Result<Self> {
-                let elements = $crate::util::read_items(tag.try_into().map_err(|_| $crate::Error::TagConvert)?, read, byte_order, ctx)?;
-                Ok(elements.into_iter().collect())
+                byte_order: $crate::ByteOrder,
+                ctx: &mut Ctx,
+                tag: Tag,
+            ) -> $crate::Result<Self> {
+                let elements = $crate::util::read_items(
+                    ::core::convert::TryInto::try_into(tag)
+                        .map_err(|_| $crate::Error::TagConvert)?,
+                    read,
+                    byte_order,
+                    ctx
+                )?;
+                Ok(::core::iter::IntoIterator::into_iter(elements).collect())
             }
         }
 
-        impl<Ctx, T> $crate::UntaggedWrite<Ctx> for $ty<T>
-            where T: $crate::ProtocolWrite<Ctx> $( + $ty_pred )*
-        {
-            fn write(&self,
-                     write: &mut dyn $crate::BitWrite,
-                     byte_order: $crate::ByteOrder,
-                     ctx: &mut Ctx,
-                     ) -> $crate::Result<()> {
-                $crate::util::write_items(self.iter(), write, byte_order, ctx)
-            }
-        }
 
-        impl<Ctx, T> $crate::FlexibleArrayMemberRead<Ctx> for $ty<T>
-            where T: $crate::ProtocolRead<Ctx> $( + $ty_pred )*
+        impl<Ctx, T, $($h)?> $crate::FlexibleArrayMemberRead<Ctx> for $ty<T, $($h)?>
+        where
+            T: $crate::ProtocolRead<Ctx> $(+ $tbound0 $(+ $tbound1)?)?,
+            $($h: $hbound0 + $hbound1)?
         {
-            fn read(read: &mut dyn $crate::BitRead, byte_order: $crate::ByteOrder, ctx: &mut Ctx) -> $crate::Result<Self> {
-                Ok($crate::util::read_items_to_eof(read, byte_order, ctx)?.into_iter().collect())
+            fn read(
+                read: &mut dyn $crate::BitRead,
+                byte_order: $crate::ByteOrder,
+                ctx: &mut Ctx
+            ) -> $crate::Result<Self> {
+                Ok(::core::iter::IntoIterator::into_iter(
+                    $crate::util::read_items_to_eof(read, byte_order, ctx)?
+                ).collect())
             }
         }
     }
 }
 
-macro_rules! test_list_type {
+macro_rules! impl_write_list {
+    ( $ty:ident<T $(: $tbound0:ident $(+ $tbound1:ident)?)? $(, $h:ident)?> ) => {
+        impl<Ctx, T, $($h)?> $crate::UntaggedWrite<Ctx> for $ty<T, $($h)?>
+        where
+            T: $crate::ProtocolWrite<Ctx> $(+ $tbound0 $(+ $tbound1)?)?
+        {
+            fn write(&self,
+                write: &mut dyn $crate::BitWrite,
+                byte_order: $crate::ByteOrder,
+                ctx: &mut Ctx,
+            ) -> $crate::Result<()> {
+                $crate::util::write_items(self.iter(), write, byte_order, ctx)
+            }
+        }
+    }
+}
+
+macro_rules! test_list {
     ( $t:ident ) => {
         #[cfg(test)]
-        #[allow(unused_imports)]
         mod tests {
             use super::*;
 
-            test_externally_tagged!($t<u16> => [[0x00, 0x01, 0x00, 0x02, 0x00, 0x03], $t::from([1, 2, 3])]);
+            test_externally_tagged!(
+                $t<u16> => [
+                    [0x00, 0x01, 0x00, 0x02, 0x00, 0x03],
+                    ::core::convert::Into::<$t<_>>::into([1, 2, 3])
+                ]
+            );
         }
     }
 }
@@ -52,41 +80,56 @@ macro_rules! test_list_type {
 mod vec {
     use alloc::vec::Vec;
 
-    impl_list_type!(Vec => T: );
-    test_list_type!(Vec);
+    impl_read_list!(Vec<T>);
+    impl_write_list!(Vec<T>);
+    test_list!(Vec);
 }
 
 mod linked_list {
     use alloc::collections::linked_list::LinkedList;
 
-    impl_list_type!(LinkedList => T: );
-    test_list_type!(LinkedList);
+    impl_read_list!(LinkedList<T>);
+    impl_write_list!(LinkedList<T>);
+    test_list!(LinkedList);
 }
 
 mod vec_deque {
     use alloc::collections::vec_deque::VecDeque;
 
-    impl_list_type!(VecDeque => T: );
-    test_list_type!(VecDeque);
+    impl_read_list!(VecDeque<T>);
+    impl_write_list!(VecDeque<T>);
+    test_list!(VecDeque);
 }
 
 mod b_tree_set {
     use alloc::collections::btree_set::BTreeSet;
 
-    impl_list_type!(BTreeSet => T: Ord);
-    test_list_type!(BTreeSet);
-}
-
-#[cfg(feature = "std")]
-mod hash_set {
-    use std::collections::HashSet;
-    use std::hash::Hash;
-
-    impl_list_type!(HashSet => T: Hash, Eq);
+    impl_read_list!(BTreeSet<T: Ord>);
+    impl_write_list!(BTreeSet<T: Ord>);
+    test_list!(BTreeSet);
 }
 
 mod binary_heap {
     use alloc::collections::binary_heap::BinaryHeap;
 
-    impl_list_type!(BinaryHeap => T: Ord);
+    impl_read_list!(BinaryHeap<T: Ord>);
+    impl_write_list!(BinaryHeap<T: Ord>);
+}
+
+#[cfg(feature = "std")]
+mod hash_set {
+    use core::hash::{BuildHasher, Hash};
+    use std::collections::HashSet;
+
+    impl_read_list!(HashSet<T: Hash + Eq, H: BuildHasher + Default>);
+    impl_write_list!(HashSet<T: Hash + Eq, H>);
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        test_externally_tagged!(
+            HashSet<u16> => [[0x00, 0x01], Into::<HashSet<_>>::into([1])]
+        );
+    }
 }

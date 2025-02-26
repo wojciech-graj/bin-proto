@@ -1,3 +1,5 @@
+use core::ffi::CStr;
+
 use crate::{util, BitRead, BitWrite, ByteOrder, ProtocolRead, ProtocolWrite, Result};
 use alloc::{ffi::CString, vec::Vec};
 
@@ -16,12 +18,13 @@ impl<Ctx> ProtocolRead<Ctx> for CString {
 
 impl<Ctx> ProtocolWrite<Ctx> for CString {
     fn write(&self, write: &mut dyn BitWrite, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<()> {
-        util::write_items(
-            self.clone().into_bytes_with_nul().iter(),
-            write,
-            byte_order,
-            ctx,
-        )
+        util::write_items(self.to_bytes_with_nul().iter(), write, byte_order, ctx)
+    }
+}
+
+impl<Ctx> ProtocolWrite<Ctx> for CStr {
+    fn write(&self, write: &mut dyn BitWrite, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<()> {
+        util::write_items(self.to_bytes_with_nul().iter(), write, byte_order, ctx)
     }
 }
 
@@ -53,5 +56,20 @@ mod tests {
             )
             .unwrap();
         assert_eq!(data, vec![0x41, 0x42, 0x43, 0]);
+    }
+
+    #[test]
+    fn can_write_cstr() {
+        let exp = vec![0x41, 0x42, 0x43, 0];
+        let mut data: Vec<u8> = Vec::new();
+        CStr::from_bytes_until_nul(&exp)
+            .unwrap()
+            .write(
+                &mut BitWriter::endian(&mut data, BigEndian),
+                ByteOrder::BigEndian,
+                &mut (),
+            )
+            .unwrap();
+        assert_eq!(data, exp);
     }
 }

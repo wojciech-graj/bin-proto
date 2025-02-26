@@ -1,4 +1,6 @@
-use crate::{util, BitRead, BitWrite, ByteOrder, Error, ProtocolRead, ProtocolWrite, Result};
+use crate::{
+    util, BitRead, BitWrite, ByteOrder, Error, ProtocolRead, ProtocolWrite, Result, UntaggedWrite,
+};
 use core::convert::TryInto;
 
 impl<Ctx, T, const N: usize> ProtocolRead<Ctx> for [T; N]
@@ -12,6 +14,15 @@ where
 }
 
 impl<Ctx, T, const N: usize> ProtocolWrite<Ctx> for [T; N]
+where
+    T: ProtocolWrite<Ctx> + Sized,
+{
+    fn write(&self, write: &mut dyn BitWrite, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<()> {
+        util::write_items(self.iter(), write, byte_order, ctx)
+    }
+}
+
+impl<Ctx, T> UntaggedWrite<Ctx> for [T]
 where
     T: ProtocolWrite<Ctx>,
 {
@@ -46,6 +57,18 @@ mod tests {
         let mut writer = BitWriter::endian(&mut data, BigEndian);
 
         [5u8, 7, 9, 11]
+            .write(&mut writer, ByteOrder::BigEndian, &mut ())
+            .unwrap();
+        assert_eq!(data, vec![5, 7, 9, 11]);
+    }
+
+    #[test]
+    fn can_write_slice() {
+        let mut data = Vec::new();
+        let mut writer = BitWriter::endian(&mut data, BigEndian);
+
+        [5u8, 7, 9, 11]
+            .as_slice()
             .write(&mut writer, ByteOrder::BigEndian, &mut ())
             .unwrap();
         assert_eq!(data, vec![5, 7, 9, 11]);

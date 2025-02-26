@@ -12,7 +12,7 @@ impl<Ctx> ProtocolRead<Ctx> for Ipv4Addr {
 
 impl<Ctx> ProtocolWrite<Ctx> for Ipv4Addr {
     fn write(&self, write: &mut dyn BitWrite, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<()> {
-        ProtocolWrite::write(&self.octets(), write, byte_order, ctx)
+        self.octets().write(write, byte_order, ctx)
     }
 }
 
@@ -28,7 +28,7 @@ impl<Ctx> ProtocolRead<Ctx> for Ipv6Addr {
 
 impl<Ctx> ProtocolWrite<Ctx> for Ipv6Addr {
     fn write(&self, write: &mut dyn BitWrite, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<()> {
-        ProtocolWrite::write(&self.octets(), write, byte_order, ctx)
+        self.octets().write(write, byte_order, ctx)
     }
 }
 
@@ -56,13 +56,13 @@ mod tests {
     #[test]
     fn write_ipv4_addr() {
         let mut data: Vec<u8> = Vec::new();
-        ProtocolWrite::write(
-            &Ipv4Addr::new(192, 168, 1, 0),
-            &mut BitWriter::endian(&mut data, BigEndian),
-            ByteOrder::BigEndian,
-            &mut (),
-        )
-        .unwrap();
+        Ipv4Addr::new(192, 168, 1, 0)
+            .write(
+                &mut BitWriter::endian(&mut data, BigEndian),
+                ByteOrder::BigEndian,
+                &mut (),
+            )
+            .unwrap();
         assert_eq!(vec![192, 168, 1, 0], data);
     }
 
@@ -89,10 +89,10 @@ mod tests {
     #[test]
     fn write_ipv6_addr() {
         let mut data: Vec<u8> = Vec::new();
-        ProtocolWrite::write(
-            &Ipv6Addr::new(
-                0x2001, 0x0db8, 0x85a3, 0x0000, 0x0000, 0x8a2e, 0x0370, 0x7334,
-            ),
+        Ipv6Addr::new(
+            0x2001, 0x0db8, 0x85a3, 0x0000, 0x0000, 0x8a2e, 0x0370, 0x7334,
+        )
+        .write(
             &mut BitWriter::endian(&mut data, BigEndian),
             ByteOrder::BigEndian,
             &mut (),

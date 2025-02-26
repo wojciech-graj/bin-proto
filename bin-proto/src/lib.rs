@@ -71,11 +71,7 @@
     clippy::style,
     unsafe_code
 )]
-#![allow(
-    clippy::module_name_repetitions,
-    clippy::missing_errors_doc,
-    clippy::implicit_hasher
-)]
+#![allow(clippy::module_name_repetitions, clippy::missing_errors_doc)]
 
 extern crate alloc;
 #[cfg(feature = "std")]

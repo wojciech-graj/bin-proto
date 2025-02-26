@@ -9,7 +9,7 @@ pub trait TaggedRead<Tag, Ctx = ()>: Sized {
 }
 
 /// A trait for encoding variable-length types with a disjoint length prefix.
-pub trait UntaggedWrite<Ctx = ()>: Sized {
+pub trait UntaggedWrite<Ctx = ()> {
     fn write(&self, write: &mut dyn BitWrite, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<()>;
 }
 
