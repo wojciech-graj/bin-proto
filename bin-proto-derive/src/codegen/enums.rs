@@ -3,7 +3,7 @@ use proc_macro2::{Span, TokenStream};
 
 pub fn read_discriminant(attribs: &Attrs) -> TokenStream {
     if let Some(bits) = &attribs.bits {
-        quote!(::bin_proto::BitFieldRead::read(__io_reader, __byte_order, __ctx, #bits))
+        quote!(::bin_proto::ProtocolRead::read(__io_reader, __byte_order, __ctx, ::bin_proto::Bits(#bits)))
     } else {
         quote!(::bin_proto::ProtocolRead::read(
             __io_reader,
@@ -16,13 +16,14 @@ pub fn read_discriminant(attribs: &Attrs) -> TokenStream {
 
 pub fn write_discriminant(attribs: &Attrs) -> TokenStream {
     let write_tag = if let Some(bits) = &attribs.bits {
-        quote!(::bin_proto::BitFieldWrite::write(&__tag, __io_writer, __byte_order, __ctx, #bits))
+        quote!(::bin_proto::ProtocolWrite::write(&__tag, __io_writer, __byte_order, __ctx, ::bin_proto::Bits(#bits)))
     } else {
         quote!(::bin_proto::ProtocolWrite::write(
             &__tag,
             __io_writer,
             __byte_order,
-            __ctx
+            __ctx,
+            (),
         ))
     };
     quote!({

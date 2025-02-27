@@ -15,9 +15,15 @@ impl<Ctx, T, const N: usize> ProtocolWrite<Ctx> for [T; N]
 where
     T: ProtocolWrite<Ctx> + Sized,
 {
-    fn write(&self, write: &mut dyn BitWrite, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<()> {
+    fn write(
+        &self,
+        write: &mut dyn BitWrite,
+        byte_order: ByteOrder,
+        ctx: &mut Ctx,
+        (): (),
+    ) -> Result<()> {
         util::write_items(self.iter(), write, byte_order, ctx)
     }
 }
 
-test_protocol!([u8; 4]: [0, 1, 2, 3] => [0x00, 0x01, 0x02, 0x03]);
+test_protocol!([u8; 4]; [0, 1, 2, 3] => [0x00, 0x01, 0x02, 0x03]);

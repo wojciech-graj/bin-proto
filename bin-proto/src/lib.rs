@@ -80,7 +80,6 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
-pub use self::bit_field::{BitFieldRead, BitFieldWrite};
 pub use self::bit_read::BitRead;
 pub use self::bit_write::BitWrite;
 pub use self::byte_order::ByteOrder;
@@ -243,6 +242,7 @@ pub use self::protocol::{ProtocolRead, ProtocolWrite};
 ///         _write: &mut dyn bin_proto::BitWrite,
 ///         _byte_order: bin_proto::ByteOrder,
 ///         _ctx: &mut Ctx,
+///         _tag: (),
 ///     ) -> bin_proto::Result<()> {
 ///         // Use ctx here
 ///         Ok(())
@@ -254,7 +254,7 @@ pub use self::protocol::{ProtocolRead, ProtocolWrite};
 /// pub struct WithCtx(NeedsCtx);
 ///
 /// WithCtx(NeedsCtx)
-///     .bytes_ctx(ByteOrder::LittleEndian, &mut Ctx)
+///     .bytes_ctx(ByteOrder::LittleEndian, &mut Ctx, ())
 ///     .unwrap();
 /// ```
 ///
@@ -307,6 +307,7 @@ pub use self::protocol::{ProtocolRead, ProtocolWrite};
 ///         _write: &mut dyn bin_proto::BitWrite,
 ///         _byte_order: bin_proto::ByteOrder,
 ///         _ctx: &mut Ctx,
+///         _tag: (),
 ///     ) -> bin_proto::Result<()> {
 ///         // Use ctx here
 ///         Ok(())
@@ -328,21 +329,22 @@ pub use self::protocol::{ProtocolRead, ProtocolWrite};
 #[cfg(feature = "derive")]
 pub use bin_proto_derive::{ProtocolRead, ProtocolWrite};
 
-mod bit_field;
+#[macro_use]
+mod protocol;
+
 mod bit_read;
 mod bit_write;
 mod byte_order;
 mod discriminable;
 mod error;
-#[macro_use]
-mod protocol;
 mod impls;
 mod util;
 
 pub extern crate bitstream_io;
 
-#[derive(Debug, Clone, Copy)]
 pub struct Untagged;
+pub struct Tag<T>(pub T);
+pub struct Bits(pub u32);
 
 /// ```compile_fail
 /// # use bin_proto::{ProtocolRead, ProtocolWrite};

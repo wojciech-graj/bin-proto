@@ -3,7 +3,7 @@ macro_rules! impl_read_map {
         $ty:ident<K: $kbound0:ident $(+ $kbound1:ident)?, V
         $(, $h:ident : $hbound0:ident + $hbound1:ident)?>
     ) => {
-        impl<Tag, Ctx, K, V, $($h)?> $crate::ProtocolRead<Ctx, (Tag,)> for $ty<K, V, $($h)?>
+        impl<Tag, Ctx, K, V, $($h)?> $crate::ProtocolRead<Ctx, $crate::Tag<Tag>> for $ty<K, V, $($h)?>
         where
             K: $crate::ProtocolRead<Ctx> + $kbound0 + $($kbound1)?,
             V: $crate::ProtocolRead<Ctx>,
@@ -13,7 +13,7 @@ macro_rules! impl_read_map {
             fn read(read: &mut dyn $crate::BitRead,
                 byte_order: $crate::ByteOrder,
                 ctx: &mut Ctx,
-                tag: (Tag,),
+                tag: $crate::Tag<Tag>,
             ) -> $crate::Result<Self> {
                 let elements = $crate::util::read_items(
                     ::core::convert::TryInto::try_into(tag.0).map_err(|_| $crate::Error::TagConvert)?,
@@ -54,10 +54,11 @@ macro_rules! impl_write_map {
             fn write(&self, write: &mut dyn $crate::BitWrite,
                     byte_order: $crate::ByteOrder,
                     ctx: &mut Ctx,
+                    _: $crate::Untagged,
                     ) -> $crate::Result<()> {
                 for (key, value) in self.iter() {
-                    $crate::ProtocolWrite::write(key, write, byte_order, ctx)?;
-                    $crate::ProtocolWrite::write(value, write, byte_order, ctx)?;
+                    $crate::ProtocolWrite::write(key, write, byte_order, ctx, ())?;
+                    $crate::ProtocolWrite::write(value, write, byte_order, ctx, ())?;
                 }
 
                 Ok(())
@@ -73,7 +74,15 @@ mod hash_map {
 
     impl_write_map!(HashMap<K: Eq + Hash, V, H>);
     impl_read_map!(HashMap<K: Eq + Hash, V, H: BuildHasher + Default>);
-    test_flexible_array_member_read_and_protocol!(HashMap<u8, u8>| 1: [(1, 2)].into() => [0x01, 0x02]);
+
+    #[cfg(test)]
+    mod tests {
+        use crate::{Tag, Untagged};
+
+        use super::*;
+
+        test_untagged_and_protocol!(HashMap<u8, u8>| Untagged, Tag(1); [(1, 2)].into() => [0x01, 0x02]);
+    }
 }
 
 mod b_tree_map {
@@ -81,5 +90,13 @@ mod b_tree_map {
 
     impl_write_map!(BTreeMap<K: Ord, V>);
     impl_read_map!(BTreeMap<K: Ord, V>);
-    test_flexible_array_member_read_and_protocol!(BTreeMap<u8, u8>| 3: [(1, 2), (3, 4), (5, 6)].into() => [0x01, 0x02, 0x03, 0x04, 0x05, 0x06]);
+
+    #[cfg(test)]
+    mod tests {
+        use crate::{Tag, Untagged};
+
+        use super::*;
+
+        test_untagged_and_protocol!(BTreeMap<u8, u8>| Untagged, Tag(3); [(1, 2), (3, 4), (5, 6)].into() => [0x01, 0x02, 0x03, 0x04, 0x05, 0x06]);
+    }
 }

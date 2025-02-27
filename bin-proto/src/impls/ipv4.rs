@@ -11,9 +11,15 @@ impl<Ctx> ProtocolRead<Ctx> for Ipv4Addr {
 }
 
 impl<Ctx> ProtocolWrite<Ctx> for Ipv4Addr {
-    fn write(&self, write: &mut dyn BitWrite, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<()> {
-        self.octets().write(write, byte_order, ctx)
+    fn write(
+        &self,
+        write: &mut dyn BitWrite,
+        byte_order: ByteOrder,
+        ctx: &mut Ctx,
+        (): (),
+    ) -> Result<()> {
+        self.octets().write(write, byte_order, ctx, ())
     }
 }
 
-test_protocol!(Ipv4Addr: Ipv4Addr::new(192, 168, 1, 0) => [192, 168, 1, 0]);
+test_protocol!(Ipv4Addr; Ipv4Addr::new(192, 168, 1, 0) => [192, 168, 1, 0]);

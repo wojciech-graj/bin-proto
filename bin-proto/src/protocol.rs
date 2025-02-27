@@ -37,20 +37,26 @@ pub trait ProtocolRead<Ctx = (), Tag = ()>: Sized {
 /// A trait for bit-level encoding.
 pub trait ProtocolWrite<Ctx = (), Tag = ()> {
     /// Writes a value to a stream.
-    fn write(&self, write: &mut dyn BitWrite, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<()>;
+    fn write(
+        &self,
+        write: &mut dyn BitWrite,
+        byte_order: ByteOrder,
+        ctx: &mut Ctx,
+        tag: Tag,
+    ) -> Result<()>;
 
     /// Gets the raw bytes of this type with provided context.
-    fn bytes_ctx(&self, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<Vec<u8>> {
+    fn bytes_ctx(&self, byte_order: ByteOrder, ctx: &mut Ctx, tag: Tag) -> Result<Vec<u8>> {
         let mut data = Vec::new();
         match byte_order {
             ByteOrder::LittleEndian => {
                 let mut writer = BitWriter::endian(&mut data, LittleEndian);
-                self.write(&mut writer, byte_order, ctx)?;
+                self.write(&mut writer, byte_order, ctx, tag)?;
                 writer.byte_align()?;
             }
             ByteOrder::BigEndian => {
                 let mut writer = BitWriter::endian(&mut data, BigEndian);
-                self.write(&mut writer, byte_order, ctx)?;
+                self.write(&mut writer, byte_order, ctx, tag)?;
                 writer.byte_align()?;
             }
         };
@@ -68,30 +74,30 @@ pub trait ProtocolNoCtx: ProtocolRead + ProtocolWrite {
 
     /// Gets the raw bytes of this type without context.
     fn bytes(&self, byte_order: ByteOrder) -> Result<Vec<u8>> {
-        self.bytes_ctx(byte_order, &mut ())
+        self.bytes_ctx(byte_order, &mut (), ())
     }
 }
 
 impl<T> ProtocolNoCtx for T where T: ProtocolRead + ProtocolWrite {}
 
 macro_rules! test_protocol_read {
-    ($ty:ty | $tag:literal: $bytes:expr => $exp:expr) => {
+    ($ty:ty | $tag:expr; $bytes:expr => $exp:expr) => {
         #[cfg(test)]
         #[test]
         fn protocol_read() {
             let bytes: &[u8] = &$bytes;
             let exp: $ty = $exp;
-            let read: $ty = $crate::ProtocolRead::read(
+            let read: $ty = $crate::ProtocolRead::<(), _>::read(
                 &mut ::bitstream_io::BitReader::endian(bytes, ::bitstream_io::BigEndian),
                 $crate::ByteOrder::BigEndian,
                 &mut (),
-                ($tag,),
+                $tag,
             )
             .unwrap();
             assert_eq!(exp, read);
         }
     };
-    ($ty:ty: $bytes:expr => $exp:expr) => {
+    ($ty:ty; $bytes:expr => $exp:expr) => {
         #[cfg(test)]
         #[test]
         fn protocol_read() {
@@ -110,7 +116,7 @@ macro_rules! test_protocol_read {
 }
 
 macro_rules! test_protocol_write {
-    ($ty:ty: $value:expr => $exp:expr) => {
+    ($ty:ty $(| $tag:expr)?; $value:expr => $exp:expr) => {
         #[cfg(test)]
         #[test]
         fn protocol_write() {
@@ -124,6 +130,7 @@ macro_rules! test_protocol_write {
                     &mut ::bitstream_io::BitWriter::endian(&mut buffer, ::bitstream_io::BigEndian),
                     $crate::ByteOrder::BigEndian,
                     &mut (),
+                    ($($tag)?),
                 )
                 .unwrap();
             assert_eq!(exp, &buffer);
@@ -132,34 +139,20 @@ macro_rules! test_protocol_write {
 }
 
 macro_rules! test_protocol {
-    ($ty:ty$(| $tag:literal)?: $value:expr => $bytes:expr) => {
-        test_protocol_read!($ty$(| $tag)?: $bytes => $value);
-        test_protocol_write!($ty: $value => $bytes);
+    ($ty:ty$(| $tag_write:expr, $tag_read:expr)?; $value:expr => $bytes:expr) => {
+        test_protocol_read!($ty$(| $tag_read)?; $bytes => $value);
+        test_protocol_write!($ty$(| $tag_write)?; $value => $bytes);
     }
 }
 
-macro_rules! test_flexible_array_member_read {
-    ($ty:ty: $bytes:expr => $exp:expr) => {
+macro_rules! test_untagged_and_protocol {
+    ($ty:ty | $tag_write:expr, $tag_read:expr; $value:expr => $bytes:expr) => {
+        test_protocol!($ty | $tag_write, $tag_read; $value => $bytes);
         #[cfg(test)]
-        #[test]
-        fn flexible_array_member_read() {
-            let bytes: &[u8] = &$bytes;
-            let exp: $ty = $exp;
-            let read: $ty = $crate::ProtocolRead::read(
-                &mut ::bitstream_io::BitReader::endian(bytes, ::bitstream_io::BigEndian),
-                $crate::ByteOrder::BigEndian,
-                &mut (),
-                $crate::Untagged,
-            )
-            .unwrap();
-            assert_eq!(exp, read);
-        }
-    };
-}
+        mod untagged {
+            use super::*;
 
-macro_rules! test_flexible_array_member_read_and_protocol {
-    ($ty:ty | $tag:literal: $value:expr => $bytes:expr) => {
-        test_protocol!($ty | $tag: $value => $bytes);
-        test_flexible_array_member_read!($ty: $bytes => $value);
+            test_protocol_read!($ty| $crate::Untagged; $bytes => $value);
+        }
     }
 }

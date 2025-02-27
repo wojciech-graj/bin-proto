@@ -8,9 +8,9 @@ impl<Ctx, T> ProtocolRead<Ctx> for PhantomData<T> {
 }
 
 impl<Ctx, T> ProtocolWrite<Ctx> for PhantomData<T> {
-    fn write(&self, _: &mut dyn BitWrite, _: ByteOrder, _: &mut Ctx) -> Result<()> {
+    fn write(&self, _: &mut dyn BitWrite, _: ByteOrder, _: &mut Ctx, (): ()) -> Result<()> {
         Ok(())
     }
 }
 
-test_protocol!(PhantomData<u8>: PhantomData => []);
+test_protocol!(PhantomData<u8>; PhantomData => []);

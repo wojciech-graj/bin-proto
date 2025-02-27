@@ -8,9 +8,9 @@ impl<Ctx> ProtocolRead<Ctx> for PhantomPinned {
 }
 
 impl<Ctx> ProtocolWrite<Ctx> for PhantomPinned {
-    fn write(&self, _: &mut dyn BitWrite, _: ByteOrder, _: &mut Ctx) -> Result<()> {
+    fn write(&self, _: &mut dyn BitWrite, _: ByteOrder, _: &mut Ctx, (): ()) -> Result<()> {
         Ok(())
     }
 }
 
-test_protocol!(PhantomPinned: PhantomPinned => []);
+test_protocol!(PhantomPinned; PhantomPinned => []);

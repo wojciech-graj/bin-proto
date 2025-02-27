@@ -70,20 +70,19 @@ pub fn impl_trait_for(
             quote!(ProtocolWrite)
         }
         TraitImplType::TaggedRead(discriminant) => {
-            let ident = syn::Ident::new("__Tag", Span::call_site());
             let mut bounds = Punctuated::new();
             bounds.push(parse_quote!(::std::convert::TryInto<#discriminant>));
             generics
                 .params
                 .push(syn::GenericParam::Type(syn::TypeParam {
                     attrs: Vec::new(),
-                    ident: ident.clone(),
+                    ident: syn::Ident::new("__Tag", Span::call_site()),
                     colon_token: None,
                     bounds,
                     eq_token: None,
                     default: None,
                 }));
-            trait_generics.push(quote!((#ident,)));
+            trait_generics.push(quote!(::bin_proto::Tag<__Tag>));
             quote!(ProtocolRead)
         }
         TraitImplType::Discriminable => quote!(Discriminable),

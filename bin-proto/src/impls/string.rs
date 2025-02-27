@@ -4,7 +4,7 @@ use crate::{
 
 use alloc::{string::String, vec::Vec};
 
-impl<Tag, Ctx> ProtocolRead<Ctx, (Tag,)> for String
+impl<Tag, Ctx> ProtocolRead<Ctx, crate::Tag<Tag>> for String
 where
     Tag: TryInto<usize>,
 {
@@ -12,7 +12,7 @@ where
         read: &mut dyn BitRead,
         byte_order: ByteOrder,
         ctx: &mut Ctx,
-        tag: (Tag,),
+        tag: crate::Tag<Tag>,
     ) -> Result<Self> {
         let bytes = util::read_items(
             tag.0.try_into().map_err(|_| Error::TagConvert)?,
@@ -25,7 +25,13 @@ where
 }
 
 impl<Ctx> ProtocolWrite<Ctx, Untagged> for String {
-    fn write(&self, write: &mut dyn BitWrite, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<()> {
+    fn write(
+        &self,
+        write: &mut dyn BitWrite,
+        byte_order: ByteOrder,
+        ctx: &mut Ctx,
+        _: Untagged,
+    ) -> Result<()> {
         let bytes: Vec<_> = self.bytes().collect();
         util::write_items(&bytes, write, byte_order, ctx)
     }
@@ -43,4 +49,4 @@ impl<Ctx> ProtocolRead<Ctx, Untagged> for String {
     }
 }
 
-test_flexible_array_member_read_and_protocol!(String| 3: "abc".into() => [b'a', b'b', b'c']);
+test_untagged_and_protocol!(String| Untagged, crate::Tag(3); "abc".into() => [b'a', b'b', b'c']);

@@ -86,9 +86,11 @@ fn impl_for_struct(
             let writes = codegen::writes(&strukt.fields, true);
             (
                 quote!(
-                    fn write(&self, __io_writer: &mut dyn ::bin_proto::BitWrite,
+                    fn write(
+                        &self, __io_writer: &mut dyn ::bin_proto::BitWrite,
                         __byte_order: ::bin_proto::ByteOrder,
-                        __ctx: &mut #ctx_ty
+                        __ctx: &mut #ctx_ty,
+                        (): (),
                     ) -> ::bin_proto::Result<()> {
                         #writes
                         Ok(())
@@ -126,7 +128,7 @@ fn impl_for_enum(
                     __io_reader: &mut dyn ::bin_proto::BitRead,
                     __byte_order: ::bin_proto::ByteOrder,
                     __ctx: &mut #ctx_ty,
-                    __tag: (__Tag,)
+                    __tag: ::bin_proto::Tag<__Tag>,
                 ) -> ::bin_proto::Result<Self> {
                     Ok(#read_variant)
                 }
@@ -146,7 +148,7 @@ fn impl_for_enum(
                     __tag: (),
                 ) -> ::bin_proto::Result<Self> {
                     let __tag: #discriminant_ty = #read_discriminant?;
-                    <Self as ::bin_proto::ProtocolRead<_, (#discriminant_ty,)>>::read(__io_reader, __byte_order, __ctx, (__tag,))
+                    <Self as ::bin_proto::ProtocolRead<_, ::bin_proto::Tag<#discriminant_ty>>>::read(__io_reader, __byte_order, __ctx, ::bin_proto::Tag(__tag))
                 }
             );
             let protocol_read_impl = impl_trait_for(ast, &impl_body, &TraitImplType::ProtocolRead);
@@ -159,11 +161,13 @@ fn impl_for_enum(
         Operation::Write => {
             let write_variant = codegen::enums::write_variant_fields(&plan);
             let impl_body = quote!(
-                fn write(&self,
-                         __io_writer: &mut dyn ::bin_proto::BitWrite,
-                         __byte_order: ::bin_proto::ByteOrder,
-                         __ctx: &mut #ctx_ty)
-                         -> ::bin_proto::Result<()> {
+                fn write(
+                    &self,
+                    __io_writer: &mut dyn ::bin_proto::BitWrite,
+                    __byte_order: ::bin_proto::ByteOrder,
+                    __ctx: &mut #ctx_ty,
+                    __tag: ::bin_proto::Untagged,
+                ) -> ::bin_proto::Result<()> {
                     #write_variant
                     Ok(())
                 }
@@ -183,13 +187,15 @@ fn impl_for_enum(
 
             let write_discriminant = write_discriminant(&attribs);
             let impl_body = quote!(
-                fn write(&self,
-                         __io_writer: &mut dyn ::bin_proto::BitWrite,
-                         __byte_order: ::bin_proto::ByteOrder,
-                         __ctx: &mut #ctx_ty)
-                         -> ::bin_proto::Result<()> {
+                fn write(
+                    &self,
+                    __io_writer: &mut dyn ::bin_proto::BitWrite,
+                    __byte_order: ::bin_proto::ByteOrder,
+                    __ctx: &mut #ctx_ty,
+                    (): (),
+                ) -> ::bin_proto::Result<()> {
                     #write_discriminant
-                    <Self as ::bin_proto::ProtocolWrite<_, ::bin_proto::Untagged>>::write(self, __io_writer, __byte_order, __ctx)
+                    <Self as ::bin_proto::ProtocolWrite<_, _>>::write(self, __io_writer, __byte_order, __ctx, ::bin_proto::Untagged)
                 }
             );
             let protocol_write_impl =

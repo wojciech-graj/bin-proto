@@ -40,7 +40,7 @@ where
     T: ProtocolWrite<Ctx> + 'a,
 {
     for item in items {
-        item.write(write, byte_order, ctx)?;
+        item.write(write, byte_order, ctx, ())?;
     }
     Ok(())
 }

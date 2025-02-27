@@ -7,9 +7,9 @@ impl<Ctx> ProtocolRead<Ctx> for () {
 }
 
 impl<Ctx> ProtocolWrite<Ctx> for () {
-    fn write(&self, _: &mut dyn BitWrite, _: ByteOrder, _: &mut Ctx) -> Result<()> {
+    fn write(&self, _: &mut dyn BitWrite, _: ByteOrder, _: &mut Ctx, (): ()) -> Result<()> {
         Ok(())
     }
 }
 
-test_protocol!((): () => []);
+test_protocol!((); () => []);

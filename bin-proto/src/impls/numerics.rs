@@ -3,12 +3,10 @@ use core::num::{
     NonZeroU32, NonZeroU64, NonZeroU8,
 };
 
-use crate::{
-    BitFieldRead, BitFieldWrite, BitRead, BitWrite, ByteOrder, ProtocolRead, ProtocolWrite, Result,
-};
+use crate::{BitRead, BitWrite, Bits, ByteOrder, ProtocolRead, ProtocolWrite, Result};
 
-impl<Ctx> BitFieldRead<Ctx> for bool {
-    fn read(read: &mut dyn BitRead, _: ByteOrder, _: &mut Ctx, bits: u32) -> Result<Self> {
+impl<Ctx> ProtocolRead<Ctx, Bits> for bool {
+    fn read(read: &mut dyn BitRead, _: ByteOrder, _: &mut Ctx, Bits(bits): Bits) -> Result<Self> {
         if read.read_u8_bf(bits)? == 0 {
             Ok(false)
         } else {
@@ -17,8 +15,14 @@ impl<Ctx> BitFieldRead<Ctx> for bool {
     }
 }
 
-impl<Ctx> BitFieldWrite<Ctx> for bool {
-    fn write(&self, write: &mut dyn BitWrite, _: ByteOrder, _: &mut Ctx, bits: u32) -> Result<()> {
+impl<Ctx> ProtocolWrite<Ctx, Bits> for bool {
+    fn write(
+        &self,
+        write: &mut dyn BitWrite,
+        _: ByteOrder,
+        _: &mut Ctx,
+        Bits(bits): Bits,
+    ) -> Result<()> {
         write.write_u8_bf(bits, (*self).into())?;
         Ok(())
     }
@@ -35,7 +39,7 @@ impl<Ctx> ProtocolRead<Ctx> for bool {
 }
 
 impl<Ctx> ProtocolWrite<Ctx> for bool {
-    fn write(&self, write: &mut dyn BitWrite, _: ByteOrder, _: &mut Ctx) -> Result<()> {
+    fn write(&self, write: &mut dyn BitWrite, _: ByteOrder, _: &mut Ctx, (): ()) -> Result<()> {
         write.write_u8((*self).into())?;
         Ok(())
     }
@@ -60,6 +64,7 @@ macro_rules! impl_protocol_for_numeric_unordered {
                 write: &mut dyn $crate::BitWrite,
                 _: $crate::ByteOrder,
                 _: &mut Ctx,
+                (): (),
             ) -> $crate::Result<()> {
                 write.$write_fn(::core::convert::TryInto::try_into(*self)?)?;
                 Ok(())
@@ -91,6 +96,7 @@ macro_rules! impl_protocol_for_numeric {
                 write: &mut dyn $crate::BitWrite,
                 byte_order: $crate::ByteOrder,
                 _: &mut Ctx,
+                (): (),
             ) -> $crate::Result<()> {
                 byte_order.$write_fn(
                     ::core::convert::TryInto::try_into(
@@ -106,12 +112,12 @@ macro_rules! impl_protocol_for_numeric {
 
 macro_rules! impl_bitfield_for_numeric {
     ($ty:ty $(: $thru:ident $fallible:tt)? => [$read_fn:ident : $write_fn:ident]) => {
-        impl<Ctx> $crate::BitFieldRead<Ctx> for $ty {
+        impl<Ctx> $crate::ProtocolRead<Ctx, $crate::Bits> for $ty {
             fn read(
                 read: &mut dyn $crate::BitRead,
                 _: $crate::ByteOrder,
                 _: &mut Ctx,
-                bits: u32,
+                $crate::Bits(bits): $crate::Bits,
             ) -> $crate::Result<Self> {
                 Ok(::core::convert::TryInto::try_into(
                     $(::core::convert::TryInto::<$thru>::try_into)?($crate::BitRead::$read_fn(
@@ -121,13 +127,13 @@ macro_rules! impl_bitfield_for_numeric {
             }
         }
 
-        impl<Ctx> $crate::BitFieldWrite<Ctx> for $ty {
+        impl<Ctx> $crate::ProtocolWrite<Ctx, $crate::Bits> for $ty {
             fn write(
                 &self,
                 write: &mut dyn $crate::BitWrite,
                 _: $crate::ByteOrder,
                 _: &mut Ctx,
-                bits: u32,
+                $crate::Bits(bits): $crate::Bits,
             ) -> $crate::Result<()> {
                 $crate::BitWrite::$write_fn(
                     write,

@@ -23,12 +23,13 @@ macro_rules! impl_newtype {
                 write: &mut dyn $crate::BitWrite,
                 byte_order: $crate::ByteOrder,
                 ctx: &mut Ctx,
+                tag: Tag
             ) -> $crate::Result<()> {
-                $crate::ProtocolWrite::write(&self.0, write, byte_order, ctx)
+                $crate::ProtocolWrite::write(&self.0, write, byte_order, ctx, tag)
             }
         }
 
-        test_protocol!($ty<u8>: $ty(1u8) => [0x01]);
+        test_protocol!($ty<u8>; $ty(1u8) => [0x01]);
     };
 }
 

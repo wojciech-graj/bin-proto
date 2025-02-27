@@ -11,9 +11,9 @@ macro_rules! impl_tuple {
                 read: &mut dyn $crate::BitRead,
                 byte_order: $crate::ByteOrder,
                 ctx: &mut Ctx,
-                tag: (),
+                (): (),
             ) -> $crate::Result<Self> {
-                Ok(($(<$t as $crate::ProtocolRead<Ctx>>::read(read, byte_order, ctx, tag)?,)*))
+                Ok(($(<$t as $crate::ProtocolRead<Ctx>>::read(read, byte_order, ctx, ())?,)*))
             }
         }
 
@@ -27,9 +27,10 @@ macro_rules! impl_tuple {
                 write: &mut dyn $crate::BitWrite,
                 byte_order: $crate::ByteOrder,
                 ctx: &mut Ctx,
+                (): ()
             ) -> $crate::Result<()> {
                 $(
-                    $crate::ProtocolWrite::write(&self.$idx, write, byte_order, ctx)?;
+                    $crate::ProtocolWrite::write(&self.$idx, write, byte_order, ctx, ())?;
                 )*
                 Ok(())
             }
@@ -65,8 +66,14 @@ impl<Ctx, Tag, T> ProtocolWrite<Ctx, Tag> for (T,)
 where
     T: ProtocolWrite<Ctx, Tag>,
 {
-    fn write(&self, write: &mut dyn BitWrite, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<()> {
-        self.0.write(write, byte_order, ctx)
+    fn write(
+        &self,
+        write: &mut dyn BitWrite,
+        byte_order: ByteOrder,
+        ctx: &mut Ctx,
+        tag: Tag,
+    ) -> Result<()> {
+        self.0.write(write, byte_order, ctx, tag)
     }
 }
 
@@ -86,4 +93,4 @@ impl_tuple!(0 A, 1 B, 2 C, 3 D);
 impl_tuple!(0 A, 1 B, 2 C);
 impl_tuple!(0 A, 1 B);
 
-test_protocol!((u8,): (1,) => [0x01]);
+test_protocol!((u8,); (1,) => [0x01]);

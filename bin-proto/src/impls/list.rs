@@ -3,7 +3,7 @@ macro_rules! impl_read_list {
         $ty:ident<T $(: $tbound0:ident $(+ $tbound1:ident)?)?
         $(, $h:ident: $hbound0:ident + $hbound1:ident)?>
     ) => {
-        impl<Tag, Ctx, T, $($h)?> $crate::ProtocolRead<Ctx, (Tag,)> for $ty<T, $($h)?>
+        impl<Tag, Ctx, T, $($h)?> $crate::ProtocolRead<Ctx, $crate::Tag<Tag>> for $ty<T, $($h)?>
         where
             T: $crate::ProtocolRead<Ctx> $(+ $tbound0 $(+ $tbound1)?)?,
             Tag: ::core::convert::TryInto<usize>,
@@ -12,7 +12,7 @@ macro_rules! impl_read_list {
             fn read(read: &mut dyn $crate::BitRead,
                 byte_order: $crate::ByteOrder,
                 ctx: &mut Ctx,
-                tag: (Tag,),
+                tag: $crate::Tag<Tag>,
             ) -> $crate::Result<Self> {
                 let elements = $crate::util::read_items(
                     ::core::convert::TryInto::try_into(tag.0)
@@ -24,7 +24,6 @@ macro_rules! impl_read_list {
                 Ok(::core::iter::IntoIterator::into_iter(elements).collect())
             }
         }
-
 
         impl<Ctx, T, $($h)?> $crate::ProtocolRead<Ctx, $crate::Untagged> for $ty<T, $($h)?>
         where
@@ -55,6 +54,7 @@ macro_rules! impl_write_list {
                 write: &mut dyn $crate::BitWrite,
                 byte_order: $crate::ByteOrder,
                 ctx: &mut Ctx,
+                _: $crate::Untagged,
             ) -> $crate::Result<()> {
                 $crate::util::write_items(self.iter(), write, byte_order, ctx)
             }
@@ -67,7 +67,15 @@ mod vec {
 
     impl_read_list!(Vec<T>);
     impl_write_list!(Vec<T>);
-    test_flexible_array_member_read_and_protocol!(Vec<u8>| 3: alloc::vec![1, 2, 3] => [0x01, 0x02, 0x03]);
+
+    #[cfg(test)]
+    mod tests {
+        use crate::{Tag, Untagged};
+
+        use super::*;
+
+        test_untagged_and_protocol!(Vec<u8>| Untagged, Tag(3); alloc::vec![1, 2, 3] => [0x01, 0x02, 0x03]);
+    }
 }
 
 mod linked_list {
@@ -75,7 +83,15 @@ mod linked_list {
 
     impl_read_list!(LinkedList<T>);
     impl_write_list!(LinkedList<T>);
-    test_flexible_array_member_read_and_protocol!(LinkedList<u8>| 3: [1, 2, 3].into() => [0x01, 0x02, 0x03]);
+
+    #[cfg(test)]
+    mod tests {
+        use crate::{Tag, Untagged};
+
+        use super::*;
+
+        test_untagged_and_protocol!(LinkedList<u8>| Untagged, Tag(3); [1, 2, 3].into() => [0x01, 0x02, 0x03]);
+    }
 }
 
 mod vec_deque {
@@ -83,7 +99,15 @@ mod vec_deque {
 
     impl_read_list!(VecDeque<T>);
     impl_write_list!(VecDeque<T>);
-    test_flexible_array_member_read_and_protocol!(VecDeque<u8>| 3: [1, 2, 3].into() => [0x01, 0x02, 0x03]);
+
+    #[cfg(test)]
+    mod tests {
+        use crate::{Tag, Untagged};
+
+        use super::*;
+
+        test_untagged_and_protocol!(VecDeque<u8>| Untagged, Tag(3); [1, 2, 3].into() => [0x01, 0x02, 0x03]);
+    }
 }
 
 mod b_tree_set {
@@ -91,7 +115,15 @@ mod b_tree_set {
 
     impl_read_list!(BTreeSet<T: Ord>);
     impl_write_list!(BTreeSet<T: Ord>);
-    test_flexible_array_member_read_and_protocol!(BTreeSet<u8>| 3: [1, 2, 3].into() => [0x01, 0x02, 0x03]);
+
+    #[cfg(test)]
+    mod tests {
+        use crate::{Tag, Untagged};
+
+        use super::*;
+
+        test_untagged_and_protocol!(BTreeSet<u8>| Untagged, Tag(3); [1, 2, 3].into() => [0x01, 0x02, 0x03]);
+    }
 }
 
 mod binary_heap {
@@ -99,6 +131,8 @@ mod binary_heap {
 
     impl_read_list!(BinaryHeap<T: Ord>);
     impl_write_list!(BinaryHeap<T: Ord>);
+
+    // TODO
 }
 
 #[cfg(feature = "std")]
@@ -108,5 +142,13 @@ mod hash_set {
 
     impl_read_list!(HashSet<T: Hash + Eq, H: BuildHasher + Default>);
     impl_write_list!(HashSet<T: Hash + Eq, H>);
-    test_flexible_array_member_read_and_protocol!(HashSet<u8>| 1: [1].into() => [0x01]);
+
+    #[cfg(test)]
+    mod tests {
+        use crate::{Tag, Untagged};
+
+        use super::*;
+
+        test_untagged_and_protocol!(HashSet<u8>| Untagged, Tag(1); [1].into() => [0x01]);
+    }
 }

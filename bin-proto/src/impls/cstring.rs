@@ -16,9 +16,15 @@ impl<Ctx> ProtocolRead<Ctx> for CString {
 }
 
 impl<Ctx> ProtocolWrite<Ctx> for CString {
-    fn write(&self, write: &mut dyn BitWrite, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<()> {
+    fn write(
+        &self,
+        write: &mut dyn BitWrite,
+        byte_order: ByteOrder,
+        ctx: &mut Ctx,
+        (): (),
+    ) -> Result<()> {
         util::write_items(self.to_bytes_with_nul().iter(), write, byte_order, ctx)
     }
 }
 
-test_protocol!(CString: CString::new("ABC").unwrap() => [0x41, 0x42, 0x43, 0]);
+test_protocol!(CString; CString::new("ABC").unwrap() => [0x41, 0x42, 0x43, 0]);
