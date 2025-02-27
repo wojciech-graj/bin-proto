@@ -42,11 +42,16 @@ macro_rules! impl_tuple {
     docsrs,
     doc = "This trait is implemented for tuples with up to 16 items."
 )]
-impl<Ctx, T> ProtocolRead<Ctx> for (T,)
+impl<Ctx, Tag, T> ProtocolRead<Ctx, Tag> for (T,)
 where
-    T: ProtocolRead<Ctx>,
+    T: ProtocolRead<Ctx, Tag>,
 {
-    fn read(read: &mut dyn BitRead, byte_order: ByteOrder, ctx: &mut Ctx, tag: ()) -> Result<Self> {
+    fn read(
+        read: &mut dyn BitRead,
+        byte_order: ByteOrder,
+        ctx: &mut Ctx,
+        tag: Tag,
+    ) -> Result<Self> {
         Ok((ProtocolRead::read(read, byte_order, ctx, tag)?,))
     }
 }
@@ -56,9 +61,9 @@ where
     doc = "This trait is implemented for tuples with up to 16 items."
 )]
 #[cfg_attr(docsrs, doc(fake_variadic))]
-impl<Ctx, T> ProtocolWrite<Ctx> for (T,)
+impl<Ctx, Tag, T> ProtocolWrite<Ctx, Tag> for (T,)
 where
-    T: ProtocolWrite<Ctx>,
+    T: ProtocolWrite<Ctx, Tag>,
 {
     fn write(&self, write: &mut dyn BitWrite, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<()> {
         self.0.write(write, byte_order, ctx)

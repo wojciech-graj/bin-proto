@@ -1,15 +1,15 @@
 use crate::{BitRead, BitWrite, ByteOrder, Error, ProtocolRead, ProtocolWrite, Result, Untagged};
 
-impl<Tg, Ctx, T> ProtocolRead<Ctx, (Tg,)> for Option<T>
+impl<Tag, Ctx, T> ProtocolRead<Ctx, (Tag,)> for Option<T>
 where
     T: ProtocolRead<Ctx>,
-    Tg: TryInto<bool>,
+    Tag: TryInto<bool>,
 {
     fn read(
         read: &mut dyn BitRead,
         byte_order: ByteOrder,
         ctx: &mut Ctx,
-        tag: (Tg,),
+        tag: (Tag,),
     ) -> Result<Self> {
         if tag.0.try_into().map_err(|_| Error::TagConvert)? {
             let value = T::read(read, byte_order, ctx, ())?;

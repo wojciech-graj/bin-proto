@@ -3,9 +3,9 @@ macro_rules! impl_container_write {
         $ty:ident<$($a:lifetime,)? T $(: $tbound0:ident $(+ ?$tbound1:ident + $tbound2:lifetime)?)?>
         $(=> $f:ident)?
     ) => {
-        impl<$($a,)? Ctx, T> $crate::ProtocolWrite<Ctx> for $ty<$($a,)? T>
+        impl<$($a,)? Tag, Ctx, T> $crate::ProtocolWrite<Ctx, Tag> for $ty<$($a,)? T>
         where
-            T: $crate::ProtocolWrite<Ctx> $(+ $tbound0 $(+ ?$tbound1 + $tbound2)?)?,
+            T: $crate::ProtocolWrite<Ctx, Tag> $(+ $tbound0 $(+ ?$tbound1 + $tbound2)?)?,
         {
             fn write(
                 &self,
@@ -28,15 +28,15 @@ macro_rules! impl_container_write {
 
 macro_rules! impl_container_read {
     ($ty:ident<T>) => {
-        impl<Ctx, T> $crate::ProtocolRead<Ctx> for $ty<T>
+        impl<Ctx, Tag, T> $crate::ProtocolRead<Ctx, Tag> for $ty<T>
         where
-            T: $crate::ProtocolRead<Ctx>,
+            T: $crate::ProtocolRead<Ctx, Tag>,
         {
             fn read(
                 read: &mut dyn $crate::BitRead,
                 byte_order: $crate::ByteOrder,
                 ctx: &mut Ctx,
-                tag: (),
+                tag: Tag,
             ) -> $crate::Result<Self> {
                 Ok($ty::new($crate::ProtocolRead::read(
                     read, byte_order, ctx, tag,

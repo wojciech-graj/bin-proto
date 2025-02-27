@@ -1,22 +1,22 @@
 macro_rules! impl_newtype {
     ($ty:ident) => {
-        impl<Ctx, T> $crate::ProtocolRead<Ctx> for $ty<T>
+        impl<Ctx, Tag, T> $crate::ProtocolRead<Ctx, Tag> for $ty<T>
         where
-            T: $crate::ProtocolRead<Ctx>,
+            T: $crate::ProtocolRead<Ctx, Tag>,
         {
             fn read(
                 read: &mut dyn $crate::BitRead,
                 byte_order: $crate::ByteOrder,
                 ctx: &mut Ctx,
-                tag: (),
+                tag: Tag,
             ) -> $crate::Result<Self> {
                 Ok(Self($crate::ProtocolRead::read(read, byte_order, ctx, tag)?))
             }
         }
 
-        impl<Ctx, T> $crate::ProtocolWrite<Ctx> for $ty<T>
+        impl<Ctx, Tag, T> $crate::ProtocolWrite<Ctx, Tag> for $ty<T>
         where
-            T: $crate::ProtocolWrite<Ctx>,
+            T: $crate::ProtocolWrite<Ctx, Tag>,
         {
             fn write(
                 &self,

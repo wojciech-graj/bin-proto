@@ -25,7 +25,7 @@ impl<Ctx> BitFieldWrite<Ctx> for bool {
 }
 
 impl<Ctx> ProtocolRead<Ctx> for bool {
-    fn read(read: &mut dyn BitRead, _: ByteOrder, _: &mut Ctx, _: ()) -> Result<Self> {
+    fn read(read: &mut dyn BitRead, _: ByteOrder, _: &mut Ctx, (): ()) -> Result<Self> {
         if read.read_u8()? == 0 {
             Ok(false)
         } else {
@@ -48,7 +48,7 @@ macro_rules! impl_protocol_for_numeric_unordered {
                 read: &mut dyn $crate::BitRead,
                 _: $crate::ByteOrder,
                 _: &mut Ctx,
-                _: (),
+                (): (),
             ) -> $crate::Result<Self> {
                 Ok(::core::convert::TryInto::try_into(read.$read_fn()?)?)
             }
@@ -75,7 +75,7 @@ macro_rules! impl_protocol_for_numeric {
                 read: &mut dyn $crate::BitRead,
                 byte_order: $crate::ByteOrder,
                 _: &mut Ctx,
-                _: (),
+                (): (),
             ) -> $crate::Result<Self> {
                 Ok(::core::convert::TryInto::try_into(
                     $(::core::convert::TryInto::<$thru>::try_into)?(

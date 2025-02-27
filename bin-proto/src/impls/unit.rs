@@ -1,7 +1,7 @@
 use crate::{BitRead, BitWrite, ByteOrder, ProtocolRead, ProtocolWrite, Result};
 
 impl<Ctx> ProtocolRead<Ctx> for () {
-    fn read(_: &mut dyn BitRead, _: ByteOrder, _: &mut Ctx, _: ()) -> Result<Self> {
+    fn read(_: &mut dyn BitRead, _: ByteOrder, _: &mut Ctx, (): ()) -> Result<Self> {
         Ok(())
     }
 }
