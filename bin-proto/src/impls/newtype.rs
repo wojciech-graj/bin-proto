@@ -1,35 +1,35 @@
 macro_rules! impl_newtype {
     ($ty:ident) => {
-        impl<Ctx, Tag, T> $crate::ProtocolRead<Ctx, Tag> for $ty<T>
+        impl<Ctx, Tag, T> $crate::BitDecode<Ctx, Tag> for $ty<T>
         where
-            T: $crate::ProtocolRead<Ctx, Tag>,
+            T: $crate::BitDecode<Ctx, Tag>,
         {
-            fn read(
+            fn decode(
                 read: &mut dyn $crate::BitRead,
                 byte_order: $crate::ByteOrder,
                 ctx: &mut Ctx,
                 tag: Tag,
             ) -> $crate::Result<Self> {
-                Ok(Self($crate::ProtocolRead::read(read, byte_order, ctx, tag)?))
+                Ok(Self($crate::BitDecode::decode(read, byte_order, ctx, tag)?))
             }
         }
 
-        impl<Ctx, Tag, T> $crate::ProtocolWrite<Ctx, Tag> for $ty<T>
+        impl<Ctx, Tag, T> $crate::BitEncode<Ctx, Tag> for $ty<T>
         where
-            T: $crate::ProtocolWrite<Ctx, Tag>,
+            T: $crate::BitEncode<Ctx, Tag>,
         {
-            fn write(
+            fn encode(
                 &self,
                 write: &mut dyn $crate::BitWrite,
                 byte_order: $crate::ByteOrder,
                 ctx: &mut Ctx,
                 tag: Tag
             ) -> $crate::Result<()> {
-                $crate::ProtocolWrite::write(&self.0, write, byte_order, ctx, tag)
+                $crate::BitEncode::encode(&self.0, write, byte_order, ctx, tag)
             }
         }
 
-        test_protocol!($ty<u8>; $ty(1u8) => [0x01]);
+        test_codec!($ty<u8>; $ty(1u8) => [0x01]);
     };
 }
 

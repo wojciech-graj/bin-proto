@@ -5,23 +5,23 @@ use crate::attr::{AttrKind, Attrs, Tag};
 use proc_macro2::TokenStream;
 use syn::{spanned::Spanned, Error};
 
-pub fn reads(fields: &syn::Fields) -> (TokenStream, TokenStream) {
+pub fn decodes(fields: &syn::Fields) -> (TokenStream, TokenStream) {
     match *fields {
-        syn::Fields::Named(ref fields) => read_named_fields(fields),
-        syn::Fields::Unnamed(ref fields) => (quote!(), read_unnamed_fields(fields)),
+        syn::Fields::Named(ref fields) => decode_named_fields(fields),
+        syn::Fields::Unnamed(ref fields) => (quote!(), decode_unnamed_fields(fields)),
         syn::Fields::Unit => (quote!(), quote!()),
     }
 }
 
-pub fn writes(fields: &syn::Fields, self_prefix: bool) -> TokenStream {
+pub fn encodes(fields: &syn::Fields, self_prefix: bool) -> TokenStream {
     match *fields {
-        syn::Fields::Named(ref fields) => write_named_fields(fields, self_prefix),
-        syn::Fields::Unnamed(ref fields) => write_unnamed_fields(fields, self_prefix),
+        syn::Fields::Named(ref fields) => encode_named_fields(fields, self_prefix),
+        syn::Fields::Unnamed(ref fields) => encode_unnamed_fields(fields, self_prefix),
         syn::Fields::Unit => quote!(),
     }
 }
 
-fn read_named_fields(fields_named: &syn::FieldsNamed) -> (TokenStream, TokenStream) {
+fn decode_named_fields(fields_named: &syn::FieldsNamed) -> (TokenStream, TokenStream) {
     let fields: Vec<_> = fields_named
         .named
         .iter()
@@ -29,10 +29,10 @@ fn read_named_fields(fields_named: &syn::FieldsNamed) -> (TokenStream, TokenStre
             let field_name = &field.ident;
             let field_ty = &field.ty;
 
-            let read = read(field);
+            let decode = decode(field);
 
             quote!(
-                let #field_name : #field_ty = #read?;
+                let #field_name : #field_ty = #decode?;
             )
         })
         .collect();
@@ -53,16 +53,16 @@ fn read_named_fields(fields_named: &syn::FieldsNamed) -> (TokenStream, TokenStre
     )
 }
 
-fn read(field: &syn::Field) -> TokenStream {
+fn decode(field: &syn::Field) -> TokenStream {
     let attribs = match Attrs::parse(field.attrs.as_slice(), Some(AttrKind::Field), field.span()) {
         Ok(attribs) => attribs,
         Err(e) => return e.to_compile_error(),
     };
 
     if let Some(field_width) = attribs.bits {
-        quote!(::bin_proto::ProtocolRead::read(__io_reader, __byte_order, __ctx, ::bin_proto::Bits(#field_width)))
+        quote!(::bin_proto::BitDecode::decode(__io_reader, __byte_order, __ctx, ::bin_proto::Bits(#field_width)))
     } else if attribs.flexible_array_member {
-        quote!(::bin_proto::ProtocolRead::read(
+        quote!(::bin_proto::BitDecode::decode(
             __io_reader,
             __byte_order,
             __ctx,
@@ -71,20 +71,20 @@ fn read(field: &syn::Field) -> TokenStream {
     } else if let Some(tag) = attribs.tag {
         match tag {
             Tag::External(tag) => {
-                quote!(::bin_proto::ProtocolRead::read(__io_reader, __byte_order, __ctx, ::bin_proto::Tag(#tag)))
+                quote!(::bin_proto::BitDecode::decode(__io_reader, __byte_order, __ctx, ::bin_proto::Tag(#tag)))
             }
             Tag::Prepend {
                 typ,
                 write_value: _,
             } => {
                 quote!({
-                    let __tag: #typ = ::bin_proto::ProtocolRead::read(__io_reader, __byte_order, __ctx, ())?;
-                    ::bin_proto::ProtocolRead::read(__io_reader, __byte_order, __ctx, ::bin_proto::Tag(__tag))
+                    let __tag: #typ = ::bin_proto::BitDecode::decode(__io_reader, __byte_order, __ctx, ())?;
+                    ::bin_proto::BitDecode::decode(__io_reader, __byte_order, __ctx, ::bin_proto::Tag(__tag))
                 })
             }
         }
     } else {
-        quote!(::bin_proto::ProtocolRead::read(
+        quote!(::bin_proto::BitDecode::decode(
             __io_reader,
             __byte_order,
             __ctx,
@@ -93,7 +93,7 @@ fn read(field: &syn::Field) -> TokenStream {
     }
 }
 
-fn write(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
+fn encode(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
     let attribs = match Attrs::parse(field.attrs.as_slice(), Some(AttrKind::Field), field.span()) {
         Ok(attribs) => attribs,
         Err(e) => return e.to_compile_error(),
@@ -112,14 +112,14 @@ fn write(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
     if let Some(field_width) = attribs.bits {
         quote!(
             {
-                ::bin_proto::ProtocolWrite::write(#field_ref, __io_writer, __byte_order, __ctx, ::bin_proto::Bits(#field_width))?
+                ::bin_proto::BitEncode::encode(#field_ref, __io_writer, __byte_order, __ctx, ::bin_proto::Bits(#field_width))?
             }
         )
     } else if let Some(tag) = attribs.tag {
         match tag {
             Tag::External(_) => quote!(
                 {
-                    ::bin_proto::ProtocolWrite::write(#field_ref, __io_writer, __byte_order, __ctx, ::bin_proto::Untagged)?
+                    ::bin_proto::BitEncode::encode(#field_ref, __io_writer, __byte_order, __ctx, ::bin_proto::Untagged)?
                 }
             ),
             Tag::Prepend {
@@ -127,8 +127,8 @@ fn write(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
                 write_value: Some(value),
             } => quote!(
                 {
-                    <#typ as ::bin_proto::ProtocolWrite::<_>>::write(&{#value}, __io_writer, __byte_order, __ctx, ())?;
-                    ::bin_proto::ProtocolWrite::write(#field_ref, __io_writer, __byte_order, __ctx, ::bin_proto::Untagged)?
+                    <#typ as ::bin_proto::BitEncode::<_>>::encode(&{#value}, __io_writer, __byte_order, __ctx, ())?;
+                    ::bin_proto::BitEncode::encode(#field_ref, __io_writer, __byte_order, __ctx, ::bin_proto::Untagged)?
                 }
             ),
             Tag::Prepend {
@@ -142,25 +142,25 @@ fn write(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
     } else if attribs.flexible_array_member {
         quote!(
             {
-                ::bin_proto::ProtocolWrite::write(#field_ref, __io_writer, __byte_order, __ctx, ::bin_proto::Untagged)?
+                ::bin_proto::BitEncode::encode(#field_ref, __io_writer, __byte_order, __ctx, ::bin_proto::Untagged)?
             }
         )
     } else {
         quote!(
             {
-                ::bin_proto::ProtocolWrite::write(#field_ref, __io_writer, __byte_order, __ctx, ())?
+                ::bin_proto::BitEncode::encode(#field_ref, __io_writer, __byte_order, __ctx, ())?
             }
         )
     }
 }
 
-fn write_named_fields(fields_named: &syn::FieldsNamed, self_prefix: bool) -> TokenStream {
-    let field_writers: Vec<_> = fields_named
+fn encode_named_fields(fields_named: &syn::FieldsNamed, self_prefix: bool) -> TokenStream {
+    let field_encoders: Vec<_> = fields_named
         .named
         .iter()
         .map(|field| {
             let field_name = &field.ident;
-            write(
+            encode(
                 field,
                 &if self_prefix {
                     quote!(&self. #field_name)
@@ -171,20 +171,20 @@ fn write_named_fields(fields_named: &syn::FieldsNamed, self_prefix: bool) -> Tok
         })
         .collect();
 
-    quote!( #( #field_writers );* )
+    quote!( #( #field_encoders );* )
 }
 
-fn read_unnamed_fields(fields_unnamed: &syn::FieldsUnnamed) -> TokenStream {
+fn decode_unnamed_fields(fields_unnamed: &syn::FieldsUnnamed) -> TokenStream {
     let field_initializers: Vec<_> = fields_unnamed
         .unnamed
         .iter()
         .map(|field| {
             let field_ty = &field.ty;
-            let read = read(field);
+            let decode = decode(field);
 
             quote!(
                 {
-                    let res: #field_ty = #read?;
+                    let res: #field_ty = #decode?;
                     res
                 }
             )
@@ -194,14 +194,14 @@ fn read_unnamed_fields(fields_unnamed: &syn::FieldsUnnamed) -> TokenStream {
     quote!( ( #( #field_initializers ),* ) )
 }
 
-fn write_unnamed_fields(fields_unnamed: &syn::FieldsUnnamed, self_prefix: bool) -> TokenStream {
-    let field_writers: Vec<_> = fields_unnamed
+fn encode_unnamed_fields(fields_unnamed: &syn::FieldsUnnamed, self_prefix: bool) -> TokenStream {
+    let field_encoders: Vec<_> = fields_unnamed
         .unnamed
         .iter()
         .enumerate()
         .map(|(field_index, field)| {
             let field_index = syn::Index::from(field_index);
-            write(
+            encode(
                 field,
                 &if self_prefix {
                     quote!(&self. #field_index)
@@ -214,5 +214,5 @@ fn write_unnamed_fields(fields_unnamed: &syn::FieldsUnnamed, self_prefix: bool) 
         })
         .collect();
 
-    quote!( #( #field_writers );* )
+    quote!( #( #field_encoders );* )
 }

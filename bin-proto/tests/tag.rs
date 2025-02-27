@@ -1,63 +1,63 @@
 #![cfg(feature = "derive")]
 
-use bin_proto::{ByteOrder, ProtocolNoCtx, ProtocolRead, ProtocolWrite};
+use bin_proto::{BitCodec, BitDecode, BitEncode, ByteOrder};
 
-#[derive(ProtocolRead, ProtocolWrite, Debug, PartialEq, Eq)]
+#[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
 pub struct Prefix {
     pub reason_length: u8,
 }
 
-#[derive(ProtocolRead, ProtocolWrite, Debug, PartialEq, Eq)]
+#[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
 pub struct WithElementsLength {
     pub count: u32,
     pub foo: bool,
-    #[protocol(tag = count as usize)]
+    #[codec(tag = count as usize)]
     pub data: Vec<u32>,
 }
 
-#[derive(ProtocolRead, Debug, PartialEq, Eq)]
+#[derive(BitDecode, Debug, PartialEq, Eq)]
 pub struct OptionalWriteValue {
-    #[protocol(tag_type = u8)]
+    #[codec(tag_type = u8)]
     pub data: Vec<u32>,
 }
 
-#[derive(ProtocolRead, ProtocolWrite, Debug, PartialEq, Eq)]
+#[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
 pub struct WithElementsLengthAuto {
-    #[protocol(write_value = self.data.len() as u32)]
+    #[codec(write_value = self.data.len() as u32)]
     pub count: u32,
     pub foo: bool,
-    #[protocol(tag = count as usize)]
+    #[codec(tag = count as usize)]
     pub data: Vec<u32>,
 }
 
-#[derive(ProtocolRead, ProtocolWrite, Debug, PartialEq, Eq)]
-#[protocol(discriminant_type = u8)]
+#[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
+#[codec(discriminant_type = u8)]
 pub enum WithElementsLengthAutoEnum {
-    #[protocol(discriminant = 1)]
+    #[codec(discriminant = 1)]
     Variant {
-        #[protocol(write_value = data.len() as u32)]
+        #[codec(write_value = data.len() as u32)]
         count: u32,
         foo: bool,
-        #[protocol(tag = count as usize)]
+        #[codec(tag = count as usize)]
         data: Vec<u32>,
     },
 }
 
-#[derive(ProtocolRead, ProtocolWrite, Debug, PartialEq, Eq)]
+#[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
 pub struct Prepended {
-    #[protocol(tag_type = u32, tag_value = self.data.len() as u32)]
+    #[codec(tag_type = u32, tag_value = self.data.len() as u32)]
     pub data: Vec<u32>,
 }
 
 #[test]
-fn can_read_length_prefix_3_elements() {
+fn can_decode_length_prefix_3_elements() {
     assert_eq!(
         WithElementsLength {
             count: 3,
             foo: true,
             data: vec![1, 2, 3],
         },
-        WithElementsLength::from_bytes(
+        WithElementsLength::decode_bytes(
             &[
                 0, 0, 0, 3, // disjoint length prefix
                 1, // boolean true
@@ -72,14 +72,14 @@ fn can_read_length_prefix_3_elements() {
 }
 
 #[test]
-fn can_write_auto_length_prefix_3_elements_enum() {
+fn can_encode_auto_length_prefix_3_elements_enum() {
     assert_eq!(
         WithElementsLengthAuto {
             count: 0,
             foo: true,
             data: vec![1, 2, 3],
         }
-        .bytes(ByteOrder::BigEndian)
+        .encode_bytes(ByteOrder::BigEndian)
         .unwrap(),
         vec![
             0, 0, 0, 3, // disjoint length prefix
@@ -92,14 +92,14 @@ fn can_write_auto_length_prefix_3_elements_enum() {
 }
 
 #[test]
-fn can_read_length_prefix_3_elements_enum() {
+fn can_decode_length_prefix_3_elements_enum() {
     assert_eq!(
         WithElementsLengthAutoEnum::Variant {
             count: 3,
             foo: true,
             data: vec![1, 2, 3],
         },
-        WithElementsLengthAutoEnum::from_bytes(
+        WithElementsLengthAutoEnum::decode_bytes(
             &[
                 1, // Discriminant
                 0, 0, 0, 3, // disjoint length prefix
@@ -115,14 +115,14 @@ fn can_read_length_prefix_3_elements_enum() {
 }
 
 #[test]
-fn can_write_auto_length_prefix_3_elements() {
+fn can_encode_auto_length_prefix_3_elements() {
     assert_eq!(
         WithElementsLengthAutoEnum::Variant {
             count: 0,
             foo: true,
             data: vec![1, 2, 3],
         }
-        .bytes(ByteOrder::BigEndian)
+        .encode_bytes(ByteOrder::BigEndian)
         .unwrap(),
         vec![
             1, // Discriminant
@@ -136,12 +136,12 @@ fn can_write_auto_length_prefix_3_elements() {
 }
 
 #[test]
-fn can_read_prepended_length_prefix_3_elements() {
+fn can_decode_prepended_length_prefix_3_elements() {
     assert_eq!(
         Prepended {
             data: vec![1, 2, 3],
         },
-        Prepended::from_bytes(
+        Prepended::decode_bytes(
             &[
                 0, 0, 0, 3, // length prefix
                 0, 0, 0, 1, // 1
@@ -155,12 +155,12 @@ fn can_read_prepended_length_prefix_3_elements() {
 }
 
 #[test]
-fn can_write_prepended_length_prefix_3_elements() {
+fn can_encode_prepended_length_prefix_3_elements() {
     assert_eq!(
         Prepended {
             data: vec![1, 2, 3],
         }
-        .bytes(ByteOrder::BigEndian)
+        .encode_bytes(ByteOrder::BigEndian)
         .unwrap(),
         vec![
             0, 0, 0, 3, // disjoint length prefix

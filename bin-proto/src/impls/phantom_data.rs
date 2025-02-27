@@ -1,16 +1,16 @@
-use crate::{BitRead, BitWrite, ByteOrder, ProtocolRead, ProtocolWrite, Result};
+use crate::{BitDecode, BitEncode, BitRead, BitWrite, ByteOrder, Result};
 use core::marker::PhantomData;
 
-impl<Ctx, T> ProtocolRead<Ctx> for PhantomData<T> {
-    fn read(_: &mut dyn BitRead, _: ByteOrder, _: &mut Ctx, (): ()) -> Result<Self> {
+impl<Ctx, T> BitDecode<Ctx> for PhantomData<T> {
+    fn decode(_: &mut dyn BitRead, _: ByteOrder, _: &mut Ctx, (): ()) -> Result<Self> {
         Ok(Self)
     }
 }
 
-impl<Ctx, T> ProtocolWrite<Ctx> for PhantomData<T> {
-    fn write(&self, _: &mut dyn BitWrite, _: ByteOrder, _: &mut Ctx, (): ()) -> Result<()> {
+impl<Ctx, T> BitEncode<Ctx> for PhantomData<T> {
+    fn encode(&self, _: &mut dyn BitWrite, _: ByteOrder, _: &mut Ctx, (): ()) -> Result<()> {
         Ok(())
     }
 }
 
-test_protocol!(PhantomData<u8>; PhantomData => []);
+test_codec!(PhantomData<u8>; PhantomData => []);

@@ -1,9 +1,9 @@
-use crate::{util, BitWrite, ByteOrder, ProtocolWrite, Result};
+use crate::{util, BitEncode, BitWrite, ByteOrder, Result};
 
 use alloc::vec::Vec;
 
-impl<Ctx> ProtocolWrite<Ctx> for str {
-    fn write(
+impl<Ctx> BitEncode<Ctx> for str {
+    fn encode(
         &self,
         write: &mut dyn BitWrite,
         byte_order: ByteOrder,
@@ -11,8 +11,8 @@ impl<Ctx> ProtocolWrite<Ctx> for str {
         (): (),
     ) -> Result<()> {
         let bytes: Vec<_> = self.bytes().collect();
-        util::write_items(&bytes, write, byte_order, ctx)
+        util::encode_items(&bytes, write, byte_order, ctx)
     }
 }
 
-test_protocol_write!(&str; "abc" => [b'a', b'b', b'c']);
+test_encode!(&str; "abc" => [b'a', b'b', b'c']);

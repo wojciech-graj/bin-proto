@@ -2,7 +2,7 @@
 
 use std::marker::PhantomData;
 
-use bin_proto::{ByteOrder, ProtocolRead, ProtocolWrite};
+use bin_proto::{BitDecode, BitEncode, ByteOrder};
 
 trait Boolean {
     fn set(&mut self);
@@ -48,8 +48,8 @@ where
 #[derive(Debug)]
 struct CtxCheck;
 
-impl<Ctx: CtxTrait> ProtocolRead<Ctx> for CtxCheck {
-    fn read(
+impl<Ctx: CtxTrait> BitDecode<Ctx> for CtxCheck {
+    fn decode(
         _: &mut dyn bin_proto::BitRead,
         _: bin_proto::ByteOrder,
         ctx: &mut Ctx,
@@ -60,8 +60,8 @@ impl<Ctx: CtxTrait> ProtocolRead<Ctx> for CtxCheck {
     }
 }
 
-impl<Ctx: CtxTrait> ProtocolWrite<Ctx> for CtxCheck {
-    fn write(
+impl<Ctx: CtxTrait> BitEncode<Ctx> for CtxCheck {
+    fn encode(
         &self,
         _: &mut dyn bin_proto::BitWrite,
         _: bin_proto::ByteOrder,
@@ -73,78 +73,78 @@ impl<Ctx: CtxTrait> ProtocolWrite<Ctx> for CtxCheck {
     }
 }
 
-#[derive(Debug, ProtocolRead, ProtocolWrite)]
-#[protocol(ctx = CtxStruct)]
+#[derive(Debug, BitDecode, BitEncode)]
+#[codec(ctx = CtxStruct)]
 struct CtxCheckStructWrapper(CtxCheck);
 
-#[derive(Debug, ProtocolRead, ProtocolWrite)]
-#[protocol(ctx = CtxStructWithGenerics<'a, bool>, ctx_generics('a))]
+#[derive(Debug, BitDecode, BitEncode)]
+#[codec(ctx = CtxStructWithGenerics<'a, bool>, ctx_generics('a))]
 struct CtxCheckStructWrapperWithGenericsConcreteBool(CtxCheck);
 
-#[derive(Debug, ProtocolRead, ProtocolWrite)]
-#[protocol(ctx = CtxStructWithGenerics<'a, T>, ctx_generics('a, T: Boolean))]
+#[derive(Debug, BitDecode, BitEncode)]
+#[codec(ctx = CtxStructWithGenerics<'a, T>, ctx_generics('a, T: Boolean))]
 struct CtxCheckStructWrapperWithGenerics(CtxCheck);
 
-#[derive(Debug, ProtocolRead, ProtocolWrite)]
-#[protocol(ctx_bounds(TraitWithGeneric<'a, bool>, CtxTrait), ctx_generics('a))]
+#[derive(Debug, BitDecode, BitEncode)]
+#[codec(ctx_bounds(TraitWithGeneric<'a, bool>, CtxTrait), ctx_generics('a))]
 struct CtxCheckBoundsWithGenericsConcreteBool(CtxCheck);
 
-#[derive(Debug, ProtocolRead, ProtocolWrite)]
-#[protocol(ctx_bounds(TraitWithGeneric<'a, T>, CtxTrait), ctx_generics('a))]
+#[derive(Debug, BitDecode, BitEncode)]
+#[codec(ctx_bounds(TraitWithGeneric<'a, T>, CtxTrait), ctx_generics('a))]
 struct CtxCheckBoundsWithGenerics<T: Boolean>(CtxCheck, PhantomData<T>);
 
-#[derive(Debug, ProtocolRead, ProtocolWrite)]
-#[protocol(ctx_bounds(CtxTrait))]
+#[derive(Debug, BitDecode, BitEncode)]
+#[codec(ctx_bounds(CtxTrait))]
 struct CtxCheckTraitWrapper(CtxCheck);
 
 #[test]
-fn read_ctx_passed() {
+fn decode_ctx_passed() {
     let mut ctx = CtxStruct(false);
-    CtxCheck::from_bytes_ctx(&[], ByteOrder::BigEndian, &mut ctx, ()).unwrap();
+    CtxCheck::decode_bytes_ctx(&[], ByteOrder::BigEndian, &mut ctx, ()).unwrap();
     assert!(ctx.0);
 }
 
 #[test]
-fn write_ctx_passed() {
+fn encode_ctx_passed() {
     let mut ctx = CtxStruct(false);
     CtxCheck
-        .bytes_ctx(ByteOrder::BigEndian, &mut ctx, ())
+        .encode_bytes_ctx(ByteOrder::BigEndian, &mut ctx, ())
         .unwrap();
     assert!(ctx.0);
 }
 
 #[test]
-fn read_ctx_passed_recur_struct() {
+fn decode_ctx_passed_recur_struct() {
     let mut ctx = CtxStruct(false);
     CtxCheckStructWrapper(CtxCheck)
-        .bytes_ctx(ByteOrder::BigEndian, &mut ctx, ())
+        .encode_bytes_ctx(ByteOrder::BigEndian, &mut ctx, ())
         .unwrap();
     assert!(ctx.0);
 }
 
 #[test]
-fn write_ctx_passed_recur_struct() {
+fn encode_ctx_passed_recur_struct() {
     let mut ctx = CtxStruct(false);
     CtxCheckStructWrapper(CtxCheck)
-        .bytes_ctx(ByteOrder::BigEndian, &mut ctx, ())
+        .encode_bytes_ctx(ByteOrder::BigEndian, &mut ctx, ())
         .unwrap();
     assert!(ctx.0);
 }
 
 #[test]
-fn read_ctx_passed_recur_trait() {
+fn decode_ctx_passed_recur_trait() {
     let mut ctx = CtxStruct(false);
     CtxCheckTraitWrapper(CtxCheck)
-        .bytes_ctx(ByteOrder::BigEndian, &mut ctx, ())
+        .encode_bytes_ctx(ByteOrder::BigEndian, &mut ctx, ())
         .unwrap();
     assert!(ctx.0);
 }
 
 #[test]
-fn write_ctx_passed_recur_trait() {
+fn encode_ctx_passed_recur_trait() {
     let mut ctx = CtxStruct(false);
     CtxCheckTraitWrapper(CtxCheck)
-        .bytes_ctx(ByteOrder::BigEndian, &mut ctx, ())
+        .encode_bytes_ctx(ByteOrder::BigEndian, &mut ctx, ())
         .unwrap();
     assert!(ctx.0);
 }

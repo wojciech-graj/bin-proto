@@ -4,10 +4,10 @@ use proc_macro2::{Span, TokenStream};
 use syn::{parse_quote, punctuated::Punctuated, spanned::Spanned, Token};
 
 pub enum TraitImplType {
-    ProtocolRead,
-    ProtocolWrite,
-    TaggedRead(syn::Type),
-    TaggedWrite,
+    Decode,
+    Encode,
+    TaggedDecode(syn::Type),
+    UntaggedEncode,
     Discriminable,
 }
 
@@ -30,10 +30,10 @@ pub fn impl_trait_for(
 
     if matches!(
         typ,
-        TraitImplType::ProtocolRead
-            | TraitImplType::ProtocolWrite
-            | TraitImplType::TaggedRead(_)
-            | TraitImplType::TaggedWrite
+        TraitImplType::Decode
+            | TraitImplType::Encode
+            | TraitImplType::TaggedDecode(_)
+            | TraitImplType::UntaggedEncode
     ) {
         if let Some(ctx_generics) = attribs.ctx_generics {
             generics.params.extend(ctx_generics);
@@ -63,13 +63,13 @@ pub fn impl_trait_for(
     }
 
     let trait_name = match &typ {
-        TraitImplType::ProtocolRead => quote!(ProtocolRead),
-        TraitImplType::ProtocolWrite => quote!(ProtocolWrite),
-        TraitImplType::TaggedWrite => {
+        TraitImplType::Decode => quote!(BitDecode),
+        TraitImplType::Encode => quote!(BitEncode),
+        TraitImplType::UntaggedEncode => {
             trait_generics.push(quote!(::bin_proto::Untagged));
-            quote!(ProtocolWrite)
+            quote!(BitEncode)
         }
-        TraitImplType::TaggedRead(discriminant) => {
+        TraitImplType::TaggedDecode(discriminant) => {
             let mut bounds = Punctuated::new();
             bounds.push(parse_quote!(::std::convert::TryInto<#discriminant>));
             generics
@@ -83,7 +83,7 @@ pub fn impl_trait_for(
                     default: None,
                 }));
             trait_generics.push(quote!(::bin_proto::Tag<__Tag>));
-            quote!(ProtocolRead)
+            quote!(BitDecode)
         }
         TraitImplType::Discriminable => quote!(Discriminable),
     };

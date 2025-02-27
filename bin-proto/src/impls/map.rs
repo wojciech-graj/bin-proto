@@ -3,19 +3,19 @@ macro_rules! impl_read_map {
         $ty:ident<K: $kbound0:ident $(+ $kbound1:ident)?, V
         $(, $h:ident : $hbound0:ident + $hbound1:ident)?>
     ) => {
-        impl<Tag, Ctx, K, V, $($h)?> $crate::ProtocolRead<Ctx, $crate::Tag<Tag>> for $ty<K, V, $($h)?>
+        impl<Tag, Ctx, K, V, $($h)?> $crate::BitDecode<Ctx, $crate::Tag<Tag>> for $ty<K, V, $($h)?>
         where
-            K: $crate::ProtocolRead<Ctx> + $kbound0 + $($kbound1)?,
-            V: $crate::ProtocolRead<Ctx>,
+            K: $crate::BitDecode<Ctx> + $kbound0 + $($kbound1)?,
+            V: $crate::BitDecode<Ctx>,
             Tag: ::core::convert::TryInto<usize>,
             $($h: $hbound0 + $hbound1)?
         {
-            fn read(read: &mut dyn $crate::BitRead,
+            fn decode(read: &mut dyn $crate::BitRead,
                 byte_order: $crate::ByteOrder,
                 ctx: &mut Ctx,
                 tag: $crate::Tag<Tag>,
             ) -> $crate::Result<Self> {
-                let elements = $crate::util::read_items(
+                let elements = $crate::util::decode_items(
                     ::core::convert::TryInto::try_into(tag.0).map_err(|_| $crate::Error::TagConvert)?,
                     read,
                     byte_order,
@@ -25,19 +25,19 @@ macro_rules! impl_read_map {
             }
         }
 
-        impl<Ctx, K, V, $($h)?> $crate::ProtocolRead<Ctx, $crate::Untagged> for $ty<K, V, $($h)?>
+        impl<Ctx, K, V, $($h)?> $crate::BitDecode<Ctx, $crate::Untagged> for $ty<K, V, $($h)?>
         where
-            K: $crate::ProtocolRead<Ctx> + $kbound0 $(+ $kbound1)?,
-            V: $crate::ProtocolRead<Ctx>,
+            K: $crate::BitDecode<Ctx> + $kbound0 $(+ $kbound1)?,
+            V: $crate::BitDecode<Ctx>,
             $($h: $hbound0 + $hbound1)?
         {
-            fn read(read: &mut dyn $crate::BitRead,
+            fn decode(read: &mut dyn $crate::BitRead,
                 byte_order: $crate::ByteOrder,
                 ctx: &mut Ctx,
                 _: $crate::Untagged,
             ) -> $crate::Result<Self> {
                 Ok(::core::iter::IntoIterator::into_iter(
-                    $crate::util::read_items_to_eof(read, byte_order, ctx)?
+                    $crate::util::decode_items_to_eof(read, byte_order, ctx)?
                 ).collect())
             }
         }
@@ -46,19 +46,19 @@ macro_rules! impl_read_map {
 
 macro_rules! impl_write_map {
     ( $ty:ident<K: $kbound0:ident $(+ $kbound1:ident)?, V $(, $h:ident)?> ) => {
-        impl<Ctx, K, V, $($h)?> $crate::ProtocolWrite<Ctx, $crate::Untagged> for $ty<K, V, $($h)?>
+        impl<Ctx, K, V, $($h)?> $crate::BitEncode<Ctx, $crate::Untagged> for $ty<K, V, $($h)?>
         where
-            K: $crate::ProtocolWrite<Ctx> + $kbound0 $(+ $kbound1)?,
-            V: $crate::ProtocolWrite<Ctx>
+            K: $crate::BitEncode<Ctx> + $kbound0 $(+ $kbound1)?,
+            V: $crate::BitEncode<Ctx>
         {
-            fn write(&self, write: &mut dyn $crate::BitWrite,
+            fn encode(&self, write: &mut dyn $crate::BitWrite,
                     byte_order: $crate::ByteOrder,
                     ctx: &mut Ctx,
                     _: $crate::Untagged,
                     ) -> $crate::Result<()> {
                 for (key, value) in self.iter() {
-                    $crate::ProtocolWrite::write(key, write, byte_order, ctx, ())?;
-                    $crate::ProtocolWrite::write(value, write, byte_order, ctx, ())?;
+                    $crate::BitEncode::encode(key, write, byte_order, ctx, ())?;
+                    $crate::BitEncode::encode(value, write, byte_order, ctx, ())?;
                 }
 
                 Ok(())
@@ -81,7 +81,7 @@ mod hash_map {
 
         use super::*;
 
-        test_untagged_and_protocol!(HashMap<u8, u8>| Untagged, Tag(1); [(1, 2)].into() => [0x01, 0x02]);
+        test_untagged_and_codec!(HashMap<u8, u8>| Untagged, Tag(1); [(1, 2)].into() => [0x01, 0x02]);
     }
 }
 
@@ -97,6 +97,6 @@ mod b_tree_map {
 
         use super::*;
 
-        test_untagged_and_protocol!(BTreeMap<u8, u8>| Untagged, Tag(3); [(1, 2), (3, 4), (5, 6)].into() => [0x01, 0x02, 0x03, 0x04, 0x05, 0x06]);
+        test_untagged_and_codec!(BTreeMap<u8, u8>| Untagged, Tag(3); [(1, 2), (3, 4), (5, 6)].into() => [0x01, 0x02, 0x03, 0x04, 0x05, 0x06]);
     }
 }

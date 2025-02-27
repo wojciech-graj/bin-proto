@@ -1,11 +1,11 @@
 use crate::{attr::Attrs, codegen, plan};
 use proc_macro2::{Span, TokenStream};
 
-pub fn read_discriminant(attribs: &Attrs) -> TokenStream {
+pub fn decode_discriminant(attribs: &Attrs) -> TokenStream {
     if let Some(bits) = &attribs.bits {
-        quote!(::bin_proto::ProtocolRead::read(__io_reader, __byte_order, __ctx, ::bin_proto::Bits(#bits)))
+        quote!(::bin_proto::BitDecode::decode(__io_reader, __byte_order, __ctx, ::bin_proto::Bits(#bits)))
     } else {
-        quote!(::bin_proto::ProtocolRead::read(
+        quote!(::bin_proto::BitDecode::decode(
             __io_reader,
             __byte_order,
             __ctx,
@@ -14,11 +14,11 @@ pub fn read_discriminant(attribs: &Attrs) -> TokenStream {
     }
 }
 
-pub fn write_discriminant(attribs: &Attrs) -> TokenStream {
-    let write_tag = if let Some(bits) = &attribs.bits {
-        quote!(::bin_proto::ProtocolWrite::write(&__tag, __io_writer, __byte_order, __ctx, ::bin_proto::Bits(#bits)))
+pub fn encode_discriminant(attribs: &Attrs) -> TokenStream {
+    let encode_tag = if let Some(bits) = &attribs.bits {
+        quote!(::bin_proto::BitEncode::encode(&__tag, __io_writer, __byte_order, __ctx, ::bin_proto::Bits(#bits)))
     } else {
-        quote!(::bin_proto::ProtocolWrite::write(
+        quote!(::bin_proto::BitEncode::encode(
             &__tag,
             __io_writer,
             __byte_order,
@@ -28,21 +28,21 @@ pub fn write_discriminant(attribs: &Attrs) -> TokenStream {
     };
     quote!({
         let __tag = <Self as ::bin_proto::Discriminable>::discriminant(self);
-        #write_tag?;
+        #encode_tag?;
     })
 }
 
-pub fn write_variant_fields(plan: &plan::Enum) -> TokenStream {
+pub fn encode_variant_fields(plan: &plan::Enum) -> TokenStream {
     let variant_match_branches: Vec<_> = plan
         .variants
         .iter()
         .map(|variant| {
             let variant_name = &variant.ident;
             let fields_pattern = bind_fields_pattern(variant_name, &variant.fields);
-            let writes = codegen::writes(&variant.fields, false);
+            let encodes = codegen::encodes(&variant.fields, false);
 
             quote!(Self :: #fields_pattern => {
-                #writes
+                #encodes
             })
         })
         .collect();
@@ -63,7 +63,7 @@ pub fn variant_discriminant(plan: &plan::Enum, attribs: &Attrs) -> TokenStream {
             let variant_name = &variant.ident;
             let fields_pattern = bind_fields_pattern(variant_name, &variant.fields);
             let discriminant_expr = &variant.discriminant_value;
-            let write_variant = if let Some(field_width) = &attribs.bits {
+            let encode_variant = if let Some(field_width) = &attribs.bits {
                 let error_message = format!(
                     "Discriminant for variant '{}' does not fit in bitfield.",
                     variant.ident
@@ -77,7 +77,7 @@ pub fn variant_discriminant(plan: &plan::Enum, attribs: &Attrs) -> TokenStream {
             };
 
             quote!(Self :: #fields_pattern => {
-                #write_variant
+                #encode_variant
             })
         })
         .collect();
@@ -86,15 +86,15 @@ pub fn variant_discriminant(plan: &plan::Enum, attribs: &Attrs) -> TokenStream {
     })
 }
 
-pub fn read_variant_fields(plan: &plan::Enum) -> TokenStream {
+pub fn decode_variant_fields(plan: &plan::Enum) -> TokenStream {
     let discriminant_match_branches = plan.variants.iter().map(|variant| {
         let variant_name = &variant.ident;
         let discriminant_literal = &variant.discriminant_value;
-        let (reader, initializer) = codegen::reads(&variant.fields);
+        let (decoder, initializer) = codegen::decodes(&variant.fields);
 
         quote!(
             #discriminant_literal => {
-                #reader
+                #decoder
                 Self::#variant_name #initializer
             }
         )

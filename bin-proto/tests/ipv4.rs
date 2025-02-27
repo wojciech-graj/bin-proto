@@ -1,37 +1,37 @@
 #![cfg(feature = "derive")]
 
-use bin_proto::{ByteOrder, ProtocolNoCtx, ProtocolRead, ProtocolWrite};
+use bin_proto::{BitCodec, BitDecode, BitEncode, ByteOrder};
 
-#[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq)]
-#[protocol(discriminant_type = u8)]
-#[protocol(bits = 4)]
+#[derive(Debug, BitDecode, BitEncode, PartialEq)]
+#[codec(discriminant_type = u8)]
+#[codec(bits = 4)]
 enum Version {
     V4 = 4,
 }
 
-#[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq)]
+#[derive(Debug, BitDecode, BitEncode, PartialEq)]
 struct Flags {
-    #[protocol(bits = 1)]
+    #[codec(bits = 1)]
     reserved: bool,
-    #[protocol(bits = 1)]
+    #[codec(bits = 1)]
     dont_fragment: bool,
-    #[protocol(bits = 1)]
+    #[codec(bits = 1)]
     more_fragments: bool,
 }
 
-#[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq)]
+#[derive(Debug, BitDecode, BitEncode, PartialEq)]
 struct IPv4 {
     version: Version,
-    #[protocol(bits = 4)]
+    #[codec(bits = 4)]
     internet_header_length: u8,
-    #[protocol(bits = 6)]
+    #[codec(bits = 6)]
     differentiated_services_code_point: u8,
-    #[protocol(bits = 2)]
+    #[codec(bits = 2)]
     explicit_congestion_notification: u8,
     total_length: u16,
     identification: u16,
     flags: Flags,
-    #[protocol(bits = 13)]
+    #[codec(bits = 13)]
     fragment_offset: u16,
     time_to_live: u8,
     protocol: u8,
@@ -87,7 +87,13 @@ fn can_encode_decode_ipv4() {
     };
     assert_eq!(
         parsed,
-        IPv4::from_bytes(&raw, ByteOrder::BigEndian).unwrap()
+        IPv4::decode_bytes(&raw, ByteOrder::BigEndian).unwrap()
     );
-    assert_eq!(raw, parsed.bytes(ByteOrder::BigEndian).unwrap().as_slice())
+    assert_eq!(
+        raw,
+        parsed
+            .encode_bytes(ByteOrder::BigEndian)
+            .unwrap()
+            .as_slice()
+    )
 }

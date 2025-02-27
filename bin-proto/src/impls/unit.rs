@@ -1,15 +1,15 @@
-use crate::{BitRead, BitWrite, ByteOrder, ProtocolRead, ProtocolWrite, Result};
+use crate::{BitDecode, BitEncode, BitRead, BitWrite, ByteOrder, Result};
 
-impl<Ctx> ProtocolRead<Ctx> for () {
-    fn read(_: &mut dyn BitRead, _: ByteOrder, _: &mut Ctx, (): ()) -> Result<Self> {
+impl<Ctx> BitDecode<Ctx> for () {
+    fn decode(_: &mut dyn BitRead, _: ByteOrder, _: &mut Ctx, (): ()) -> Result<Self> {
         Ok(())
     }
 }
 
-impl<Ctx> ProtocolWrite<Ctx> for () {
-    fn write(&self, _: &mut dyn BitWrite, _: ByteOrder, _: &mut Ctx, (): ()) -> Result<()> {
+impl<Ctx> BitEncode<Ctx> for () {
+    fn encode(&self, _: &mut dyn BitWrite, _: ByteOrder, _: &mut Ctx, (): ()) -> Result<()> {
         Ok(())
     }
 }
 
-test_protocol!((); () => []);
+test_codec!((); () => []);

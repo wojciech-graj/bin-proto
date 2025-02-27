@@ -1,18 +1,18 @@
-use crate::{BitRead, BitWrite, ByteOrder, Error, ProtocolRead, ProtocolWrite, Result, Untagged};
+use crate::{BitDecode, BitEncode, BitRead, BitWrite, ByteOrder, Error, Result, Untagged};
 
-impl<Tag, Ctx, T> ProtocolRead<Ctx, crate::Tag<Tag>> for Option<T>
+impl<Tag, Ctx, T> BitDecode<Ctx, crate::Tag<Tag>> for Option<T>
 where
-    T: ProtocolRead<Ctx>,
+    T: BitDecode<Ctx>,
     Tag: TryInto<bool>,
 {
-    fn read(
+    fn decode(
         read: &mut dyn BitRead,
         byte_order: ByteOrder,
         ctx: &mut Ctx,
         tag: crate::Tag<Tag>,
     ) -> Result<Self> {
         if tag.0.try_into().map_err(|_| Error::TagConvert)? {
-            let value = T::read(read, byte_order, ctx, ())?;
+            let value = T::decode(read, byte_order, ctx, ())?;
             Ok(Some(value))
         } else {
             Ok(None)
@@ -20,11 +20,11 @@ where
     }
 }
 
-impl<Ctx, T> ProtocolWrite<Ctx, Untagged> for Option<T>
+impl<Ctx, T> BitEncode<Ctx, Untagged> for Option<T>
 where
-    T: ProtocolWrite<Ctx>,
+    T: BitEncode<Ctx>,
 {
-    fn write(
+    fn encode(
         &self,
         write: &mut dyn BitWrite,
         byte_order: ByteOrder,
@@ -32,7 +32,7 @@ where
         _: Untagged,
     ) -> Result<()> {
         if let Some(ref value) = *self {
-            value.write(write, byte_order, ctx, ())?;
+            value.encode(write, byte_order, ctx, ())?;
         }
         Ok(())
     }
@@ -44,7 +44,7 @@ mod none {
 
     use super::*;
 
-    test_protocol!(Option<u8>| Untagged, Tag(false); None => []);
+    test_codec!(Option<u8>| Untagged, Tag(false); None => []);
 }
 
 #[cfg(test)]
@@ -53,5 +53,5 @@ mod some {
 
     use super::*;
 
-    test_protocol!(Option<u8>| Untagged, Tag(true); Some(1) => [0x01]);
+    test_codec!(Option<u8>| Untagged, Tag(true); Some(1) => [0x01]);
 }

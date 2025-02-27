@@ -6,13 +6,13 @@ mod vec {
 
     mod bench_bin_proto {
         use super::*;
-        use bin_proto::{ProtocolNoCtx, ProtocolRead, ProtocolWrite};
+        use bin_proto::{BitCodec, BitDecode, BitEncode};
 
-        #[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq)]
+        #[derive(Debug, BitDecode, BitEncode, PartialEq)]
         struct V {
-            #[protocol(write_value = self.data.len() as u8)]
+            #[codec(write_value = self.data.len() as u8)]
             count: u8,
-            #[protocol(tag = count as usize)]
+            #[codec(tag = count as usize)]
             data: Vec<u8>,
         }
 
@@ -24,7 +24,7 @@ mod vec {
                         count: 255,
                         data: (0..255).collect(),
                     }
-                    .bytes(bin_proto::ByteOrder::BigEndian),
+                    .encode_bytes(bin_proto::ByteOrder::BigEndian),
                 )
                 .unwrap();
             });
@@ -35,7 +35,11 @@ mod vec {
             let mut v = vec![255u8];
             v.extend((0..255).collect::<Vec<_>>());
             b.iter(|| {
-                black_box(V::from_bytes(v.as_slice(), bin_proto::ByteOrder::BigEndian)).unwrap();
+                black_box(V::decode_bytes(
+                    v.as_slice(),
+                    bin_proto::ByteOrder::BigEndian,
+                ))
+                .unwrap();
             })
         }
     }
@@ -82,10 +86,10 @@ mod enum_ {
 
     mod bench_bin_proto {
         use super::*;
-        use bin_proto::{ProtocolNoCtx, ProtocolRead, ProtocolWrite};
+        use bin_proto::{BitCodec, BitDecode, BitEncode};
 
-        #[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq)]
-        #[protocol(discriminant_type = u8)]
+        #[derive(Debug, BitDecode, BitEncode, PartialEq)]
+        #[codec(discriminant_type = u8)]
         enum E {
             V0 = 0,
             V1 = 1,
@@ -97,10 +101,10 @@ mod enum_ {
         fn bench_enum_write(b: &mut Bencher) {
             b.iter(|| {
                 black_box({
-                    E::V0.bytes(bin_proto::ByteOrder::BigEndian).unwrap();
-                    E::V1.bytes(bin_proto::ByteOrder::BigEndian).unwrap();
-                    E::V2.bytes(bin_proto::ByteOrder::BigEndian).unwrap();
-                    E::V3.bytes(bin_proto::ByteOrder::BigEndian).unwrap();
+                    E::V0.encode_bytes(bin_proto::ByteOrder::BigEndian).unwrap();
+                    E::V1.encode_bytes(bin_proto::ByteOrder::BigEndian).unwrap();
+                    E::V2.encode_bytes(bin_proto::ByteOrder::BigEndian).unwrap();
+                    E::V3.encode_bytes(bin_proto::ByteOrder::BigEndian).unwrap();
                 })
             });
         }
@@ -109,7 +113,7 @@ mod enum_ {
         fn bench_enum_read(b: &mut Bencher) {
             b.iter(|| {
                 black_box(for i in 0..4 {
-                    E::from_bytes(&[i], bin_proto::ByteOrder::BigEndian).unwrap();
+                    E::decode_bytes(&[i], bin_proto::ByteOrder::BigEndian).unwrap();
                 })
             });
         }
@@ -161,38 +165,38 @@ mod ipv4 {
 
     mod bench_bin_proto {
         use super::*;
-        use bin_proto::{ProtocolNoCtx, ProtocolRead, ProtocolWrite};
+        use bin_proto::{BitCodec, BitDecode, BitEncode};
 
-        #[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq)]
-        #[protocol(discriminant_type = u8)]
-        #[protocol(bits = 4)]
+        #[derive(Debug, BitDecode, BitEncode, PartialEq)]
+        #[codec(discriminant_type = u8)]
+        #[codec(bits = 4)]
         enum Version {
             V4 = 4,
         }
 
-        #[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq)]
+        #[derive(Debug, BitDecode, BitEncode, PartialEq)]
         struct Flags {
-            #[protocol(bits = 1)]
+            #[codec(bits = 1)]
             reserved: bool,
-            #[protocol(bits = 1)]
+            #[codec(bits = 1)]
             dont_fragment: bool,
-            #[protocol(bits = 1)]
+            #[codec(bits = 1)]
             more_fragments: bool,
         }
 
-        #[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq)]
+        #[derive(Debug, BitDecode, BitEncode, PartialEq)]
         struct IPv4 {
             version: Version,
-            #[protocol(bits = 4)]
+            #[codec(bits = 4)]
             internet_header_length: u8,
-            #[protocol(bits = 6)]
+            #[codec(bits = 6)]
             differentiated_services_code_point: u8,
-            #[protocol(bits = 2)]
+            #[codec(bits = 2)]
             explicit_congestion_notification: u8,
             total_length: u16,
             identification: u16,
             flags: Flags,
-            #[protocol(bits = 13)]
+            #[codec(bits = 13)]
             fragment_offset: u16,
             time_to_live: u8,
             protocol: u8,
@@ -224,7 +228,7 @@ mod ipv4 {
                         source_address: Ipv4Addr::new(2, 1, 1, 1),
                         destination_address: Ipv4Addr::new(2, 1, 1, 2),
                     }
-                    .bytes(bin_proto::ByteOrder::BigEndian),
+                    .encode_bytes(bin_proto::ByteOrder::BigEndian),
                 )
                 .unwrap();
             });
@@ -233,7 +237,7 @@ mod ipv4 {
         #[bench]
         fn bench_ipv4_read(b: &mut Bencher) {
             b.iter(|| {
-                black_box(IPv4::from_bytes(
+                black_box(IPv4::decode_bytes(
                     &[
                         0b0100_0000 // Version: 4
             |    0b0101, // Header Length: 5,

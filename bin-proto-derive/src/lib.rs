@@ -24,38 +24,38 @@ use codegen::trait_impl::{impl_trait_for, TraitImplType};
 use proc_macro2::TokenStream;
 use syn::{parse_macro_input, spanned::Spanned};
 
-use crate::codegen::enums::{read_discriminant, variant_discriminant, write_discriminant};
+use crate::codegen::enums::{decode_discriminant, encode_discriminant, variant_discriminant};
 
 #[derive(Clone, Copy)]
 enum Operation {
-    Read,
-    Write,
+    Decode,
+    Encode,
 }
 
-#[proc_macro_derive(ProtocolRead, attributes(protocol))]
-pub fn protocol_read(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+#[proc_macro_derive(BitDecode, attributes(codec))]
+pub fn decode(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let ast: syn::DeriveInput = parse_macro_input!(input as syn::DeriveInput);
-    impl_protocol(&ast, Operation::Read).into()
+    impl_codec(&ast, Operation::Decode).into()
 }
 
-#[proc_macro_derive(ProtocolWrite, attributes(protocol))]
-pub fn protocol_write(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+#[proc_macro_derive(BitEncode, attributes(codec))]
+pub fn encode(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let ast: syn::DeriveInput = parse_macro_input!(input as syn::DeriveInput);
-    impl_protocol(&ast, Operation::Write).into()
+    impl_codec(&ast, Operation::Encode).into()
 }
 
-fn impl_protocol(ast: &syn::DeriveInput, protocol_type: Operation) -> TokenStream {
+fn impl_codec(ast: &syn::DeriveInput, codec_type: Operation) -> TokenStream {
     match ast.data {
-        syn::Data::Struct(ref s) => impl_for_struct(ast, s, protocol_type),
-        syn::Data::Enum(ref e) => impl_for_enum(ast, e, protocol_type),
-        syn::Data::Union(..) => unimplemented!("Protocol is unimplemented on Unions"),
+        syn::Data::Struct(ref s) => impl_for_struct(ast, s, codec_type),
+        syn::Data::Enum(ref e) => impl_for_enum(ast, e, codec_type),
+        syn::Data::Union(..) => unimplemented!("Codec is unimplemented on Unions"),
     }
 }
 
 fn impl_for_struct(
     ast: &syn::DeriveInput,
     strukt: &syn::DataStruct,
-    protocol_type: Operation,
+    codec_type: Operation,
 ) -> TokenStream {
     let attribs = match Attrs::parse(ast.attrs.as_slice(), Some(AttrKind::Struct), ast.span()) {
         Ok(attribs) => attribs,
@@ -64,39 +64,40 @@ fn impl_for_struct(
 
     let ctx_ty = attribs.ctx_ty();
 
-    let (impl_body, trait_type) = match protocol_type {
-        Operation::Read => {
-            let (reads, initializers) = codegen::reads(&strukt.fields);
+    let (impl_body, trait_type) = match codec_type {
+        Operation::Decode => {
+            let (decodes, initializers) = codegen::decodes(&strukt.fields);
             (
                 quote!(
-                    fn read(
+                    fn decode(
                         __io_reader: &mut dyn ::bin_proto::BitRead,
                         __byte_order: ::bin_proto::ByteOrder,
                         __ctx: &mut #ctx_ty,
                         __tag: (),
                     ) -> ::bin_proto::Result<Self> {
-                        #reads
+                        #decodes
                         Ok(Self #initializers)
                     }
                 ),
-                TraitImplType::ProtocolRead,
+                TraitImplType::Decode,
             )
         }
-        Operation::Write => {
-            let writes = codegen::writes(&strukt.fields, true);
+        Operation::Encode => {
+            let encodes = codegen::encodes(&strukt.fields, true);
             (
                 quote!(
-                    fn write(
-                        &self, __io_writer: &mut dyn ::bin_proto::BitWrite,
+                    fn encode(
+                        &self,
+                        __io_writer: &mut dyn ::bin_proto::BitWrite,
                         __byte_order: ::bin_proto::ByteOrder,
                         __ctx: &mut #ctx_ty,
                         (): (),
                     ) -> ::bin_proto::Result<()> {
-                        #writes
+                        #encodes
                         Ok(())
                     }
                 ),
-                TraitImplType::ProtocolWrite,
+                TraitImplType::Encode,
             )
         }
     };
@@ -104,11 +105,7 @@ fn impl_for_struct(
     impl_trait_for(ast, &impl_body, &trait_type)
 }
 
-fn impl_for_enum(
-    ast: &syn::DeriveInput,
-    e: &syn::DataEnum,
-    protocol_type: Operation,
-) -> TokenStream {
+fn impl_for_enum(ast: &syn::DeriveInput, e: &syn::DataEnum, codec_type: Operation) -> TokenStream {
     let plan = match plan::Enum::try_new(ast, e) {
         Ok(plan) => plan,
         Err(e) => return e.to_compile_error(),
@@ -120,60 +117,60 @@ fn impl_for_enum(
     let discriminant_ty = &plan.discriminant_ty;
     let ctx_ty = attribs.ctx_ty();
 
-    match protocol_type {
-        Operation::Read => {
-            let read_variant = codegen::enums::read_variant_fields(&plan);
+    match codec_type {
+        Operation::Decode => {
+            let decode_variant = codegen::enums::decode_variant_fields(&plan);
             let impl_body = quote!(
-                fn read(
+                fn decode(
                     __io_reader: &mut dyn ::bin_proto::BitRead,
                     __byte_order: ::bin_proto::ByteOrder,
                     __ctx: &mut #ctx_ty,
                     __tag: ::bin_proto::Tag<__Tag>,
                 ) -> ::bin_proto::Result<Self> {
-                    Ok(#read_variant)
+                    Ok(#decode_variant)
                 }
             );
-            let externally_tagged_read_impl = impl_trait_for(
+            let tagged_decode_impl = impl_trait_for(
                 ast,
                 &impl_body,
-                &TraitImplType::TaggedRead(discriminant_ty.clone()),
+                &TraitImplType::TaggedDecode(discriminant_ty.clone()),
             );
 
-            let read_discriminant = read_discriminant(&attribs);
+            let decode_discriminant = decode_discriminant(&attribs);
             let impl_body = quote!(
-                fn read(
+                fn decode(
                     __io_reader: &mut dyn ::bin_proto::BitRead,
                     __byte_order: ::bin_proto::ByteOrder,
                     __ctx: &mut #ctx_ty,
                     __tag: (),
                 ) -> ::bin_proto::Result<Self> {
-                    let __tag: #discriminant_ty = #read_discriminant?;
-                    <Self as ::bin_proto::ProtocolRead<_, ::bin_proto::Tag<#discriminant_ty>>>::read(__io_reader, __byte_order, __ctx, ::bin_proto::Tag(__tag))
+                    let __tag: #discriminant_ty = #decode_discriminant?;
+                    <Self as ::bin_proto::BitDecode<_, ::bin_proto::Tag<#discriminant_ty>>>::decode(__io_reader, __byte_order, __ctx, ::bin_proto::Tag(__tag))
                 }
             );
-            let protocol_read_impl = impl_trait_for(ast, &impl_body, &TraitImplType::ProtocolRead);
+            let decode_impl = impl_trait_for(ast, &impl_body, &TraitImplType::Decode);
 
             quote!(
-                #externally_tagged_read_impl
-                #protocol_read_impl
+                #tagged_decode_impl
+                #decode_impl
             )
         }
-        Operation::Write => {
-            let write_variant = codegen::enums::write_variant_fields(&plan);
+        Operation::Encode => {
+            let encode_variant = codegen::enums::encode_variant_fields(&plan);
             let impl_body = quote!(
-                fn write(
+                fn encode(
                     &self,
                     __io_writer: &mut dyn ::bin_proto::BitWrite,
                     __byte_order: ::bin_proto::ByteOrder,
                     __ctx: &mut #ctx_ty,
                     __tag: ::bin_proto::Untagged,
                 ) -> ::bin_proto::Result<()> {
-                    #write_variant
+                    #encode_variant
                     Ok(())
                 }
             );
-            let externally_tagged_write_impl =
-                impl_trait_for(ast, &impl_body, &TraitImplType::TaggedWrite);
+            let untagged_encode_impl =
+                impl_trait_for(ast, &impl_body, &TraitImplType::UntaggedEncode);
 
             let variant_discriminant = variant_discriminant(&plan, &attribs);
             let impl_body = quote!(
@@ -185,26 +182,25 @@ fn impl_for_enum(
             );
             let discriminable_impl = impl_trait_for(ast, &impl_body, &TraitImplType::Discriminable);
 
-            let write_discriminant = write_discriminant(&attribs);
+            let encode_discriminant = encode_discriminant(&attribs);
             let impl_body = quote!(
-                fn write(
+                fn encode(
                     &self,
                     __io_writer: &mut dyn ::bin_proto::BitWrite,
                     __byte_order: ::bin_proto::ByteOrder,
                     __ctx: &mut #ctx_ty,
                     (): (),
                 ) -> ::bin_proto::Result<()> {
-                    #write_discriminant
-                    <Self as ::bin_proto::ProtocolWrite<_, _>>::write(self, __io_writer, __byte_order, __ctx, ::bin_proto::Untagged)
+                    #encode_discriminant
+                    <Self as ::bin_proto::BitEncode<_, _>>::encode(self, __io_writer, __byte_order, __ctx, ::bin_proto::Untagged)
                 }
             );
-            let protocol_write_impl =
-                impl_trait_for(ast, &impl_body, &TraitImplType::ProtocolWrite);
+            let encode_impl = impl_trait_for(ast, &impl_body, &TraitImplType::Encode);
 
             quote!(
-                #externally_tagged_write_impl
+                #untagged_encode_impl
                 #discriminable_impl
-                #protocol_write_impl
+                #encode_impl
             )
         }
     }

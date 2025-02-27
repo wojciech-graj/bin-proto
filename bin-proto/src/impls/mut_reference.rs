@@ -1,18 +1,18 @@
-use crate::{BitWrite, ByteOrder, ProtocolWrite, Result};
+use crate::{BitEncode, BitWrite, ByteOrder, Result};
 
-impl<Ctx, Tag, T> ProtocolWrite<Ctx, Tag> for &mut T
+impl<Ctx, Tag, T> BitEncode<Ctx, Tag> for &mut T
 where
-    T: ProtocolWrite<Ctx, Tag>,
+    T: BitEncode<Ctx, Tag>,
 {
-    fn write(
+    fn encode(
         &self,
         write: &mut dyn BitWrite,
         byte_order: ByteOrder,
         ctx: &mut Ctx,
         tag: Tag,
     ) -> Result<()> {
-        (**self).write(write, byte_order, ctx, tag)
+        (**self).encode(write, byte_order, ctx, tag)
     }
 }
 
-test_protocol_write!(&mut u8; &mut 1 => [0x01]);
+test_encode!(&mut u8; &mut 1 => [0x01]);

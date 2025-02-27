@@ -3,10 +3,10 @@ use core::num::{
     NonZeroU32, NonZeroU64, NonZeroU8,
 };
 
-use crate::{BitRead, BitWrite, Bits, ByteOrder, ProtocolRead, ProtocolWrite, Result};
+use crate::{BitDecode, BitEncode, BitRead, BitWrite, Bits, ByteOrder, Result};
 
-impl<Ctx> ProtocolRead<Ctx, Bits> for bool {
-    fn read(read: &mut dyn BitRead, _: ByteOrder, _: &mut Ctx, Bits(bits): Bits) -> Result<Self> {
+impl<Ctx> BitDecode<Ctx, Bits> for bool {
+    fn decode(read: &mut dyn BitRead, _: ByteOrder, _: &mut Ctx, Bits(bits): Bits) -> Result<Self> {
         if read.read_u8_bf(bits)? == 0 {
             Ok(false)
         } else {
@@ -15,8 +15,8 @@ impl<Ctx> ProtocolRead<Ctx, Bits> for bool {
     }
 }
 
-impl<Ctx> ProtocolWrite<Ctx, Bits> for bool {
-    fn write(
+impl<Ctx> BitEncode<Ctx, Bits> for bool {
+    fn encode(
         &self,
         write: &mut dyn BitWrite,
         _: ByteOrder,
@@ -28,8 +28,8 @@ impl<Ctx> ProtocolWrite<Ctx, Bits> for bool {
     }
 }
 
-impl<Ctx> ProtocolRead<Ctx> for bool {
-    fn read(read: &mut dyn BitRead, _: ByteOrder, _: &mut Ctx, (): ()) -> Result<Self> {
+impl<Ctx> BitDecode<Ctx> for bool {
+    fn decode(read: &mut dyn BitRead, _: ByteOrder, _: &mut Ctx, (): ()) -> Result<Self> {
         if read.read_u8()? == 0 {
             Ok(false)
         } else {
@@ -38,17 +38,17 @@ impl<Ctx> ProtocolRead<Ctx> for bool {
     }
 }
 
-impl<Ctx> ProtocolWrite<Ctx> for bool {
-    fn write(&self, write: &mut dyn BitWrite, _: ByteOrder, _: &mut Ctx, (): ()) -> Result<()> {
+impl<Ctx> BitEncode<Ctx> for bool {
+    fn encode(&self, write: &mut dyn BitWrite, _: ByteOrder, _: &mut Ctx, (): ()) -> Result<()> {
         write.write_u8((*self).into())?;
         Ok(())
     }
 }
 
-macro_rules! impl_protocol_for_numeric_unordered {
+macro_rules! impl_codec_for_numeric_unordered {
     ($ty:ty => [$read_fn:ident : $write_fn:ident]) => {
-        impl<Ctx> $crate::ProtocolRead<Ctx> for $ty {
-            fn read(
+        impl<Ctx> $crate::BitDecode<Ctx> for $ty {
+            fn decode(
                 read: &mut dyn $crate::BitRead,
                 _: $crate::ByteOrder,
                 _: &mut Ctx,
@@ -58,8 +58,8 @@ macro_rules! impl_protocol_for_numeric_unordered {
             }
         }
 
-        impl<Ctx> $crate::ProtocolWrite<Ctx> for $ty {
-            fn write(
+        impl<Ctx> $crate::BitEncode<Ctx> for $ty {
+            fn encode(
                 &self,
                 write: &mut dyn $crate::BitWrite,
                 _: $crate::ByteOrder,
@@ -73,10 +73,10 @@ macro_rules! impl_protocol_for_numeric_unordered {
     };
 }
 
-macro_rules! impl_protocol_for_numeric {
+macro_rules! impl_codec_for_numeric {
     ($ty:ty $(: $thru:ident $fallible:tt)? => [$read_fn:ident : $write_fn:ident]) => {
-        impl<Ctx> $crate::ProtocolRead<Ctx> for $ty {
-            fn read(
+        impl<Ctx> $crate::BitDecode<Ctx> for $ty {
+            fn decode(
                 read: &mut dyn $crate::BitRead,
                 byte_order: $crate::ByteOrder,
                 _: &mut Ctx,
@@ -90,8 +90,8 @@ macro_rules! impl_protocol_for_numeric {
             }
         }
 
-        impl<Ctx> $crate::ProtocolWrite<Ctx> for $ty {
-            fn write(
+        impl<Ctx> $crate::BitEncode<Ctx> for $ty {
+            fn encode(
                 &self,
                 write: &mut dyn $crate::BitWrite,
                 byte_order: $crate::ByteOrder,
@@ -112,8 +112,8 @@ macro_rules! impl_protocol_for_numeric {
 
 macro_rules! impl_bitfield_for_numeric {
     ($ty:ty $(: $thru:ident $fallible:tt)? => [$read_fn:ident : $write_fn:ident]) => {
-        impl<Ctx> $crate::ProtocolRead<Ctx, $crate::Bits> for $ty {
-            fn read(
+        impl<Ctx> $crate::BitDecode<Ctx, $crate::Bits> for $ty {
+            fn decode(
                 read: &mut dyn $crate::BitRead,
                 _: $crate::ByteOrder,
                 _: &mut Ctx,
@@ -127,8 +127,8 @@ macro_rules! impl_bitfield_for_numeric {
             }
         }
 
-        impl<Ctx> $crate::ProtocolWrite<Ctx, $crate::Bits> for $ty {
-            fn write(
+        impl<Ctx> $crate::BitEncode<Ctx, $crate::Bits> for $ty {
+            fn encode(
                 &self,
                 write: &mut dyn $crate::BitWrite,
                 _: $crate::ByteOrder,
@@ -148,32 +148,32 @@ macro_rules! impl_bitfield_for_numeric {
     };
 }
 
-impl_protocol_for_numeric_unordered!(u8 => [read_u8 : write_u8]);
-impl_protocol_for_numeric_unordered!(i8 => [read_i8 : write_i8]);
+impl_codec_for_numeric_unordered!(u8 => [read_u8 : write_u8]);
+impl_codec_for_numeric_unordered!(i8 => [read_i8 : write_i8]);
 
-impl_protocol_for_numeric_unordered!(NonZeroU8 => [read_u8 : write_u8]);
-impl_protocol_for_numeric_unordered!(NonZeroI8 => [read_i8 : write_i8]);
+impl_codec_for_numeric_unordered!(NonZeroU8 => [read_u8 : write_u8]);
+impl_codec_for_numeric_unordered!(NonZeroI8 => [read_i8 : write_i8]);
 
-impl_protocol_for_numeric!(u16 => [read_u16 : write_u16]);
-impl_protocol_for_numeric!(i16 => [read_i16 : write_i16]);
-impl_protocol_for_numeric!(u32 => [read_u32 : write_u32]);
-impl_protocol_for_numeric!(i32 => [read_i32 : write_i32]);
-impl_protocol_for_numeric!(u64 => [read_u64 : write_u64]);
-impl_protocol_for_numeric!(i64 => [read_i64 : write_i64]);
-impl_protocol_for_numeric!(u128 => [read_u128 : write_u128]);
-impl_protocol_for_numeric!(i128 => [read_i128 : write_i128]);
+impl_codec_for_numeric!(u16 => [read_u16 : write_u16]);
+impl_codec_for_numeric!(i16 => [read_i16 : write_i16]);
+impl_codec_for_numeric!(u32 => [read_u32 : write_u32]);
+impl_codec_for_numeric!(i32 => [read_i32 : write_i32]);
+impl_codec_for_numeric!(u64 => [read_u64 : write_u64]);
+impl_codec_for_numeric!(i64 => [read_i64 : write_i64]);
+impl_codec_for_numeric!(u128 => [read_u128 : write_u128]);
+impl_codec_for_numeric!(i128 => [read_i128 : write_i128]);
 
-impl_protocol_for_numeric!(NonZeroU16 => [read_u16 : write_u16]);
-impl_protocol_for_numeric!(NonZeroI16 => [read_i16 : write_i16]);
-impl_protocol_for_numeric!(NonZeroU32 => [read_u32 : write_u32]);
-impl_protocol_for_numeric!(NonZeroI32 => [read_i32 : write_i32]);
-impl_protocol_for_numeric!(NonZeroU64 => [read_u64 : write_u64]);
-impl_protocol_for_numeric!(NonZeroI64 => [read_i64 : write_i64]);
-impl_protocol_for_numeric!(NonZeroU128 => [read_u128 : write_u128]);
-impl_protocol_for_numeric!(NonZeroI128 => [read_i128 : write_i128]);
+impl_codec_for_numeric!(NonZeroU16 => [read_u16 : write_u16]);
+impl_codec_for_numeric!(NonZeroI16 => [read_i16 : write_i16]);
+impl_codec_for_numeric!(NonZeroU32 => [read_u32 : write_u32]);
+impl_codec_for_numeric!(NonZeroI32 => [read_i32 : write_i32]);
+impl_codec_for_numeric!(NonZeroU64 => [read_u64 : write_u64]);
+impl_codec_for_numeric!(NonZeroI64 => [read_i64 : write_i64]);
+impl_codec_for_numeric!(NonZeroU128 => [read_u128 : write_u128]);
+impl_codec_for_numeric!(NonZeroI128 => [read_i128 : write_i128]);
 
-impl_protocol_for_numeric!(f32 => [read_f32 : write_f32]);
-impl_protocol_for_numeric!(f64 => [read_f64 : write_f64]);
+impl_codec_for_numeric!(f32 => [read_f32 : write_f32]);
+impl_codec_for_numeric!(f64 => [read_f64 : write_f64]);
 
 impl_bitfield_for_numeric!(u8 => [read_u8_bf : write_u8_bf]);
 impl_bitfield_for_numeric!(i8 => [read_i8_bf : write_i8_bf]);
@@ -195,16 +195,16 @@ impl_bitfield_for_numeric!(NonZeroI32 => [read_i32_bf : write_i32_bf]);
 mod size {
     use core::num::{NonZeroIsize, NonZeroUsize};
 
-    impl_protocol_for_numeric!(usize => [read_u16 : write_u16]);
+    impl_codec_for_numeric!(usize => [read_u16 : write_u16]);
     impl_bitfield_for_numeric!(usize => [read_u16_bf : write_u16_bf]);
 
-    impl_protocol_for_numeric!(NonZeroUsize: usize? => [read_u16 : write_u16]);
+    impl_codec_for_numeric!(NonZeroUsize: usize? => [read_u16 : write_u16]);
     impl_bitfield_for_numeric!(NonZeroUsize: usize? => [read_u16_bf : write_u16_bf]);
 
-    impl_protocol_for_numeric!(isize => [read_i16 : write_i16]);
+    impl_codec_for_numeric!(isize => [read_i16 : write_i16]);
     impl_bitfield_for_numeric!(isize => [read_i16_bf : write_i16_bf]);
 
-    impl_protocol_for_numeric!(NonZeroIsize: isize? => [read_i16 : write_i16]);
+    impl_codec_for_numeric!(NonZeroIsize: isize? => [read_i16 : write_i16]);
     impl_bitfield_for_numeric!(NonZeroIsize: isize? => [read_i16_bf : write_i16_bf]);
 }
 
@@ -212,16 +212,16 @@ mod size {
 mod size {
     use core::num::{NonZeroIsize, NonZeroUsize};
 
-    impl_protocol_for_numeric!(usize => [read_u32 : write_u32]);
+    impl_codec_for_numeric!(usize => [read_u32 : write_u32]);
     impl_bitfield_for_numeric!(usize => [read_u32_bf : write_u32_bf]);
 
-    impl_protocol_for_numeric!(NonZeroUsize: usize? => [read_u32 : write_u32]);
+    impl_codec_for_numeric!(NonZeroUsize: usize? => [read_u32 : write_u32]);
     impl_bitfield_for_numeric!(NonZeroUsize: usize? => [read_u32_bf : write_u32_bf]);
 
-    impl_protocol_for_numeric!(isize => [read_i32 : write_i32]);
+    impl_codec_for_numeric!(isize => [read_i32 : write_i32]);
     impl_bitfield_for_numeric!(isize => [read_i32_bf : write_i32_bf]);
 
-    impl_protocol_for_numeric!(NonZeroIsize: isize? => [read_i32 : write_i32]);
+    impl_codec_for_numeric!(NonZeroIsize: isize? => [read_i32 : write_i32]);
     impl_bitfield_for_numeric!(NonZeroIsize: isize? => [read_i32_bf : write_i32_bf]);
 }
 
@@ -229,15 +229,15 @@ mod size {
 mod size {
     use core::num::{NonZeroIsize, NonZeroUsize};
 
-    impl_protocol_for_numeric!(usize => [read_u64 : write_u64]);
+    impl_codec_for_numeric!(usize => [read_u64 : write_u64]);
     impl_bitfield_for_numeric!(usize => [read_u64_bf : write_u64_bf]);
 
-    impl_protocol_for_numeric!(NonZeroUsize: usize? => [read_u64 : write_u64]);
+    impl_codec_for_numeric!(NonZeroUsize: usize? => [read_u64 : write_u64]);
     impl_bitfield_for_numeric!(NonZeroUsize: usize? => [read_u64_bf : write_u64_bf]);
 
-    impl_protocol_for_numeric!(isize => [read_i64 : write_i64]);
+    impl_codec_for_numeric!(isize => [read_i64 : write_i64]);
     impl_bitfield_for_numeric!(isize => [read_i64_bf : write_i64_bf]);
 
-    impl_protocol_for_numeric!(NonZeroIsize: isize? => [read_i64 : write_i64]);
+    impl_codec_for_numeric!(NonZeroIsize: isize? => [read_i64 : write_i64]);
     impl_bitfield_for_numeric!(NonZeroIsize: isize? => [read_i64_bf : write_i64_bf]);
 }

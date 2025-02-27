@@ -1,42 +1,42 @@
 //! Simple & fast bit-level binary co/dec in Rust.
 //!
-//! For more information about `#[derive(ProtocolRead, ProtocolWrite)]` and its attributes, see
-//! [macro@ProtocolRead] or [macro@ProtocolWrite].
+//! For more information about `#[derive(BitDecode, BitEncode)]` and its attributes, see
+//! [macro@BitDecode] or [macro@BitEncode].
 //!
 //! # Example
 //!
 //! ```
 //! # #[cfg(feature = "derive")]
 //! # {
-//! # use bin_proto::{ProtocolRead, ProtocolWrite, ProtocolNoCtx};
-//! #[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq)]
-//! #[protocol(discriminant_type = u8)]
-//! #[protocol(bits = 4)]
+//! # use bin_proto::{BitDecode, BitEncode, BitCodec};
+//! #[derive(Debug, BitDecode, BitEncode, PartialEq)]
+//! #[codec(discriminant_type = u8)]
+//! #[codec(bits = 4)]
 //! enum E {
 //!     V1 = 1,
-//!     #[protocol(discriminant = 4)]
+//!     #[codec(discriminant = 4)]
 //!     V4,
 //! }
 //!
-//! #[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq)]
+//! #[derive(Debug, BitDecode, BitEncode, PartialEq)]
 //! struct S {
-//!     #[protocol(bits = 1)]
+//!     #[codec(bits = 1)]
 //!     bitflag: bool,
-//!     #[protocol(bits = 3)]
+//!     #[codec(bits = 3)]
 //!     bitfield: u8,
 //!     enum_: E,
-//!     #[protocol(write_value = self.arr.len() as u8)]
+//!     #[codec(write_value = self.arr.len() as u8)]
 //!     arr_len: u8,
-//!     #[protocol(tag = arr_len as usize)]
+//!     #[codec(tag = arr_len as usize)]
 //!     arr: Vec<u8>,
-//!     #[protocol(tag_type = u16, tag_value = self.prefixed_arr.len() as u16)]
+//!     #[codec(tag_type = u16, tag_value = self.prefixed_arr.len() as u16)]
 //!     prefixed_arr: Vec<u8>,
-//!     #[protocol(flexible_array_member)]
+//!     #[codec(flexible_array_member)]
 //!     read_to_end: Vec<u8>,
 //! }
 //!
 //! assert_eq!(
-//!     S::from_bytes(&[
+//!     S::decode_bytes(&[
 //!         0b1000_0000 // bitflag: true (1)
 //!        | 0b101_0000 // bitfield: 5 (101)
 //!            | 0b0001, // enum_: V1 (0001)
@@ -83,42 +83,42 @@ extern crate std;
 pub use self::bit_read::BitRead;
 pub use self::bit_write::BitWrite;
 pub use self::byte_order::ByteOrder;
+pub use self::codec::BitCodec;
+pub use self::codec::{BitDecode, BitEncode};
 pub use self::discriminable::Discriminable;
 pub use self::error::{Error, Result};
-pub use self::protocol::ProtocolNoCtx;
-pub use self::protocol::{ProtocolRead, ProtocolWrite};
 
-/// Derive the `ProtocolRead` and `ProtocolWrite` traits.
+/// Derive the `BitDecode` and `BitEncode` traits.
 ///
 /// # Attributes
 ///
-/// ## `#[protocol(discriminant_type = <type>)]`
+/// ## `#[codec(discriminant_type = <type>)]`
 /// - Applies to: `enum`
-/// - `<type>`: an arbitrary type that implements `ProtocolRead` or `ProtocolWrite`
+/// - `<type>`: an arbitrary type that implements `BitDecode` or `BitEncode`
 ///
 /// Specify if enum variant should be determined by a string or interger representation of its
 /// discriminant.
 ///
 /// ```
-/// # use bin_proto::{ProtocolRead, ProtocolWrite};
-/// #[derive(ProtocolRead, ProtocolWrite)]
-/// #[protocol(discriminant_type = u8)]
+/// # use bin_proto::{BitDecode, BitEncode};
+/// #[derive(BitDecode, BitEncode)]
+/// #[codec(discriminant_type = u8)]
 /// enum Example {
 ///     Variant1 = 1,
 ///     Variant5 = 5,
 /// }
 /// ```
 ///
-/// ## `#[protocol(discriminant = <value>)]`
+/// ## `#[codec(discriminant = <value>)]`
 /// - Applies to: `enum` variant
 /// - `<value>`: unique value of the discriminant's type
 ///
 /// ```
-/// # use bin_proto::{ProtocolRead, ProtocolWrite};
-/// #[derive(ProtocolRead, ProtocolWrite)]
-/// #[protocol(discriminant_type = u8)]
+/// # use bin_proto::{BitDecode, BitEncode};
+/// #[derive(BitDecode, BitEncode)]
+/// #[codec(discriminant_type = u8)]
 /// enum Example {
-///     #[protocol(discriminant = 1)]
+///     #[codec(discriminant = 1)]
 ///     Variant1,
 ///     Variant5 = 5,
 /// }
@@ -126,7 +126,7 @@ pub use self::protocol::{ProtocolRead, ProtocolWrite};
 ///
 /// Specify the discriminant for a variant.
 ///
-/// ## `#[protocol(bits = <width>)]`
+/// ## `#[codec(bits = <width>)]`
 /// - Applies to: `impl BitFieldRead`, `impl BitFieldWrite`, `enum` with discriminant that
 ///   `impl BitField`
 ///
@@ -137,24 +137,24 @@ pub use self::protocol::{ProtocolRead, ProtocolWrite};
 /// big endian stream.
 ///
 /// ```
-/// # use bin_proto::{ProtocolRead, ProtocolWrite};
-/// #[derive(ProtocolRead, ProtocolWrite)]
-/// struct Nibble(#[protocol(bits = 4)] u8);
+/// # use bin_proto::{BitDecode, BitEncode};
+/// #[derive(BitDecode, BitEncode)]
+/// struct Nibble(#[codec(bits = 4)] u8);
 /// ```
 ///
-/// ## `#[protocol(flexible_array_member)]`
+/// ## `#[codec(flexible_array_member)]`
 /// - Applies to: `impl UntaggedRead`
 ///
 /// Variable-length field is final field in container, hence lacks a length prefix and should be
 /// read until eof.
 ///
 /// ```
-/// # use bin_proto::{ProtocolRead, ProtocolWrite};
-/// #[derive(ProtocolRead, ProtocolWrite)]
-/// struct ReadToEnd(#[protocol(flexible_array_member)] Vec<u8>);
+/// # use bin_proto::{BitDecode, BitEncode};
+/// #[derive(BitDecode, BitEncode)]
+/// struct ReadToEnd(#[codec(flexible_array_member)] Vec<u8>);
 /// ```
 ///
-/// ## `#[protocol(tag = <expr>)]`
+/// ## `#[codec(tag = <expr>)]`
 /// - Applies to: `impl TaggedRead` or `impl UntaggedWrite`
 /// - `<expr>`: arbitrary expression. Fields in parent container can be used
 ///   without prefixing them with `self`.
@@ -163,17 +163,17 @@ pub use self::protocol::{ProtocolRead, ProtocolWrite};
 /// boolean for `Option`.
 ///
 /// ```
-/// # use bin_proto::{ProtocolRead, ProtocolWrite};
-/// #[derive(ProtocolRead, ProtocolWrite)]
+/// # use bin_proto::{BitDecode, BitEncode};
+/// #[derive(BitDecode, BitEncode)]
 /// pub struct WithElementsLength {
 ///     pub count: u32,
 ///     pub foo: bool,
-///     #[protocol(tag = count as usize)]
+///     #[codec(tag = count as usize)]
 ///     pub data: Vec<u32>,
 /// }
 /// ```
 ///
-/// ## `#[protocol(tag_type = <type>[, tag_value = <expr>]?)]`
+/// ## `#[codec(tag_type = <type>[, tag_value = <expr>]?)]`
 /// - Applies to: `impl TaggedRead` or `impl UntaggedWrite`
 /// - `<type>`: tag's type
 /// - `<expr>`: arbitrary expression. Fields in parent container should be
@@ -181,36 +181,36 @@ pub use self::protocol::{ProtocolRead, ProtocolWrite};
 ///
 /// Specify tag of field. The tag represents a length prefix for variable-length fields, and a
 /// boolean for `Option`. The tag is placed directly before the field. The `tag_value` only has
-/// to be specified when deriving `ProtocolWrite`.
+/// to be specified when deriving `BitEncode`.
 ///
 /// ```
-/// # use bin_proto::{ProtocolRead, ProtocolWrite};
-/// #[derive(ProtocolRead, ProtocolWrite)]
+/// # use bin_proto::{BitDecode, BitEncode};
+/// #[derive(BitDecode, BitEncode)]
 /// pub struct WithElementsLength {
-///     #[protocol(tag_type = u16, tag_value = self.data.len() as u16)]
+///     #[codec(tag_type = u16, tag_value = self.data.len() as u16)]
 ///     pub data: Vec<u32>,
 /// }
 /// ```
 ///
-/// ## `#[protocol(write_value = <expr>)]`
+/// ## `#[codec(write_value = <expr>)]`
 /// - Applies to: fields
 /// - `<expr>`: An expression that can be coerced to the field type, potentially using `self`
 ///
 /// Specify an expression that should be used as the field's value for writing.
 ///
 /// ```
-/// # use bin_proto::{ProtocolRead, ProtocolWrite};
-/// #[derive(ProtocolRead, ProtocolWrite)]
+/// # use bin_proto::{BitDecode, BitEncode};
+/// #[derive(BitDecode, BitEncode)]
 /// pub struct WithElementsLengthAuto {
-///     #[protocol(write_value = self.data.len() as u32)]
+///     #[codec(write_value = self.data.len() as u32)]
 ///     pub count: u32,
 ///     pub foo: bool,
-///     #[protocol(tag = count as usize)]
+///     #[codec(tag = count as usize)]
 ///     pub data: Vec<u32>,
 /// }
 /// ```
 ///
-/// ## `[#protocol(ctx = <type>)[, ctx_generics(<generic>[, <generic>]*)]?]`
+/// ## `[#codec(ctx = <type>)[, ctx_generics(<generic>[, <generic>]*)]?]`
 /// - Applies to: containers
 /// - `<type>`: The type of the context. Either a concrete type, or one of the container's generics
 /// - `<generic>`: Any generics used by the context type, with optional bounds. E.g.
@@ -219,13 +219,13 @@ pub use self::protocol::{ProtocolRead, ProtocolWrite};
 /// Specify the type of context that will be passed to codec functions.
 ///
 /// ```
-/// # use bin_proto::{ByteOrder, ProtocolRead, ProtocolWrite};
+/// # use bin_proto::{ByteOrder, BitDecode, BitEncode};
 /// pub struct Ctx;
 ///
 /// pub struct NeedsCtx;
 ///
-/// impl ProtocolRead<Ctx> for NeedsCtx {
-///     fn read(
+/// impl BitDecode<Ctx> for NeedsCtx {
+///     fn decode(
 ///         _read: &mut dyn bin_proto::BitRead,
 ///         _byte_order: bin_proto::ByteOrder,
 ///         _ctx: &mut Ctx,
@@ -236,8 +236,8 @@ pub use self::protocol::{ProtocolRead, ProtocolWrite};
 ///     }
 /// }
 ///
-/// impl ProtocolWrite<Ctx> for NeedsCtx {
-///     fn write(
+/// impl BitEncode<Ctx> for NeedsCtx {
+///     fn encode(
 ///         &self,
 ///         _write: &mut dyn bin_proto::BitWrite,
 ///         _byte_order: bin_proto::ByteOrder,
@@ -249,33 +249,33 @@ pub use self::protocol::{ProtocolRead, ProtocolWrite};
 ///     }
 /// }
 ///
-/// #[derive(ProtocolRead, ProtocolWrite)]
-/// #[protocol(ctx = Ctx)]
+/// #[derive(BitDecode, BitEncode)]
+/// #[codec(ctx = Ctx)]
 /// pub struct WithCtx(NeedsCtx);
 ///
 /// WithCtx(NeedsCtx)
-///     .bytes_ctx(ByteOrder::LittleEndian, &mut Ctx, ())
+///     .encode_bytes_ctx(ByteOrder::LittleEndian, &mut Ctx, ())
 ///     .unwrap();
 /// ```
 ///
 /// ```
-/// # use bin_proto::{ProtocolRead, ProtocolWrite};
+/// # use bin_proto::{BitDecode, BitEncode};
 /// # use std::marker::PhantomData;
-/// #[derive(ProtocolRead, ProtocolWrite)]
-/// #[protocol(ctx = Ctx)]
-/// pub struct NestedProtocol<Ctx, A: ProtocolRead<Ctx> + ProtocolWrite<Ctx>>(A, PhantomData<Ctx>);
+/// #[derive(BitDecode, BitEncode)]
+/// #[codec(ctx = Ctx)]
+/// pub struct NestedCodec<Ctx, A: BitDecode<Ctx> + BitEncode<Ctx>>(A, PhantomData<Ctx>);
 /// ```
 ///
 /// ```
-/// # use bin_proto::{ProtocolRead, ProtocolWrite};
+/// # use bin_proto::{BitDecode, BitEncode};
 /// pub struct Ctx<'a, T: Copy>(&'a T);
 ///
-/// #[derive(ProtocolRead, ProtocolWrite)]
-/// #[protocol(ctx = Ctx<'a, T>, ctx_generics('a, T: Copy))]
+/// #[derive(BitDecode, BitEncode)]
+/// #[codec(ctx = Ctx<'a, T>, ctx_generics('a, T: Copy))]
 /// pub struct WithCtx;
 /// ```
 ///
-/// ## `[#protocol(ctx_bounds(<bound>[, <bound>]*)[, ctx_generics(<generic>[, <generic>]*)]?)]`
+/// ## `[#codec(ctx_bounds(<bound>[, <bound>]*)[, ctx_generics(<generic>[, <generic>]*)]?)]`
 /// - Applies to: containers
 /// - `<bounds>`: Trait bounds that must be satisfied by the context
 /// - `<generic>`: Any generics used by the context type. E.g. `'a` for a context with a
@@ -284,13 +284,13 @@ pub use self::protocol::{ProtocolRead, ProtocolWrite};
 /// Specify the trait bounds of context that will be passed to codec functions.
 ///
 /// ```
-/// # use bin_proto::{ByteOrder, ProtocolRead, ProtocolWrite};
+/// # use bin_proto::{ByteOrder, BitDecode, BitEncode};
 /// pub trait CtxTrait {};
 ///
 /// pub struct NeedsCtx;
 ///
-/// impl<Ctx: CtxTrait> ProtocolRead<Ctx> for NeedsCtx {
-///     fn read(
+/// impl<Ctx: CtxTrait> BitDecode<Ctx> for NeedsCtx {
+///     fn decode(
 ///         _read: &mut dyn bin_proto::BitRead,
 ///         _byte_order: bin_proto::ByteOrder,
 ///         _ctx: &mut Ctx,
@@ -301,8 +301,8 @@ pub use self::protocol::{ProtocolRead, ProtocolWrite};
 ///     }
 ///}
 ///
-/// impl<Ctx: CtxTrait> ProtocolWrite<Ctx> for NeedsCtx {
-///     fn write(
+/// impl<Ctx: CtxTrait> BitEncode<Ctx> for NeedsCtx {
+///     fn encode(
 ///         &self,
 ///         _write: &mut dyn bin_proto::BitWrite,
 ///         _byte_order: bin_proto::ByteOrder,
@@ -314,23 +314,23 @@ pub use self::protocol::{ProtocolRead, ProtocolWrite};
 ///     }
 /// }
 ///
-/// #[derive(ProtocolRead, ProtocolWrite)]
-/// #[protocol(ctx_bounds(CtxTrait))]
+/// #[derive(BitDecode, BitEncode)]
+/// #[codec(ctx_bounds(CtxTrait))]
 /// pub struct WithCtx(NeedsCtx);
 /// ```
 ///
 /// ```
-/// # use bin_proto::{ProtocolRead, ProtocolWrite};
-/// #[derive(ProtocolRead, ProtocolWrite)]
-/// #[protocol(ctx_bounds(From<&'a i32>), ctx_generics('a))]
+/// # use bin_proto::{BitDecode, BitEncode};
+/// #[derive(BitDecode, BitEncode)]
+/// #[codec(ctx_bounds(From<&'a i32>), ctx_generics('a))]
 /// pub struct WithCtx;
 /// ```
 #[cfg_attr(docsrs, doc(cfg(feature = "derive")))]
 #[cfg(feature = "derive")]
-pub use bin_proto_derive::{ProtocolRead, ProtocolWrite};
+pub use bin_proto_derive::{BitDecode, BitEncode};
 
 #[macro_use]
-mod protocol;
+mod codec;
 
 mod bit_read;
 mod bit_write;
@@ -347,12 +347,12 @@ pub struct Tag<T>(pub T);
 pub struct Bits(pub u32);
 
 /// ```compile_fail
-/// # use bin_proto::{ProtocolRead, ProtocolWrite};
-/// #[derive(ProtocolRead, ProtocolWrite)]
+/// # use bin_proto::{BitDecode, BitEncode};
+/// #[derive(BitDecode, BitEncode)]
 /// struct MutuallyExclusiveAttrs {
 ///     pub length: u8,
-///     #[protocol(flexible_array_member)]
-///     #[protocol(tag = length as usize)]
+///     #[codec(flexible_array_member)]
+///     #[codec(tag = length as usize)]
 ///     pub reason: String,
 /// }
 /// ```

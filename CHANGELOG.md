@@ -1,11 +1,13 @@
 # v0.7.0
-- Combine `TaggedRead`, `FlexibleArrayMemberRead`, `BitFieldRead`, and `ProtocolRead` traits
-- Combine `UntaggedWrite`, `BitFieldWrite`, and `ProtocolWrite` traits
+- Combine `TaggedRead`, `FlexibleArrayMemberRead`, `BitFieldRead`, and `ProtocolRead` traits into `BitDecode`
+- Combine `UntaggedWrite`, `BitFieldWrite`, and `ProtocolWrite` traits into `BitEncode`
+- Rename `ProtocolNoCtx` to `Codec`
+- Change all `protocol` attributes to `codec`
 - Add `std` feature, support `no_std`
-- Implement `ProtocolRead` and `ProtocolWrite` on tuples with up to 16 items, `NonZeroUX`, `NonZeroIX`, `Wrapping`, `Saturating`
-- Implement `ProtocolWrite` on `CStr`, `Cow`, `Cell`, `RwLock`, `Mutex`, `RefCell`, `&T`, `&mut T`
-- Implement `ProtocolWrite<_, Untagged>` on `[T]`, `str`
-- Implement `ProtocolWrite<_, Bits>` and `ProtocolRead<_, Bits>` on `NonZeroUX`, `NonZeroIX`, `u64`, `i64`
+- Implement `BitDecode` and `BitEncode` on tuples with up to 16 items, `NonZeroUX`, `NonZeroIX`, `Wrapping`, `Saturating`
+- Implement `BitEncode` on `CStr`, `Cow`, `Cell`, `RwLock`, `Mutex`, `RefCell`, `&T`, `&mut T`
+- Implement `BitEncode<_, Untagged>` on `[T]`, `str`
+- Implement `BitEncode<_, Bits>` and `BitDecode<_, Bits>` on `NonZeroUX`, `NonZeroIX`, `u64`, `i64`
 - Don't use implicit hasher in `HashSet` and `HashMap` impls
 - Increase MSRV to 1.83.0
 - Remove `BitRead::read_unaryX` and `BitWrite::write_unaryX`

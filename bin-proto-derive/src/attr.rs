@@ -80,7 +80,7 @@ impl Attrs {
         let mut ctx_bounds = None;
 
         for attr in attrs {
-            if attr.path().is_ident("protocol") {
+            if attr.path().is_ident("codec") {
                 attr.parse_nested_meta(|meta| {
                     if meta.path.is_ident("flexible_array_member") {
                         expect_attr_kind!(AttrKind::Field, kind, meta, "flexible_array_member");
@@ -142,7 +142,7 @@ impl Attrs {
                         expect_attr_kind!(AttrKind::Field, kind, meta, "tag_value");
                         tag_value = Some(meta.value()?.parse()?);
                     } else {
-                        return Err(meta.error("unrecognized protocol"));
+                        return Err(meta.error("unrecognized codec"));
                     }
                     Ok(())
                 })?;

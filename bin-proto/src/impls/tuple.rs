@@ -1,28 +1,28 @@
-use crate::{BitRead, BitWrite, ByteOrder, ProtocolRead, ProtocolWrite, Result};
+use crate::{BitDecode, BitEncode, BitRead, BitWrite, ByteOrder, Result};
 
 macro_rules! impl_tuple {
     ($($idx:tt $t:ident),*) => {
         #[cfg_attr(docsrs, doc(hidden))]
-        impl<Ctx, $($t,)*> $crate::ProtocolRead<Ctx> for ($($t,)*)
+        impl<Ctx, $($t,)*> $crate::BitDecode<Ctx> for ($($t,)*)
         where
-            $($t: $crate::ProtocolRead<Ctx>,)*
+            $($t: $crate::BitDecode<Ctx>,)*
         {
-            fn read(
+            fn decode(
                 read: &mut dyn $crate::BitRead,
                 byte_order: $crate::ByteOrder,
                 ctx: &mut Ctx,
                 (): (),
             ) -> $crate::Result<Self> {
-                Ok(($(<$t as $crate::ProtocolRead<Ctx>>::read(read, byte_order, ctx, ())?,)*))
+                Ok(($(<$t as $crate::BitDecode<Ctx>>::decode(read, byte_order, ctx, ())?,)*))
             }
         }
 
         #[cfg_attr(docsrs, doc(hidden))]
-        impl<Ctx, $($t,)*> $crate::ProtocolWrite<Ctx> for ($($t,)*)
+        impl<Ctx, $($t,)*> $crate::BitEncode<Ctx> for ($($t,)*)
         where
-            $($t: $crate::ProtocolWrite<Ctx>,)*
+            $($t: $crate::BitEncode<Ctx>,)*
         {
-            fn write(
+            fn encode(
                 &self,
                 write: &mut dyn $crate::BitWrite,
                 byte_order: $crate::ByteOrder,
@@ -30,7 +30,7 @@ macro_rules! impl_tuple {
                 (): ()
             ) -> $crate::Result<()> {
                 $(
-                    $crate::ProtocolWrite::write(&self.$idx, write, byte_order, ctx, ())?;
+                    $crate::BitEncode::encode(&self.$idx, write, byte_order, ctx, ())?;
                 )*
                 Ok(())
             }
@@ -43,17 +43,17 @@ macro_rules! impl_tuple {
     docsrs,
     doc = "This trait is implemented for tuples with up to 16 items."
 )]
-impl<Ctx, Tag, T> ProtocolRead<Ctx, Tag> for (T,)
+impl<Ctx, Tag, T> BitDecode<Ctx, Tag> for (T,)
 where
-    T: ProtocolRead<Ctx, Tag>,
+    T: BitDecode<Ctx, Tag>,
 {
-    fn read(
+    fn decode(
         read: &mut dyn BitRead,
         byte_order: ByteOrder,
         ctx: &mut Ctx,
         tag: Tag,
     ) -> Result<Self> {
-        Ok((ProtocolRead::read(read, byte_order, ctx, tag)?,))
+        Ok((BitDecode::decode(read, byte_order, ctx, tag)?,))
     }
 }
 
@@ -62,18 +62,18 @@ where
     doc = "This trait is implemented for tuples with up to 16 items."
 )]
 #[cfg_attr(docsrs, doc(fake_variadic))]
-impl<Ctx, Tag, T> ProtocolWrite<Ctx, Tag> for (T,)
+impl<Ctx, Tag, T> BitEncode<Ctx, Tag> for (T,)
 where
-    T: ProtocolWrite<Ctx, Tag>,
+    T: BitEncode<Ctx, Tag>,
 {
-    fn write(
+    fn encode(
         &self,
         write: &mut dyn BitWrite,
         byte_order: ByteOrder,
         ctx: &mut Ctx,
         tag: Tag,
     ) -> Result<()> {
-        self.0.write(write, byte_order, ctx, tag)
+        self.0.encode(write, byte_order, ctx, tag)
     }
 }
 
@@ -93,4 +93,4 @@ impl_tuple!(0 A, 1 B, 2 C, 3 D);
 impl_tuple!(0 A, 1 B, 2 C);
 impl_tuple!(0 A, 1 B);
 
-test_protocol!((u8,); (1,) => [0x01]);
+test_codec!((u8,); (1,) => [0x01]);

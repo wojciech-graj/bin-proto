@@ -3,18 +3,18 @@ macro_rules! impl_read_list {
         $ty:ident<T $(: $tbound0:ident $(+ $tbound1:ident)?)?
         $(, $h:ident: $hbound0:ident + $hbound1:ident)?>
     ) => {
-        impl<Tag, Ctx, T, $($h)?> $crate::ProtocolRead<Ctx, $crate::Tag<Tag>> for $ty<T, $($h)?>
+        impl<Tag, Ctx, T, $($h)?> $crate::BitDecode<Ctx, $crate::Tag<Tag>> for $ty<T, $($h)?>
         where
-            T: $crate::ProtocolRead<Ctx> $(+ $tbound0 $(+ $tbound1)?)?,
+            T: $crate::BitDecode<Ctx> $(+ $tbound0 $(+ $tbound1)?)?,
             Tag: ::core::convert::TryInto<usize>,
             $($h: $hbound0 + $hbound1)?
         {
-            fn read(read: &mut dyn $crate::BitRead,
+            fn decode(read: &mut dyn $crate::BitRead,
                 byte_order: $crate::ByteOrder,
                 ctx: &mut Ctx,
                 tag: $crate::Tag<Tag>,
             ) -> $crate::Result<Self> {
-                let elements = $crate::util::read_items(
+                let elements = $crate::util::decode_items(
                     ::core::convert::TryInto::try_into(tag.0)
                         .map_err(|_| $crate::Error::TagConvert)?,
                     read,
@@ -25,19 +25,19 @@ macro_rules! impl_read_list {
             }
         }
 
-        impl<Ctx, T, $($h)?> $crate::ProtocolRead<Ctx, $crate::Untagged> for $ty<T, $($h)?>
+        impl<Ctx, T, $($h)?> $crate::BitDecode<Ctx, $crate::Untagged> for $ty<T, $($h)?>
         where
-            T: $crate::ProtocolRead<Ctx> $(+ $tbound0 $(+ $tbound1)?)?,
+            T: $crate::BitDecode<Ctx> $(+ $tbound0 $(+ $tbound1)?)?,
             $($h: $hbound0 + $hbound1)?
         {
-            fn read(
+            fn decode(
                 read: &mut dyn $crate::BitRead,
                 byte_order: $crate::ByteOrder,
                 ctx: &mut Ctx,
                 _: $crate::Untagged,
             ) -> $crate::Result<Self> {
                 Ok(::core::iter::IntoIterator::into_iter(
-                    $crate::util::read_items_to_eof(read, byte_order, ctx)?
+                    $crate::util::decode_items_to_eof(read, byte_order, ctx)?
                 ).collect())
             }
         }
@@ -46,17 +46,17 @@ macro_rules! impl_read_list {
 
 macro_rules! impl_write_list {
     ( $ty:ident<T $(: $tbound0:ident $(+ $tbound1:ident)?)? $(, $h:ident)?> ) => {
-        impl<Ctx, T, $($h)?> $crate::ProtocolWrite<Ctx, $crate::Untagged> for $ty<T, $($h)?>
+        impl<Ctx, T, $($h)?> $crate::BitEncode<Ctx, $crate::Untagged> for $ty<T, $($h)?>
         where
-            T: $crate::ProtocolWrite<Ctx> $(+ $tbound0 $(+ $tbound1)?)?
+            T: $crate::BitEncode<Ctx> $(+ $tbound0 $(+ $tbound1)?)?
         {
-            fn write(&self,
+            fn encode(&self,
                 write: &mut dyn $crate::BitWrite,
                 byte_order: $crate::ByteOrder,
                 ctx: &mut Ctx,
                 _: $crate::Untagged,
             ) -> $crate::Result<()> {
-                $crate::util::write_items(self.iter(), write, byte_order, ctx)
+                $crate::util::encode_items(self.iter(), write, byte_order, ctx)
             }
         }
     }
@@ -74,7 +74,7 @@ mod vec {
 
         use super::*;
 
-        test_untagged_and_protocol!(Vec<u8>| Untagged, Tag(3); alloc::vec![1, 2, 3] => [0x01, 0x02, 0x03]);
+        test_untagged_and_codec!(Vec<u8>| Untagged, Tag(3); alloc::vec![1, 2, 3] => [0x01, 0x02, 0x03]);
     }
 }
 
@@ -90,7 +90,7 @@ mod linked_list {
 
         use super::*;
 
-        test_untagged_and_protocol!(LinkedList<u8>| Untagged, Tag(3); [1, 2, 3].into() => [0x01, 0x02, 0x03]);
+        test_untagged_and_codec!(LinkedList<u8>| Untagged, Tag(3); [1, 2, 3].into() => [0x01, 0x02, 0x03]);
     }
 }
 
@@ -106,7 +106,7 @@ mod vec_deque {
 
         use super::*;
 
-        test_untagged_and_protocol!(VecDeque<u8>| Untagged, Tag(3); [1, 2, 3].into() => [0x01, 0x02, 0x03]);
+        test_untagged_and_codec!(VecDeque<u8>| Untagged, Tag(3); [1, 2, 3].into() => [0x01, 0x02, 0x03]);
     }
 }
 
@@ -122,7 +122,7 @@ mod b_tree_set {
 
         use super::*;
 
-        test_untagged_and_protocol!(BTreeSet<u8>| Untagged, Tag(3); [1, 2, 3].into() => [0x01, 0x02, 0x03]);
+        test_untagged_and_codec!(BTreeSet<u8>| Untagged, Tag(3); [1, 2, 3].into() => [0x01, 0x02, 0x03]);
     }
 }
 
@@ -149,6 +149,6 @@ mod hash_set {
 
         use super::*;
 
-        test_untagged_and_protocol!(HashSet<u8>| Untagged, Tag(1); [1].into() => [0x01]);
+        test_untagged_and_codec!(HashSet<u8>| Untagged, Tag(1); [1].into() => [0x01]);
     }
 }

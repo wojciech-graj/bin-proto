@@ -1,16 +1,16 @@
-use crate::{BitRead, BitWrite, ByteOrder, ProtocolRead, ProtocolWrite, Result};
+use crate::{BitDecode, BitEncode, BitRead, BitWrite, ByteOrder, Result};
 use core::marker::PhantomPinned;
 
-impl<Ctx> ProtocolRead<Ctx> for PhantomPinned {
-    fn read(_: &mut dyn BitRead, _: ByteOrder, _: &mut Ctx, (): ()) -> Result<Self> {
+impl<Ctx> BitDecode<Ctx> for PhantomPinned {
+    fn decode(_: &mut dyn BitRead, _: ByteOrder, _: &mut Ctx, (): ()) -> Result<Self> {
         Ok(Self)
     }
 }
 
-impl<Ctx> ProtocolWrite<Ctx> for PhantomPinned {
-    fn write(&self, _: &mut dyn BitWrite, _: ByteOrder, _: &mut Ctx, (): ()) -> Result<()> {
+impl<Ctx> BitEncode<Ctx> for PhantomPinned {
+    fn encode(&self, _: &mut dyn BitWrite, _: ByteOrder, _: &mut Ctx, (): ()) -> Result<()> {
         Ok(())
     }
 }
 
-test_protocol!(PhantomPinned; PhantomPinned => []);
+test_codec!(PhantomPinned; PhantomPinned => []);
