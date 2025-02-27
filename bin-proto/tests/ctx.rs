@@ -1,3 +1,5 @@
+#![cfg(feature = "derive")]
+
 use std::marker::PhantomData;
 
 use bin_proto::{ByteOrder, ProtocolRead, ProtocolWrite};
@@ -51,6 +53,7 @@ impl<Ctx: CtxTrait> ProtocolRead<Ctx> for CtxCheck {
         _: &mut dyn bin_proto::BitRead,
         _: bin_proto::ByteOrder,
         ctx: &mut Ctx,
+        _: (),
     ) -> Result<Self, bin_proto::Error> {
         ctx.call();
         Ok(Self)
@@ -96,7 +99,7 @@ struct CtxCheckTraitWrapper(CtxCheck);
 #[test]
 fn read_ctx_passed() {
     let mut ctx = CtxStruct(false);
-    CtxCheck::from_bytes_ctx(&[], ByteOrder::BigEndian, &mut ctx).unwrap();
+    CtxCheck::from_bytes_ctx(&[], ByteOrder::BigEndian, &mut ctx, ()).unwrap();
     assert!(ctx.0);
 }
 

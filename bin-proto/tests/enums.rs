@@ -1,3 +1,5 @@
+#![cfg(feature = "derive")]
+
 use std::marker::PhantomData;
 
 use bin_proto::{ByteOrder, ProtocolNoCtx, ProtocolRead, ProtocolWrite};

@@ -5,7 +5,7 @@ impl<Ctx, T, const N: usize> ProtocolRead<Ctx> for [T; N]
 where
     T: ProtocolRead<Ctx>,
 {
-    fn read(read: &mut dyn BitRead, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<Self> {
+    fn read(read: &mut dyn BitRead, byte_order: ByteOrder, ctx: &mut Ctx, _: ()) -> Result<Self> {
         let elements = util::read_items(N, read, byte_order, ctx)?;
         elements.try_into().map_err(|_| Error::SliceTryFromVec)
     }

@@ -7,7 +7,7 @@ pub enum TraitImplType {
     ProtocolRead,
     ProtocolWrite,
     TaggedRead(syn::Type),
-    UntaggedWrite,
+    TaggedWrite,
     Discriminable,
 }
 
@@ -28,36 +28,12 @@ pub fn impl_trait_for(
 
     let mut trait_generics: Punctuated<TokenStream, Token![,]> = Punctuated::new();
 
-    let trait_name = match &typ {
-        TraitImplType::ProtocolRead => quote!(ProtocolRead),
-        TraitImplType::ProtocolWrite => quote!(ProtocolWrite),
-        TraitImplType::TaggedRead(discriminant) => {
-            let ident = syn::Ident::new("__Tag", Span::call_site());
-            let mut bounds = Punctuated::new();
-            bounds.push(parse_quote!(::std::convert::TryInto<#discriminant>));
-            generics
-                .params
-                .push(syn::GenericParam::Type(syn::TypeParam {
-                    attrs: Vec::new(),
-                    ident: ident.clone(),
-                    colon_token: None,
-                    bounds,
-                    eq_token: None,
-                    default: None,
-                }));
-            trait_generics.push(quote!(#ident));
-            quote!(TaggedRead)
-        }
-        TraitImplType::UntaggedWrite => quote!(UntaggedWrite),
-        TraitImplType::Discriminable => quote!(Discriminable),
-    };
-
     if matches!(
         typ,
         TraitImplType::ProtocolRead
             | TraitImplType::ProtocolWrite
             | TraitImplType::TaggedRead(_)
-            | TraitImplType::UntaggedWrite
+            | TraitImplType::TaggedWrite
     ) {
         if let Some(ctx_generics) = attribs.ctx_generics {
             generics.params.extend(ctx_generics);
@@ -85,6 +61,33 @@ pub fn impl_trait_for(
             quote!(#ident)
         });
     }
+
+    let trait_name = match &typ {
+        TraitImplType::ProtocolRead => quote!(ProtocolRead),
+        TraitImplType::ProtocolWrite => quote!(ProtocolWrite),
+        TraitImplType::TaggedWrite => {
+            trait_generics.push(quote!(::bin_proto::Untagged));
+            quote!(ProtocolWrite)
+        }
+        TraitImplType::TaggedRead(discriminant) => {
+            let ident = syn::Ident::new("__Tag", Span::call_site());
+            let mut bounds = Punctuated::new();
+            bounds.push(parse_quote!(::std::convert::TryInto<#discriminant>));
+            generics
+                .params
+                .push(syn::GenericParam::Type(syn::TypeParam {
+                    attrs: Vec::new(),
+                    ident: ident.clone(),
+                    colon_token: None,
+                    bounds,
+                    eq_token: None,
+                    default: None,
+                }));
+            trait_generics.push(quote!((#ident,)));
+            quote!(ProtocolRead)
+        }
+        TraitImplType::Discriminable => quote!(Discriminable),
+    };
 
     let (impl_generics, _, where_clause) = generics.split_for_impl();
     quote!(

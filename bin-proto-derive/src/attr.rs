@@ -1,6 +1,5 @@
-use std::fmt;
-
 use proc_macro2::{Span, TokenStream};
+use std::fmt;
 use syn::{parenthesized, punctuated::Punctuated, Error, Result, Token};
 
 #[derive(Default)]

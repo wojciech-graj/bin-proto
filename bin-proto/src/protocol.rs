@@ -9,27 +9,33 @@ use core2::io;
 use crate::{BitRead, BitWrite, ByteOrder, Result};
 
 /// A trait for bit-level decoding.
-pub trait ProtocolRead<Ctx = ()>: Sized {
+pub trait ProtocolRead<Ctx = (), Tag = ()>: Sized {
     /// Reads self from a stream.
-    fn read(read: &mut dyn BitRead, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<Self>;
+    fn read(read: &mut dyn BitRead, byte_order: ByteOrder, ctx: &mut Ctx, tag: Tag)
+        -> Result<Self>;
 
     /// Parses a new value from its raw byte representation with additional context.
-    fn from_bytes_ctx(bytes: &[u8], byte_order: ByteOrder, ctx: &mut Ctx) -> Result<Self> {
+    fn from_bytes_ctx(
+        bytes: &[u8],
+        byte_order: ByteOrder,
+        ctx: &mut Ctx,
+        tag: Tag,
+    ) -> Result<Self> {
         match byte_order {
             ByteOrder::LittleEndian => {
                 let mut buffer = BitReader::endian(io::Cursor::new(bytes), LittleEndian);
-                Self::read(&mut buffer, byte_order, ctx)
+                Self::read(&mut buffer, byte_order, ctx, tag)
             }
             ByteOrder::BigEndian => {
                 let mut buffer = BitReader::endian(io::Cursor::new(bytes), BigEndian);
-                Self::read(&mut buffer, byte_order, ctx)
+                Self::read(&mut buffer, byte_order, ctx, tag)
             }
         }
     }
 }
 
 /// A trait for bit-level encoding.
-pub trait ProtocolWrite<Ctx = ()> {
+pub trait ProtocolWrite<Ctx = (), Tag = ()> {
     /// Writes a value to a stream.
     fn write(&self, write: &mut dyn BitWrite, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<()>;
 
@@ -57,7 +63,7 @@ pub trait ProtocolWrite<Ctx = ()> {
 pub trait ProtocolNoCtx: ProtocolRead + ProtocolWrite {
     /// Parses a new value from its raw byte representation without context.
     fn from_bytes(bytes: &[u8], byte_order: ByteOrder) -> Result<Self> {
-        Self::from_bytes_ctx(bytes, byte_order, &mut ())
+        Self::from_bytes_ctx(bytes, byte_order, &mut (), ())
     }
 
     /// Gets the raw bytes of this type without context.
@@ -69,6 +75,22 @@ pub trait ProtocolNoCtx: ProtocolRead + ProtocolWrite {
 impl<T> ProtocolNoCtx for T where T: ProtocolRead + ProtocolWrite {}
 
 macro_rules! test_protocol_read {
+    ($ty:ty | $tag:literal: $bytes:expr => $exp:expr) => {
+        #[cfg(test)]
+        #[test]
+        fn protocol_read() {
+            let bytes: &[u8] = &$bytes;
+            let exp: $ty = $exp;
+            let read: $ty = $crate::ProtocolRead::read(
+                &mut ::bitstream_io::BitReader::endian(bytes, ::bitstream_io::BigEndian),
+                $crate::ByteOrder::BigEndian,
+                &mut (),
+                ($tag,),
+            )
+            .unwrap();
+            assert_eq!(exp, read);
+        }
+    };
     ($ty:ty: $bytes:expr => $exp:expr) => {
         #[cfg(test)]
         #[test]
@@ -79,6 +101,7 @@ macro_rules! test_protocol_read {
                 &mut ::bitstream_io::BitReader::endian(bytes, ::bitstream_io::BigEndian),
                 $crate::ByteOrder::BigEndian,
                 &mut (),
+                (),
             )
             .unwrap();
             assert_eq!(exp, read);
@@ -109,8 +132,34 @@ macro_rules! test_protocol_write {
 }
 
 macro_rules! test_protocol {
-    ($ty:ty: $value:expr => $bytes:expr) => {
-        test_protocol_read!($ty: $bytes => $value);
+    ($ty:ty$(| $tag:literal)?: $value:expr => $bytes:expr) => {
+        test_protocol_read!($ty$(| $tag)?: $bytes => $value);
         test_protocol_write!($ty: $value => $bytes);
+    }
+}
+
+macro_rules! test_flexible_array_member_read {
+    ($ty:ty: $bytes:expr => $exp:expr) => {
+        #[cfg(test)]
+        #[test]
+        fn flexible_array_member_read() {
+            let bytes: &[u8] = &$bytes;
+            let exp: $ty = $exp;
+            let read: $ty = $crate::ProtocolRead::read(
+                &mut ::bitstream_io::BitReader::endian(bytes, ::bitstream_io::BigEndian),
+                $crate::ByteOrder::BigEndian,
+                &mut (),
+                $crate::Untagged,
+            )
+            .unwrap();
+            assert_eq!(exp, read);
+        }
+    };
+}
+
+macro_rules! test_flexible_array_member_read_and_protocol {
+    ($ty:ty | $tag:literal: $value:expr => $bytes:expr) => {
+        test_protocol!($ty | $tag: $value => $bytes);
+        test_flexible_array_member_read!($ty: $bytes => $value);
     }
 }

@@ -21,7 +21,7 @@ where
 {
     let mut elements = Vec::with_capacity(item_count);
     for _ in 0..item_count {
-        let element = T::read(read, byte_order, ctx)?;
+        let element = T::read(read, byte_order, ctx, ())?;
         elements.push(element);
     }
     Ok(elements)
@@ -55,7 +55,7 @@ where
 {
     let mut items = Vec::new();
     loop {
-        let item = match T::read(read, byte_order, ctx) {
+        let item = match T::read(read, byte_order, ctx, ()) {
             Ok(item) => item,
             Err(Error::Io(e)) => {
                 return if e.kind() == io::ErrorKind::UnexpectedEof {

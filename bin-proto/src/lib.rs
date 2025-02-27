@@ -6,6 +6,8 @@
 //! # Example
 //!
 //! ```
+//! # #[cfg(feature = "derive")]
+//! # {
 //! # use bin_proto::{ProtocolRead, ProtocolWrite, ProtocolNoCtx};
 //! #[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq)]
 //! #[protocol(discriminant_type = u8)]
@@ -53,6 +55,7 @@
 //!         read_to_end: vec![0x01, 0x02, 0x03],
 //!     }
 //! );
+//! # }
 //! ```
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
@@ -83,10 +86,8 @@ pub use self::bit_write::BitWrite;
 pub use self::byte_order::ByteOrder;
 pub use self::discriminable::Discriminable;
 pub use self::error::{Error, Result};
-pub use self::flexible_array_member::FlexibleArrayMemberRead;
 pub use self::protocol::ProtocolNoCtx;
 pub use self::protocol::{ProtocolRead, ProtocolWrite};
-pub use self::tagged::{TaggedRead, UntaggedWrite};
 
 /// Derive the `ProtocolRead` and `ProtocolWrite` traits.
 ///
@@ -143,7 +144,7 @@ pub use self::tagged::{TaggedRead, UntaggedWrite};
 /// ```
 ///
 /// ## `#[protocol(flexible_array_member)]`
-/// - Applies to: `impl FlexibleArrayMemberRead`
+/// - Applies to: `impl UntaggedRead`
 ///
 /// Variable-length field is final field in container, hence lacks a length prefix and should be
 /// read until eof.
@@ -229,6 +230,7 @@ pub use self::tagged::{TaggedRead, UntaggedWrite};
 ///         _read: &mut dyn bin_proto::BitRead,
 ///         _byte_order: bin_proto::ByteOrder,
 ///         _ctx: &mut Ctx,
+///         _tag: (),
 ///     ) -> bin_proto::Result<Self> {
 ///         // Use ctx here
 ///         Ok(Self)
@@ -292,6 +294,7 @@ pub use self::tagged::{TaggedRead, UntaggedWrite};
 ///         _read: &mut dyn bin_proto::BitRead,
 ///         _byte_order: bin_proto::ByteOrder,
 ///         _ctx: &mut Ctx,
+///         _tag: (),
 ///     ) -> bin_proto::Result<Self> {
 ///         // Use ctx here
 ///         Ok(Self)
@@ -332,15 +335,14 @@ mod byte_order;
 mod discriminable;
 mod error;
 #[macro_use]
-mod flexible_array_member;
-#[macro_use]
 mod protocol;
-#[macro_use]
-mod tagged;
 mod impls;
 mod util;
 
 pub extern crate bitstream_io;
+
+#[derive(Debug, Clone, Copy)]
+pub struct Untagged;
 
 /// ```compile_fail
 /// # use bin_proto::{ProtocolRead, ProtocolWrite};

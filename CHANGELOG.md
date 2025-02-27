@@ -1,10 +1,10 @@
 # v0.7.0
+- Merge `TaggedRead` and `FlexibleArrayMemberRead` into `ProtocolRead`, and `UntaggedWrite` into `ProtocolWrite`
 - Add `std` feature, support `no_std`
 - Implement `ProtocolRead` and `ProtocolWrite` on tuples with up to 16 items, `NonZeroUX`, `NonZeroIX`, `Wrapping`, `Saturating`
 - Implement `ProtocolWrite` on `CStr`, `Cow`, `Cell`, `RwLock`, `Mutex`, `RefCell`, `&T`, `&mut T`
+- Implement `ProtocolWrite<_, Untagged>` on `[T]`, `str`
 - Implement `BitFieldWrite` and `BitFieldRead` on `NonZeroUX`, `NonZeroIX`, `u64`, `i64`
-- Implement `UntaggedWrite` on `[T]`, `str`
-- Drop `Sized` bound on `UntaggedWrite`
 - Don't use implicit hasher in `HashSet` and `HashMap` impls
 - Increase MSRV to 1.83.0
 - Remove `BitRead::read_unaryX` and `BitWrite::write_unaryX`

@@ -36,8 +36,11 @@ macro_rules! impl_container_read {
                 read: &mut dyn $crate::BitRead,
                 byte_order: $crate::ByteOrder,
                 ctx: &mut Ctx,
+                tag: (),
             ) -> $crate::Result<Self> {
-                Ok($ty::new($crate::ProtocolRead::read(read, byte_order, ctx)?))
+                Ok($ty::new($crate::ProtocolRead::read(
+                    read, byte_order, ctx, tag,
+                )?))
             }
         }
     };

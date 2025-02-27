@@ -62,23 +62,24 @@ fn read(field: &syn::Field) -> TokenStream {
     if let Some(field_width) = attribs.bits {
         quote!(::bin_proto::BitFieldRead::read(__io_reader, __byte_order, __ctx, #field_width))
     } else if attribs.flexible_array_member {
-        quote!(::bin_proto::FlexibleArrayMemberRead::read(
+        quote!(::bin_proto::ProtocolRead::read(
             __io_reader,
             __byte_order,
-            __ctx
+            __ctx,
+            ::bin_proto::Untagged
         ))
     } else if let Some(tag) = attribs.tag {
         match tag {
             Tag::External(tag) => {
-                quote!(::bin_proto::TaggedRead::read(__io_reader, __byte_order, __ctx, #tag))
+                quote!(::bin_proto::ProtocolRead::read(__io_reader, __byte_order, __ctx, (#tag,)))
             }
             Tag::Prepend {
                 typ,
                 write_value: _,
             } => {
                 quote!({
-                    let __tag = ::bin_proto::ProtocolRead::read(__io_reader, __byte_order, __ctx)?;
-                    ::bin_proto::TaggedRead::<#typ, _>::read(__io_reader, __byte_order, __ctx, __tag)
+                    let __tag: #typ = ::bin_proto::ProtocolRead::read(__io_reader, __byte_order, __ctx, ())?;
+                    ::bin_proto::ProtocolRead::read(__io_reader, __byte_order, __ctx, (__tag,))
                 })
             }
         }
@@ -86,7 +87,8 @@ fn read(field: &syn::Field) -> TokenStream {
         quote!(::bin_proto::ProtocolRead::read(
             __io_reader,
             __byte_order,
-            __ctx
+            __ctx,
+            (),
         ))
     }
 }
@@ -113,17 +115,11 @@ fn write(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
                 ::bin_proto::BitFieldWrite::write(#field_ref, __io_writer, __byte_order, __ctx, #field_width)?
             }
         )
-    } else if attribs.flexible_array_member {
-        quote!(
-            {
-                ::bin_proto::UntaggedWrite::write(#field_ref, __io_writer, __byte_order, __ctx)?
-            }
-        )
     } else if let Some(tag) = attribs.tag {
         match tag {
             Tag::External(_) => quote!(
                 {
-                    ::bin_proto::UntaggedWrite::write(#field_ref, __io_writer, __byte_order, __ctx)?
+                    ::bin_proto::ProtocolWrite::<_, ::bin_proto::Untagged>::write(#field_ref, __io_writer, __byte_order, __ctx)?
                 }
             ),
             Tag::Prepend {
@@ -131,8 +127,8 @@ fn write(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
                 write_value: Some(value),
             } => quote!(
                 {
-                    <#typ as ::bin_proto::ProtocolWrite<_>>::write(&{#value}, __io_writer, __byte_order, __ctx)?;
-                    ::bin_proto::UntaggedWrite::write(#field_ref, __io_writer, __byte_order, __ctx)?
+                    <#typ as ::bin_proto::ProtocolWrite::<_>>::write(&{#value}, __io_writer, __byte_order, __ctx)?;
+                    ::bin_proto::ProtocolWrite::<_, ::bin_proto::Untagged>::write(#field_ref, __io_writer, __byte_order, __ctx)?
                 }
             ),
             Tag::Prepend {
@@ -143,10 +139,16 @@ fn write(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
                     .to_compile_error();
             }
         }
+    } else if attribs.flexible_array_member {
+        quote!(
+            {
+                ::bin_proto::ProtocolWrite::<_, ::bin_proto::Untagged>::write(#field_ref, __io_writer, __byte_order, __ctx)?
+            }
+        )
     } else {
         quote!(
             {
-                ::bin_proto::ProtocolWrite::write(#field_ref, __io_writer, __byte_order, __ctx)?
+                ::bin_proto::ProtocolWrite::<_>::write(#field_ref, __io_writer, __byte_order, __ctx)?
             }
         )
     }

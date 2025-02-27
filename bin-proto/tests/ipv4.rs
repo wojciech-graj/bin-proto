@@ -1,3 +1,5 @@
+#![cfg(feature = "derive")]
+
 use bin_proto::{ByteOrder, ProtocolNoCtx, ProtocolRead, ProtocolWrite};
 
 #[derive(Debug, ProtocolRead, ProtocolWrite, PartialEq)]

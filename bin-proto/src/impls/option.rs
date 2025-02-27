@@ -1,21 +1,18 @@
-use crate::{
-    BitRead, BitWrite, ByteOrder, Error, ProtocolRead, ProtocolWrite, Result, TaggedRead,
-    UntaggedWrite,
-};
+use crate::{BitRead, BitWrite, ByteOrder, Error, ProtocolRead, ProtocolWrite, Result, Untagged};
 
-impl<Tag, Ctx, T> TaggedRead<Tag, Ctx> for Option<T>
+impl<Tg, Ctx, T> ProtocolRead<Ctx, (Tg,)> for Option<T>
 where
     T: ProtocolRead<Ctx>,
-    Tag: TryInto<bool>,
+    Tg: TryInto<bool>,
 {
     fn read(
         read: &mut dyn BitRead,
         byte_order: ByteOrder,
         ctx: &mut Ctx,
-        tag: Tag,
+        tag: (Tg,),
     ) -> Result<Self> {
-        if tag.try_into().map_err(|_| Error::TagConvert)? {
-            let value = T::read(read, byte_order, ctx)?;
+        if tag.0.try_into().map_err(|_| Error::TagConvert)? {
+            let value = T::read(read, byte_order, ctx, ())?;
             Ok(Some(value))
         } else {
             Ok(None)
@@ -23,7 +20,7 @@ where
     }
 }
 
-impl<Ctx, T> UntaggedWrite<Ctx> for Option<T>
+impl<Ctx, T> ProtocolWrite<Ctx, Untagged> for Option<T>
 where
     T: ProtocolWrite<Ctx>,
 {
@@ -36,9 +33,9 @@ where
 }
 
 mod none {
-    test_tagged!(Option<u8>| false: None => []);
+    test_protocol!(Option<u8>| false: None => []);
 }
 
 mod some {
-    test_tagged!(Option<u8>| true: Some(1) => [0x01]);
+    test_protocol!(Option<u8>| true: Some(1) => [0x01]);
 }

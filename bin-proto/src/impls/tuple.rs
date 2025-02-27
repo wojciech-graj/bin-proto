@@ -11,8 +11,9 @@ macro_rules! impl_tuple {
                 read: &mut dyn $crate::BitRead,
                 byte_order: $crate::ByteOrder,
                 ctx: &mut Ctx,
+                tag: (),
             ) -> $crate::Result<Self> {
-                Ok(($(<$t as $crate::ProtocolRead<Ctx>>::read(read, byte_order, ctx)?,)*))
+                Ok(($(<$t as $crate::ProtocolRead<Ctx>>::read(read, byte_order, ctx, tag)?,)*))
             }
         }
 
@@ -45,8 +46,8 @@ impl<Ctx, T> ProtocolRead<Ctx> for (T,)
 where
     T: ProtocolRead<Ctx>,
 {
-    fn read(read: &mut dyn BitRead, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<Self> {
-        Ok((ProtocolRead::read(read, byte_order, ctx)?,))
+    fn read(read: &mut dyn BitRead, byte_order: ByteOrder, ctx: &mut Ctx, tag: ()) -> Result<Self> {
+        Ok((ProtocolRead::read(read, byte_order, ctx, tag)?,))
     }
 }
 

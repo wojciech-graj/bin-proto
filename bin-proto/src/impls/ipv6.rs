@@ -3,8 +3,8 @@ use core::net::Ipv6Addr;
 use crate::{BitRead, BitWrite, ByteOrder, ProtocolRead, ProtocolWrite, Result};
 
 impl<Ctx> ProtocolRead<Ctx> for Ipv6Addr {
-    fn read(read: &mut dyn BitRead, byte_order: ByteOrder, ctx: &mut Ctx) -> Result<Self> {
-        let bytes: [u16; 8] = ProtocolRead::read(read, byte_order, ctx)?;
+    fn read(read: &mut dyn BitRead, byte_order: ByteOrder, ctx: &mut Ctx, tag: ()) -> Result<Self> {
+        let bytes: [u16; 8] = ProtocolRead::read(read, byte_order, ctx, tag)?;
 
         Ok(Self::new(
             bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],

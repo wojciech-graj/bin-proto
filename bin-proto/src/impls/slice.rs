@@ -1,6 +1,6 @@
-use crate::{util, BitWrite, ByteOrder, ProtocolWrite, Result, UntaggedWrite};
+use crate::{util, BitWrite, ByteOrder, ProtocolWrite, Result};
 
-impl<Ctx, T> UntaggedWrite<Ctx> for [T]
+impl<Ctx, T> ProtocolWrite<Ctx> for [T]
 where
     T: ProtocolWrite<Ctx>,
 {
@@ -9,4 +9,4 @@ where
     }
 }
 
-test_untagged_write!(&[u8]: &[1, 2, 3] => [0x01, 0x02, 0x03]);
+test_protocol_write!(&[u8]: &[1, 2, 3] => [0x01, 0x02, 0x03]);

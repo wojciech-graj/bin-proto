@@ -8,8 +8,9 @@ macro_rules! impl_newtype {
                 read: &mut dyn $crate::BitRead,
                 byte_order: $crate::ByteOrder,
                 ctx: &mut Ctx,
+                tag: (),
             ) -> $crate::Result<Self> {
-                Ok(Self($crate::ProtocolRead::read(read, byte_order, ctx)?))
+                Ok(Self($crate::ProtocolRead::read(read, byte_order, ctx, tag)?))
             }
         }
 

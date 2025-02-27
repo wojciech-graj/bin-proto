@@ -8,7 +8,8 @@ pub fn read_discriminant(attribs: &Attrs) -> TokenStream {
         quote!(::bin_proto::ProtocolRead::read(
             __io_reader,
             __byte_order,
-            __ctx
+            __ctx,
+            (),
         ))
     }
 }
@@ -98,9 +99,11 @@ pub fn read_variant_fields(plan: &plan::Enum) -> TokenStream {
         )
     });
 
+    let discriminant_ty = &plan.discriminant_ty;
+
     quote!(
         {
-            match __tag.try_into().map_err(|_| ::bin_proto::Error::TagConvert)? {
+            match ::core::convert::TryInto::<#discriminant_ty>::try_into(__tag.0).map_err(|_| ::bin_proto::Error::TagConvert)? {
                 #(#discriminant_match_branches,)*
                 unknown_discriminant => {
                     return Err(::bin_proto::Error::UnknownEnumDiscriminant(
