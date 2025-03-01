@@ -74,7 +74,9 @@ mod vec {
 
         use super::*;
 
-        test_untagged_and_codec!(Vec<u8>| Untagged, Tag(3); alloc::vec![1, 2, 3] => [0x01, 0x02, 0x03]);
+        test_untagged_and_codec!(
+            Vec<u8>| Untagged, Tag(3); alloc::vec![1, 2, 3] => [0x01, 0x02, 0x03]
+        );
     }
 }
 
@@ -90,7 +92,9 @@ mod linked_list {
 
         use super::*;
 
-        test_untagged_and_codec!(LinkedList<u8>| Untagged, Tag(3); [1, 2, 3].into() => [0x01, 0x02, 0x03]);
+        test_untagged_and_codec!(
+            LinkedList<u8>| Untagged, Tag(3); [1, 2, 3].into() => [0x01, 0x02, 0x03]
+        );
     }
 }
 
@@ -106,7 +110,9 @@ mod vec_deque {
 
         use super::*;
 
-        test_untagged_and_codec!(VecDeque<u8>| Untagged, Tag(3); [1, 2, 3].into() => [0x01, 0x02, 0x03]);
+        test_untagged_and_codec!(
+            VecDeque<u8>| Untagged, Tag(3); [1, 2, 3].into() => [0x01, 0x02, 0x03]
+        );
     }
 }
 
@@ -122,7 +128,9 @@ mod b_tree_set {
 
         use super::*;
 
-        test_untagged_and_codec!(BTreeSet<u8>| Untagged, Tag(3); [1, 2, 3].into() => [0x01, 0x02, 0x03]);
+        test_untagged_and_codec!(
+            BTreeSet<u8>| Untagged, Tag(3); [1, 2, 3].into() => [0x01, 0x02, 0x03]
+        );
     }
 }
 
@@ -132,7 +140,35 @@ mod binary_heap {
     impl_read_list!(BinaryHeap<T: Ord>);
     impl_write_list!(BinaryHeap<T: Ord>);
 
-    // TODO
+    #[cfg(test)]
+    mod tests {
+        use alloc::vec::Vec;
+
+        use bitstream_io::{BigEndian, BitReader};
+
+        use crate::{BitDecode, ByteOrder, Tag, Untagged};
+
+        use super::*;
+
+        #[test]
+        fn decode() {
+            let bytes: &[u8] = &[0x01];
+            let exp: BinaryHeap<u8> = [1].into();
+            let read: BinaryHeap<u8> = BitDecode::decode(
+                &mut BitReader::endian(bytes, BigEndian),
+                ByteOrder::BigEndian,
+                &mut (),
+                Tag(1),
+            )
+            .unwrap();
+            assert_eq!(
+                exp.into_iter().collect::<Vec<_>>(),
+                read.into_iter().collect::<Vec<_>>()
+            );
+        }
+
+        test_encode!(BinaryHeap<u8>| Untagged; [1].into() => [0x01]);
+    }
 }
 
 #[cfg(feature = "std")]

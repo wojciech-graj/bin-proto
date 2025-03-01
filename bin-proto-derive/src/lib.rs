@@ -105,6 +105,7 @@ fn impl_for_struct(
     impl_trait_for(ast, &impl_body, &trait_type)
 }
 
+#[allow(clippy::too_many_lines)]
 fn impl_for_enum(ast: &syn::DeriveInput, e: &syn::DataEnum, codec_type: Operation) -> TokenStream {
     let plan = match plan::Enum::try_new(ast, e) {
         Ok(plan) => plan,
@@ -145,7 +146,12 @@ fn impl_for_enum(ast: &syn::DeriveInput, e: &syn::DataEnum, codec_type: Operatio
                     __tag: (),
                 ) -> ::bin_proto::Result<Self> {
                     let __tag: #discriminant_ty = #decode_discriminant?;
-                    <Self as ::bin_proto::BitDecode<_, ::bin_proto::Tag<#discriminant_ty>>>::decode(__io_reader, __byte_order, __ctx, ::bin_proto::Tag(__tag))
+                    <Self as ::bin_proto::BitDecode<_, ::bin_proto::Tag<#discriminant_ty>>>::decode(
+                        __io_reader,
+                        __byte_order,
+                        __ctx,
+                        ::bin_proto::Tag(__tag)
+                    )
                 }
             );
             let decode_impl = impl_trait_for(ast, &impl_body, &TraitImplType::Decode);
@@ -192,7 +198,13 @@ fn impl_for_enum(ast: &syn::DeriveInput, e: &syn::DataEnum, codec_type: Operatio
                     (): (),
                 ) -> ::bin_proto::Result<()> {
                     #encode_discriminant
-                    <Self as ::bin_proto::BitEncode<_, _>>::encode(self, __io_writer, __byte_order, __ctx, ::bin_proto::Untagged)
+                    <Self as ::bin_proto::BitEncode<_, _>>::encode(
+                        self,
+                        __io_writer,
+                        __byte_order,
+                        __ctx,
+                        ::bin_proto::Untagged
+                    )
                 }
             );
             let encode_impl = impl_trait_for(ast, &impl_body, &TraitImplType::Encode);

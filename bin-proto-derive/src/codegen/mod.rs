@@ -59,37 +59,27 @@ fn decode(field: &syn::Field) -> TokenStream {
         Err(e) => return e.to_compile_error(),
     };
 
-    if let Some(field_width) = attribs.bits {
-        quote!(::bin_proto::BitDecode::decode(__io_reader, __byte_order, __ctx, ::bin_proto::Bits(#field_width)))
-    } else if attribs.flexible_array_member {
-        quote!(::bin_proto::BitDecode::decode(
-            __io_reader,
-            __byte_order,
-            __ctx,
-            ::bin_proto::Untagged
-        ))
-    } else if let Some(tag) = attribs.tag {
-        match tag {
-            Tag::External(tag) => {
-                quote!(::bin_proto::BitDecode::decode(__io_reader, __byte_order, __ctx, ::bin_proto::Tag(#tag)))
-            }
-            Tag::Prepend {
-                typ,
-                write_value: _,
-            } => {
-                quote!({
-                    let __tag: #typ = ::bin_proto::BitDecode::decode(__io_reader, __byte_order, __ctx, ())?;
-                    ::bin_proto::BitDecode::decode(__io_reader, __byte_order, __ctx, ::bin_proto::Tag(__tag))
-                })
-            }
-        }
+    if let Some(Tag::Prepend { typ, .. }) = attribs.tag {
+        quote!({
+            let __tag: #typ = ::bin_proto::BitDecode::decode(__io_reader, __byte_order, __ctx, ())?;
+            ::bin_proto::BitDecode::decode(
+                __io_reader,
+                __byte_order,
+                __ctx,
+                ::bin_proto::Tag(__tag)
+            )
+        })
     } else {
-        quote!(::bin_proto::BitDecode::decode(
-            __io_reader,
-            __byte_order,
-            __ctx,
-            (),
-        ))
+        let tag = if let Some(field_width) = attribs.bits {
+            quote!(::bin_proto::Bits(#field_width))
+        } else if attribs.flexible_array_member {
+            quote!(::bin_proto::Untagged)
+        } else if let Some(Tag::External(tag)) = attribs.tag {
+            quote!(::bin_proto::Tag(#tag))
+        } else {
+            quote!(())
+        };
+        quote!(::bin_proto::BitDecode::decode(__io_reader, __byte_order, __ctx, #tag))
     }
 }
 
@@ -109,46 +99,39 @@ fn encode(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
         field_name.clone()
     };
 
-    if let Some(field_width) = attribs.bits {
+    if let Some(Tag::Prepend { typ, write_value }) = attribs.tag {
+        let Some(write_value) = write_value else {
+            return Error::new(field.span(), "Tag must specify 'write_value'").to_compile_error();
+        };
         quote!(
             {
-                ::bin_proto::BitEncode::encode(#field_ref, __io_writer, __byte_order, __ctx, ::bin_proto::Bits(#field_width))?
-            }
-        )
-    } else if let Some(tag) = attribs.tag {
-        match tag {
-            Tag::External(_) => quote!(
-                {
-                    ::bin_proto::BitEncode::encode(#field_ref, __io_writer, __byte_order, __ctx, ::bin_proto::Untagged)?
-                }
-            ),
-            Tag::Prepend {
-                typ,
-                write_value: Some(value),
-            } => quote!(
-                {
-                    <#typ as ::bin_proto::BitEncode::<_>>::encode(&{#value}, __io_writer, __byte_order, __ctx, ())?;
-                    ::bin_proto::BitEncode::encode(#field_ref, __io_writer, __byte_order, __ctx, ::bin_proto::Untagged)?
-                }
-            ),
-            Tag::Prepend {
-                typ: _,
-                write_value: None,
-            } => {
-                return Error::new(field.span(), "Tag must specify 'write_value'")
-                    .to_compile_error();
-            }
-        }
-    } else if attribs.flexible_array_member {
-        quote!(
-            {
-                ::bin_proto::BitEncode::encode(#field_ref, __io_writer, __byte_order, __ctx, ::bin_proto::Untagged)?
+                <#typ as ::bin_proto::BitEncode::<_>>::encode(
+                    &{#write_value},
+                    __io_writer,
+                    __byte_order,
+                    __ctx,
+                    ()
+                )?;
+                ::bin_proto::BitEncode::encode(
+                    #field_ref,
+                    __io_writer,
+                    __byte_order,
+                    __ctx,
+                    ::bin_proto::Untagged
+                )?
             }
         )
     } else {
+        let tag = if let Some(field_width) = attribs.bits {
+            quote!(::bin_proto::Bits(#field_width))
+        } else if matches!(attribs.tag, Some(Tag::External(_))) || attribs.flexible_array_member {
+            quote!(::bin_proto::Untagged)
+        } else {
+            quote!(())
+        };
         quote!(
             {
-                ::bin_proto::BitEncode::encode(#field_ref, __io_writer, __byte_order, __ctx, ())?
+                ::bin_proto::BitEncode::encode(#field_ref, __io_writer, __byte_order, __ctx, #tag)?
             }
         )
     }

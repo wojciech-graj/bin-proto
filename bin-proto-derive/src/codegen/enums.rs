@@ -3,7 +3,12 @@ use proc_macro2::{Span, TokenStream};
 
 pub fn decode_discriminant(attribs: &Attrs) -> TokenStream {
     if let Some(bits) = &attribs.bits {
-        quote!(::bin_proto::BitDecode::decode(__io_reader, __byte_order, __ctx, ::bin_proto::Bits(#bits)))
+        quote!(::bin_proto::BitDecode::decode(
+            __io_reader,
+            __byte_order,
+            __ctx,
+            ::bin_proto::Bits(#bits),
+        ))
     } else {
         quote!(::bin_proto::BitDecode::decode(
             __io_reader,
@@ -16,7 +21,13 @@ pub fn decode_discriminant(attribs: &Attrs) -> TokenStream {
 
 pub fn encode_discriminant(attribs: &Attrs) -> TokenStream {
     let encode_tag = if let Some(bits) = &attribs.bits {
-        quote!(::bin_proto::BitEncode::encode(&__tag, __io_writer, __byte_order, __ctx, ::bin_proto::Bits(#bits)))
+        quote!(::bin_proto::BitEncode::encode(
+            &__tag,
+            __io_writer,
+            __byte_order,
+            __ctx,
+            ::bin_proto::Bits(#bits),
+        ))
     } else {
         quote!(::bin_proto::BitEncode::encode(
             &__tag,
@@ -69,7 +80,10 @@ pub fn variant_discriminant(plan: &plan::Enum, attribs: &Attrs) -> TokenStream {
                     variant.ident
                 );
                 quote!(
-                    const _: () = ::std::assert!(#discriminant_expr < (1 as #discriminant_ty) << #field_width, #error_message);
+                    const _: () = ::std::assert!(
+                        #discriminant_expr < (1 as #discriminant_ty) << #field_width, #error_message
+                    );
+
                     #discriminant_expr
                 )
             } else {
@@ -104,7 +118,8 @@ pub fn decode_variant_fields(plan: &plan::Enum) -> TokenStream {
 
     quote!(
         {
-            match ::core::convert::TryInto::<#discriminant_ty>::try_into(__tag.0).map_err(|_| ::bin_proto::Error::TagConvert)? {
+            match ::core::convert::TryInto::<#discriminant_ty>::try_into(__tag.0)
+                .map_err(|_| ::bin_proto::Error::TagConvert)? {
                 #(#discriminant_match_branches,)*
                 unknown_discriminant => {
                     return Err(::bin_proto::Error::UnknownEnumDiscriminant(

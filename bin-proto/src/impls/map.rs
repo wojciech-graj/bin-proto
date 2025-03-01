@@ -16,7 +16,8 @@ macro_rules! impl_read_map {
                 tag: $crate::Tag<Tag>,
             ) -> $crate::Result<Self> {
                 let elements = $crate::util::decode_items(
-                    ::core::convert::TryInto::try_into(tag.0).map_err(|_| $crate::Error::TagConvert)?,
+                    ::core::convert::TryInto::try_into(tag.0)
+                        .map_err(|_| $crate::Error::TagConvert)?,
                     read,
                     byte_order,
                     ctx
@@ -81,7 +82,9 @@ mod hash_map {
 
         use super::*;
 
-        test_untagged_and_codec!(HashMap<u8, u8>| Untagged, Tag(1); [(1, 2)].into() => [0x01, 0x02]);
+        test_untagged_and_codec!(
+            HashMap<u8, u8>| Untagged, Tag(1); [(1, 2)].into() => [0x01, 0x02]
+        );
     }
 }
 
@@ -97,6 +100,9 @@ mod b_tree_map {
 
         use super::*;
 
-        test_untagged_and_codec!(BTreeMap<u8, u8>| Untagged, Tag(3); [(1, 2), (3, 4), (5, 6)].into() => [0x01, 0x02, 0x03, 0x04, 0x05, 0x06]);
+        test_untagged_and_codec!(
+            BTreeMap<u8, u8>| Untagged, Tag(3);
+            [(1, 2), (3, 4), (5, 6)].into() => [0x01, 0x02, 0x03, 0x04, 0x05, 0x06]
+        );
     }
 }

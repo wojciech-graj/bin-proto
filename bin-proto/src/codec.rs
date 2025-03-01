@@ -18,7 +18,7 @@ pub trait BitDecode<Ctx = (), Tag = ()>: Sized {
         tag: Tag,
     ) -> Result<Self>;
 
-    /// Parses a new value from its raw byte representation with additional context.
+    /// Parses a new value from its raw byte representation with provided context and tag.
     fn decode_bytes_ctx(
         bytes: &[u8],
         byte_order: ByteOrder,
@@ -49,7 +49,7 @@ pub trait BitEncode<Ctx = (), Tag = ()> {
         tag: Tag,
     ) -> Result<()>;
 
-    /// Gets the raw bytes of this type with provided context.
+    /// Gets the raw bytes of this type with provided context and tag.
     fn encode_bytes_ctx(&self, byte_order: ByteOrder, ctx: &mut Ctx, tag: Tag) -> Result<Vec<u8>> {
         let mut data = Vec::new();
         match byte_order {
@@ -69,7 +69,7 @@ pub trait BitEncode<Ctx = (), Tag = ()> {
     }
 }
 
-/// A trait with helper functions for contextless `Codec`s
+/// A trait with helper functions for simple codecs
 pub trait BitCodec: BitDecode + BitEncode {
     /// Parses a new value from its raw byte representation without context.
     fn decode_bytes(bytes: &[u8], byte_order: ByteOrder) -> Result<Self> {

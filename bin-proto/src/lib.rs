@@ -127,8 +127,8 @@ pub use self::error::{Error, Result};
 /// Specify the discriminant for a variant.
 ///
 /// ## `#[codec(bits = <width>)]`
-/// - Applies to: `impl BitFieldRead`, `impl BitFieldWrite`, `enum` with discriminant that
-///   `impl BitField`
+/// - Applies to: `impl BitDecode<_, Bits>`, `impl BitEncode<_, Bits>`, `enum` with discriminant that
+///   `impl BitDecode<_, Bits>` or `impl BitEncode<_, Bits>`
 ///
 /// Determine width of field in bits.
 ///
@@ -143,7 +143,7 @@ pub use self::error::{Error, Result};
 /// ```
 ///
 /// ## `#[codec(flexible_array_member)]`
-/// - Applies to: `impl UntaggedRead`
+/// - Applies to: `impl BitEncode<_, Untagged>`
 ///
 /// Variable-length field is final field in container, hence lacks a length prefix and should be
 /// read until eof.
@@ -155,7 +155,7 @@ pub use self::error::{Error, Result};
 /// ```
 ///
 /// ## `#[codec(tag = <expr>)]`
-/// - Applies to: `impl TaggedRead` or `impl UntaggedWrite`
+/// - Applies to: `impl BitDecode<_, Tag>` or `impl BitEncode<_, Untagged>`
 /// - `<expr>`: arbitrary expression. Fields in parent container can be used
 ///   without prefixing them with `self`.
 ///
@@ -174,7 +174,7 @@ pub use self::error::{Error, Result};
 /// ```
 ///
 /// ## `#[codec(tag_type = <type>[, tag_value = <expr>]?)]`
-/// - Applies to: `impl TaggedRead` or `impl UntaggedWrite`
+/// - Applies to: `impl BitDecode<_, Tag>` or `impl BitEncode<_, Untagged>`
 /// - `<type>`: tag's type
 /// - `<expr>`: arbitrary expression. Fields in parent container should be
 ///   prefixed with `self`.
@@ -342,8 +342,13 @@ mod util;
 
 pub extern crate bitstream_io;
 
+/// A marker for `BitWrite` implementors that don't prepend their tag.
 pub struct Untagged;
+
+/// A marker for `BitRead` implementors that require a tag.
 pub struct Tag<T>(pub T);
+
+/// A marker for `BitRead` and `BitWrite` implementors that support bitfield operations.
 pub struct Bits(pub u32);
 
 /// ```compile_fail

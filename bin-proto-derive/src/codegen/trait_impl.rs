@@ -91,7 +91,8 @@ pub fn impl_trait_for(
     let (impl_generics, _, where_clause) = generics.split_for_impl();
     quote!(
         #[automatically_derived]
-        impl #impl_generics ::bin_proto::#trait_name<#trait_generics> for #name #ty_generics #where_clause {
+        impl #impl_generics ::bin_proto::#trait_name<#trait_generics> for #name #ty_generics
+        #where_clause {
             #impl_body
         }
     )

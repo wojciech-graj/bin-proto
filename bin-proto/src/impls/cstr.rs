@@ -14,4 +14,6 @@ impl<Ctx> BitEncode<Ctx> for CStr {
     }
 }
 
-test_encode!(&CStr; CStr::from_bytes_with_nul(&[0x41, 0x42, 0x43, 0]).unwrap() => [0x41, 0x42, 0x43, 0]);
+test_encode!(
+    &CStr; CStr::from_bytes_with_nul(&[0x41, 0x42, 0x43, 0]).unwrap() => [0x41, 0x42, 0x43, 0]
+);
