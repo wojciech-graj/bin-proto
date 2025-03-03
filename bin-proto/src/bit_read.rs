@@ -5,8 +5,8 @@ use bitstream_io::{BE, LE};
 #[cfg(not(feature = "std"))]
 use core2::io;
 
-/// A bit-level equivalent of `std::io::Read`. An object-safe wrapper over
-/// `bitstream_io::BitRead`.
+/// A bit-level equivalent of [`Read`](std::io::Read). An object-safe wrapper over
+/// [`bitstream_io::BitRead`].
 pub trait BitRead {
     fn read_bit(&mut self) -> io::Result<bool>;
     fn skip(&mut self, bits: u32) -> io::Result<()>;

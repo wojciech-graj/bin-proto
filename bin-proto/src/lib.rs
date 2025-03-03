@@ -1,7 +1,7 @@
 //! Simple & fast bit-level binary co/dec in Rust.
 //!
 //! For more information about `#[derive(BitDecode, BitEncode)]` and its attributes, see
-//! [macro@BitDecode] or [macro@BitEncode].
+//! [`macro@BitDecode`] or [`macro@BitEncode`].
 //!
 //! # Example
 //!
@@ -57,6 +57,22 @@
 //! );
 //! # }
 //! ```
+//!
+//! # Manual Implementations
+//!
+//! The [`macro@BitDecode`] and [`macro@BitEncode`] derive macros support the most common use-cases,
+//! but it may sometimes be necessary to manually implement [`BitEncode`] or [`BitDecode`]. Both
+//! traits have two generic parameters:
+//! - `Ctx`: A mutable variable passed recursively down the codec chain
+//! - `Tag`: A tag for specifying additional behavior
+//!
+//! `Tag` can have any type. The following are used throughout [`bin-proto`] and ensure
+//! interoperability:
+//! - [`Tag`]: Specifies that an additional tag is required during decoding, such as a length prefix
+//!   for a [`Vec`](::alloc::vec::Vec), or a discriminant of an `enum`
+//! - [`Untagged`]: Specifies that the type has a tag used during decoding, but this tag is not
+//!   written during encoding
+//! - [`Bits`]: Specified that the type is a bitfield, and can have a variable number of bits
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![cfg_attr(docsrs, feature(rustdoc_internals))]
@@ -88,13 +104,13 @@ pub use self::codec::{BitDecode, BitEncode};
 pub use self::discriminable::Discriminable;
 pub use self::error::{Error, Result};
 
-/// Derive the `BitDecode` and `BitEncode` traits.
+/// Derive the [`BitDecode`] and [`BitEncode`] traits.
 ///
 /// # Attributes
 ///
 /// ## `#[codec(discriminant_type = <type>)]`
 /// - Applies to: `enum`
-/// - `<type>`: an arbitrary type that implements `BitDecode` or `BitEncode`
+/// - `<type>`: an arbitrary type that implements [`BitDecode`] or [`BitEncode`]
 ///
 /// Specify if enum variant should be determined by a string or interger representation of its
 /// discriminant.
@@ -127,14 +143,15 @@ pub use self::error::{Error, Result};
 /// Specify the discriminant for a variant.
 ///
 /// ## `#[codec(bits = <width>)]`
-/// - Applies to: `impl BitDecode<_, Bits>`, `impl BitEncode<_, Bits>`, `enum` with discriminant that
-///   `impl BitDecode<_, Bits>` or `impl BitEncode<_, Bits>`
+/// - Applies to: [`impl BitDecode<_, Bits>`](BitDecode), [`impl BitEncode<_, Bits>`](BitEncode),
+///   `enum` with discriminant that [`impl BitDecode<_, Bits>`](BitDecode) or
+///   [`impl BitEncode<_, Bits>`](BitEncode)
 ///
 /// Determine width of field in bits.
 ///
-/// **WARNING**: Bitfields disregard `ByteOrder` and instead have the same endianness as the
-/// underlying `BitRead` / `BitWrite` instance. If you're using bitfields, you almost always want a
-/// big endian stream.
+/// **WARNING**: Bitfields disregard [`ByteOrder`] and instead have the same endianness as the
+/// underlying [`BitRead`] / [`BitWrite`] instance. If you're using bitfields, you almost always
+/// want a big endian stream.
 ///
 /// ```
 /// # use bin_proto::{BitDecode, BitEncode};
@@ -143,7 +160,7 @@ pub use self::error::{Error, Result};
 /// ```
 ///
 /// ## `#[codec(flexible_array_member)]`
-/// - Applies to: `impl BitEncode<_, Untagged>`
+/// - Applies to: [`impl BitEncode<_, Untagged>`](BitEncode)
 ///
 /// Variable-length field is final field in container, hence lacks a length prefix and should be
 /// read until eof.
@@ -155,12 +172,13 @@ pub use self::error::{Error, Result};
 /// ```
 ///
 /// ## `#[codec(tag = <expr>)]`
-/// - Applies to: `impl BitDecode<_, Tag>` or `impl BitEncode<_, Untagged>`
+/// - Applies to: [`impl BitDecode<_, Tag>`](BitDecode) or
+///   [`impl BitEncode<_, Untagged>`](BitEncode)
 /// - `<expr>`: arbitrary expression. Fields in parent container can be used
 ///   without prefixing them with `self`.
 ///
 /// Specify tag of field. The tag represents a length prefix for variable-length fields, and a
-/// boolean for `Option`.
+/// boolean for [`Option`].
 ///
 /// ```
 /// # use bin_proto::{BitDecode, BitEncode};
@@ -174,14 +192,15 @@ pub use self::error::{Error, Result};
 /// ```
 ///
 /// ## `#[codec(tag_type = <type>[, tag_value = <expr>]?)]`
-/// - Applies to: `impl BitDecode<_, Tag>` or `impl BitEncode<_, Untagged>`
+/// - Applies to: [`impl BitDecode<_, Tag>`](BitDecode) or
+///   [`impl BitEncode<_, Untagged>`](BitEncode)
 /// - `<type>`: tag's type
 /// - `<expr>`: arbitrary expression. Fields in parent container should be
 ///   prefixed with `self`.
 ///
 /// Specify tag of field. The tag represents a length prefix for variable-length fields, and a
-/// boolean for `Option`. The tag is placed directly before the field. The `tag_value` only has
-/// to be specified when deriving `BitEncode`.
+/// boolean for [`Option`]. The tag is placed directly before the field. The `tag_value` only has
+/// to be specified when deriving [`BitEncode`].
 ///
 /// ```
 /// # use bin_proto::{BitDecode, BitEncode};
@@ -214,7 +233,7 @@ pub use self::error::{Error, Result};
 /// - Applies to: containers
 /// - `<type>`: The type of the context. Either a concrete type, or one of the container's generics
 /// - `<generic>`: Any generics used by the context type, with optional bounds. E.g.
-///   `T: Copy` for a `Vec<T>` context.
+///   `T: Copy` for a [`Vec<T>`](alloc::vec::Vec) context.
 ///
 /// Specify the type of context that will be passed to codec functions.
 ///
@@ -279,7 +298,7 @@ pub use self::error::{Error, Result};
 /// - Applies to: containers
 /// - `<bounds>`: Trait bounds that must be satisfied by the context
 /// - `<generic>`: Any generics used by the context type. E.g. `'a` for a context with a
-///   `From<&'a i32>` bound.
+///   [`From<&'a i32>`](From) bound.
 ///
 /// Specify the trait bounds of context that will be passed to codec functions.
 ///
@@ -342,13 +361,14 @@ mod util;
 
 pub extern crate bitstream_io;
 
-/// A marker for `BitWrite` implementors that don't prepend their tag.
+/// A marker for [`BitEncode`] implementors that don't prepend their tag, and [`BitDecode`]
+/// implementors that usually have a tag, but can be read to EOF
 pub struct Untagged;
 
-/// A marker for `BitRead` implementors that require a tag.
+/// A marker for [`BitDecode`] implementors that require a tag.
 pub struct Tag<T>(pub T);
 
-/// A marker for `BitRead` and `BitWrite` implementors that support bitfield operations.
+/// A marker for [`BitDecode`] and [`BitEncode`] implementors that support bitfield operations.
 pub struct Bits(pub u32);
 
 /// ```compile_fail

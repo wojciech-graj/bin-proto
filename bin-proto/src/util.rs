@@ -27,7 +27,7 @@ where
     Ok(elements)
 }
 
-/// `BitWrites` an iterator of parcels to the stream.
+/// [`BitWrite`]s an iterator of parcels to the stream.
 ///
 /// Does not include a length prefix.
 pub fn encode_items<'a, Ctx, T>(

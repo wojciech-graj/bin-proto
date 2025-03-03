@@ -5,8 +5,8 @@ use bitstream_io::{BE, LE};
 #[cfg(not(feature = "std"))]
 use core2::io;
 
-/// A bit-level equivalent of `std::io::Write`. An object-safe wrapper over
-/// `bitstream_io::BitWrite`.
+/// A bit-level equivalent of [`Write`](std::io::Write). An object-safe wrapper over
+/// [`bitstream_io::BitWrite`].
 pub trait BitWrite {
     fn write_bit(&mut self, bit: bool) -> io::Result<()>;
     fn write_bytes(&mut self, buf: &[u8]) -> io::Result<()>;
