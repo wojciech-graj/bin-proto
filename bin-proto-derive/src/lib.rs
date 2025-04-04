@@ -69,12 +69,15 @@ fn impl_for_struct(
             let (decodes, initializers) = codegen::decodes(&strukt.fields);
             (
                 quote!(
-                    fn decode(
-                        __io_reader: &mut dyn ::bin_proto::BitRead,
-                        __byte_order: ::bin_proto::ByteOrder,
+                    fn decode<__R, __E>(
+                        __io_reader: &mut __R,
                         __ctx: &mut #ctx_ty,
                         __tag: (),
-                    ) -> ::bin_proto::Result<Self> {
+                    ) -> ::bin_proto::Result<Self>
+                    where
+                        __R: ::bin_proto::BitRead,
+                        __E: ::bin_proto::Endianness,
+                    {
                         #decodes
                         Ok(Self #initializers)
                     }
@@ -86,13 +89,16 @@ fn impl_for_struct(
             let encodes = codegen::encodes(&strukt.fields, true);
             (
                 quote!(
-                    fn encode(
+                    fn encode<__W, __E>(
                         &self,
-                        __io_writer: &mut dyn ::bin_proto::BitWrite,
-                        __byte_order: ::bin_proto::ByteOrder,
+                        __io_writer: &mut __W,
                         __ctx: &mut #ctx_ty,
                         (): (),
-                    ) -> ::bin_proto::Result<()> {
+                    ) -> ::bin_proto::Result<()>
+                    where
+                        __W: ::bin_proto::BitWrite,
+                        __E: ::bin_proto::Endianness,
+                    {
                         #encodes
                         Ok(())
                     }
@@ -122,12 +128,15 @@ fn impl_for_enum(ast: &syn::DeriveInput, e: &syn::DataEnum, codec_type: Operatio
         Operation::Decode => {
             let decode_variant = codegen::enums::decode_variant_fields(&plan);
             let impl_body = quote!(
-                fn decode(
-                    __io_reader: &mut dyn ::bin_proto::BitRead,
-                    __byte_order: ::bin_proto::ByteOrder,
+                fn decode<__R, __E>(
+                    __io_reader: &mut __R,
                     __ctx: &mut #ctx_ty,
                     __tag: ::bin_proto::Tag<__Tag>,
-                ) -> ::bin_proto::Result<Self> {
+                ) -> ::bin_proto::Result<Self>
+                where
+                    __R: ::bin_proto::BitRead,
+                    __E: ::bin_proto::Endianness,
+                {
                     Ok(#decode_variant)
                 }
             );
@@ -139,16 +148,18 @@ fn impl_for_enum(ast: &syn::DeriveInput, e: &syn::DataEnum, codec_type: Operatio
 
             let decode_discriminant = decode_discriminant(&attribs);
             let impl_body = quote!(
-                fn decode(
-                    __io_reader: &mut dyn ::bin_proto::BitRead,
-                    __byte_order: ::bin_proto::ByteOrder,
+                fn decode<__R, __E>(
+                    __io_reader: &mut __R,
                     __ctx: &mut #ctx_ty,
                     __tag: (),
-                ) -> ::bin_proto::Result<Self> {
+                ) -> ::bin_proto::Result<Self>
+                where
+                    __R: ::bin_proto::BitRead,
+                    __E: ::bin_proto::Endianness,
+                {
                     let __tag: #discriminant_ty = #decode_discriminant?;
-                    <Self as ::bin_proto::BitDecode<_, ::bin_proto::Tag<#discriminant_ty>>>::decode(
+                    <Self as ::bin_proto::BitDecode<_, ::bin_proto::Tag<#discriminant_ty>>>::decode::<_, __E>(
                         __io_reader,
-                        __byte_order,
                         __ctx,
                         ::bin_proto::Tag(__tag)
                     )
@@ -164,13 +175,16 @@ fn impl_for_enum(ast: &syn::DeriveInput, e: &syn::DataEnum, codec_type: Operatio
         Operation::Encode => {
             let encode_variant = codegen::enums::encode_variant_fields(&plan);
             let impl_body = quote!(
-                fn encode(
+                fn encode<__W, __E>(
                     &self,
-                    __io_writer: &mut dyn ::bin_proto::BitWrite,
-                    __byte_order: ::bin_proto::ByteOrder,
+                    __io_writer: &mut __W,
                     __ctx: &mut #ctx_ty,
                     __tag: ::bin_proto::Untagged,
-                ) -> ::bin_proto::Result<()> {
+                ) -> ::bin_proto::Result<()>
+                where
+                    __W: ::bin_proto::BitWrite,
+                    __E: ::bin_proto::Endianness,
+                {
                     #encode_variant
                     Ok(())
                 }
@@ -190,18 +204,20 @@ fn impl_for_enum(ast: &syn::DeriveInput, e: &syn::DataEnum, codec_type: Operatio
 
             let encode_discriminant = encode_discriminant(&attribs);
             let impl_body = quote!(
-                fn encode(
+                fn encode<__W, __E>(
                     &self,
-                    __io_writer: &mut dyn ::bin_proto::BitWrite,
-                    __byte_order: ::bin_proto::ByteOrder,
+                    __io_writer: &mut __W,
                     __ctx: &mut #ctx_ty,
                     (): (),
-                ) -> ::bin_proto::Result<()> {
+                ) -> ::bin_proto::Result<()>
+                where
+                    __W: ::bin_proto::BitWrite,
+                    __E: ::bin_proto::Endianness,
+                {
                     #encode_discriminant
-                    <Self as ::bin_proto::BitEncode<_, _>>::encode(
+                    <Self as ::bin_proto::BitEncode<_, _>>::encode::<_, __E>(
                         self,
                         __io_writer,
-                        __byte_order,
                         __ctx,
                         ::bin_proto::Untagged
                     )

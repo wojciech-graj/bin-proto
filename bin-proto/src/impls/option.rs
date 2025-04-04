@@ -1,18 +1,19 @@
-use crate::{BitDecode, BitEncode, BitRead, BitWrite, ByteOrder, Error, Result, Untagged};
+use bitstream_io::{BitRead, BitWrite, Endianness};
+
+use crate::{BitDecode, BitEncode, Error, Result, Untagged};
 
 impl<Tag, Ctx, T> BitDecode<Ctx, crate::Tag<Tag>> for Option<T>
 where
     T: BitDecode<Ctx>,
     Tag: TryInto<bool>,
 {
-    fn decode(
-        read: &mut dyn BitRead,
-        byte_order: ByteOrder,
-        ctx: &mut Ctx,
-        tag: crate::Tag<Tag>,
-    ) -> Result<Self> {
+    fn decode<R, E>(read: &mut R, ctx: &mut Ctx, tag: crate::Tag<Tag>) -> Result<Self>
+    where
+        R: BitRead,
+        E: Endianness,
+    {
         if tag.0.try_into().map_err(|_| Error::TagConvert)? {
-            let value = T::decode(read, byte_order, ctx, ())?;
+            let value = T::decode::<_, E>(read, ctx, ())?;
             Ok(Some(value))
         } else {
             Ok(None)
@@ -24,15 +25,13 @@ impl<Ctx, T> BitEncode<Ctx, Untagged> for Option<T>
 where
     T: BitEncode<Ctx>,
 {
-    fn encode(
-        &self,
-        write: &mut dyn BitWrite,
-        byte_order: ByteOrder,
-        ctx: &mut Ctx,
-        _: Untagged,
-    ) -> Result<()> {
+    fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, _: Untagged) -> Result<()>
+    where
+        W: BitWrite,
+        E: Endianness,
+    {
         if let Some(ref value) = *self {
-            value.encode(write, byte_order, ctx, ())?;
+            value.encode::<_, E>(write, ctx, ())?;
         }
         Ok(())
     }

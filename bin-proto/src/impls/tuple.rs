@@ -1,4 +1,6 @@
-use crate::{BitDecode, BitEncode, BitRead, BitWrite, ByteOrder, Result};
+use bitstream_io::{BitRead, BitWrite, Endianness};
+
+use crate::{BitDecode, BitEncode, Result};
 
 macro_rules! impl_tuple {
     ($($idx:tt $t:ident),*) => {
@@ -7,13 +9,16 @@ macro_rules! impl_tuple {
         where
             $($t: $crate::BitDecode<Ctx>,)*
         {
-            fn decode(
-                read: &mut dyn $crate::BitRead,
-                byte_order: $crate::ByteOrder,
+            fn decode<R, E>(
+                read: &mut R,
                 ctx: &mut Ctx,
                 (): (),
-            ) -> $crate::Result<Self> {
-                Ok(($(<$t as $crate::BitDecode<Ctx>>::decode(read, byte_order, ctx, ())?,)*))
+            ) -> $crate::Result<Self>
+            where
+                R: ::bitstream_io::BitRead,
+                E: ::bitstream_io::Endianness,
+            {
+                Ok(($(<$t as $crate::BitDecode<Ctx>>::decode::<_, E>(read,  ctx, ())?,)*))
             }
         }
 
@@ -22,15 +27,18 @@ macro_rules! impl_tuple {
         where
             $($t: $crate::BitEncode<Ctx>,)*
         {
-            fn encode(
+            fn encode<W, E>(
                 &self,
-                write: &mut dyn $crate::BitWrite,
-                byte_order: $crate::ByteOrder,
+                write: &mut W,
                 ctx: &mut Ctx,
                 (): ()
-            ) -> $crate::Result<()> {
+            ) -> $crate::Result<()>
+            where
+                W: ::bitstream_io::BitWrite,
+                E: ::bitstream_io::Endianness,
+            {
                 $(
-                    $crate::BitEncode::encode(&self.$idx, write, byte_order, ctx, ())?;
+                    $crate::BitEncode::encode::<_, E>(&self.$idx, write,  ctx, ())?;
                 )*
                 Ok(())
             }
@@ -47,13 +55,12 @@ impl<Ctx, Tag, T> BitDecode<Ctx, Tag> for (T,)
 where
     T: BitDecode<Ctx, Tag>,
 {
-    fn decode(
-        read: &mut dyn BitRead,
-        byte_order: ByteOrder,
-        ctx: &mut Ctx,
-        tag: Tag,
-    ) -> Result<Self> {
-        Ok((BitDecode::decode(read, byte_order, ctx, tag)?,))
+    fn decode<R, E>(read: &mut R, ctx: &mut Ctx, tag: Tag) -> Result<Self>
+    where
+        R: BitRead,
+        E: Endianness,
+    {
+        Ok((BitDecode::decode::<R, E>(read, ctx, tag)?,))
     }
 }
 
@@ -66,31 +73,29 @@ impl<Ctx, Tag, T> BitEncode<Ctx, Tag> for (T,)
 where
     T: BitEncode<Ctx, Tag>,
 {
-    fn encode(
-        &self,
-        write: &mut dyn BitWrite,
-        byte_order: ByteOrder,
-        ctx: &mut Ctx,
-        tag: Tag,
-    ) -> Result<()> {
-        self.0.encode(write, byte_order, ctx, tag)
+    fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, tag: Tag) -> Result<()>
+    where
+        W: BitWrite,
+        E: Endianness,
+    {
+        self.0.encode::<W, E>(write, ctx, tag)
     }
 }
 
-impl_tuple!(0 A, 1 B, 2 C, 3 D, 4 E, 5 F, 6 G, 7 H, 8 I, 9 K, 10 L, 11 M, 12 N, 13 O, 14 P, 15 Q);
-impl_tuple!(0 A, 1 B, 2 C, 3 D, 4 E, 5 F, 6 G, 7 H, 8 I, 9 K, 10 L, 11 M, 12 N, 13 O, 14 P);
-impl_tuple!(0 A, 1 B, 2 C, 3 D, 4 E, 5 F, 6 G, 7 H, 8 I, 9 K, 10 L, 11 M, 12 N, 13 O);
-impl_tuple!(0 A, 1 B, 2 C, 3 D, 4 E, 5 F, 6 G, 7 H, 8 I, 9 K, 10 L, 11 M, 12 N);
-impl_tuple!(0 A, 1 B, 2 C, 3 D, 4 E, 5 F, 6 G, 7 H, 8 I, 9 K, 10 L, 11 M);
-impl_tuple!(0 A, 1 B, 2 C, 3 D, 4 E, 5 F, 6 G, 7 H, 8 I, 9 K, 10 L);
-impl_tuple!(0 A, 1 B, 2 C, 3 D, 4 E, 5 F, 6 G, 7 H, 8 I, 9 K);
-impl_tuple!(0 A, 1 B, 2 C, 3 D, 4 E, 5 F, 6 G, 7 H, 8 I);
-impl_tuple!(0 A, 1 B, 2 C, 3 D, 4 E, 5 F, 6 G, 7 H);
-impl_tuple!(0 A, 1 B, 2 C, 3 D, 4 E, 5 F, 6 G);
-impl_tuple!(0 A, 1 B, 2 C, 3 D, 4 E, 5 F);
-impl_tuple!(0 A, 1 B, 2 C, 3 D, 4 E);
-impl_tuple!(0 A, 1 B, 2 C, 3 D);
-impl_tuple!(0 A, 1 B, 2 C);
-impl_tuple!(0 A, 1 B);
+impl_tuple!(0 T0, 1 T1, 2 T2, 3 T3, 4 T4, 5 T5, 6 T6, 7 T7, 8 T8, 9 T9, 10 T10, 11 T11, 12 T12, 13 T13, 14 T14, 15 T15);
+impl_tuple!(0 T0, 1 T1, 2 T2, 3 T3, 4 T4, 5 T5, 6 T6, 7 T7, 8 T8, 9 T9, 10 T10, 11 T11, 12 T12, 13 T13, 14 T14);
+impl_tuple!(0 T0, 1 T1, 2 T2, 3 T3, 4 T4, 5 T5, 6 T6, 7 T7, 8 T8, 9 T9, 10 T10, 11 T11, 12 T12, 13 T13);
+impl_tuple!(0 T0, 1 T1, 2 T2, 3 T3, 4 T4, 5 T5, 6 T6, 7 T7, 8 T8, 9 T9, 10 T10, 11 T11, 12 T12);
+impl_tuple!(0 T0, 1 T1, 2 T2, 3 T3, 4 T4, 5 T5, 6 T6, 7 T7, 8 T8, 9 T9, 10 T10, 11 T11);
+impl_tuple!(0 T0, 1 T1, 2 T2, 3 T3, 4 T4, 5 T5, 6 T6, 7 T7, 8 T8, 9 T9, 10 T10);
+impl_tuple!(0 T0, 1 T1, 2 T2, 3 T3, 4 T4, 5 T5, 6 T6, 7 T7, 8 T8, 9 T9);
+impl_tuple!(0 T0, 1 T1, 2 T2, 3 T3, 4 T4, 5 T5, 6 T6, 7 T7, 8 T8);
+impl_tuple!(0 T0, 1 T1, 2 T2, 3 T3, 4 T4, 5 T5, 6 T6, 7 T7);
+impl_tuple!(0 T0, 1 T1, 2 T2, 3 T3, 4 T4, 5 T5, 6 T6);
+impl_tuple!(0 T0, 1 T1, 2 T2, 3 T3, 4 T4, 5 T5);
+impl_tuple!(0 T0, 1 T1, 2 T2, 3 T3, 4 T4);
+impl_tuple!(0 T0, 1 T1, 2 T2, 3 T3);
+impl_tuple!(0 T0, 1 T1, 2 T2);
+impl_tuple!(0 T0, 1 T1);
 
 test_codec!((u8,); (1,) => [0x01]);

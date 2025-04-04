@@ -24,7 +24,7 @@ mod vec {
                         count: 255,
                         data: (0..255).collect(),
                     }
-                    .encode_bytes(bin_proto::ByteOrder::BigEndian),
+                    .encode_bytes(bin_proto::BigEndian),
                 )
                 .unwrap();
             });
@@ -35,11 +35,7 @@ mod vec {
             let mut v = vec![255u8];
             v.extend((0..255).collect::<Vec<_>>());
             b.iter(|| {
-                black_box(V::decode_bytes(
-                    v.as_slice(),
-                    bin_proto::ByteOrder::BigEndian,
-                ))
-                .unwrap();
+                black_box(V::decode_bytes(v.as_slice(), bin_proto::BigEndian)).unwrap();
             })
         }
     }
@@ -101,10 +97,10 @@ mod enum_ {
         fn bench_enum_write(b: &mut Bencher) {
             b.iter(|| {
                 black_box({
-                    E::V0.encode_bytes(bin_proto::ByteOrder::BigEndian).unwrap();
-                    E::V1.encode_bytes(bin_proto::ByteOrder::BigEndian).unwrap();
-                    E::V2.encode_bytes(bin_proto::ByteOrder::BigEndian).unwrap();
-                    E::V3.encode_bytes(bin_proto::ByteOrder::BigEndian).unwrap();
+                    E::V0.encode_bytes(bin_proto::BigEndian).unwrap();
+                    E::V1.encode_bytes(bin_proto::BigEndian).unwrap();
+                    E::V2.encode_bytes(bin_proto::BigEndian).unwrap();
+                    E::V3.encode_bytes(bin_proto::BigEndian).unwrap();
                 })
             });
         }
@@ -113,7 +109,7 @@ mod enum_ {
         fn bench_enum_read(b: &mut Bencher) {
             b.iter(|| {
                 black_box(for i in 0..4 {
-                    E::decode_bytes(&[i], bin_proto::ByteOrder::BigEndian).unwrap();
+                    E::decode_bytes(&[i], bin_proto::BigEndian).unwrap();
                 })
             });
         }
@@ -228,7 +224,7 @@ mod ipv4 {
                         source_address: Ipv4Addr::new(2, 1, 1, 1),
                         destination_address: Ipv4Addr::new(2, 1, 1, 2),
                     }
-                    .encode_bytes(bin_proto::ByteOrder::BigEndian),
+                    .encode_bytes(bin_proto::BigEndian),
                 )
                 .unwrap();
             });
@@ -262,7 +258,7 @@ mod ipv4 {
                         0x01,
                         0x02, // Destination Address: 2.1.1.2
                     ],
-                    bin_proto::ByteOrder::BigEndian,
+                    bin_proto::BigEndian,
                 ))
                 .unwrap();
             });

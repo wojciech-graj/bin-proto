@@ -3,16 +3,14 @@ use proc_macro2::{Span, TokenStream};
 
 pub fn decode_discriminant(attribs: &Attrs) -> TokenStream {
     if let Some(bits) = &attribs.bits {
-        quote!(::bin_proto::BitDecode::decode(
+        quote!(::bin_proto::BitDecode::decode::<_, __E>(
             __io_reader,
-            __byte_order,
             __ctx,
             ::bin_proto::Bits(#bits),
         ))
     } else {
-        quote!(::bin_proto::BitDecode::decode(
+        quote!(::bin_proto::BitDecode::decode::<_, __E>(
             __io_reader,
-            __byte_order,
             __ctx,
             (),
         ))
@@ -21,18 +19,16 @@ pub fn decode_discriminant(attribs: &Attrs) -> TokenStream {
 
 pub fn encode_discriminant(attribs: &Attrs) -> TokenStream {
     let encode_tag = if let Some(bits) = &attribs.bits {
-        quote!(::bin_proto::BitEncode::encode(
+        quote!(::bin_proto::BitEncode::encode::<_, __E>(
             &__tag,
             __io_writer,
-            __byte_order,
             __ctx,
             ::bin_proto::Bits(#bits),
         ))
     } else {
-        quote!(::bin_proto::BitEncode::encode(
+        quote!(::bin_proto::BitEncode::encode::<_, __E>(
             &__tag,
             __io_writer,
-            __byte_order,
             __ctx,
             (),
         ))

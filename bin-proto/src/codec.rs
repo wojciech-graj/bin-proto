@@ -2,68 +2,47 @@ use alloc::vec::Vec;
 #[cfg(feature = "std")]
 use std::io;
 
-use bitstream_io::{BigEndian, BitReader, BitWriter, LittleEndian};
+use bitstream_io::{BitRead, BitReader, BitWrite, BitWriter, Endianness};
 #[cfg(not(feature = "std"))]
 use core2::io;
 
-use crate::{BitRead, BitWrite, ByteOrder, Result};
+use crate::Result;
 
 /// A trait for bit-level decoding.
 pub trait BitDecode<Ctx = (), Tag = ()>: Sized {
     /// Reads self from a stream.
-    fn decode(
-        read: &mut dyn BitRead,
-        byte_order: ByteOrder,
-        ctx: &mut Ctx,
-        tag: Tag,
-    ) -> Result<Self>;
+    fn decode<R, E>(read: &mut R, ctx: &mut Ctx, tag: Tag) -> Result<Self>
+    where
+        R: BitRead,
+        E: Endianness;
 
     /// Parses a new value from its raw byte representation with provided context and tag.
-    fn decode_bytes_ctx(
-        bytes: &[u8],
-        byte_order: ByteOrder,
-        ctx: &mut Ctx,
-        tag: Tag,
-    ) -> Result<Self> {
-        match byte_order {
-            ByteOrder::LittleEndian => {
-                let mut buffer = BitReader::endian(io::Cursor::new(bytes), LittleEndian);
-                Self::decode(&mut buffer, byte_order, ctx, tag)
-            }
-            ByteOrder::BigEndian => {
-                let mut buffer = BitReader::endian(io::Cursor::new(bytes), BigEndian);
-                Self::decode(&mut buffer, byte_order, ctx, tag)
-            }
-        }
+    fn decode_bytes_ctx<E>(bytes: &[u8], byte_order: E, ctx: &mut Ctx, tag: Tag) -> Result<Self>
+    where
+        E: Endianness,
+    {
+        let mut buffer = BitReader::endian(io::Cursor::new(bytes), byte_order);
+        Self::decode::<_, E>(&mut buffer, ctx, tag)
     }
 }
 
 /// A trait for bit-level encoding.
 pub trait BitEncode<Ctx = (), Tag = ()> {
     /// Writes a value to a stream.
-    fn encode(
-        &self,
-        write: &mut dyn BitWrite,
-        byte_order: ByteOrder,
-        ctx: &mut Ctx,
-        tag: Tag,
-    ) -> Result<()>;
+    fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, tag: Tag) -> Result<()>
+    where
+        W: BitWrite,
+        E: Endianness;
 
     /// Gets the raw bytes of this type with provided context and tag.
-    fn encode_bytes_ctx(&self, byte_order: ByteOrder, ctx: &mut Ctx, tag: Tag) -> Result<Vec<u8>> {
+    fn encode_bytes_ctx<E>(&self, byte_order: E, ctx: &mut Ctx, tag: Tag) -> Result<Vec<u8>>
+    where
+        E: Endianness,
+    {
         let mut data = Vec::new();
-        match byte_order {
-            ByteOrder::LittleEndian => {
-                let mut writer = BitWriter::endian(&mut data, LittleEndian);
-                self.encode(&mut writer, byte_order, ctx, tag)?;
-                writer.byte_align()?;
-            }
-            ByteOrder::BigEndian => {
-                let mut writer = BitWriter::endian(&mut data, BigEndian);
-                self.encode(&mut writer, byte_order, ctx, tag)?;
-                writer.byte_align()?;
-            }
-        };
+        let mut writer = BitWriter::endian(&mut data, byte_order);
+        self.encode::<_, E>(&mut writer, ctx, tag)?;
+        writer.byte_align()?;
 
         Ok(data)
     }
@@ -72,12 +51,18 @@ pub trait BitEncode<Ctx = (), Tag = ()> {
 /// A trait with helper functions for simple codecs
 pub trait BitCodec: BitDecode + BitEncode {
     /// Parses a new value from its raw byte representation without context.
-    fn decode_bytes(bytes: &[u8], byte_order: ByteOrder) -> Result<Self> {
+    fn decode_bytes<E>(bytes: &[u8], byte_order: E) -> Result<Self>
+    where
+        E: Endianness,
+    {
         Self::decode_bytes_ctx(bytes, byte_order, &mut (), ())
     }
 
     /// Gets the raw bytes of this type without context.
-    fn encode_bytes(&self, byte_order: ByteOrder) -> Result<Vec<u8>> {
+    fn encode_bytes<E>(&self, byte_order: E) -> Result<Vec<u8>>
+    where
+        E: Endianness,
+    {
         self.encode_bytes_ctx(byte_order, &mut (), ())
     }
 }
@@ -91,9 +76,8 @@ macro_rules! test_decode {
         fn decode() {
             let bytes: &[u8] = &$bytes;
             let exp: $ty = $exp;
-            let read: $ty = $crate::BitDecode::<(), _>::decode(
+            let read: $ty = $crate::BitDecode::<(), _>::decode::<_, ::bitstream_io::BigEndian>(
                 &mut ::bitstream_io::BitReader::endian(bytes, ::bitstream_io::BigEndian),
-                $crate::ByteOrder::BigEndian,
                 &mut (),
                 $tag,
             )
@@ -107,9 +91,8 @@ macro_rules! test_decode {
         fn decode() {
             let bytes: &[u8] = &$bytes;
             let exp: $ty = $exp;
-            let decoded: $ty = $crate::BitDecode::decode(
+            let decoded: $ty = $crate::BitDecode::decode::<_, ::bitstream_io::BigEndian>(
                 &mut ::bitstream_io::BitReader::endian(bytes, ::bitstream_io::BigEndian),
-                $crate::ByteOrder::BigEndian,
                 &mut (),
                 (),
             )
@@ -130,9 +113,8 @@ macro_rules! test_encode {
             let exp: &[u8] = &$exp;
             let value: $ty = $value;
             value
-                .encode(
+                .encode::<_, ::bitstream_io::BigEndian>(
                     &mut ::bitstream_io::BitWriter::endian(&mut buffer, ::bitstream_io::BigEndian),
-                    $crate::ByteOrder::BigEndian,
                     &mut (),
                     ($($tag)?),
                 )

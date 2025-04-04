@@ -61,10 +61,9 @@ fn decode(field: &syn::Field) -> TokenStream {
 
     if let Some(Tag::Prepend { typ, .. }) = attribs.tag {
         quote!({
-            let __tag: #typ = ::bin_proto::BitDecode::decode(__io_reader, __byte_order, __ctx, ())?;
-            ::bin_proto::BitDecode::decode(
+            let __tag: #typ = ::bin_proto::BitDecode::decode::<_, __E>(__io_reader, __ctx, ())?;
+            ::bin_proto::BitDecode::decode::<_, __E>(
                 __io_reader,
-                __byte_order,
                 __ctx,
                 ::bin_proto::Tag(__tag)
             )
@@ -79,7 +78,7 @@ fn decode(field: &syn::Field) -> TokenStream {
         } else {
             quote!(())
         };
-        quote!(::bin_proto::BitDecode::decode(__io_reader, __byte_order, __ctx, #tag))
+        quote!(::bin_proto::BitDecode::decode::<_, __E>(__io_reader, __ctx, #tag))
     }
 }
 
@@ -105,17 +104,15 @@ fn encode(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
         };
         quote!(
             {
-                <#typ as ::bin_proto::BitEncode::<_>>::encode(
+                <#typ as ::bin_proto::BitEncode::<_>>::encode::<_, __E>(
                     &{#write_value},
                     __io_writer,
-                    __byte_order,
                     __ctx,
                     ()
                 )?;
-                ::bin_proto::BitEncode::encode(
+                ::bin_proto::BitEncode::encode::<_, __E>(
                     #field_ref,
                     __io_writer,
-                    __byte_order,
                     __ctx,
                     ::bin_proto::Untagged
                 )?
@@ -131,7 +128,7 @@ fn encode(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
         };
         quote!(
             {
-                ::bin_proto::BitEncode::encode(#field_ref, __io_writer, __byte_order, __ctx, #tag)?
+                ::bin_proto::BitEncode::encode::<_, __E>(#field_ref, __io_writer, __ctx, #tag)?
             }
         )
     }

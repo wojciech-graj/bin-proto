@@ -1,6 +1,7 @@
 #![cfg(feature = "derive")]
 
-use bin_proto::{BitCodec, BitDecode, BitEncode, ByteOrder};
+use bin_proto::{BitCodec, BitDecode, BitEncode};
+use bitstream_io::BigEndian;
 
 #[derive(Debug, BitDecode, BitEncode, PartialEq)]
 #[codec(discriminant_type = u8)]
@@ -85,15 +86,6 @@ fn can_encode_decode_ipv4() {
         source_address: [2, 1, 1, 1],
         destination_address: [2, 1, 1, 2],
     };
-    assert_eq!(
-        parsed,
-        IPv4::decode_bytes(&raw, ByteOrder::BigEndian).unwrap()
-    );
-    assert_eq!(
-        raw,
-        parsed
-            .encode_bytes(ByteOrder::BigEndian)
-            .unwrap()
-            .as_slice()
-    )
+    assert_eq!(parsed, IPv4::decode_bytes(&raw, BigEndian).unwrap());
+    assert_eq!(raw, parsed.encode_bytes(BigEndian).unwrap().as_slice())
 }

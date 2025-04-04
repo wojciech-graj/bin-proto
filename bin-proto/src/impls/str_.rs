@@ -1,17 +1,16 @@
-use crate::{util, BitEncode, BitWrite, ByteOrder, Result};
+use crate::{util, BitEncode, Result};
 
 use alloc::vec::Vec;
+use bitstream_io::{BitWrite, Endianness};
 
 impl<Ctx> BitEncode<Ctx> for str {
-    fn encode(
-        &self,
-        write: &mut dyn BitWrite,
-        byte_order: ByteOrder,
-        ctx: &mut Ctx,
-        (): (),
-    ) -> Result<()> {
+    fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, (): ()) -> Result<()>
+    where
+        W: BitWrite,
+        E: Endianness,
+    {
         let bytes: Vec<_> = self.bytes().collect();
-        util::encode_items(&bytes, write, byte_order, ctx)
+        util::encode_items::<_, E, _, _>(&bytes, write, ctx)
     }
 }
 

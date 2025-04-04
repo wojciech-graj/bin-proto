@@ -1,17 +1,17 @@
-use crate::{util, BitEncode, BitWrite, ByteOrder, Result};
+use bitstream_io::{BitWrite, Endianness};
+
+use crate::{util, BitEncode, Result};
 
 impl<Ctx, T> BitEncode<Ctx> for [T]
 where
     T: BitEncode<Ctx>,
 {
-    fn encode(
-        &self,
-        write: &mut dyn BitWrite,
-        byte_order: ByteOrder,
-        ctx: &mut Ctx,
-        (): (),
-    ) -> Result<()> {
-        util::encode_items(self.iter(), write, byte_order, ctx)
+    fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, (): ()) -> Result<()>
+    where
+        W: BitWrite,
+        E: Endianness,
+    {
+        util::encode_items::<_, E, _, _>(self.iter(), write, ctx)
     }
 }
 

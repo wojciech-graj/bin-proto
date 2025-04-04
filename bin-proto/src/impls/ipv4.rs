@@ -1,29 +1,28 @@
 use core::net::Ipv4Addr;
 
-use crate::{BitDecode, BitEncode, BitRead, BitWrite, ByteOrder, Result};
+use bitstream_io::{BitRead, BitWrite, Endianness};
+
+use crate::{BitDecode, BitEncode, Result};
 
 impl<Ctx> BitDecode<Ctx> for Ipv4Addr {
-    fn decode(
-        read: &mut dyn BitRead,
-        byte_order: ByteOrder,
-        ctx: &mut Ctx,
-        tag: (),
-    ) -> Result<Self> {
-        let bytes: [u8; 4] = BitDecode::decode(read, byte_order, ctx, tag)?;
+    fn decode<R, E>(read: &mut R, ctx: &mut Ctx, tag: ()) -> Result<Self>
+    where
+        R: BitRead,
+        E: Endianness,
+    {
+        let bytes: [u8; 4] = BitDecode::decode::<_, E>(read, ctx, tag)?;
 
         Ok(Self::new(bytes[0], bytes[1], bytes[2], bytes[3]))
     }
 }
 
 impl<Ctx> BitEncode<Ctx> for Ipv4Addr {
-    fn encode(
-        &self,
-        write: &mut dyn BitWrite,
-        byte_order: ByteOrder,
-        ctx: &mut Ctx,
-        (): (),
-    ) -> Result<()> {
-        self.octets().encode(write, byte_order, ctx, ())
+    fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, (): ()) -> Result<()>
+    where
+        W: BitWrite,
+        E: Endianness,
+    {
+        self.octets().encode::<_, E>(write, ctx, ())
     }
 }
 

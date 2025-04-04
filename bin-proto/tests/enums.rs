@@ -2,7 +2,8 @@
 
 use std::marker::PhantomData;
 
-use bin_proto::{BitCodec, BitDecode, BitEncode, ByteOrder};
+use bin_proto::{BitCodec, BitDecode, BitEncode};
+use bitstream_io::BigEndian;
 
 #[derive(Debug, BitDecode, BitEncode, PartialEq)]
 #[codec(discriminant_type = u8)]
@@ -57,7 +58,7 @@ fn decode_enum_variant() {
             len: 2,
             arr: vec![1, 2]
         },
-        Enum::decode_bytes(&[1, 64, 2, 1, 2], ByteOrder::BigEndian).unwrap()
+        Enum::decode_bytes(&[1, 64, 2, 1, 2], BigEndian).unwrap()
     );
 }
 
@@ -65,7 +66,7 @@ fn decode_enum_variant() {
 fn encode_enum_variant() {
     assert_eq!(
         Enum::Variant2::<u32>(20, true, PhantomData)
-            .encode_bytes(ByteOrder::BigEndian)
+            .encode_bytes(BigEndian)
             .unwrap(),
         vec![2, 0, 0, 0, 20, 1]
     );
@@ -77,7 +78,7 @@ fn decode_enum_variant_in_container() {
         EnumContainer {
             e: Enum2::Variant1(2)
         },
-        EnumContainer::decode_bytes(&[64, 128], ByteOrder::BigEndian).unwrap()
+        EnumContainer::decode_bytes(&[64, 128], BigEndian).unwrap()
     );
 }
 
@@ -87,7 +88,7 @@ fn encode_enum_variant_in_container() {
         EnumContainer {
             e: Enum2::Variant2(511)
         }
-        .encode_bytes(ByteOrder::BigEndian)
+        .encode_bytes(BigEndian)
         .unwrap(),
         vec![128, 127, 192]
     );
@@ -99,7 +100,7 @@ fn decode_enum_variant_in_container_tagged() {
         TaggedEnumContainer {
             e: Enum2::Variant1(2)
         },
-        TaggedEnumContainer::decode_bytes(&[0, 1, 2], ByteOrder::BigEndian).unwrap()
+        TaggedEnumContainer::decode_bytes(&[0, 1, 2], BigEndian).unwrap()
     );
 }
 
@@ -109,7 +110,7 @@ fn encode_enum_variant_in_container_tagged() {
         TaggedEnumContainer {
             e: Enum2::Variant2(511)
         }
-        .encode_bytes(ByteOrder::BigEndian)
+        .encode_bytes(BigEndian)
         .unwrap(),
         vec![0, 2, 1, 255,]
     );
@@ -122,7 +123,7 @@ fn decode_enum_variant_in_container_tagged_bitfield() {
             discriminant: 1,
             e: Enum2::Variant1(2)
         },
-        BitFieldTaggedEnumContainer::decode_bytes(&[32, 64], ByteOrder::BigEndian).unwrap()
+        BitFieldTaggedEnumContainer::decode_bytes(&[32, 64], BigEndian).unwrap()
     );
 }
 
@@ -133,7 +134,7 @@ fn encode_enum_variant_in_container_tagged_bitfield() {
             discriminant: 2,
             e: Enum2::Variant2(511)
         }
-        .encode_bytes(ByteOrder::BigEndian)
+        .encode_bytes(BigEndian)
         .unwrap(),
         vec![64, 63, 224]
     );

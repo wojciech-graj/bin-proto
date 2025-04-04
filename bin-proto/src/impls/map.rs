@@ -10,16 +10,19 @@ macro_rules! impl_read_map {
             Tag: ::core::convert::TryInto<usize>,
             $($h: $hbound0 + $hbound1)?
         {
-            fn decode(read: &mut dyn $crate::BitRead,
-                byte_order: $crate::ByteOrder,
+            fn decode<R, E>(
+                read: &mut R,
                 ctx: &mut Ctx,
                 tag: $crate::Tag<Tag>,
-            ) -> $crate::Result<Self> {
-                let elements = $crate::util::decode_items(
+            ) -> $crate::Result<Self>
+            where
+                R: ::bitstream_io::BitRead,
+                E: ::bitstream_io::Endianness,
+            {
+                let elements = $crate::util::decode_items::<_, E, _, _>(
                     ::core::convert::TryInto::try_into(tag.0)
                         .map_err(|_| $crate::Error::TagConvert)?,
                     read,
-                    byte_order,
                     ctx
                 )?;
                 Ok(::core::iter::IntoIterator::into_iter(elements).collect())
@@ -32,13 +35,17 @@ macro_rules! impl_read_map {
             V: $crate::BitDecode<Ctx>,
             $($h: $hbound0 + $hbound1)?
         {
-            fn decode(read: &mut dyn $crate::BitRead,
-                byte_order: $crate::ByteOrder,
+            fn decode<R, E>(
+                read: &mut R,
                 ctx: &mut Ctx,
                 _: $crate::Untagged,
-            ) -> $crate::Result<Self> {
+            ) -> $crate::Result<Self>
+            where
+                R: ::bitstream_io::BitRead,
+                E: ::bitstream_io::Endianness,
+            {
                 Ok(::core::iter::IntoIterator::into_iter(
-                    $crate::util::decode_items_to_eof(read, byte_order, ctx)?
+                    $crate::util::decode_items_to_eof::<_, E, _, _>(read,  ctx)?
                 ).collect())
             }
         }
@@ -52,14 +59,19 @@ macro_rules! impl_write_map {
             K: $crate::BitEncode<Ctx> + $kbound0 $(+ $kbound1)?,
             V: $crate::BitEncode<Ctx>
         {
-            fn encode(&self, write: &mut dyn $crate::BitWrite,
-                    byte_order: $crate::ByteOrder,
-                    ctx: &mut Ctx,
-                    _: $crate::Untagged,
-                    ) -> $crate::Result<()> {
+            fn encode<W, E>(
+                &self,
+                write: &mut W,
+                ctx: &mut Ctx,
+                _: $crate::Untagged,
+            ) -> $crate::Result<()>
+            where
+                W: ::bitstream_io::BitWrite,
+                E: ::bitstream_io::Endianness,
+            {
                 for (key, value) in self.iter() {
-                    $crate::BitEncode::encode(key, write, byte_order, ctx, ())?;
-                    $crate::BitEncode::encode(value, write, byte_order, ctx, ())?;
+                    $crate::BitEncode::encode::<_, E>(key, write,  ctx, ())?;
+                    $crate::BitEncode::encode::<_, E>(value, write,  ctx, ())?;
                 }
 
                 Ok(())

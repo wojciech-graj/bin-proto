@@ -1,14 +1,24 @@
-use crate::{BitDecode, BitEncode, BitRead, BitWrite, ByteOrder, Result};
+use bitstream_io::{BitRead, BitWrite, Endianness};
+
+use crate::{BitDecode, BitEncode, Result};
 use core::marker::PhantomPinned;
 
 impl<Ctx> BitDecode<Ctx> for PhantomPinned {
-    fn decode(_: &mut dyn BitRead, _: ByteOrder, _: &mut Ctx, (): ()) -> Result<Self> {
+    fn decode<R, E>(_: &mut R, _: &mut Ctx, (): ()) -> Result<Self>
+    where
+        R: BitRead,
+        E: Endianness,
+    {
         Ok(Self)
     }
 }
 
 impl<Ctx> BitEncode<Ctx> for PhantomPinned {
-    fn encode(&self, _: &mut dyn BitWrite, _: ByteOrder, _: &mut Ctx, (): ()) -> Result<()> {
+    fn encode<W, E>(&self, _: &mut W, _: &mut Ctx, (): ()) -> Result<()>
+    where
+        W: BitWrite,
+        E: Endianness,
+    {
         Ok(())
     }
 }

@@ -2,7 +2,8 @@
 
 use std::marker::PhantomData;
 
-use bin_proto::{BitCodec, BitDecode, BitEncode, ByteOrder};
+use bin_proto::{BitCodec, BitDecode, BitEncode};
+use bitstream_io::BigEndian;
 
 #[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
 pub struct Foobar {
@@ -49,7 +50,7 @@ fn named_fields_are_correctly_written() {
             b: '2' as u8,
             c: 1,
         }
-        .encode_bytes(ByteOrder::BigEndian)
+        .encode_bytes(BigEndian)
         .unwrap()
     );
 }
@@ -62,7 +63,7 @@ fn named_fields_are_correctly_decoded() {
             b: '2' as u8,
             c: 1,
         },
-        Foobar::decode_bytes(&[3, '2' as u8, 1], ByteOrder::BigEndian).unwrap()
+        Foobar::decode_bytes(&[3, '2' as u8, 1], BigEndian).unwrap()
     );
 }
 
@@ -70,7 +71,7 @@ fn named_fields_are_correctly_decoded() {
 fn unnamed_fields_are_correctly_written() {
     assert_eq!(
         vec![6, 1, 9],
-        BizBong(6, 1, 9).encode_bytes(ByteOrder::BigEndian).unwrap()
+        BizBong(6, 1, 9).encode_bytes(BigEndian).unwrap()
     );
 }
 
@@ -78,23 +79,20 @@ fn unnamed_fields_are_correctly_written() {
 fn unnamed_fields_are_correctly_decoded() {
     assert_eq!(
         BizBong(3, 1, 7),
-        BizBong::decode_bytes(&[3, 1, 7], ByteOrder::BigEndian).unwrap()
+        BizBong::decode_bytes(&[3, 1, 7], BigEndian).unwrap()
     );
 }
 
 #[test]
 fn unit_structs_are_correctly_written() {
-    assert_eq!(
-        PartyInTheFront.encode_bytes(ByteOrder::BigEndian).unwrap(),
-        &[]
-    );
+    assert_eq!(PartyInTheFront.encode_bytes(BigEndian).unwrap(), &[]);
 }
 
 #[test]
 fn unit_structs_are_correctly_decoded() {
     assert_eq!(
         PartyInTheFront,
-        PartyInTheFront::decode_bytes(&[], ByteOrder::BigEndian).unwrap()
+        PartyInTheFront::decode_bytes(&[], BigEndian).unwrap()
     );
 }
 
@@ -107,7 +105,7 @@ fn ipv4() {
     }
 
     assert_eq!(
-        IPv4Header::decode_bytes(&[0x45], ByteOrder::BigEndian).unwrap(),
+        IPv4Header::decode_bytes(&[0x45], BigEndian).unwrap(),
         IPv4Header { version: 4 }
     )
 }

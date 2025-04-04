@@ -1,6 +1,7 @@
 # v0.7.0
 - Combine `TaggedRead`, `FlexibleArrayMemberRead`, `BitFieldRead`, and `ProtocolRead` traits into `BitDecode`
 - Combine `UntaggedWrite`, `BitFieldWrite`, and `ProtocolWrite` traits into `BitEncode`
+- Replace `BitRead`, `BitWrite`, and `ByteOrder` traits with `BitRead`, `BitWrite`, `Endianness` from `bitstream_io`
 - Rename `ProtocolNoCtx` to `Codec`
 - Change all `protocol` attributes to `codec`
 - Add `std` feature, support `no_std`
@@ -16,6 +17,7 @@
 - Remove `thiserror` dependency
 - Deny `unwrap`, `expect`, and `unsafe`
 - Clean up tuple impl documentation with `doc(fake_variadic)`
+- Update `bitstream_io` to 3
 # v0.6.0
 - Allow multiple attributes in a single `#[protocol(...)]`
 - Require unquoted expressions in attributes

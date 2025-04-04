@@ -1,6 +1,7 @@
 #![cfg(feature = "derive")]
 
-use bin_proto::{BitCodec, BitDecode, BitEncode, ByteOrder};
+use bin_proto::{BitCodec, BitDecode, BitEncode};
+use bitstream_io::BigEndian;
 
 #[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
 pub struct Prefix {
@@ -65,7 +66,7 @@ fn can_decode_length_prefix_3_elements() {
                 0, 0, 0, 2, // 2
                 0, 0, 0, 3 // 3
             ],
-            ByteOrder::BigEndian,
+            BigEndian,
         )
         .unwrap()
     );
@@ -79,7 +80,7 @@ fn can_encode_auto_length_prefix_3_elements_enum() {
             foo: true,
             data: vec![1, 2, 3],
         }
-        .encode_bytes(ByteOrder::BigEndian)
+        .encode_bytes(BigEndian)
         .unwrap(),
         vec![
             0, 0, 0, 3, // disjoint length prefix
@@ -108,7 +109,7 @@ fn can_decode_length_prefix_3_elements_enum() {
                 0, 0, 0, 2, // 2
                 0, 0, 0, 3 // 3
             ],
-            ByteOrder::BigEndian,
+            BigEndian,
         )
         .unwrap()
     );
@@ -122,7 +123,7 @@ fn can_encode_auto_length_prefix_3_elements() {
             foo: true,
             data: vec![1, 2, 3],
         }
-        .encode_bytes(ByteOrder::BigEndian)
+        .encode_bytes(BigEndian)
         .unwrap(),
         vec![
             1, // Discriminant
@@ -148,7 +149,7 @@ fn can_decode_prepended_length_prefix_3_elements() {
                 0, 0, 0, 2, // 2
                 0, 0, 0, 3 // 3
             ],
-            ByteOrder::BigEndian,
+            BigEndian,
         )
         .unwrap()
     );
@@ -160,7 +161,7 @@ fn can_encode_prepended_length_prefix_3_elements() {
         Prepended {
             data: vec![1, 2, 3],
         }
-        .encode_bytes(ByteOrder::BigEndian)
+        .encode_bytes(BigEndian)
         .unwrap(),
         vec![
             0, 0, 0, 3, // disjoint length prefix

@@ -44,7 +44,7 @@
 //!         0x21, 0x37, // arr: [0x21, 0x37]
 //!         0x00, 0x01, 0x33, // prefixed_arr: [0x33]
 //!         0x01, 0x02, 0x03, // read_to_end: [0x01, 0x02, 0x03]
-//!     ], bin_proto::ByteOrder::BigEndian).unwrap(),
+//!     ], bitstream_io::BigEndian).unwrap(),
 //!     S {
 //!         bitflag: true,
 //!         bitfield: 5,
@@ -96,13 +96,11 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
-pub use self::bit_read::BitRead;
-pub use self::bit_write::BitWrite;
-pub use self::byte_order::ByteOrder;
 pub use self::codec::BitCodec;
 pub use self::codec::{BitDecode, BitEncode};
 pub use self::discriminable::Discriminable;
 pub use self::error::{Error, Result};
+pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 
 /// Derive the [`BitDecode`] and [`BitEncode`] traits.
 ///
@@ -238,31 +236,37 @@ pub use self::error::{Error, Result};
 /// Specify the type of context that will be passed to codec functions.
 ///
 /// ```
-/// # use bin_proto::{ByteOrder, BitDecode, BitEncode};
+/// # use bin_proto::{BitDecode, BitEncode};
 /// pub struct Ctx;
 ///
 /// pub struct NeedsCtx;
 ///
 /// impl BitDecode<Ctx> for NeedsCtx {
-///     fn decode(
-///         _read: &mut dyn bin_proto::BitRead,
-///         _byte_order: bin_proto::ByteOrder,
+///     fn decode<R, E>(
+///         _read: &mut R,
 ///         _ctx: &mut Ctx,
 ///         _tag: (),
-///     ) -> bin_proto::Result<Self> {
+///     ) -> bin_proto::Result<Self>
+///     where
+///         R: bitstream_io::BitRead,
+///         E: bitstream_io::Endianness,
+///     {
 ///         // Use ctx here
 ///         Ok(Self)
 ///     }
 /// }
 ///
 /// impl BitEncode<Ctx> for NeedsCtx {
-///     fn encode(
+///     fn encode<W, E>(
 ///         &self,
-///         _write: &mut dyn bin_proto::BitWrite,
-///         _byte_order: bin_proto::ByteOrder,
+///         _write: &mut W,
 ///         _ctx: &mut Ctx,
 ///         _tag: (),
-///     ) -> bin_proto::Result<()> {
+///     ) -> bin_proto::Result<()>
+///     where
+///         W: bitstream_io::BitWrite,
+///         E: bitstream_io::Endianness,
+///     {
 ///         // Use ctx here
 ///         Ok(())
 ///     }
@@ -273,7 +277,7 @@ pub use self::error::{Error, Result};
 /// pub struct WithCtx(NeedsCtx);
 ///
 /// WithCtx(NeedsCtx)
-///     .encode_bytes_ctx(ByteOrder::LittleEndian, &mut Ctx, ())
+///     .encode_bytes_ctx(bitstream_io::BigEndian, &mut Ctx, ())
 ///     .unwrap();
 /// ```
 ///
@@ -303,31 +307,37 @@ pub use self::error::{Error, Result};
 /// Specify the trait bounds of context that will be passed to codec functions.
 ///
 /// ```
-/// # use bin_proto::{ByteOrder, BitDecode, BitEncode};
+/// # use bin_proto::{BitDecode, BitEncode};
 /// pub trait CtxTrait {};
 ///
 /// pub struct NeedsCtx;
 ///
 /// impl<Ctx: CtxTrait> BitDecode<Ctx> for NeedsCtx {
-///     fn decode(
-///         _read: &mut dyn bin_proto::BitRead,
-///         _byte_order: bin_proto::ByteOrder,
+///     fn decode<R, E>(
+///         _read: &mut R,
 ///         _ctx: &mut Ctx,
 ///         _tag: (),
-///     ) -> bin_proto::Result<Self> {
+///     ) -> bin_proto::Result<Self>
+///     where
+///         R: bitstream_io::BitRead,
+///         E: bitstream_io::Endianness,
+///     {
 ///         // Use ctx here
 ///         Ok(Self)
 ///     }
 ///}
 ///
 /// impl<Ctx: CtxTrait> BitEncode<Ctx> for NeedsCtx {
-///     fn encode(
+///     fn encode<W, E>(
 ///         &self,
-///         _write: &mut dyn bin_proto::BitWrite,
-///         _byte_order: bin_proto::ByteOrder,
+///         _write: &mut W,
 ///         _ctx: &mut Ctx,
 ///         _tag: (),
-///     ) -> bin_proto::Result<()> {
+///     ) -> bin_proto::Result<()>
+///     where
+///         W: bitstream_io::BitWrite,
+///         E: bitstream_io::Endianness,
+///     {
 ///         // Use ctx here
 ///         Ok(())
 ///     }
@@ -351,9 +361,6 @@ pub use bin_proto_derive::{BitDecode, BitEncode};
 #[macro_use]
 mod codec;
 
-mod bit_read;
-mod bit_write;
-mod byte_order;
 mod discriminable;
 mod error;
 mod impls;

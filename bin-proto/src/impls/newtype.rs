@@ -4,13 +4,16 @@ macro_rules! impl_newtype {
         where
             T: $crate::BitDecode<Ctx, Tag>,
         {
-            fn decode(
-                read: &mut dyn $crate::BitRead,
-                byte_order: $crate::ByteOrder,
+            fn decode<R, E>(
+                read: &mut R,
                 ctx: &mut Ctx,
                 tag: Tag,
-            ) -> $crate::Result<Self> {
-                Ok(Self($crate::BitDecode::decode(read, byte_order, ctx, tag)?))
+            ) -> $crate::Result<Self>
+            where
+                R: ::bitstream_io::BitRead,
+                E: ::bitstream_io::Endianness,
+            {
+                Ok(Self($crate::BitDecode::decode::<_, E>(read,  ctx, tag)?))
             }
         }
 
@@ -18,14 +21,17 @@ macro_rules! impl_newtype {
         where
             T: $crate::BitEncode<Ctx, Tag>,
         {
-            fn encode(
+            fn encode<W, E>(
                 &self,
-                write: &mut dyn $crate::BitWrite,
-                byte_order: $crate::ByteOrder,
+                write: &mut W,
                 ctx: &mut Ctx,
                 tag: Tag
-            ) -> $crate::Result<()> {
-                $crate::BitEncode::encode(&self.0, write, byte_order, ctx, tag)
+            ) -> $crate::Result<()>
+            where
+                W: ::bitstream_io::BitWrite,
+                E: ::bitstream_io::Endianness,
+            {
+                $crate::BitEncode::encode::<_, E>(&self.0, write,  ctx, tag)
             }
         }
 

@@ -9,16 +9,19 @@ macro_rules! impl_read_list {
             Tag: ::core::convert::TryInto<usize>,
             $($h: $hbound0 + $hbound1)?
         {
-            fn decode(read: &mut dyn $crate::BitRead,
-                byte_order: $crate::ByteOrder,
+            fn decode<R, E>(read: &mut R,
                 ctx: &mut Ctx,
                 tag: $crate::Tag<Tag>,
-            ) -> $crate::Result<Self> {
-                let elements = $crate::util::decode_items(
+            ) -> $crate::Result<Self>
+            where
+                R: ::bitstream_io::BitRead,
+                E: ::bitstream_io::Endianness,
+            {
+                let elements = $crate::util::decode_items::<_, E, _, _>(
                     ::core::convert::TryInto::try_into(tag.0)
                         .map_err(|_| $crate::Error::TagConvert)?,
                     read,
-                    byte_order,
+
                     ctx
                 )?;
                 Ok(::core::iter::IntoIterator::into_iter(elements).collect())
@@ -30,14 +33,17 @@ macro_rules! impl_read_list {
             T: $crate::BitDecode<Ctx> $(+ $tbound0 $(+ $tbound1)?)?,
             $($h: $hbound0 + $hbound1)?
         {
-            fn decode(
-                read: &mut dyn $crate::BitRead,
-                byte_order: $crate::ByteOrder,
+            fn decode<R, E>(
+                read: &mut R,
                 ctx: &mut Ctx,
                 _: $crate::Untagged,
-            ) -> $crate::Result<Self> {
+            ) -> $crate::Result<Self>
+            where
+                R: ::bitstream_io::BitRead,
+                E: ::bitstream_io::Endianness,
+            {
                 Ok(::core::iter::IntoIterator::into_iter(
-                    $crate::util::decode_items_to_eof(read, byte_order, ctx)?
+                    $crate::util::decode_items_to_eof::<_, E, _, _>(read,  ctx)?
                 ).collect())
             }
         }
@@ -50,13 +56,16 @@ macro_rules! impl_write_list {
         where
             T: $crate::BitEncode<Ctx> $(+ $tbound0 $(+ $tbound1)?)?
         {
-            fn encode(&self,
-                write: &mut dyn $crate::BitWrite,
-                byte_order: $crate::ByteOrder,
+            fn encode<W, E>(&self,
+                write: &mut W,
                 ctx: &mut Ctx,
                 _: $crate::Untagged,
-            ) -> $crate::Result<()> {
-                $crate::util::encode_items(self.iter(), write, byte_order, ctx)
+            ) -> $crate::Result<()>
+            where
+                W: ::bitstream_io::BitWrite,
+                E: ::bitstream_io::Endianness,
+            {
+                $crate::util::encode_items::<_, E, _, _>(self.iter(), write,  ctx)
             }
         }
     }
@@ -146,7 +155,7 @@ mod binary_heap {
 
         use bitstream_io::{BigEndian, BitReader};
 
-        use crate::{BitDecode, ByteOrder, Tag, Untagged};
+        use crate::{BitDecode, Tag, Untagged};
 
         use super::*;
 
@@ -154,9 +163,8 @@ mod binary_heap {
         fn decode() {
             let bytes: &[u8] = &[0x01];
             let exp: BinaryHeap<u8> = [1].into();
-            let read: BinaryHeap<u8> = BitDecode::decode(
+            let read: BinaryHeap<u8> = BitDecode::decode::<_, BigEndian>(
                 &mut BitReader::endian(bytes, BigEndian),
-                ByteOrder::BigEndian,
                 &mut (),
                 Tag(1),
             )

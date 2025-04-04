@@ -1,17 +1,17 @@
-use crate::{BitEncode, BitWrite, ByteOrder, Result};
+use bitstream_io::{BitWrite, Endianness};
+
+use crate::{BitEncode, Result};
 
 impl<Ctx, Tag, T> BitEncode<Ctx, Tag> for &T
 where
     T: BitEncode<Ctx, Tag>,
 {
-    fn encode(
-        &self,
-        write: &mut dyn BitWrite,
-        byte_order: ByteOrder,
-        ctx: &mut Ctx,
-        tag: Tag,
-    ) -> Result<()> {
-        (**self).encode(write, byte_order, ctx, tag)
+    fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, tag: Tag) -> Result<()>
+    where
+        W: BitWrite,
+        E: Endianness,
+    {
+        (**self).encode::<_, E>(write, ctx, tag)
     }
 }
 

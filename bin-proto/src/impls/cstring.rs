@@ -1,17 +1,17 @@
 use alloc::{ffi::CString, vec::Vec};
+use bitstream_io::{BitRead, BitWrite, Endianness};
 
-use crate::{util, BitDecode, BitEncode, BitRead, BitWrite, ByteOrder, Result};
+use crate::{util, BitDecode, BitEncode, Result};
 
 impl<Ctx> BitDecode<Ctx> for CString {
-    fn decode(
-        read: &mut dyn BitRead,
-        byte_order: ByteOrder,
-        ctx: &mut Ctx,
-        tag: (),
-    ) -> Result<Self> {
+    fn decode<R, E>(read: &mut R, ctx: &mut Ctx, tag: ()) -> Result<Self>
+    where
+        R: BitRead,
+        E: Endianness,
+    {
         let mut result = Vec::new();
         loop {
-            let c: u8 = BitDecode::decode(read, byte_order, ctx, tag)?;
+            let c: u8 = BitDecode::decode::<_, E>(read, ctx, tag)?;
             if c == 0x00 {
                 return Ok(Self::new(result)?);
             }
@@ -21,14 +21,12 @@ impl<Ctx> BitDecode<Ctx> for CString {
 }
 
 impl<Ctx> BitEncode<Ctx> for CString {
-    fn encode(
-        &self,
-        write: &mut dyn BitWrite,
-        byte_order: ByteOrder,
-        ctx: &mut Ctx,
-        (): (),
-    ) -> Result<()> {
-        util::encode_items(self.to_bytes_with_nul().iter(), write, byte_order, ctx)
+    fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, (): ()) -> Result<()>
+    where
+        W: BitWrite,
+        E: Endianness,
+    {
+        util::encode_items::<_, E, _, _>(self.to_bytes_with_nul().iter(), write, ctx)
     }
 }
 
