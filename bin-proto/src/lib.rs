@@ -44,7 +44,7 @@
 //!         0x21, 0x37, // arr: [0x21, 0x37]
 //!         0x00, 0x01, 0x33, // prefixed_arr: [0x33]
 //!         0x01, 0x02, 0x03, // read_to_end: [0x01, 0x02, 0x03]
-//!     ], bitstream_io::BigEndian).unwrap(),
+//!     ], bin_proto::BigEndian).unwrap(),
 //!     S {
 //!         bitflag: true,
 //!         bitfield: 5,
@@ -66,7 +66,7 @@
 //! - `Ctx`: A mutable variable passed recursively down the codec chain
 //! - `Tag`: A tag for specifying additional behavior
 //!
-//! `Tag` can have any type. The following are used throughout [`bin-proto`] and ensure
+//! `Tag` can have any type. The following are used throughout `bin-proto` and ensure
 //! interoperability:
 //! - [`Tag`]: Specifies that an additional tag is required during decoding, such as a length prefix
 //!   for a [`Vec`](::alloc::vec::Vec), or a discriminant of an `enum`
@@ -147,7 +147,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 ///
 /// Determine width of field in bits.
 ///
-/// **WARNING**: Bitfields disregard [`ByteOrder`] and instead have the same endianness as the
+/// **WARNING**: Bitfields disregard endianness and instead have the same endianness as the
 /// underlying [`BitRead`] / [`BitWrite`] instance. If you're using bitfields, you almost always
 /// want a big endian stream.
 ///
@@ -248,8 +248,8 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 ///         _tag: (),
 ///     ) -> bin_proto::Result<Self>
 ///     where
-///         R: bitstream_io::BitRead,
-///         E: bitstream_io::Endianness,
+///         R: bin_proto::BitRead,
+///         E: bin_proto::Endianness,
 ///     {
 ///         // Use ctx here
 ///         Ok(Self)
@@ -264,8 +264,8 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 ///         _tag: (),
 ///     ) -> bin_proto::Result<()>
 ///     where
-///         W: bitstream_io::BitWrite,
-///         E: bitstream_io::Endianness,
+///         W: bin_proto::BitWrite,
+///         E: bin_proto::Endianness,
 ///     {
 ///         // Use ctx here
 ///         Ok(())
@@ -277,7 +277,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// pub struct WithCtx(NeedsCtx);
 ///
 /// WithCtx(NeedsCtx)
-///     .encode_bytes_ctx(bitstream_io::BigEndian, &mut Ctx, ())
+///     .encode_bytes_ctx(bin_proto::BigEndian, &mut Ctx, ())
 ///     .unwrap();
 /// ```
 ///
@@ -319,8 +319,8 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 ///         _tag: (),
 ///     ) -> bin_proto::Result<Self>
 ///     where
-///         R: bitstream_io::BitRead,
-///         E: bitstream_io::Endianness,
+///         R: bin_proto::BitRead,
+///         E: bin_proto::Endianness,
 ///     {
 ///         // Use ctx here
 ///         Ok(Self)
@@ -335,8 +335,8 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 ///         _tag: (),
 ///     ) -> bin_proto::Result<()>
 ///     where
-///         W: bitstream_io::BitWrite,
-///         E: bitstream_io::Endianness,
+///         W: bin_proto::BitWrite,
+///         E: bin_proto::Endianness,
 ///     {
 ///         // Use ctx here
 ///         Ok(())

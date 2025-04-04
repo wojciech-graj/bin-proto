@@ -1,4 +1,4 @@
-//! Utility types
+//! Implementations
 
 mod array;
 mod container;
