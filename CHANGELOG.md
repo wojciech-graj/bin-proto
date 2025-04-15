@@ -1,3 +1,6 @@
+# v0.7.1
+- Expand dependency version ranges
+- Bump bitstream-io to 3.1.0
 # v0.7.0
 - Combine `TaggedRead`, `FlexibleArrayMemberRead`, `BitFieldRead`, and `ProtocolRead` traits into `BitDecode`
 - Combine `UntaggedWrite`, `BitFieldWrite`, and `ProtocolWrite` traits into `BitEncode`

@@ -26,6 +26,6 @@ derive = ["bin-proto-derive"]
 std = ["bitstream-io/std"]
 
 [dependencies]
-bin-proto-derive = { version = "0.7.0", path = "../bin-proto-derive", optional = true }
-bitstream-io = { version = "3.0.0", default-features = false }
+bin-proto-derive = { version = "0.7.1", path = "../bin-proto-derive", optional = true }
+bitstream-io = { version = "3.1.0", default-features = false }
 core2 = "0.4.0"
