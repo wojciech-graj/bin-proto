@@ -38,7 +38,6 @@ impl fmt::Display for Error {
             }
             Self::TagConvert => write!(f, "failed to convert tag"),
             Self::SliceTryFromVec => write!(f, "failed to convert Vec to slice"),
-            #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
             #[cfg(feature = "std")]
             Self::Poison => write!(f, "poisoned lock: another task failed inside"),
             Self::Other(e) => write!(f, "{e}"),
