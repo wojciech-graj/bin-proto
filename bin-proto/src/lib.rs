@@ -189,7 +189,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// }
 /// ```
 ///
-/// ## `#[codec(tag_type = <type>[, tag_value = <expr>]?)]`
+/// ## `#[codec(tag_type = <type>[, tag_value = <expr>]?[, tag_bits = <expr>]?)]`
 /// - Applies to: [`impl BitDecode<_, Tag>`](BitDecode) or
 ///   [`impl BitEncode<_, Untagged>`](BitEncode)
 /// - `<type>`: tag's type
@@ -204,7 +204,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
 /// pub struct WithElementsLength {
-///     #[codec(tag_type = u16, tag_value = self.data.len() as u16)]
+///     #[codec(tag_type = u16, tag_value = self.data.len() as u16, tag_bits = 13)]
 ///     pub data: Vec<u32>,
 /// }
 /// ```

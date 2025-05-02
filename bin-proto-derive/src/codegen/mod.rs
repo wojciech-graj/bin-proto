@@ -3,7 +3,7 @@ pub mod trait_impl;
 
 use crate::attr::{AttrKind, Attrs, Tag};
 use proc_macro2::TokenStream;
-use syn::{spanned::Spanned, Error};
+use syn::{Error, spanned::Spanned};
 
 pub fn decodes(fields: &syn::Fields) -> (TokenStream, TokenStream) {
     match *fields {
@@ -59,9 +59,14 @@ fn decode(field: &syn::Field) -> TokenStream {
         Err(e) => return e.to_compile_error(),
     };
 
-    if let Some(Tag::Prepend { typ, .. }) = attribs.tag {
+    if let Some(Tag::Prepend { typ, bits, .. }) = attribs.tag {
+        let tag = if let Some(bits) = bits {
+            quote!(::bin_proto::Bits(#bits))
+        } else {
+            quote!(())
+        };
         quote!({
-            let __tag: #typ = ::bin_proto::BitDecode::decode::<_, __E>(__io_reader, __ctx, ())?;
+            let __tag: #typ = ::bin_proto::BitDecode::decode::<_, __E>(__io_reader, __ctx, #tag)?;
             ::bin_proto::BitDecode::decode::<_, __E>(
                 __io_reader,
                 __ctx,
@@ -98,17 +103,27 @@ fn encode(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
         field_name.clone()
     };
 
-    if let Some(Tag::Prepend { typ, write_value }) = attribs.tag {
+    if let Some(Tag::Prepend {
+        typ,
+        write_value,
+        bits,
+    }) = attribs.tag
+    {
         let Some(write_value) = write_value else {
             return Error::new(field.span(), "Tag must specify 'write_value'").to_compile_error();
         };
+        let tag = if let Some(bits) = bits {
+            quote!(::bin_proto::Bits(#bits))
+        } else {
+            quote!(())
+        };
         quote!(
             {
-                <#typ as ::bin_proto::BitEncode::<_>>::encode::<_, __E>(
+                <#typ as ::bin_proto::BitEncode::<_, _>>::encode::<_, __E>(
                     &{#write_value},
                     __io_writer,
                     __ctx,
-                    ()
+                    #tag
                 )?;
                 ::bin_proto::BitEncode::encode::<_, __E>(
                     #field_ref,

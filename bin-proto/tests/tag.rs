@@ -50,6 +50,12 @@ pub struct Prepended {
     pub data: Vec<u32>,
 }
 
+#[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
+pub struct PrependedBits {
+    #[codec(tag_type = u32, tag_value = self.data.len() as u32, tag_bits = 3)]
+    pub data: Vec<u32>,
+}
+
 #[test]
 fn can_decode_length_prefix_3_elements() {
     assert_eq!(
@@ -169,5 +175,28 @@ fn can_encode_prepended_length_prefix_3_elements() {
             0, 0, 0, 2, // 2
             0, 0, 0, 3 // 3
         ],
+    );
+}
+
+#[test]
+fn can_decode_prepended_length_prefix_bits() {
+    assert_eq!(
+        PrependedBits {
+            data: vec![1, 2, 3],
+        },
+        PrependedBits::decode_bytes(&[96, 0, 0, 0, 32, 0, 0, 0, 64, 0, 0, 0, 96], BigEndian,)
+            .unwrap()
+    );
+}
+
+#[test]
+fn can_encode_prepended_length_prefix_bits() {
+    assert_eq!(
+        PrependedBits {
+            data: vec![1, 2, 3],
+        }
+        .encode_bytes(BigEndian)
+        .unwrap(),
+        vec![96, 0, 0, 0, 32, 0, 0, 0, 64, 0, 0, 0, 96],
     );
 }

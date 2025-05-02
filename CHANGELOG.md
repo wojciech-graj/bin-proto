@@ -1,6 +1,9 @@
+# v0.8.0
+- Add `#[codec(tag_bits = ...)]` attribute
+- Update `bitstream_io` to 4.0
 # v0.7.1
 - Expand dependency version ranges
-- Bump bitstream-io to 3.1.0
+- Bump bitstream-io to 3.1
 # v0.7.0
 - Combine `TaggedRead`, `FlexibleArrayMemberRead`, `BitFieldRead`, and `ProtocolRead` traits into `BitDecode`
 - Combine `UntaggedWrite`, `BitFieldWrite`, and `ProtocolWrite` traits into `BitEncode`
@@ -20,7 +23,7 @@
 - Remove `thiserror` dependency
 - Deny `unwrap`, `expect`, and `unsafe`
 - Clean up tuple impl documentation with `doc(fake_variadic)`
-- Update `bitstream_io` to 3
+- Update `bitstream_io` to 3.0
 # v0.6.0
 - Allow multiple attributes in a single `#[protocol(...)]`
 - Require unquoted expressions in attributes

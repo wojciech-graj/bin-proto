@@ -1,6 +1,6 @@
 use proc_macro2::{Span, TokenStream};
 use std::fmt;
-use syn::{parenthesized, punctuated::Punctuated, Error, Result, Token};
+use syn::{Error, Result, Token, parenthesized, punctuated::Punctuated};
 
 #[derive(Default)]
 pub struct Attrs {
@@ -24,6 +24,7 @@ pub enum Tag {
     Prepend {
         typ: syn::Type,
         write_value: Option<syn::Expr>,
+        bits: Option<syn::Expr>,
     },
 }
 
@@ -75,6 +76,7 @@ impl Attrs {
         let mut tag = None;
         let mut tag_type = None;
         let mut tag_value = None;
+        let mut tag_bits = None;
 
         let mut ctx = None;
         let mut ctx_bounds = None;
@@ -141,6 +143,9 @@ impl Attrs {
                     } else if meta.path.is_ident("tag_value") {
                         expect_attr_kind!(AttrKind::Field, kind, meta, "tag_value");
                         tag_value = Some(meta.value()?.parse()?);
+                    } else if meta.path.is_ident("tag_bits") {
+                        expect_attr_kind!(AttrKind::Field, kind, meta, "tag_bits");
+                        tag_bits = Some(meta.value()?.parse()?);
                     } else {
                         return Err(meta.error("unrecognized codec"));
                     }
@@ -149,20 +154,21 @@ impl Attrs {
             }
         }
 
-        match (tag, tag_type, tag_value) {
-            (Some(tag), None, None) => attribs.tag = Some(Tag::External(tag)),
-            (None, Some(tag_type), tag_value) => {
+        match (tag, tag_type, tag_value, tag_bits) {
+            (Some(tag), None, None, None) => attribs.tag = Some(Tag::External(tag)),
+            (None, Some(tag_type), tag_value, tag_bits) => {
                 attribs.tag = Some(Tag::Prepend {
                     typ: tag_type,
                     write_value: tag_value,
+                    bits: tag_bits,
                 });
             }
-            (None, None, None) => {}
+            (None, None, None, None) => {}
             _ => {
                 return Err(Error::new(
                     span,
                     "invalid configuration of 'tag', 'tag_type', or 'tag_value' attributes.",
-                ))
+                ));
             }
         }
 
@@ -174,7 +180,7 @@ impl Attrs {
                 return Err(Error::new(
                     span,
                     "use of mutually exclusive 'ctx' and 'ctx_bounds' attributes.",
-                ))
+                ));
             }
         }
 
