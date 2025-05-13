@@ -6,7 +6,7 @@ pub fn decode_discriminant(attribs: &Attrs) -> TokenStream {
         quote!(::bin_proto::BitDecode::decode::<_, __E>(
             __io_reader,
             __ctx,
-            ::bin_proto::Bits(#bits),
+            ::bin_proto::Bits::<#bits>,
         ))
     } else {
         quote!(::bin_proto::BitDecode::decode::<_, __E>(
@@ -23,7 +23,7 @@ pub fn encode_discriminant(attribs: &Attrs) -> TokenStream {
             &__tag,
             __io_writer,
             __ctx,
-            ::bin_proto::Bits(#bits),
+            ::bin_proto::Bits::<#bits>,
         ))
     } else {
         quote!(::bin_proto::BitEncode::encode::<_, __E>(

@@ -3,7 +3,7 @@ pub mod trait_impl;
 
 use crate::attr::{AttrKind, Attrs, Tag};
 use proc_macro2::TokenStream;
-use syn::{Error, spanned::Spanned};
+use syn::{spanned::Spanned, Error};
 
 pub fn decodes(fields: &syn::Fields) -> (TokenStream, TokenStream) {
     match *fields {
@@ -61,7 +61,7 @@ fn decode(field: &syn::Field) -> TokenStream {
 
     if let Some(Tag::Prepend { typ, bits, .. }) = attribs.tag {
         let tag = if let Some(bits) = bits {
-            quote!(::bin_proto::Bits(#bits))
+            quote!(::bin_proto::Bits::<#bits>)
         } else {
             quote!(())
         };
@@ -75,7 +75,7 @@ fn decode(field: &syn::Field) -> TokenStream {
         })
     } else {
         let tag = if let Some(field_width) = attribs.bits {
-            quote!(::bin_proto::Bits(#field_width))
+            quote!(::bin_proto::Bits::<#field_width>)
         } else if attribs.flexible_array_member {
             quote!(::bin_proto::Untagged)
         } else if let Some(Tag::External(tag)) = attribs.tag {
@@ -113,7 +113,7 @@ fn encode(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
             return Error::new(field.span(), "Tag must specify 'write_value'").to_compile_error();
         };
         let tag = if let Some(bits) = bits {
-            quote!(::bin_proto::Bits(#bits))
+            quote!(::bin_proto::Bits::<#bits>)
         } else {
             quote!(())
         };
@@ -135,7 +135,7 @@ fn encode(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
         )
     } else {
         let tag = if let Some(field_width) = attribs.bits {
-            quote!(::bin_proto::Bits(#field_width))
+            quote!(::bin_proto::Bits::<#field_width>)
         } else if matches!(attribs.tag, Some(Tag::External(_))) || attribs.flexible_array_member {
             quote!(::bin_proto::Untagged)
         } else {

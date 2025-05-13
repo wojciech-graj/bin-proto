@@ -1,6 +1,6 @@
 use proc_macro2::{Span, TokenStream};
 use std::fmt;
-use syn::{Error, Result, Token, parenthesized, punctuated::Punctuated};
+use syn::{parenthesized, punctuated::Punctuated, Error, Result, Token};
 
 #[derive(Default)]
 pub struct Attrs {

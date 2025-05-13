@@ -376,7 +376,7 @@ pub struct Untagged;
 pub struct Tag<T>(pub T);
 
 /// A marker for [`BitDecode`] and [`BitEncode`] implementors that support bitfield operations.
-pub struct Bits(pub u32);
+pub struct Bits<const C: u32>;
 
 /// ```compile_fail
 /// # use bin_proto::{BitDecode, BitEncode};
