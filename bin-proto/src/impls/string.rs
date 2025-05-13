@@ -16,7 +16,8 @@ where
             tag.0.try_into().map_err(|_| Error::TagConvert)?,
             read,
             ctx,
-        )?;
+        )
+        .collect::<Result<_>>()?;
         Ok(Self::from_utf8(bytes)?)
     }
 }

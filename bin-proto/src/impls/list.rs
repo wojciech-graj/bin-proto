@@ -17,14 +17,13 @@ macro_rules! impl_read_list {
                 R: ::bitstream_io::BitRead,
                 E: ::bitstream_io::Endianness,
             {
-                let elements = $crate::util::decode_items::<_, E, _, _>(
+                $crate::util::decode_items::<_, E, _, _>(
                     ::core::convert::TryInto::try_into(tag.0)
                         .map_err(|_| $crate::Error::TagConvert)?,
                     read,
 
                     ctx
-                )?;
-                Ok(::core::iter::IntoIterator::into_iter(elements).collect())
+                ).collect()
             }
         }
 

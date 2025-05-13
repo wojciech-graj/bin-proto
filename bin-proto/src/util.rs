@@ -2,7 +2,6 @@
 
 use crate::{BitDecode, BitEncode, Error, Result};
 
-use alloc::vec::Vec;
 use bitstream_io::{BitRead, BitWrite, Endianness};
 use core::iter;
 #[cfg(feature = "std")]
@@ -12,21 +11,20 @@ use std::io;
 use core2::io;
 
 /// Reads a specified number of items from a stream.
-pub fn decode_items<R, E, Ctx, T>(item_count: usize, read: &mut R, ctx: &mut Ctx) -> Result<Vec<T>>
+pub fn decode_items<'a, R, E, Ctx, T>(
+    item_count: usize,
+    read: &'a mut R,
+    ctx: &'a mut Ctx,
+) -> impl Iterator<Item = Result<T>> + use<'a, R, E, Ctx, T>
 where
     R: BitRead,
     E: Endianness,
     T: BitDecode<Ctx>,
 {
-    let mut elements = Vec::with_capacity(item_count);
-    for _ in 0..item_count {
-        let element = T::decode::<_, E>(read, ctx, ())?;
-        elements.push(element);
-    }
-    Ok(elements)
+    iter::repeat_with(|| T::decode::<_, E>(read, ctx, ())).take(item_count)
 }
 
-/// [`BitWrite`]s an iterator of parcels to the stream.
+/// [`BitEncode`]s an iterator of parcels to the stream.
 ///
 /// Does not include a length prefix.
 pub fn encode_items<'a, W, E, Ctx, T>(

@@ -1,5 +1,6 @@
 # v0.9.0
 - Change `Bits(u32)` to `Bits<const C: u32>`
+- Improve `BitDecode` performance for collections
 # v0.8.0
 - Add `#[codec(tag_bits = ...)]` attribute
 - Update `bitstream_io` to 4.0

@@ -1,6 +1,7 @@
 use bitstream_io::{BitRead, BitWrite, Endianness};
 
 use crate::{util, BitDecode, BitEncode, Error, Result};
+use alloc::vec::Vec;
 use core::convert::TryInto;
 
 impl<Ctx, T, const N: usize> BitDecode<Ctx> for [T; N]
@@ -12,7 +13,8 @@ where
         R: BitRead,
         E: Endianness,
     {
-        let elements = util::decode_items::<_, E, _, _>(N, read, ctx)?;
+        let elements: Vec<_> =
+            util::decode_items::<_, E, _, _>(N, read, ctx).collect::<Result<_>>()?;
         elements.try_into().map_err(|_| Error::SliceTryFromVec)
     }
 }
