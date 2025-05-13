@@ -9,8 +9,7 @@
 Simple & fast structured bit-level binary co/dec in Rust.
 
 An improved and modernized fork of
-[protocol](https://crates.io/crates/protocol). A more efficient but (slightly)
-less feature-rich alternative to [deku](https://crates.io/crates/deku).
+[protocol](https://crates.io/crates/protocol). An alternative to [deku](https://crates.io/crates/deku).
 
 This crate adds a trait (and a custom derive for ease-of-use) that can be
 implemented on types, allowing structured data to be sent and received from any
@@ -20,14 +19,7 @@ bit streams, as their `BitRead` and `BitWrite` traits are being used internally.
 
 ## Example
 
-Add this to your `Cargo.toml`:
-
-```toml
-[dependencies]
-bin-proto = "0.8"
-```
-
-And then define a type with the `#[derive(bin_proto::BitDecode, bin_proto::BitEncode)]` attributes.
+Define a type with the `#[derive(bin_proto::BitDecode, bin_proto::BitEncode)]` attributes.
 
 ```rust
 use bin_proto::{BitDecode, BitEncode, BitCodec};

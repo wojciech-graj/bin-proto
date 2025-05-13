@@ -4,6 +4,7 @@ use crate::{BitDecode, BitEncode, Error, Result};
 
 use alloc::vec::Vec;
 use bitstream_io::{BitRead, BitWrite, Endianness};
+use core::iter;
 #[cfg(feature = "std")]
 use std::io;
 
@@ -44,25 +45,17 @@ where
     Ok(())
 }
 
-pub fn decode_items_to_eof<R, E, Ctx, T>(read: &mut R, ctx: &mut Ctx) -> Result<Vec<T>>
+pub fn decode_items_to_eof<'a, R, E, Ctx, T>(
+    read: &'a mut R,
+    ctx: &'a mut Ctx,
+) -> impl Iterator<Item = Result<T>> + use<'a, R, E, Ctx, T>
 where
     R: BitRead,
     E: Endianness,
     T: BitDecode<Ctx>,
 {
-    let mut items = Vec::new();
-    loop {
-        let item = match T::decode::<_, E>(read, ctx, ()) {
-            Ok(item) => item,
-            Err(Error::Io(e)) => {
-                return if e.kind() == io::ErrorKind::UnexpectedEof {
-                    Ok(items)
-                } else {
-                    Err(e.into())
-                }
-            }
-            Err(e) => return Err(e),
-        };
-        items.push(item);
-    }
+    iter::from_fn(|| match T::decode::<_, E>(read, ctx, ()) {
+        Err(Error::Io(e)) if e.kind() == io::ErrorKind::UnexpectedEof => None,
+        other => Some(other),
+    })
 }

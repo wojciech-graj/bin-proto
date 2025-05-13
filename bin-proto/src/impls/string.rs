@@ -38,7 +38,7 @@ impl<Ctx> BitDecode<Ctx, Untagged> for String {
         R: BitRead,
         E: Endianness,
     {
-        let bytes = util::decode_items_to_eof::<_, E, _, _>(read, ctx)?;
+        let bytes = util::decode_items_to_eof::<_, E, _, _>(read, ctx).collect::<Result<_>>()?;
         Ok(Self::from_utf8(bytes)?)
     }
 }
