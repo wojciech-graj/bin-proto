@@ -33,3 +33,4 @@ where
 }
 
 test_codec!([u8; 4]; [0, 1, 2, 3] => [0x00, 0x01, 0x02, 0x03]);
+test_roundtrip!([u8; 4]);

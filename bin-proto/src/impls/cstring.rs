@@ -31,3 +31,4 @@ impl<Ctx> BitEncode<Ctx> for CString {
 }
 
 test_codec!(CString; CString::new("ABC").unwrap() => [0x41, 0x42, 0x43, 0]);
+test_roundtrip!(CString);

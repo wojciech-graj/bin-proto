@@ -24,3 +24,4 @@ impl<Ctx, T> BitEncode<Ctx> for PhantomData<T> {
 }
 
 test_codec!(PhantomData<u8>; PhantomData => []);
+test_roundtrip!(PhantomData<u8>);

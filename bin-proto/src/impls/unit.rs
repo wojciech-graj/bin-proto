@@ -23,3 +23,4 @@ impl<Ctx> BitEncode<Ctx> for () {
 }
 
 test_codec!((); () => []);
+test_roundtrip!(());

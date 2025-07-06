@@ -53,6 +53,7 @@ mod box_ {
     impl_container_write!(Box<T>);
     impl_container_read!(Box<T>);
     test_codec!(Box<u8>; Box::new(1) => [0x01]);
+    test_roundtrip!(Box<u8>);
 }
 
 mod rc {
@@ -61,6 +62,7 @@ mod rc {
     impl_container_write!(Rc<T>);
     impl_container_read!(Rc<T>);
     test_codec!(Rc<u8>; Rc::new(1) => [0x01]);
+    test_roundtrip!(Rc<u8>);
 }
 
 mod arc {
@@ -69,6 +71,7 @@ mod arc {
     impl_container_write!(Arc<T>);
     impl_container_read!(Arc<T>);
     test_codec!(Arc<u8>; Arc::new(1) => [0x01]);
+    test_roundtrip!(Arc<u8>);
 }
 
 mod cow {

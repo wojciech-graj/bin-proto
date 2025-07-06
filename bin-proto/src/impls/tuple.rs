@@ -99,3 +99,4 @@ impl_tuple!(0 T0, 1 T1, 2 T2);
 impl_tuple!(0 T0, 1 T1);
 
 test_codec!((u8,); (1,) => [0x01]);
+test_roundtrip!((u8,));

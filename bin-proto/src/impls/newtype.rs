@@ -43,10 +43,12 @@ mod wrapping {
     use core::num::Wrapping;
 
     impl_newtype!(Wrapping);
+    test_roundtrip!(Wrapping<u8>);
 }
 
 mod saturating {
     use core::num::Saturating;
 
     impl_newtype!(Saturating);
+    // TODO: https://github.com/proptest-rs/proptest/pull/585
 }

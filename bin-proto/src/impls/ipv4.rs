@@ -27,3 +27,4 @@ impl<Ctx> BitEncode<Ctx> for Ipv4Addr {
 }
 
 test_codec!(Ipv4Addr; Ipv4Addr::new(192, 168, 1, 0) => [192, 168, 1, 0]);
+test_roundtrip!(Ipv4Addr);

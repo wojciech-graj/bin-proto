@@ -35,3 +35,4 @@ test_codec!(Ipv6Addr;
         0x34
     ]
 );
+test_roundtrip!(Ipv6Addr);

@@ -131,6 +131,21 @@ macro_rules! test_codec {
     }
 }
 
+macro_rules! test_roundtrip {
+    ($ty:ty) => {
+        #[cfg(test)]
+        ::proptest::proptest!(
+            #[test]
+            fn roundtrip(x in ::proptest::arbitrary::any::<$ty>()) {
+                use alloc::format; // TODO: https://github.com/proptest-rs/proptest/pull/584
+                let encoded = $crate::BitEncode::encode_bytes_ctx(&x, ::bitstream_io::BigEndian, &mut (), ()).unwrap();
+                let decoded = <$ty as $crate::BitDecode>::decode_bytes_ctx(&encoded, ::bitstream_io::BigEndian, &mut (), ()).unwrap();
+                ::proptest::prop_assert_eq!(x, decoded);
+            }
+        );
+    }
+}
+
 macro_rules! test_untagged_and_codec {
     ($ty:ty | $tag_write:expr, $tag_read:expr; $value:expr => $bytes:expr) => {
         test_codec!($ty | $tag_write, $tag_read; $value => $bytes);
