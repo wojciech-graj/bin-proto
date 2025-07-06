@@ -104,10 +104,45 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 
 /// Derive the [`BitDecode`] and [`BitEncode`] traits.
 ///
+/// # Scopes
+///
+/// ```ignore
+/// #[container, enum]
+/// enum Enum {
+///     #[variant]
+///     Variant {
+///         #[field]
+///         field: Type,
+///     }
+/// }
+///
+/// #[container, struct]
+/// struct Struct {
+///     #[field]
+///     field: Type,
+/// }
+/// ```
+///
 /// # Attributes
 ///
-/// ## `#[codec(discriminant_type = <type>)]`
-/// - Applies to: `enum`
+/// | Attribute | Scope | Applicability |
+/// |-|-|-|
+/// | [`discriminant_type`](#discriminant_type) | enum | rw |
+/// | [`discriminant`](#discriminant) | variant | rw |
+/// | [`bits`](#bits) | field, enum | rw |
+/// | [`flexible_array_member`](#flexible_array_member) | field | rw |
+/// | [`tag`](#tag) | field | rw |
+/// | [`tag_type`](#tag_type) | field | rw |
+/// | [`write_value`](#write_value) | field | w |
+/// | [`ctx`](#ctx) | container | rw |
+/// | [`ctx_bounds`](#ctx_bounds) | container | rw |
+/// | [`default`](#default) | field | r |
+/// | [`pad_before`](#pad_before) | field, struct | rw |
+/// | [`pad_after`](#pad_after) | field, struct | rw |
+/// | [`magic`](#magic) | field, struct | rw |
+///
+/// ## `discriminant_type`
+/// `#[codec(discriminant_type = <type>)]`
 /// - `<type>`: an arbitrary type that implements [`BitDecode`] or [`BitEncode`]
 ///
 /// Specify if enum variant should be determined by a string or interger representation of its
@@ -123,8 +158,8 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// }
 /// ```
 ///
-/// ## `#[codec(discriminant = <value>)]`
-/// - Applies to: `enum` variant
+/// ## `discriminant`
+/// `#[codec(discriminant = <value>)]`
 /// - `<value>`: unique value of the discriminant's type
 ///
 /// ```
@@ -140,10 +175,8 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 ///
 /// Specify the discriminant for a variant.
 ///
-/// ## `#[codec(bits = <width>)]`
-/// - Applies to: [`impl BitDecode<_, Bits>`](BitDecode), [`impl BitEncode<_, Bits>`](BitEncode),
-///   `enum` with discriminant that [`impl BitDecode<_, Bits>`](BitDecode) or
-///   [`impl BitEncode<_, Bits>`](BitEncode)
+/// ## `bits`
+/// `#[codec(bits = <width>)]`
 ///
 /// Determine width of field in bits.
 ///
@@ -157,8 +190,8 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// struct Nibble(#[codec(bits = 4)] u8);
 /// ```
 ///
-/// ## `#[codec(flexible_array_member)]`
-/// - Applies to: [`impl BitEncode<_, Untagged>`](BitEncode)
+/// ## `flexible_array_member`
+/// `#[codec(flexible_array_member)]`
 ///
 /// Variable-length field is final field in container, hence lacks a length prefix and should be
 /// read until eof.
@@ -169,9 +202,8 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// struct ReadToEnd(#[codec(flexible_array_member)] Vec<u8>);
 /// ```
 ///
-/// ## `#[codec(tag = <expr>)]`
-/// - Applies to: [`impl BitDecode<_, Tag>`](BitDecode) or
-///   [`impl BitEncode<_, Untagged>`](BitEncode)
+/// ## `tag`
+/// `#[codec(tag = <expr>)]`
 /// - `<expr>`: arbitrary expression. Fields in parent container can be used
 ///   without prefixing them with `self`.
 ///
@@ -189,9 +221,8 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// }
 /// ```
 ///
-/// ## `#[codec(tag_type = <type>[, tag_value = <expr>]?[, tag_bits = <expr>]?)]`
-/// - Applies to: [`impl BitDecode<_, Tag>`](BitDecode) or
-///   [`impl BitEncode<_, Untagged>`](BitEncode)
+/// ## `tag_type`
+/// `#[codec(tag_type = <type>[, tag_value = <expr>]?[, tag_bits = <expr>]?)]`
 /// - `<type>`: tag's type
 /// - `<expr>`: arbitrary expression. Fields in parent container should be
 ///   prefixed with `self`.
@@ -209,8 +240,8 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// }
 /// ```
 ///
-/// ## `#[codec(write_value = <expr>)]`
-/// - Applies to: fields
+/// ## `write_value`
+/// `#[codec(write_value = <expr>)]`
 /// - `<expr>`: An expression that can be coerced to the field type, potentially using `self`
 ///
 /// Specify an expression that should be used as the field's value for writing.
@@ -227,8 +258,8 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// }
 /// ```
 ///
-/// ## `#[codec(ctx = <type>)[, ctx_generics(<generic>[, <generic>]*)]?]`
-/// - Applies to: containers
+/// ## `ctx`
+/// `#[codec(ctx = <type>)[, ctx_generics(<generic>[, <generic>]*)]?]`
 /// - `<type>`: The type of the context. Either a concrete type, or one of the container's generics
 /// - `<generic>`: Any generics used by the context type, with optional bounds. E.g.
 ///   `T: Copy` for a [`Vec<T>`](alloc::vec::Vec) context.
@@ -298,8 +329,8 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// pub struct WithCtx;
 /// ```
 ///
-/// ## `#[codec(ctx_bounds(<bound>[, <bound>]*)[, ctx_generics(<generic>[, <generic>]*)]?)]`
-/// - Applies to: containers
+/// ## `ctx_bounds`
+/// `#[codec(ctx_bounds(<bound>[, <bound>]*)[, ctx_generics(<generic>[, <generic>]*)]?)]`
 /// - `<bounds>`: Trait bounds that must be satisfied by the context
 /// - `<generic>`: Any generics used by the context type. E.g. `'a` for a context with a
 ///   [`From<&'a i32>`](From) bound.
@@ -355,8 +386,8 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// pub struct WithCtx;
 /// ```
 ///
-/// ## `#[codec(default)]`
-/// - Applies to: fields
+/// ## `default`
+/// `#[codec(default)]`
 ///
 /// Use [`Default::default`] instead of attempting to read field.
 ///
@@ -366,8 +397,8 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// pub struct Struct(#[codec(default)] u8);
 /// ```
 ///
-/// ## `#[codec(pad_before = <expr>)]`
-/// - Applies to: fields, containers
+/// ## `pad_before`
+/// `#[codec(pad_before = <expr>)]`
 ///
 /// Insert 0 bits when writing and skip bits when reading, prior to processing the field.
 ///
@@ -377,8 +408,8 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// pub struct Struct(#[codec(pad_before = 3)] u8);
 /// ```
 ///
-/// ## `#[codec(pad_after = <expr>)]`
-/// - Applies to: fields, containers
+/// ## `pad_after`
+/// `#[codec(pad_after = <expr>)]`
 ///
 /// Insert 0 bits when writing and skip bits when reading, after processing the field.
 ///
@@ -388,8 +419,8 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// pub struct Struct(#[codec(pad_after = 3)] u8);
 /// ```
 ///
-/// ## `#[codec(magic = <expr>)]`
-/// - Applies to: fields, structs
+/// ## `magic`
+/// `#[codec(magic = <expr>)]`
 /// - `<expr>`: Must evaluate to `&[u8; _]`
 ///
 /// Indicates that the value must be present immediately preceding the field or struct.

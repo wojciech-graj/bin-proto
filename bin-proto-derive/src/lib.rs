@@ -144,8 +144,6 @@ fn impl_for_enum(ast: &syn::DeriveInput, e: &syn::DataEnum, codec_type: Operatio
     match codec_type {
         Operation::Decode => {
             let decode_variant = codegen::enums::decode_variant_fields(&plan);
-            let pad_before = attrs.pad_before.as_ref().map(decode_pad);
-            let pad_after = attrs.pad_after.as_ref().map(decode_pad);
             let impl_body = quote!(
                 fn decode<__R, __E>(
                     __io_reader: &mut __R,
@@ -156,10 +154,7 @@ fn impl_for_enum(ast: &syn::DeriveInput, e: &syn::DataEnum, codec_type: Operatio
                     __R: ::bin_proto::BitRead,
                     __E: ::bin_proto::Endianness,
                 {
-                    #pad_before
-                    let res = #decode_variant;
-                    #pad_after
-                    ::core::result::Result::Ok(res)
+                    ::core::result::Result::Ok(#decode_variant)
                 }
             );
             let tagged_decode_impl = impl_trait_for(
@@ -179,15 +174,12 @@ fn impl_for_enum(ast: &syn::DeriveInput, e: &syn::DataEnum, codec_type: Operatio
                     __R: ::bin_proto::BitRead,
                     __E: ::bin_proto::Endianness,
                 {
-                    #pad_before
                     let __tag: #discriminant_ty = #decode_discriminant?;
-                    let res = <Self as ::bin_proto::BitDecode<_, ::bin_proto::Tag<#discriminant_ty>>>::decode::<_, __E>(
+                    <Self as ::bin_proto::BitDecode<_, ::bin_proto::Tag<#discriminant_ty>>>::decode::<_, __E>(
                         __io_reader,
                         __ctx,
                         ::bin_proto::Tag(__tag)
-                    )?;
-                    #pad_after
-                    ::core::result::Result::Ok(res)
+                    )
                 }
             );
             let decode_impl = impl_trait_for(ast, &impl_body, &TraitImplType::Decode);

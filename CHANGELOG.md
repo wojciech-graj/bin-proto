@@ -1,4 +1,4 @@
-# v0.10.0
+# v0.9.1
 - Add `#[codec(default)]`, `#[codec(pad_before = ...)]`, `#[codec(pad_after = ...)]`, `#[codec(magic = ...)]`
 - Add `Error::Magic` variant
 # v0.9.0

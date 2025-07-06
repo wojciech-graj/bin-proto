@@ -1,6 +1,6 @@
 [package]
 name = "bin-proto-derive"
-version = "0.10.0"
+version = "0.9.1"
 authors = [
     "Wojciech Graj <me@w-graj.net>",
     "Dylan McKay <me@dylanmckay.io>"
