@@ -2,7 +2,7 @@
 
 use std::marker::PhantomData;
 
-use bin_proto::{BitCodec, BitDecode, BitEncode};
+use bin_proto::{BitCodec, BitDecode, BitEncode, Error};
 use bitstream_io::BigEndian;
 
 #[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
@@ -55,6 +55,14 @@ pub struct Padded {
     #[codec(pad_before = 4, pad_after = 8)]
     b: u8,
     c: u8,
+}
+
+#[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
+#[codec(magic = &[0x09u8])]
+pub struct Magic {
+    a: u8,
+    #[codec(magic = b"\x01\x02\x03")]
+    b: u8,
 }
 
 #[test]
@@ -145,6 +153,41 @@ fn pad_read_correctly() {
         Padded { a: 1, b: 2, c: 3 },
         Padded::decode_bytes(&[0, 128, 16, 0, 24, 0, 0], BigEndian).unwrap()
     )
+}
+
+#[test]
+fn magic_written_correctly() {
+    assert_eq!(
+        vec![9, 4, 1, 2, 3, 5],
+        Magic { a: 4, b: 5 }.encode_bytes(BigEndian).unwrap()
+    )
+}
+
+#[test]
+fn magic_read_correctly() {
+    assert_eq!(
+        Magic { a: 4, b: 5 },
+        Magic::decode_bytes(&[9, 4, 1, 2, 3, 5], BigEndian).unwrap()
+    )
+}
+
+#[test]
+fn incorrect_magic_fails() {
+    let exp = Err::<Magic, _>(Error::Magic {
+        actual: vec![10],
+        expected: &[9],
+    });
+    let ret = Magic::decode_bytes(&[10, 4, 1, 2, 3, 5], BigEndian);
+    if !matches!(
+        &ret,
+        Err(Error::Magic {
+            actual,
+            expected: &[9],
+        })
+    if *actual == vec![10])
+    {
+        panic!("expected: {exp:?}. actual: {ret:?}");
+    }
 }
 
 #[test]

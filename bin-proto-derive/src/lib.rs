@@ -72,6 +72,7 @@ fn impl_for_struct(
             let (decodes, initializers) = codegen::decodes(&strukt.fields);
             let pad_before = attrs.pad_before.as_ref().map(decode_pad);
             let pad_after = attrs.pad_after.as_ref().map(decode_pad);
+            let magic = attrs.decode_magic();
 
             (
                 quote!(
@@ -85,6 +86,7 @@ fn impl_for_struct(
                         __E: ::bin_proto::Endianness,
                     {
                         #pad_before
+                        #magic
                         #decodes
                         #pad_after
                         ::core::result::Result::Ok(Self #initializers)
@@ -97,6 +99,7 @@ fn impl_for_struct(
             let encodes = codegen::encodes(&strukt.fields, true);
             let pad_before = attrs.pad_before.as_ref().map(encode_pad);
             let pad_after = attrs.pad_after.as_ref().map(encode_pad);
+            let magic = attrs.encode_magic();
 
             (
                 quote!(
@@ -111,6 +114,7 @@ fn impl_for_struct(
                         __E: ::bin_proto::Endianness,
                     {
                         #pad_before
+                        #magic
                         #encodes
                         #pad_after
                         ::core::result::Result::Ok(())

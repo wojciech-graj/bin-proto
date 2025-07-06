@@ -11,6 +11,7 @@ pub struct Attrs {
     pub discriminant: Option<syn::Expr>,
     pub discriminant_type: Option<syn::Type>,
     pub flexible_array_member: bool,
+    pub magic: Option<syn::Expr>,
     pub pad_after: Option<syn::Expr>,
     pub pad_before: Option<syn::Expr>,
     pub tag: Option<Tag>,
@@ -71,6 +72,33 @@ impl Attrs {
             quote!(#ctx)
         } else {
             quote!(__Ctx)
+        }
+    }
+
+    pub fn decode_magic(&self) -> TokenStream {
+        if let Some(magic) = &self.magic {
+            quote!(
+                let magic: [u8; (#magic).len()] = ::bin_proto::BitDecode::decode::<_, __E>(
+                    __io_reader,
+                    __ctx,
+                    ()
+                )?;
+                if magic != *(#magic) {
+                    return ::core::result::Result::Err(
+                        ::bin_proto::Error::Magic{ expected: #magic, actual: magic.to_vec() }
+                    );
+                }
+            )
+        } else {
+            TokenStream::new()
+        }
+    }
+
+    pub fn encode_magic(&self) -> TokenStream {
+        if let Some(magic) = &self.magic {
+            quote!(::bin_proto::BitEncode::encode::<_, __E>(#magic, __io_writer, __ctx, ())?;)
+        } else {
+            TokenStream::new()
         }
     }
 
@@ -180,6 +208,10 @@ impl Attrs {
                             meta
                         );
                         attrs.pad_after = Some(meta.value()?.parse()?);
+                    }
+                    "magic" => {
+                        expect_attr_kind!(AttrKind::Struct | AttrKind::Field, kind, meta);
+                        attrs.magic = Some(meta.value()?.parse()?);
                     }
                     _ => {
                         return Err(meta.error("unrecognized attribute"));

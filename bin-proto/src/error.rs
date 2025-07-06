@@ -22,6 +22,10 @@ pub enum Error {
     #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
     #[cfg(feature = "std")]
     Poison,
+    Magic {
+        actual: alloc::vec::Vec<u8>,
+        expected: &'static [u8],
+    },
     Other(Box<dyn core::error::Error + Send + Sync>),
 }
 
@@ -40,6 +44,12 @@ impl fmt::Display for Error {
             Self::SliceTryFromVec => write!(f, "failed to convert Vec to slice"),
             #[cfg(feature = "std")]
             Self::Poison => write!(f, "poisoned lock: another task failed inside"),
+            Self::Magic { actual, expected } => {
+                write!(
+                    f,
+                    "magic mismatch. expected: {expected:?}. actual: {actual:?}"
+                )
+            }
             Self::Other(e) => write!(f, "{e}"),
         }
     }

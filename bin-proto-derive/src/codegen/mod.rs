@@ -65,6 +65,7 @@ fn decode(field: &syn::Field) -> TokenStream {
 
     let pad_before = attrs.pad_before.as_ref().map(decode_pad);
     let pad_after = attrs.pad_after.as_ref().map(decode_pad);
+    let magic = attrs.decode_magic();
 
     let decode = if attrs.default {
         quote!(::core::default::Default::default())
@@ -97,6 +98,7 @@ fn decode(field: &syn::Field) -> TokenStream {
 
     quote!({
         #pad_before
+        #magic
         let decoded = #decode;
         #pad_after
         decoded
@@ -115,6 +117,7 @@ fn encode(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
 
     let pad_before = attrs.pad_before.as_ref().map(encode_pad);
     let pad_after = attrs.pad_after.as_ref().map(encode_pad);
+    let magic = attrs.encode_magic();
 
     let field_ref = if let Some(value) = attrs.write_value {
         let ty = &field.ty;
@@ -173,6 +176,7 @@ fn encode(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
 
     quote!({
         #pad_before
+        #magic
         let encoded = #encode;
         #pad_after
         encoded
