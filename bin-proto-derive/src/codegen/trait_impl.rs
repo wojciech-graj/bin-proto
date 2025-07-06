@@ -3,6 +3,7 @@ use crate::attr::{Attrs, Ctx};
 use proc_macro2::{Span, TokenStream};
 use syn::{parse_quote, punctuated::Punctuated, spanned::Spanned, Token};
 
+#[allow(clippy::large_enum_variant)]
 pub enum TraitImplType {
     Decode,
     Encode,
@@ -17,8 +18,8 @@ pub fn impl_trait_for(
     typ: &TraitImplType,
 ) -> TokenStream {
     let name = &ast.ident;
-    let attribs = match Attrs::parse(ast.attrs.as_slice(), None, ast.span()) {
-        Ok(attribs) => attribs,
+    let attrs = match Attrs::parse(ast.attrs.as_slice(), None, ast.span()) {
+        Ok(attrs) => attrs,
         Err(e) => return e.to_compile_error(),
     };
 
@@ -35,15 +36,15 @@ pub fn impl_trait_for(
             | TraitImplType::TaggedDecode(_)
             | TraitImplType::UntaggedEncode
     ) {
-        if let Some(ctx_generics) = attribs.ctx_generics {
+        if let Some(ctx_generics) = attrs.ctx_generics {
             generics.params.extend(ctx_generics);
         }
 
-        trait_generics.push(if let Some(Ctx::Concrete(ctx)) = attribs.ctx {
+        trait_generics.push(if let Some(Ctx::Concrete(ctx)) = attrs.ctx {
             quote!(#ctx)
         } else {
             let ident = syn::Ident::new("__Ctx", Span::call_site());
-            let bounds = if let Some(Ctx::Bounds(bounds)) = attribs.ctx {
+            let bounds = if let Some(Ctx::Bounds(bounds)) = attrs.ctx {
                 bounds.into_iter().collect()
             } else {
                 Punctuated::new()

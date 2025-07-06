@@ -4,14 +4,15 @@ use syn::{parenthesized, punctuated::Punctuated, Error, Result, Token};
 
 #[derive(Default)]
 pub struct Attrs {
-    pub discriminant_type: Option<syn::Type>,
-    pub discriminant: Option<syn::Expr>,
+    pub bits: Option<syn::Expr>,
     pub ctx: Option<Ctx>,
     pub ctx_generics: Option<Vec<syn::GenericParam>>,
-    pub write_value: Option<syn::Expr>,
-    pub bits: Option<syn::Expr>,
+    pub default: bool,
+    pub discriminant: Option<syn::Expr>,
+    pub discriminant_type: Option<syn::Type>,
     pub flexible_array_member: bool,
     pub tag: Option<Tag>,
+    pub write_value: Option<syn::Expr>,
 }
 
 pub enum Ctx {
@@ -19,6 +20,7 @@ pub enum Ctx {
     Bounds(Vec<syn::TypeParamBound>),
 }
 
+#[allow(clippy::large_enum_variant)]
 pub enum Tag {
     External(syn::Expr),
     Prepend {
@@ -48,12 +50,13 @@ impl fmt::Display for AttrKind {
 }
 
 macro_rules! expect_attr_kind {
-    ($pat:pat, $kind:expr, $meta:expr, $attr:expr) => {
+    ($pat:pat, $kind:expr, $meta:expr) => {
         if let Some(kind) = $kind {
             if !matches!(kind, $pat) {
                 return Err($meta.error(format!(
                     "attribute '{}' cannot be applied to {}",
-                    $attr, kind
+                    $meta.path.require_ident()?,
+                    kind
                 )));
             }
         }
@@ -70,8 +73,8 @@ impl Attrs {
     }
 
     #[allow(clippy::too_many_lines, clippy::cognitive_complexity)]
-    pub fn parse(attrs: &[syn::Attribute], kind: Option<AttrKind>, span: Span) -> Result<Self> {
-        let mut attribs = Self::default();
+    pub fn parse(attribs: &[syn::Attribute], kind: Option<AttrKind>, span: Span) -> Result<Self> {
+        let mut attrs = Self::default();
 
         let mut tag = None;
         let mut tag_type = None;
@@ -81,44 +84,47 @@ impl Attrs {
         let mut ctx = None;
         let mut ctx_bounds = None;
 
-        for attr in attrs {
-            if attr.path().is_ident("codec") {
-                attr.parse_nested_meta(|meta| {
-                    if meta.path.is_ident("flexible_array_member") {
-                        expect_attr_kind!(AttrKind::Field, kind, meta, "flexible_array_member");
-                        attribs.flexible_array_member = true;
-                    } else if meta.path.is_ident("discriminant_type") {
-                        expect_attr_kind!(AttrKind::Enum, kind, meta, "discriminant_type");
-                        attribs.discriminant_type = Some(meta.value()?.parse()?);
-                    } else if meta.path.is_ident("discriminant") {
-                        expect_attr_kind!(AttrKind::Variant, kind, meta, "discriminant");
-                        attribs.discriminant = Some(meta.value()?.parse()?);
-                    } else if meta.path.is_ident("ctx") {
-                        expect_attr_kind!(AttrKind::Enum | AttrKind::Struct, kind, meta, "ctx");
+        for attr in attribs {
+            if !attr.path().is_ident("codec") {
+                continue;
+            }
+
+            attr.parse_nested_meta(|meta| {
+                let Some(ident) = meta.path.get_ident() else {
+                    return Err(meta.error("unrecognized attribute"));
+                };
+
+                match ident.to_string().as_str() {
+                    "flexible_array_member" => {
+                        expect_attr_kind!(AttrKind::Field, kind, meta);
+                        attrs.flexible_array_member = true;
+                    }
+                    "discriminant_type" => {
+                        expect_attr_kind!(AttrKind::Enum, kind, meta);
+                        attrs.discriminant_type = Some(meta.value()?.parse()?);
+                    }
+                    "discriminant" => {
+                        expect_attr_kind!(AttrKind::Variant, kind, meta);
+                        attrs.discriminant = Some(meta.value()?.parse()?);
+                    }
+                    "ctx" => {
+                        expect_attr_kind!(AttrKind::Enum | AttrKind::Struct, kind, meta);
                         ctx = Some(meta.value()?.parse()?);
-                    } else if meta.path.is_ident("ctx_generics") {
-                        expect_attr_kind!(
-                            AttrKind::Enum | AttrKind::Struct,
-                            kind,
-                            meta,
-                            "ctx_generics"
-                        );
+                    }
+                    "ctx_generics" => {
+                        expect_attr_kind!(AttrKind::Enum | AttrKind::Struct, kind, meta);
                         let content;
                         parenthesized!(content in meta.input);
-                        attribs.ctx_generics = Some(
+                        attrs.ctx_generics = Some(
                             Punctuated::<syn::GenericParam, Token![,]>::parse_separated_nonempty(
                                 &content,
                             )?
                             .into_iter()
                             .collect(),
                         );
-                    } else if meta.path.is_ident("ctx_bounds") {
-                        expect_attr_kind!(
-                            AttrKind::Enum | AttrKind::Struct,
-                            kind,
-                            meta,
-                            "ctx_bounds"
-                        );
+                    }
+                    "ctx_bounds" => {
+                        expect_attr_kind!(AttrKind::Enum | AttrKind::Struct, kind, meta);
                         let content;
                         parenthesized!(content in meta.input);
                         ctx_bounds = Some(
@@ -128,36 +134,48 @@ impl Attrs {
                             .into_iter()
                             .collect(),
                         );
-                    } else if meta.path.is_ident("bits") {
-                        expect_attr_kind!(AttrKind::Enum | AttrKind::Field, kind, meta, "bits");
-                        attribs.bits = Some(meta.value()?.parse()?);
-                    } else if meta.path.is_ident("write_value") {
-                        expect_attr_kind!(AttrKind::Field, kind, meta, "write_value");
-                        attribs.write_value = Some(meta.value()?.parse()?);
-                    } else if meta.path.is_ident("tag") {
-                        expect_attr_kind!(AttrKind::Field, kind, meta, "tag");
-                        tag = Some(meta.value()?.parse()?);
-                    } else if meta.path.is_ident("tag_type") {
-                        expect_attr_kind!(AttrKind::Field, kind, meta, "tag_type");
-                        tag_type = Some(meta.value()?.parse()?);
-                    } else if meta.path.is_ident("tag_value") {
-                        expect_attr_kind!(AttrKind::Field, kind, meta, "tag_value");
-                        tag_value = Some(meta.value()?.parse()?);
-                    } else if meta.path.is_ident("tag_bits") {
-                        expect_attr_kind!(AttrKind::Field, kind, meta, "tag_bits");
-                        tag_bits = Some(meta.value()?.parse()?);
-                    } else {
-                        return Err(meta.error("unrecognized codec"));
                     }
-                    Ok(())
-                })?;
-            }
+                    "bits" => {
+                        expect_attr_kind!(AttrKind::Enum | AttrKind::Field, kind, meta);
+                        attrs.bits = Some(meta.value()?.parse()?);
+                    }
+                    "write_value" => {
+                        expect_attr_kind!(AttrKind::Field, kind, meta);
+                        attrs.write_value = Some(meta.value()?.parse()?);
+                    }
+                    "tag" => {
+                        expect_attr_kind!(AttrKind::Field, kind, meta);
+                        tag = Some(meta.value()?.parse()?);
+                    }
+                    "tag_type" => {
+                        expect_attr_kind!(AttrKind::Field, kind, meta);
+                        tag_type = Some(meta.value()?.parse()?);
+                    }
+                    "tag_value" => {
+                        expect_attr_kind!(AttrKind::Field, kind, meta);
+                        tag_value = Some(meta.value()?.parse()?);
+                    }
+                    "tag_bits" => {
+                        expect_attr_kind!(AttrKind::Field, kind, meta);
+                        tag_bits = Some(meta.value()?.parse()?);
+                    }
+                    "default" => {
+                        expect_attr_kind!(AttrKind::Field, kind, meta);
+                        attrs.default = true;
+                    }
+                    _ => {
+                        return Err(meta.error("unrecognized attribute"));
+                    }
+                }
+
+                Ok(())
+            })?;
         }
 
         match (tag, tag_type, tag_value, tag_bits) {
-            (Some(tag), None, None, None) => attribs.tag = Some(Tag::External(tag)),
+            (Some(tag), None, None, None) => attrs.tag = Some(Tag::External(tag)),
             (None, Some(tag_type), tag_value, tag_bits) => {
-                attribs.tag = Some(Tag::Prepend {
+                attrs.tag = Some(Tag::Prepend {
                     typ: tag_type,
                     write_value: tag_value,
                     bits: tag_bits,
@@ -173,8 +191,8 @@ impl Attrs {
         }
 
         match (ctx, ctx_bounds) {
-            (Some(ctx), None) => attribs.ctx = Some(Ctx::Concrete(ctx)),
-            (None, Some(ctx_bounds)) => attribs.ctx = Some(Ctx::Bounds(ctx_bounds)),
+            (Some(ctx), None) => attrs.ctx = Some(Ctx::Concrete(ctx)),
+            (None, Some(ctx_bounds)) => attrs.ctx = Some(Ctx::Bounds(ctx_bounds)),
             (None, None) => {}
             _ => {
                 return Err(Error::new(
@@ -185,9 +203,9 @@ impl Attrs {
         }
 
         if [
-            attribs.bits.is_some(),
-            attribs.flexible_array_member,
-            attribs.tag.is_some(),
+            attrs.bits.is_some(),
+            attrs.flexible_array_member,
+            attrs.tag.is_some(),
         ]
         .iter()
         .filter(|b| **b)
@@ -200,6 +218,6 @@ impl Attrs {
             ));
         }
 
-        Ok(attribs)
+        Ok(attrs)
     }
 }

@@ -227,7 +227,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// }
 /// ```
 ///
-/// ## `[#codec(ctx = <type>)[, ctx_generics(<generic>[, <generic>]*)]?]`
+/// ## `#[codec(ctx = <type>)[, ctx_generics(<generic>[, <generic>]*)]?]`
 /// - Applies to: containers
 /// - `<type>`: The type of the context. Either a concrete type, or one of the container's generics
 /// - `<generic>`: Any generics used by the context type, with optional bounds. E.g.
@@ -298,7 +298,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// pub struct WithCtx;
 /// ```
 ///
-/// ## `[#codec(ctx_bounds(<bound>[, <bound>]*)[, ctx_generics(<generic>[, <generic>]*)]?)]`
+/// ## `#[codec(ctx_bounds(<bound>[, <bound>]*)[, ctx_generics(<generic>[, <generic>]*)]?)]`
 /// - Applies to: containers
 /// - `<bounds>`: Trait bounds that must be satisfied by the context
 /// - `<generic>`: Any generics used by the context type. E.g. `'a` for a context with a
@@ -353,6 +353,17 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// #[derive(BitDecode, BitEncode)]
 /// #[codec(ctx_bounds(From<&'a i32>), ctx_generics('a))]
 /// pub struct WithCtx;
+/// ```
+///
+/// ## `#[codec(default)]`
+/// - Applies to: fields
+///
+/// Use [`Default::default`] instead of attempting to read field.
+///
+/// ```
+/// # use bin_proto::{BitDecode, BitEncode};
+/// #[derive(BitDecode, BitEncode)]
+/// pub struct Struct(#[codec(default)] u8);
 /// ```
 #[cfg_attr(docsrs, doc(cfg(feature = "derive")))]
 #[cfg(feature = "derive")]

@@ -41,6 +41,13 @@ pub struct StructWithExistingBoundedGenerics<
     foo: A,
 }
 
+#[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
+pub struct WithDefault {
+    a: u8,
+    #[codec(default)]
+    b: u8,
+}
+
 #[test]
 fn named_fields_are_correctly_written() {
     assert_eq!(
@@ -94,6 +101,25 @@ fn unit_structs_are_correctly_decoded() {
         PartyInTheFront,
         PartyInTheFront::decode_bytes(&[], BigEndian).unwrap()
     );
+}
+
+#[test]
+fn default_written_correctly() {
+    assert_eq!(
+        vec![1, 2],
+        WithDefault { a: 1, b: 2 }.encode_bytes(BigEndian).unwrap()
+    )
+}
+
+#[test]
+fn default_read_correctly() {
+    assert_eq!(
+        WithDefault {
+            a: 1,
+            b: Default::default()
+        },
+        WithDefault::decode_bytes(&[1], BigEndian).unwrap()
+    )
 }
 
 #[test]

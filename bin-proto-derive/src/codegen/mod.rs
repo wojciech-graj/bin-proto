@@ -32,7 +32,7 @@ fn decode_named_fields(fields_named: &syn::FieldsNamed) -> (TokenStream, TokenSt
             let decode = decode(field);
 
             quote!(
-                let #field_name : #field_ty = #decode?;
+                let #field_name : #field_ty = #decode;
             )
         })
         .collect();
@@ -54,12 +54,14 @@ fn decode_named_fields(fields_named: &syn::FieldsNamed) -> (TokenStream, TokenSt
 }
 
 fn decode(field: &syn::Field) -> TokenStream {
-    let attribs = match Attrs::parse(field.attrs.as_slice(), Some(AttrKind::Field), field.span()) {
-        Ok(attribs) => attribs,
+    let attrs = match Attrs::parse(field.attrs.as_slice(), Some(AttrKind::Field), field.span()) {
+        Ok(attrs) => attrs,
         Err(e) => return e.to_compile_error(),
     };
 
-    if let Some(Tag::Prepend { typ, bits, .. }) = attribs.tag {
+    if attrs.default {
+        quote!(::core::default::Default::default())
+    } else if let Some(Tag::Prepend { typ, bits, .. }) = attrs.tag {
         let tag = if let Some(bits) = bits {
             quote!(::bin_proto::Bits::<#bits>)
         } else {
@@ -71,29 +73,29 @@ fn decode(field: &syn::Field) -> TokenStream {
                 __io_reader,
                 __ctx,
                 ::bin_proto::Tag(__tag)
-            )
+            )?
         })
     } else {
-        let tag = if let Some(field_width) = attribs.bits {
+        let tag = if let Some(field_width) = attrs.bits {
             quote!(::bin_proto::Bits::<#field_width>)
-        } else if attribs.flexible_array_member {
+        } else if attrs.flexible_array_member {
             quote!(::bin_proto::Untagged)
-        } else if let Some(Tag::External(tag)) = attribs.tag {
+        } else if let Some(Tag::External(tag)) = attrs.tag {
             quote!(::bin_proto::Tag(#tag))
         } else {
             quote!(())
         };
-        quote!(::bin_proto::BitDecode::decode::<_, __E>(__io_reader, __ctx, #tag))
+        quote!(::bin_proto::BitDecode::decode::<_, __E>(__io_reader, __ctx, #tag)?)
     }
 }
 
 fn encode(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
-    let attribs = match Attrs::parse(field.attrs.as_slice(), Some(AttrKind::Field), field.span()) {
-        Ok(attribs) => attribs,
+    let attrs = match Attrs::parse(field.attrs.as_slice(), Some(AttrKind::Field), field.span()) {
+        Ok(attrs) => attrs,
         Err(e) => return e.to_compile_error(),
     };
 
-    let field_ref = if let Some(value) = attribs.write_value {
+    let field_ref = if let Some(value) = attrs.write_value {
         let ty = &field.ty;
         quote!(&{
             let value: #ty = {#value};
@@ -107,7 +109,7 @@ fn encode(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
         typ,
         write_value,
         bits,
-    }) = attribs.tag
+    }) = attrs.tag
     {
         let Some(write_value) = write_value else {
             return Error::new(field.span(), "Tag must specify 'write_value'").to_compile_error();
@@ -134,9 +136,9 @@ fn encode(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
             }
         )
     } else {
-        let tag = if let Some(field_width) = attribs.bits {
+        let tag = if let Some(field_width) = attrs.bits {
             quote!(::bin_proto::Bits::<#field_width>)
-        } else if matches!(attribs.tag, Some(Tag::External(_))) || attribs.flexible_array_member {
+        } else if matches!(attrs.tag, Some(Tag::External(_))) || attrs.flexible_array_member {
             quote!(::bin_proto::Untagged)
         } else {
             quote!(())
@@ -179,7 +181,7 @@ fn decode_unnamed_fields(fields_unnamed: &syn::FieldsUnnamed) -> TokenStream {
 
             quote!(
                 {
-                    let res: #field_ty = #decode?;
+                    let res: #field_ty = #decode;
                     res
                 }
             )

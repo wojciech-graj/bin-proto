@@ -17,7 +17,7 @@ extern crate quote;
 
 mod attr;
 mod codegen;
-mod plan;
+mod enums;
 
 use attr::{AttrKind, Attrs};
 use codegen::trait_impl::{impl_trait_for, TraitImplType};
@@ -48,7 +48,7 @@ fn impl_codec(ast: &syn::DeriveInput, codec_type: Operation) -> TokenStream {
     match ast.data {
         syn::Data::Struct(ref s) => impl_for_struct(ast, s, codec_type),
         syn::Data::Enum(ref e) => impl_for_enum(ast, e, codec_type),
-        syn::Data::Union(..) => unimplemented!("Codec is unimplemented on Unions"),
+        syn::Data::Union(..) => unimplemented!("Codec is not derivable on Unions"),
     }
 }
 
@@ -57,16 +57,17 @@ fn impl_for_struct(
     strukt: &syn::DataStruct,
     codec_type: Operation,
 ) -> TokenStream {
-    let attribs = match Attrs::parse(ast.attrs.as_slice(), Some(AttrKind::Struct), ast.span()) {
-        Ok(attribs) => attribs,
+    let attrs = match Attrs::parse(ast.attrs.as_slice(), Some(AttrKind::Struct), ast.span()) {
+        Ok(attrs) => attrs,
         Err(e) => return e.to_compile_error(),
     };
 
-    let ctx_ty = attribs.ctx_ty();
+    let ctx_ty = attrs.ctx_ty();
 
     let (impl_body, trait_type) = match codec_type {
         Operation::Decode => {
             let (decodes, initializers) = codegen::decodes(&strukt.fields);
+
             (
                 quote!(
                     fn decode<__R, __E>(
@@ -113,16 +114,16 @@ fn impl_for_struct(
 
 #[allow(clippy::too_many_lines)]
 fn impl_for_enum(ast: &syn::DeriveInput, e: &syn::DataEnum, codec_type: Operation) -> TokenStream {
-    let plan = match plan::Enum::try_new(ast, e) {
+    let plan = match enums::Enum::try_new(ast, e) {
         Ok(plan) => plan,
         Err(e) => return e.to_compile_error(),
     };
-    let attribs = match Attrs::parse(ast.attrs.as_slice(), Some(AttrKind::Enum), ast.span()) {
-        Ok(attribs) => attribs,
+    let attrs = match Attrs::parse(ast.attrs.as_slice(), Some(AttrKind::Enum), ast.span()) {
+        Ok(attrs) => attrs,
         Err(e) => return e.to_compile_error(),
     };
     let discriminant_ty = &plan.discriminant_ty;
-    let ctx_ty = attribs.ctx_ty();
+    let ctx_ty = attrs.ctx_ty();
 
     match codec_type {
         Operation::Decode => {
@@ -146,7 +147,7 @@ fn impl_for_enum(ast: &syn::DeriveInput, e: &syn::DataEnum, codec_type: Operatio
                 &TraitImplType::TaggedDecode(discriminant_ty.clone()),
             );
 
-            let decode_discriminant = decode_discriminant(&attribs);
+            let decode_discriminant = decode_discriminant(&attrs);
             let impl_body = quote!(
                 fn decode<__R, __E>(
                     __io_reader: &mut __R,
@@ -192,7 +193,7 @@ fn impl_for_enum(ast: &syn::DeriveInput, e: &syn::DataEnum, codec_type: Operatio
             let untagged_encode_impl =
                 impl_trait_for(ast, &impl_body, &TraitImplType::UntaggedEncode);
 
-            let variant_discriminant = variant_discriminant(&plan, &attribs);
+            let variant_discriminant = variant_discriminant(&plan, &attrs);
             let impl_body = quote!(
                 type Discriminant = #discriminant_ty;
 
@@ -202,7 +203,7 @@ fn impl_for_enum(ast: &syn::DeriveInput, e: &syn::DataEnum, codec_type: Operatio
             );
             let discriminable_impl = impl_trait_for(ast, &impl_body, &TraitImplType::Discriminable);
 
-            let encode_discriminant = encode_discriminant(&attribs);
+            let encode_discriminant = encode_discriminant(&attrs);
             let impl_body = quote!(
                 fn encode<__W, __E>(
                     &self,

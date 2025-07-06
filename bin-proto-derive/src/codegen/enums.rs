@@ -1,8 +1,8 @@
-use crate::{attr::Attrs, codegen, plan};
+use crate::{attr::Attrs, codegen, enums};
 use proc_macro2::{Span, TokenStream};
 
-pub fn decode_discriminant(attribs: &Attrs) -> TokenStream {
-    if let Some(bits) = &attribs.bits {
+pub fn decode_discriminant(attrs: &Attrs) -> TokenStream {
+    if let Some(bits) = &attrs.bits {
         quote!(::bin_proto::BitDecode::decode::<_, __E>(
             __io_reader,
             __ctx,
@@ -17,8 +17,8 @@ pub fn decode_discriminant(attribs: &Attrs) -> TokenStream {
     }
 }
 
-pub fn encode_discriminant(attribs: &Attrs) -> TokenStream {
-    let encode_tag = if let Some(bits) = &attribs.bits {
+pub fn encode_discriminant(attrs: &Attrs) -> TokenStream {
+    let encode_tag = if let Some(bits) = &attrs.bits {
         quote!(::bin_proto::BitEncode::encode::<_, __E>(
             &__tag,
             __io_writer,
@@ -39,7 +39,7 @@ pub fn encode_discriminant(attribs: &Attrs) -> TokenStream {
     })
 }
 
-pub fn encode_variant_fields(plan: &plan::Enum) -> TokenStream {
+pub fn encode_variant_fields(plan: &enums::Enum) -> TokenStream {
     let variant_match_branches: Vec<_> = plan
         .variants
         .iter()
@@ -61,7 +61,7 @@ pub fn encode_variant_fields(plan: &plan::Enum) -> TokenStream {
     )
 }
 
-pub fn variant_discriminant(plan: &plan::Enum, attribs: &Attrs) -> TokenStream {
+pub fn variant_discriminant(plan: &enums::Enum, attrs: &Attrs) -> TokenStream {
     let discriminant_ty = &plan.discriminant_ty;
     let variant_match_branches: Vec<_> = plan
         .variants
@@ -70,7 +70,7 @@ pub fn variant_discriminant(plan: &plan::Enum, attribs: &Attrs) -> TokenStream {
             let variant_name = &variant.ident;
             let fields_pattern = bind_fields_pattern(variant_name, &variant.fields);
             let discriminant_expr = &variant.discriminant_value;
-            let encode_variant = if let Some(field_width) = &attribs.bits {
+            let encode_variant = if let Some(field_width) = &attrs.bits {
                 let error_message = format!(
                     "Discriminant for variant '{}' does not fit in bitfield.",
                     variant.ident
@@ -96,7 +96,7 @@ pub fn variant_discriminant(plan: &plan::Enum, attribs: &Attrs) -> TokenStream {
     })
 }
 
-pub fn decode_variant_fields(plan: &plan::Enum) -> TokenStream {
+pub fn decode_variant_fields(plan: &enums::Enum) -> TokenStream {
     let discriminant_match_branches = plan.variants.iter().map(|variant| {
         let variant_name = &variant.ident;
         let discriminant_literal = &variant.discriminant_value;

@@ -1,3 +1,5 @@
+# v0.10.0
+- Add `#[codec(default)]`
 # v0.9.0
 - Change `Bits(u32)` to `Bits<const C: u32>`
 - Improve `BitDecode` performance for collections
