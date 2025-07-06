@@ -365,6 +365,28 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// #[derive(BitDecode, BitEncode)]
 /// pub struct Struct(#[codec(default)] u8);
 /// ```
+///
+/// ## `#[codec(pad_before = <expr>)]`
+/// - Applies to: fields
+///
+/// Insert 0 bits when writing and skip bits when reading, prior to processing the field.
+///
+/// ```
+/// # use bin_proto::{BitDecode, BitEncode};
+/// #[derive(BitDecode, BitEncode)]
+/// pub struct Struct(#[codec(pad_before = 3)] u8);
+/// ```
+///
+/// ## `#[codec(pad_after = <expr>)]`
+/// - Applies to: fields
+///
+/// Insert 0 bits when writing and skip bits when reading, after processing the field.
+///
+/// ```
+/// # use bin_proto::{BitDecode, BitEncode};
+/// #[derive(BitDecode, BitEncode)]
+/// pub struct Struct(#[codec(pad_after = 3)] u8);
+/// ```
 #[cfg_attr(docsrs, doc(cfg(feature = "derive")))]
 #[cfg(feature = "derive")]
 pub use bin_proto_derive::{BitDecode, BitEncode};

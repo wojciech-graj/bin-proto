@@ -48,6 +48,14 @@ pub struct WithDefault {
     b: u8,
 }
 
+#[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
+pub struct Padded {
+    a: u8,
+    #[codec(pad_before = 4, pad_after = 8)]
+    b: u8,
+    c: u8,
+}
+
 #[test]
 fn named_fields_are_correctly_written() {
     assert_eq!(
@@ -119,6 +127,22 @@ fn default_read_correctly() {
             b: Default::default()
         },
         WithDefault::decode_bytes(&[1], BigEndian).unwrap()
+    )
+}
+
+#[test]
+fn pad_written_correctly() {
+    assert_eq!(
+        vec![1, 0, 32, 0, 48],
+        Padded { a: 1, b: 2, c: 3 }.encode_bytes(BigEndian).unwrap()
+    )
+}
+
+#[test]
+fn pad_read_correctly() {
+    assert_eq!(
+        Padded { a: 1, b: 2, c: 3 },
+        Padded::decode_bytes(&[1, 0, 32, 0, 48], BigEndian).unwrap()
     )
 }
 

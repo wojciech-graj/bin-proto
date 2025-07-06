@@ -8,8 +8,8 @@ use syn::{spanned::Spanned, Error};
 pub fn decodes(fields: &syn::Fields) -> (TokenStream, TokenStream) {
     match *fields {
         syn::Fields::Named(ref fields) => decode_named_fields(fields),
-        syn::Fields::Unnamed(ref fields) => (quote!(), decode_unnamed_fields(fields)),
-        syn::Fields::Unit => (quote!(), quote!()),
+        syn::Fields::Unnamed(ref fields) => (TokenStream::new(), decode_unnamed_fields(fields)),
+        syn::Fields::Unit => (TokenStream::new(), TokenStream::new()),
     }
 }
 
@@ -17,7 +17,7 @@ pub fn encodes(fields: &syn::Fields, self_prefix: bool) -> TokenStream {
     match *fields {
         syn::Fields::Named(ref fields) => encode_named_fields(fields, self_prefix),
         syn::Fields::Unnamed(ref fields) => encode_unnamed_fields(fields, self_prefix),
-        syn::Fields::Unit => quote!(),
+        syn::Fields::Unit => TokenStream::new(),
     }
 }
 
@@ -53,13 +53,20 @@ fn decode_named_fields(fields_named: &syn::FieldsNamed) -> (TokenStream, TokenSt
     )
 }
 
+fn decode_pad(pad: &syn::Expr) -> TokenStream {
+    quote!(::bin_proto::BitRead::skip(__io_reader, #pad)?;)
+}
+
 fn decode(field: &syn::Field) -> TokenStream {
     let attrs = match Attrs::parse(field.attrs.as_slice(), Some(AttrKind::Field), field.span()) {
         Ok(attrs) => attrs,
         Err(e) => return e.to_compile_error(),
     };
 
-    if attrs.default {
+    let pad_before = attrs.pad_before.as_ref().map(decode_pad);
+    let pad_after = attrs.pad_after.as_ref().map(decode_pad);
+
+    let decode = if attrs.default {
         quote!(::core::default::Default::default())
     } else if let Some(Tag::Prepend { typ, bits, .. }) = attrs.tag {
         let tag = if let Some(bits) = bits {
@@ -86,7 +93,18 @@ fn decode(field: &syn::Field) -> TokenStream {
             quote!(())
         };
         quote!(::bin_proto::BitDecode::decode::<_, __E>(__io_reader, __ctx, #tag)?)
-    }
+    };
+
+    quote!({
+        #pad_before
+        let decoded = #decode;
+        #pad_after
+        decoded
+    })
+}
+
+fn encode_pad(pad: &syn::Expr) -> TokenStream {
+    quote!(::bin_proto::BitWrite::pad(__io_writer, #pad)?;)
 }
 
 fn encode(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
@@ -94,6 +112,9 @@ fn encode(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
         Ok(attrs) => attrs,
         Err(e) => return e.to_compile_error(),
     };
+
+    let pad_before = attrs.pad_before.as_ref().map(encode_pad);
+    let pad_after = attrs.pad_after.as_ref().map(encode_pad);
 
     let field_ref = if let Some(value) = attrs.write_value {
         let ty = &field.ty;
@@ -105,7 +126,7 @@ fn encode(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
         field_name.clone()
     };
 
-    if let Some(Tag::Prepend {
+    let encode = if let Some(Tag::Prepend {
         typ,
         write_value,
         bits,
@@ -148,7 +169,14 @@ fn encode(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
                 ::bin_proto::BitEncode::encode::<_, __E>(#field_ref, __io_writer, __ctx, #tag)?
             }
         )
-    }
+    };
+
+    quote!({
+        #pad_before
+        let encoded = #encode;
+        #pad_after
+        encoded
+    })
 }
 
 fn encode_named_fields(fields_named: &syn::FieldsNamed, self_prefix: bool) -> TokenStream {

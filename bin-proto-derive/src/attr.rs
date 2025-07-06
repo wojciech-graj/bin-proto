@@ -11,6 +11,8 @@ pub struct Attrs {
     pub discriminant: Option<syn::Expr>,
     pub discriminant_type: Option<syn::Type>,
     pub flexible_array_member: bool,
+    pub pad_after: Option<syn::Expr>,
+    pub pad_before: Option<syn::Expr>,
     pub tag: Option<Tag>,
     pub write_value: Option<syn::Expr>,
 }
@@ -162,6 +164,14 @@ impl Attrs {
                     "default" => {
                         expect_attr_kind!(AttrKind::Field, kind, meta);
                         attrs.default = true;
+                    }
+                    "pad_before" => {
+                        expect_attr_kind!(AttrKind::Field, kind, meta);
+                        attrs.pad_before = Some(meta.value()?.parse()?);
+                    }
+                    "pad_after" => {
+                        expect_attr_kind!(AttrKind::Field, kind, meta);
+                        attrs.pad_after = Some(meta.value()?.parse()?);
                     }
                     _ => {
                         return Err(meta.error("unrecognized attribute"));
