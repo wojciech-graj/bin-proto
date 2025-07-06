@@ -20,7 +20,10 @@ mod codegen;
 mod enums;
 
 use attr::{AttrKind, Attrs};
-use codegen::trait_impl::{impl_trait_for, TraitImplType};
+use codegen::{
+    decode_pad, encode_pad,
+    trait_impl::{impl_trait_for, TraitImplType},
+};
 use proc_macro2::TokenStream;
 use syn::{parse_macro_input, spanned::Spanned};
 
@@ -67,6 +70,8 @@ fn impl_for_struct(
     let (impl_body, trait_type) = match codec_type {
         Operation::Decode => {
             let (decodes, initializers) = codegen::decodes(&strukt.fields);
+            let pad_before = attrs.pad_before.as_ref().map(decode_pad);
+            let pad_after = attrs.pad_after.as_ref().map(decode_pad);
 
             (
                 quote!(
@@ -79,8 +84,10 @@ fn impl_for_struct(
                         __R: ::bin_proto::BitRead,
                         __E: ::bin_proto::Endianness,
                     {
+                        #pad_before
                         #decodes
-                        Ok(Self #initializers)
+                        #pad_after
+                        ::core::result::Result::Ok(Self #initializers)
                     }
                 ),
                 TraitImplType::Decode,
@@ -88,6 +95,9 @@ fn impl_for_struct(
         }
         Operation::Encode => {
             let encodes = codegen::encodes(&strukt.fields, true);
+            let pad_before = attrs.pad_before.as_ref().map(encode_pad);
+            let pad_after = attrs.pad_after.as_ref().map(encode_pad);
+
             (
                 quote!(
                     fn encode<__W, __E>(
@@ -100,8 +110,10 @@ fn impl_for_struct(
                         __W: ::bin_proto::BitWrite,
                         __E: ::bin_proto::Endianness,
                     {
+                        #pad_before
                         #encodes
-                        Ok(())
+                        #pad_after
+                        ::core::result::Result::Ok(())
                     }
                 ),
                 TraitImplType::Encode,
@@ -128,6 +140,8 @@ fn impl_for_enum(ast: &syn::DeriveInput, e: &syn::DataEnum, codec_type: Operatio
     match codec_type {
         Operation::Decode => {
             let decode_variant = codegen::enums::decode_variant_fields(&plan);
+            let pad_before = attrs.pad_before.as_ref().map(decode_pad);
+            let pad_after = attrs.pad_after.as_ref().map(decode_pad);
             let impl_body = quote!(
                 fn decode<__R, __E>(
                     __io_reader: &mut __R,
@@ -138,7 +152,10 @@ fn impl_for_enum(ast: &syn::DeriveInput, e: &syn::DataEnum, codec_type: Operatio
                     __R: ::bin_proto::BitRead,
                     __E: ::bin_proto::Endianness,
                 {
-                    Ok(#decode_variant)
+                    #pad_before
+                    let res = #decode_variant;
+                    #pad_after
+                    ::core::result::Result::Ok(res)
                 }
             );
             let tagged_decode_impl = impl_trait_for(
@@ -158,12 +175,15 @@ fn impl_for_enum(ast: &syn::DeriveInput, e: &syn::DataEnum, codec_type: Operatio
                     __R: ::bin_proto::BitRead,
                     __E: ::bin_proto::Endianness,
                 {
+                    #pad_before
                     let __tag: #discriminant_ty = #decode_discriminant?;
-                    <Self as ::bin_proto::BitDecode<_, ::bin_proto::Tag<#discriminant_ty>>>::decode::<_, __E>(
+                    let res = <Self as ::bin_proto::BitDecode<_, ::bin_proto::Tag<#discriminant_ty>>>::decode::<_, __E>(
                         __io_reader,
                         __ctx,
                         ::bin_proto::Tag(__tag)
-                    )
+                    )?;
+                    #pad_after
+                    ::core::result::Result::Ok(res)
                 }
             );
             let decode_impl = impl_trait_for(ast, &impl_body, &TraitImplType::Decode);
@@ -175,6 +195,8 @@ fn impl_for_enum(ast: &syn::DeriveInput, e: &syn::DataEnum, codec_type: Operatio
         }
         Operation::Encode => {
             let encode_variant = codegen::enums::encode_variant_fields(&plan);
+            let pad_before = attrs.pad_before.as_ref().map(encode_pad);
+            let pad_after = attrs.pad_after.as_ref().map(encode_pad);
             let impl_body = quote!(
                 fn encode<__W, __E>(
                     &self,
@@ -186,8 +208,10 @@ fn impl_for_enum(ast: &syn::DeriveInput, e: &syn::DataEnum, codec_type: Operatio
                     __W: ::bin_proto::BitWrite,
                     __E: ::bin_proto::Endianness,
                 {
+                    #pad_before
                     #encode_variant
-                    Ok(())
+                    #pad_after
+                    ::core::result::Result::Ok(())
                 }
             );
             let untagged_encode_impl =
@@ -215,13 +239,16 @@ fn impl_for_enum(ast: &syn::DeriveInput, e: &syn::DataEnum, codec_type: Operatio
                     __W: ::bin_proto::BitWrite,
                     __E: ::bin_proto::Endianness,
                 {
+                    #pad_before
                     #encode_discriminant
-                    <Self as ::bin_proto::BitEncode<_, _>>::encode::<_, __E>(
+                    let res = <Self as ::bin_proto::BitEncode<_, _>>::encode::<_, __E>(
                         self,
                         __io_writer,
                         __ctx,
                         ::bin_proto::Untagged
-                    )
+                    )?;
+                    #pad_after
+                    ::core::result::Result::Ok(res)
                 }
             );
             let encode_impl = impl_trait_for(ast, &impl_body, &TraitImplType::Encode);

@@ -367,7 +367,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// ```
 ///
 /// ## `#[codec(pad_before = <expr>)]`
-/// - Applies to: fields
+/// - Applies to: fields, containers
 ///
 /// Insert 0 bits when writing and skip bits when reading, prior to processing the field.
 ///
@@ -378,7 +378,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// ```
 ///
 /// ## `#[codec(pad_after = <expr>)]`
-/// - Applies to: fields
+/// - Applies to: fields, containers
 ///
 /// Insert 0 bits when writing and skip bits when reading, after processing the field.
 ///

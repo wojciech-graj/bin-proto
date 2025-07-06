@@ -53,7 +53,7 @@ fn decode_named_fields(fields_named: &syn::FieldsNamed) -> (TokenStream, TokenSt
     )
 }
 
-fn decode_pad(pad: &syn::Expr) -> TokenStream {
+pub fn decode_pad(pad: &syn::Expr) -> TokenStream {
     quote!(::bin_proto::BitRead::skip(__io_reader, #pad)?;)
 }
 
@@ -103,7 +103,7 @@ fn decode(field: &syn::Field) -> TokenStream {
     })
 }
 
-fn encode_pad(pad: &syn::Expr) -> TokenStream {
+pub fn encode_pad(pad: &syn::Expr) -> TokenStream {
     quote!(::bin_proto::BitWrite::pad(__io_writer, #pad)?;)
 }
 

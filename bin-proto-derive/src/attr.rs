@@ -166,11 +166,19 @@ impl Attrs {
                         attrs.default = true;
                     }
                     "pad_before" => {
-                        expect_attr_kind!(AttrKind::Field, kind, meta);
+                        expect_attr_kind!(
+                            AttrKind::Enum | AttrKind::Struct | AttrKind::Field,
+                            kind,
+                            meta
+                        );
                         attrs.pad_before = Some(meta.value()?.parse()?);
                     }
                     "pad_after" => {
-                        expect_attr_kind!(AttrKind::Field, kind, meta);
+                        expect_attr_kind!(
+                            AttrKind::Enum | AttrKind::Struct | AttrKind::Field,
+                            kind,
+                            meta
+                        );
                         attrs.pad_after = Some(meta.value()?.parse()?);
                     }
                     _ => {
