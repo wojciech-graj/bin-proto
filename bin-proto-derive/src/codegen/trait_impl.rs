@@ -72,7 +72,7 @@ pub fn impl_trait_for(
         }
         TraitImplType::TaggedDecode(discriminant) => {
             let mut bounds = Punctuated::new();
-            bounds.push(parse_quote!(::std::convert::TryInto<#discriminant>));
+            bounds.push(parse_quote!(::core::convert::TryInto<#discriminant>));
             generics
                 .params
                 .push(syn::GenericParam::Type(syn::TypeParam {

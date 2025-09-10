@@ -1,8 +1,11 @@
+#![cfg(feature = "alloc")]
+
 use alloc::{ffi::CString, vec::Vec};
 use bitstream_io::{BitRead, BitWrite, Endianness};
 
 use crate::{util, BitDecode, BitEncode, Result};
 
+#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
 impl<Ctx> BitDecode<Ctx> for CString {
     fn decode<R, E>(read: &mut R, ctx: &mut Ctx, tag: ()) -> Result<Self>
     where
@@ -20,6 +23,7 @@ impl<Ctx> BitDecode<Ctx> for CString {
     }
 }
 
+#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
 impl<Ctx> BitEncode<Ctx> for CString {
     fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, (): ()) -> Result<()>
     where

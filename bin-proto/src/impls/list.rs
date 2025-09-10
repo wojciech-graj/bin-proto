@@ -1,8 +1,11 @@
+#[allow(unused)]
 macro_rules! impl_read_list {
     (
+        $(#[$attr:meta])?
         $ty:ident<T $(: $tbound0:ident $(+ $tbound1:ident)?)?
         $(, $h:ident: $hbound0:ident + $hbound1:ident)?>
     ) => {
+        $(#[$attr])?
         impl<Tag, Ctx, T, $($h)?> $crate::BitDecode<Ctx, $crate::Tag<Tag>> for $ty<T, $($h)?>
         where
             T: $crate::BitDecode<Ctx> $(+ $tbound0 $(+ $tbound1)?)?,
@@ -27,6 +30,7 @@ macro_rules! impl_read_list {
             }
         }
 
+        $(#[$attr])?
         impl<Ctx, T, $($h)?> $crate::BitDecode<Ctx, $crate::Untagged> for $ty<T, $($h)?>
         where
             T: $crate::BitDecode<Ctx> $(+ $tbound0 $(+ $tbound1)?)?,
@@ -47,8 +51,10 @@ macro_rules! impl_read_list {
     }
 }
 
+#[allow(unused)]
 macro_rules! impl_write_list {
-    ( $ty:ident<T $(: $tbound0:ident $(+ $tbound1:ident)?)? $(, $h:ident)?> ) => {
+    ($(#[$attr:meta])? $ty:ident<T $(: $tbound0:ident $(+ $tbound1:ident)?)? $(, $h:ident)?> ) => {
+        $(#[$attr])?
         impl<Ctx, T, $($h)?> $crate::BitEncode<Ctx, $crate::Untagged> for $ty<T, $($h)?>
         where
             T: $crate::BitEncode<Ctx> $(+ $tbound0 $(+ $tbound1)?)?
@@ -68,11 +74,12 @@ macro_rules! impl_write_list {
     }
 }
 
+#[cfg(feature = "alloc")]
 mod vec {
     use alloc::vec::Vec;
 
-    impl_read_list!(Vec<T>);
-    impl_write_list!(Vec<T>);
+    impl_read_list!(#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))] Vec<T>);
+    impl_write_list!(#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))] Vec<T>);
 
     #[cfg(test)]
     mod tests {
@@ -86,11 +93,12 @@ mod vec {
     }
 }
 
+#[cfg(feature = "alloc")]
 mod linked_list {
     use alloc::collections::linked_list::LinkedList;
 
-    impl_read_list!(LinkedList<T>);
-    impl_write_list!(LinkedList<T>);
+    impl_read_list!(#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))] LinkedList<T>);
+    impl_write_list!(#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))] LinkedList<T>);
 
     #[cfg(test)]
     mod tests {
@@ -104,11 +112,12 @@ mod linked_list {
     }
 }
 
+#[cfg(feature = "alloc")]
 mod vec_deque {
     use alloc::collections::vec_deque::VecDeque;
 
-    impl_read_list!(VecDeque<T>);
-    impl_write_list!(VecDeque<T>);
+    impl_read_list!(#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))] VecDeque<T>);
+    impl_write_list!(#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))] VecDeque<T>);
 
     #[cfg(test)]
     mod tests {
@@ -122,11 +131,12 @@ mod vec_deque {
     }
 }
 
+#[cfg(feature = "alloc")]
 mod b_tree_set {
     use alloc::collections::btree_set::BTreeSet;
 
-    impl_read_list!(BTreeSet<T: Ord>);
-    impl_write_list!(BTreeSet<T: Ord>);
+    impl_read_list!(#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))] BTreeSet<T: Ord>);
+    impl_write_list!(#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))] BTreeSet<T: Ord>);
 
     #[cfg(test)]
     mod tests {
@@ -140,11 +150,12 @@ mod b_tree_set {
     }
 }
 
+#[cfg(feature = "alloc")]
 mod binary_heap {
     use alloc::collections::binary_heap::BinaryHeap;
 
-    impl_read_list!(BinaryHeap<T: Ord>);
-    impl_write_list!(BinaryHeap<T: Ord>);
+    impl_read_list!(#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))] BinaryHeap<T: Ord>);
+    impl_write_list!(#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))] BinaryHeap<T: Ord>);
 
     #[cfg(test)]
     mod tests {
@@ -181,8 +192,8 @@ mod hash_set {
     use core::hash::{BuildHasher, Hash};
     use std::collections::HashSet;
 
-    impl_read_list!(HashSet<T: Hash + Eq, H: BuildHasher + Default>);
-    impl_write_list!(HashSet<T: Hash + Eq, H>);
+    impl_read_list!(#[cfg_attr(docsrs, doc(cfg(feature = "std")))] HashSet<T: Hash + Eq, H: BuildHasher + Default>);
+    impl_write_list!(#[cfg_attr(docsrs, doc(cfg(feature = "std")))] HashSet<T: Hash + Eq, H>);
 
     #[cfg(test)]
     mod tests {

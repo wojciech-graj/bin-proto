@@ -6,16 +6,15 @@
 ![msrv](https://img.shields.io/crates/msrv/bin-proto)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE.txt)
 
-Simple & fast structured bit-level binary co/dec in Rust.
-
-An improved and modernized fork of
-[protocol](https://crates.io/crates/protocol). An alternative to [deku](https://crates.io/crates/deku).
+Conversion to/from binary for arbitrary types. With `no_std` and `no_alloc` support.
 
 This crate adds a trait (and a custom derive for ease-of-use) that can be
 implemented on types, allowing structured data to be sent and received from any
 binary stream. It is recommended to use
 [bitstream_io](https://docs.rs/bitstream-io/latest/bitstream_io/) if you need
 bit streams, as their `BitRead` and `BitWrite` traits are being used internally.
+
+An alternative to [deku](https://crates.io/crates/deku) and [binrw](https://crates.io/crates/binrw).
 
 ## Example
 
@@ -122,7 +121,5 @@ WithCtx(NeedsCtx)
 ```
 
 ## Performance / Alternatives
-
-This crate's main alternative is [deku](https://crates.io/crates/deku), and [binrw](https://crates.io/crates/binrw) for byte-level protocols.
 
 See [GitHub Actions](https://github.com/wojciech-graj/bin-proto/actions) for latest benchmark results with comparison against deku.

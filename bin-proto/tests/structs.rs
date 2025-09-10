@@ -1,4 +1,4 @@
-#![cfg(feature = "derive")]
+#![cfg(all(feature = "derive", feature = "alloc"))]
 
 use std::marker::PhantomData;
 
@@ -173,21 +173,10 @@ fn magic_read_correctly() {
 
 #[test]
 fn incorrect_magic_fails() {
-    let exp = Err::<Magic, _>(Error::Magic {
-        actual: vec![10],
-        expected: &[9],
-    });
-    let ret = Magic::decode_bytes(&[10, 4, 1, 2, 3, 5], BigEndian);
-    if !matches!(
-        &ret,
-        Err(Error::Magic {
-            actual,
-            expected: &[9],
-        })
-    if *actual == vec![10])
-    {
-        panic!("expected: {exp:?}. actual: {ret:?}");
-    }
+    assert!(matches!(
+        &Magic::decode_bytes(&[10, 4, 1, 2, 3, 5], BigEndian),
+        Err(Error::Magic(&[9]))
+    ));
 }
 
 #[test]

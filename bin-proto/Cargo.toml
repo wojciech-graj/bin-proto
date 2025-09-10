@@ -1,6 +1,6 @@
 [package]
 name = "bin-proto"
-version = "0.9.1"
+version = "0.10.0"
 authors = [
     "Wojciech Graj <me@w-graj.net>",
     "Dylan McKay <me@dylanmckay.io>"
@@ -8,12 +8,12 @@ authors = [
 edition = "2021"
 rust-version = "1.83.0"
 
-description = "Easy binary protocol definitions"
+description = "Conversion to/from binary for arbitrary types"
 license = "MIT"
 readme = "../README.md"
 repository = "https://github.com/wojciech-graj/bin-proto"
 documentation = "https://docs.rs/bin-proto"
-keywords = ["protocol", "binary", "bit", "codec", "serde"]
+keywords = ["binary", "encode", "decode", "serialize", "deserialize"]
 categories = ["encoding", "parsing"]
 
 [package.metadata.docs.rs]
@@ -21,14 +21,15 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
+alloc = ["bitstream-io/alloc", "core2/alloc"]
 default = ["derive", "std"]
-derive = ["bin-proto-derive"]
-std = ["bitstream-io/std"]
+derive = ["dep:bin-proto-derive"]
+std = ["bitstream-io/std", "core2/std", "alloc"]
 
 [dependencies]
-bin-proto-derive = { version = "0.9.1", path = "../bin-proto-derive", optional = true }
+bin-proto-derive = { version = "0.10.0", path = "../bin-proto-derive", optional = true }
 bitstream-io = { version = "4.0.0", default-features = false }
-core2 = "0.4.0"
+core2 = { version = "0.4.0", default-features = false }
 
 [dev-dependencies]
 proptest = "1.0.0"

@@ -7,3 +7,6 @@ exclude = [
   "bench",
 ]
 resolver = "2"
+
+[patch.crates-io]
+bitstream-io = { git = "https://github.com/tuffy/bitstream-io.git", rev = "f3c8cf2" }

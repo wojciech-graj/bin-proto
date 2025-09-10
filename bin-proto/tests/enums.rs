@@ -1,4 +1,4 @@
-#![cfg(feature = "derive")]
+#![cfg(all(feature = "derive", feature = "alloc"))]
 
 use std::marker::PhantomData;
 

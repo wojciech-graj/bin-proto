@@ -1,4 +1,4 @@
-//! Simple & fast bit-level binary co/dec in Rust.
+//! Conversion to/from binary for arbitrary types. With `no_std` and `no_alloc` support.
 //!
 //! For more information about `#[derive(BitDecode, BitEncode)]` and its attributes, see
 //! [`macro@BitDecode`] or [`macro@BitEncode`].
@@ -6,7 +6,7 @@
 //! # Example
 //!
 //! ```
-//! # #[cfg(feature = "derive")]
+//! # #[cfg(all(feature = "derive", feature = "alloc"))]
 //! # {
 //! # use bin_proto::{BitDecode, BitEncode, BitCodec};
 //! #[derive(Debug, BitDecode, BitEncode, PartialEq)]
@@ -79,6 +79,7 @@
 #![cfg_attr(docsrs, allow(internal_features))]
 #![no_std]
 #![deny(
+    missing_docs,
     clippy::pedantic,
     clippy::nursery,
     clippy::cargo,
@@ -87,17 +88,17 @@
     clippy::suspicious,
     clippy::complexity,
     clippy::perf,
-    clippy::style,
-    unsafe_code
+    clippy::style
 )]
 #![allow(clippy::module_name_repetitions, clippy::missing_errors_doc)]
 
+#[cfg(feature = "alloc")]
 extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
 pub use self::codec::BitCodec;
-pub use self::codec::{BitDecode, BitEncode};
+pub use self::codec::{BitDecode, BitDecodeExt, BitEncode, BitEncodeExt};
 pub use self::discriminable::Discriminable;
 pub use self::error::{Error, Result};
 pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
@@ -197,9 +198,12 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// read until eof.
 ///
 /// ```
+/// # #[cfg(feature = "alloc")]
+/// # {
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
 /// struct ReadToEnd(#[codec(flexible_array_member)] Vec<u8>);
+/// # }
 /// ```
 ///
 /// ## `tag`
@@ -211,6 +215,8 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// boolean for [`Option`].
 ///
 /// ```
+/// # #[cfg(feature = "alloc")]
+/// # {
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
 /// pub struct WithElementsLength {
@@ -219,6 +225,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 ///     #[codec(tag = count as usize)]
 ///     pub data: Vec<u32>,
 /// }
+/// # }
 /// ```
 ///
 /// ## `tag_type`
@@ -232,12 +239,15 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// to be specified when deriving [`BitEncode`].
 ///
 /// ```
+/// # #[cfg(feature = "alloc")]
+/// # {
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
 /// pub struct WithElementsLength {
 ///     #[codec(tag_type = u16, tag_value = self.data.len() as u16, tag_bits = 13)]
 ///     pub data: Vec<u32>,
 /// }
+/// # }
 /// ```
 ///
 /// ## `write_value`
@@ -247,6 +257,8 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// Specify an expression that should be used as the field's value for writing.
 ///
 /// ```
+/// # #[cfg(feature = "alloc")]
+/// # {
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
 /// pub struct WithElementsLengthAuto {
@@ -256,6 +268,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 ///     #[codec(tag = count as usize)]
 ///     pub data: Vec<u32>,
 /// }
+/// # }
 /// ```
 ///
 /// ## `ctx`
@@ -267,7 +280,9 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// Specify the type of context that will be passed to codec functions.
 ///
 /// ```
-/// # use bin_proto::{BitDecode, BitEncode};
+/// # #[cfg(feature = "alloc")]
+/// # {
+/// # use bin_proto::{BitDecode, BitEncode, BitEncodeExt};
 /// pub struct Ctx;
 ///
 /// pub struct NeedsCtx;
@@ -310,6 +325,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// WithCtx(NeedsCtx)
 ///     .encode_bytes_ctx(bin_proto::BigEndian, &mut Ctx, ())
 ///     .unwrap();
+/// # }
 /// ```
 ///
 /// ```
@@ -462,9 +478,9 @@ pub struct Bits<const C: u32>;
 ///     pub length: u8,
 ///     #[codec(flexible_array_member)]
 ///     #[codec(tag = length as usize)]
-///     pub reason: String,
+///     pub reason: alloc::string::String,
 /// }
 /// ```
-#[cfg(all(feature = "derive", doctest))]
+#[cfg(all(feature = "derive", feature = "alloc", doctest))]
 #[allow(unused)]
 fn compile_fail_if_multiple_exclusive_attrs() {}

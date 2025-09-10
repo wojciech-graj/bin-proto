@@ -1,8 +1,7 @@
 use bitstream_io::{BitRead, BitWrite, Endianness};
 
-use crate::{util, BitDecode, BitEncode, Error, Result};
-use alloc::vec::Vec;
-use core::convert::TryInto;
+use crate::{util, BitDecode, BitEncode, Result};
+use core::mem::MaybeUninit;
 
 impl<Ctx, T, const N: usize> BitDecode<Ctx> for [T; N]
 where
@@ -13,9 +12,15 @@ where
         R: BitRead,
         E: Endianness,
     {
-        let elements: Vec<_> =
-            util::decode_items::<_, E, _, _>(N, read, ctx).collect::<Result<_>>()?;
-        elements.try_into().map_err(|_| Error::SliceTryFromVec)
+        let elements = util::decode_items::<_, E, _, _>(N, read, ctx);
+        let mut array: MaybeUninit<[T; N]> = MaybeUninit::uninit();
+        let array_ptr = array.as_mut_ptr().cast::<T>();
+        unsafe {
+            for (i, item) in elements.enumerate() {
+                array_ptr.add(i).write(item?);
+            }
+            Ok(array.assume_init())
+        }
     }
 }
 

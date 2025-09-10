@@ -7,3 +7,6 @@ publish = false
 [dependencies]
 bin-proto = { path = "../bin-proto" }
 deku = "0.19.0"
+
+[patch.crates-io]
+bitstream-io = { git = "https://github.com/tuffy/bitstream-io.git", rev = "f3c8cf2" }

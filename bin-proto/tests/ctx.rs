@@ -1,8 +1,8 @@
-#![cfg(feature = "derive")]
+#![cfg(all(feature = "derive", feature = "alloc"))]
 
 use std::marker::PhantomData;
 
-use bin_proto::{BitDecode, BitEncode};
+use bin_proto::{BitDecode, BitDecodeExt, BitEncode, BitEncodeExt};
 use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness};
 
 trait Boolean {

@@ -1,3 +1,13 @@
+# v0.10.0
+- Add support for `no_alloc`
+- Fix `no_std` support
+- Split `BitEncode`, `BitDecode` traits into `BitEncode`, `BitEncodeExt`, `BitDecode`, `BitDecodeExt`
+- Add `BitEncodeExt::encode_bytes_ctx_buf` and `BitCodec::encode_bytes_buf`
+- Change `Error::Magic` variant to only contain static data
+- Rename `Error::UnknownEnumDiscriminant` to `Error::Discriminant`
+- Rename `Error::Other` to `Error::Boxed`
+- Add `Error::Other` variant
+- Optimize reading `[T; N]`
 # v0.9.1
 - Add `#[codec(default)]`, `#[codec(pad_before = ...)]`, `#[codec(pad_after = ...)]`, `#[codec(magic = ...)]`
 - Add `Error::Magic` variant

@@ -1,8 +1,11 @@
+#[allow(unused)]
 macro_rules! impl_read_map {
     (
+        $(#[$attr:meta])?
         $ty:ident<K: $kbound0:ident $(+ $kbound1:ident)?, V
         $(, $h:ident : $hbound0:ident + $hbound1:ident)?>
     ) => {
+        $(#[$attr])?
         impl<Tag, Ctx, K, V, $($h)?> $crate::BitDecode<Ctx, $crate::Tag<Tag>> for $ty<K, V, $($h)?>
         where
             K: $crate::BitDecode<Ctx> + $kbound0 + $($kbound1)?,
@@ -28,6 +31,7 @@ macro_rules! impl_read_map {
             }
         }
 
+        $(#[$attr])?
         impl<Ctx, K, V, $($h)?> $crate::BitDecode<Ctx, $crate::Untagged> for $ty<K, V, $($h)?>
         where
             K: $crate::BitDecode<Ctx> + $kbound0 $(+ $kbound1)?,
@@ -49,8 +53,10 @@ macro_rules! impl_read_map {
     };
 }
 
+#[allow(unused)]
 macro_rules! impl_write_map {
-    ( $ty:ident<K: $kbound0:ident $(+ $kbound1:ident)?, V $(, $h:ident)?> ) => {
+    ( $(#[$attr:meta])? $ty:ident<K: $kbound0:ident $(+ $kbound1:ident)?, V $(, $h:ident)?> ) => {
+        $(#[$attr])?
         impl<Ctx, K, V, $($h)?> $crate::BitEncode<Ctx, $crate::Untagged> for $ty<K, V, $($h)?>
         where
             K: $crate::BitEncode<Ctx> + $kbound0 $(+ $kbound1)?,
@@ -82,8 +88,8 @@ mod hash_map {
     use core::hash::{BuildHasher, Hash};
     use std::collections::HashMap;
 
-    impl_write_map!(HashMap<K: Eq + Hash, V, H>);
-    impl_read_map!(HashMap<K: Eq + Hash, V, H: BuildHasher + Default>);
+    impl_write_map!(#[cfg_attr(docsrs, doc(cfg(feature = "std")))] HashMap<K: Eq + Hash, V, H>);
+    impl_read_map!(#[cfg_attr(docsrs, doc(cfg(feature = "std")))] HashMap<K: Eq + Hash, V, H: BuildHasher + Default>);
 
     #[cfg(test)]
     mod tests {
@@ -97,11 +103,12 @@ mod hash_map {
     }
 }
 
+#[cfg(feature = "alloc")]
 mod b_tree_map {
     use alloc::collections::btree_map::BTreeMap;
 
-    impl_write_map!(BTreeMap<K: Ord, V>);
-    impl_read_map!(BTreeMap<K: Ord, V>);
+    impl_write_map!(#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))] BTreeMap<K: Ord, V>);
+    impl_read_map!(#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))] BTreeMap<K: Ord, V>);
 
     #[cfg(test)]
     mod tests {

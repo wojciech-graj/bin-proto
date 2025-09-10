@@ -76,7 +76,7 @@ pub fn variant_discriminant(plan: &enums::Enum, attrs: &Attrs) -> TokenStream {
                     variant.ident
                 );
                 quote!(
-                    const _: () = ::std::assert!(
+                    const _: () = ::core::assert!(
                         #discriminant_expr < (1 as #discriminant_ty) << #field_width, #error_message
                     );
 
@@ -118,9 +118,7 @@ pub fn decode_variant_fields(plan: &enums::Enum) -> TokenStream {
                 .map_err(|_| ::bin_proto::Error::TagConvert)? {
                 #(#discriminant_match_branches,)*
                 unknown_discriminant => {
-                    return Err(::bin_proto::Error::UnknownEnumDiscriminant(
-                        ::std::format!("{:?}", unknown_discriminant),
-                    ));
+                    return Err(::bin_proto::Error::Discriminant);
                 },
             }
         }

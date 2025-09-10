@@ -1,6 +1,6 @@
 [package]
 name = "bin-proto-derive"
-version = "0.9.1"
+version = "0.10.0"
 authors = [
     "Wojciech Graj <me@w-graj.net>",
     "Dylan McKay <me@dylanmckay.io>"
@@ -13,7 +13,7 @@ license = "MIT"
 readme = "../README.md"
 repository = "https://github.com/wojciech-graj/bin-proto"
 documentation = "https://docs.rs/bin-proto"
-keywords = ["protocol", "binary", "bit", "codec", "serde"]
+keywords = ["binary", "encode", "decode", "serialize", "deserialize"]
 categories = ["encoding", "parsing"]
 
 [lib]

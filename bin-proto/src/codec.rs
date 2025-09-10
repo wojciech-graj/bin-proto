@@ -1,10 +1,11 @@
+#[cfg(feature = "alloc")]
 use alloc::vec::Vec;
 #[cfg(feature = "std")]
-use std::io;
+use std::io::{self, Cursor};
 
 use bitstream_io::{BitRead, BitReader, BitWrite, BitWriter, Endianness};
 #[cfg(not(feature = "std"))]
-use core2::io;
+use core2::io::{self, Cursor};
 
 use crate::Result;
 
@@ -15,7 +16,10 @@ pub trait BitDecode<Ctx = (), Tag = ()>: Sized {
     where
         R: BitRead,
         E: Endianness;
+}
 
+/// Utility functionality for bit-level decoding.
+pub trait BitDecodeExt<Ctx = (), Tag = ()>: BitDecode<Ctx, Tag> {
     /// Parses a new value from its raw byte representation with provided context and tag.
     fn decode_bytes_ctx<E>(bytes: &[u8], byte_order: E, ctx: &mut Ctx, tag: Tag) -> Result<Self>
     where
@@ -26,6 +30,8 @@ pub trait BitDecode<Ctx = (), Tag = ()>: Sized {
     }
 }
 
+impl<T, Ctx, Tag> BitDecodeExt<Ctx, Tag> for T where T: BitDecode<Ctx, Tag> {}
+
 /// A trait for bit-level encoding.
 pub trait BitEncode<Ctx = (), Tag = ()> {
     /// Writes a value to a stream.
@@ -33,8 +39,13 @@ pub trait BitEncode<Ctx = (), Tag = ()> {
     where
         W: BitWrite,
         E: Endianness;
+}
 
+/// Utility functionality for bit-level encoding.
+pub trait BitEncodeExt<Ctx = (), Tag = ()>: BitEncode<Ctx, Tag> {
     /// Gets the raw bytes of this type with provided context and tag.
+    #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
+    #[cfg(feature = "alloc")]
     fn encode_bytes_ctx<E>(&self, byte_order: E, ctx: &mut Ctx, tag: Tag) -> Result<Vec<u8>>
     where
         E: Endianness,
@@ -46,9 +57,29 @@ pub trait BitEncode<Ctx = (), Tag = ()> {
 
         Ok(data)
     }
+
+    /// Fills the buffer with the raw bytes of this type with provided context and tag.
+    fn encode_bytes_ctx_buf<E>(
+        &self,
+        byte_order: E,
+        ctx: &mut Ctx,
+        tag: Tag,
+        buf: &mut [u8],
+    ) -> Result<()>
+    where
+        E: Endianness,
+    {
+        let mut writer = BitWriter::endian(Cursor::new(buf), byte_order);
+        self.encode::<_, E>(&mut writer, ctx, tag)?;
+        writer.byte_align()?;
+
+        Ok(())
+    }
 }
 
-/// A trait with helper functions for simple codecs
+impl<T, Ctx, Tag> BitEncodeExt<Ctx, Tag> for T where T: BitEncode<Ctx, Tag> {}
+
+/// A trait with helper functions for simple codecs.
 pub trait BitCodec: BitDecode + BitEncode {
     /// Parses a new value from its raw byte representation without context.
     fn decode_bytes<E>(bytes: &[u8], byte_order: E) -> Result<Self>
@@ -59,11 +90,21 @@ pub trait BitCodec: BitDecode + BitEncode {
     }
 
     /// Gets the raw bytes of this type without context.
+    #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
+    #[cfg(feature = "alloc")]
     fn encode_bytes<E>(&self, byte_order: E) -> Result<Vec<u8>>
     where
         E: Endianness,
     {
         self.encode_bytes_ctx(byte_order, &mut (), ())
+    }
+
+    /// Fills the buffer with the raw bytes of this type without context.
+    fn encode_bytes_buf<E>(&self, byte_order: E, buf: &mut [u8]) -> Result<()>
+    where
+        E: Endianness,
+    {
+        self.encode_bytes_ctx_buf(byte_order, &mut (), (), buf)
     }
 }
 
@@ -109,17 +150,38 @@ macro_rules! test_encode {
         fn encode() {
             use $crate::BitEncode;
 
-            let mut buffer: ::alloc::vec::Vec<u8> = ::alloc::vec::Vec::new();
             let exp: &[u8] = &$exp;
             let value: $ty = $value;
-            value
-                .encode::<_, ::bitstream_io::BigEndian>(
-                    &mut ::bitstream_io::BitWriter::endian(&mut buffer, ::bitstream_io::BigEndian),
-                    &mut (),
-                    ($($tag)?),
-                )
-                .unwrap();
-            assert_eq!(exp, &buffer);
+
+            #[cfg(feature = "alloc")]
+            {
+                let mut buffer: ::alloc::vec::Vec<u8> = ::alloc::vec::Vec::new();
+                value
+                    .encode::<_, ::bitstream_io::BigEndian>(
+                        &mut ::bitstream_io::BitWriter::endian(&mut buffer, ::bitstream_io::BigEndian),
+                        &mut (),
+                        ($($tag)?),
+                    )
+                    .unwrap();
+                assert_eq!(exp, &buffer);
+            }
+
+            #[cfg(not(feature = "alloc"))]
+            {
+                let mut buffer = [0u8; 16];
+                value
+                    .encode::<_, ::bitstream_io::BigEndian>(
+                        &mut ::bitstream_io::BitWriter::endian(&mut ::core2::io::Cursor::new(buffer.as_mut_slice()), ::bitstream_io::BigEndian),
+                        &mut (),
+                        ($($tag)?),
+                    )
+                    .unwrap();
+                assert_eq!(exp, &buffer[..exp.len()]);
+                assert!(::core::iter::Iterator::all(
+                    &mut ::core::iter::IntoIterator::into_iter(&buffer[exp.len()..]),
+                    |x| *x == 0)
+                );
+            }
         }
     };
 }
@@ -133,19 +195,20 @@ macro_rules! test_codec {
 
 macro_rules! test_roundtrip {
     ($ty:ty) => {
-        #[cfg(test)]
+        #[cfg(all(test, feature = "alloc"))]
         ::proptest::proptest!(
             #[test]
             fn roundtrip(x in ::proptest::arbitrary::any::<$ty>()) {
                 use alloc::format; // TODO: https://github.com/proptest-rs/proptest/pull/584
-                let encoded = $crate::BitEncode::encode_bytes_ctx(&x, ::bitstream_io::BigEndian, &mut (), ()).unwrap();
-                let decoded = <$ty as $crate::BitDecode>::decode_bytes_ctx(&encoded, ::bitstream_io::BigEndian, &mut (), ()).unwrap();
+                let encoded = $crate::BitEncodeExt::encode_bytes_ctx(&x, ::bitstream_io::BigEndian, &mut (), ()).unwrap();
+                let decoded = <$ty as $crate::BitDecodeExt>::decode_bytes_ctx(&encoded, ::bitstream_io::BigEndian, &mut (), ()).unwrap();
                 ::proptest::prop_assert_eq!(x, decoded);
             }
         );
     }
 }
 
+#[allow(unused)]
 macro_rules! test_untagged_and_codec {
     ($ty:ty | $tag_write:expr, $tag_read:expr; $value:expr => $bytes:expr) => {
         test_codec!($ty | $tag_write, $tag_read; $value => $bytes);

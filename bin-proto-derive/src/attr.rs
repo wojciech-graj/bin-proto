@@ -84,9 +84,7 @@ impl Attrs {
                     ()
                 )?;
                 if magic != *(#magic) {
-                    return ::core::result::Result::Err(
-                        ::bin_proto::Error::Magic{ expected: #magic, actual: magic.to_vec() }
-                    );
+                    return ::core::result::Result::Err(::bin_proto::Error::Magic(#magic));
                 }
             )
         } else {
