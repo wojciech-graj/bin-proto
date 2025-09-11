@@ -28,7 +28,7 @@ std = ["bitstream-io/std", "core2/std", "alloc"]
 
 [dependencies]
 bin-proto-derive = { version = "0.10.0", path = "../bin-proto-derive", optional = true }
-bitstream-io = { version = "4.0.0", default-features = false }
+bitstream-io = { version = "4.6.0", default-features = false }
 core2 = { version = "0.4.0", default-features = false }
 
 [dev-dependencies]

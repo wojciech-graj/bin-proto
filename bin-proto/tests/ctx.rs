@@ -5,6 +5,7 @@ use std::marker::PhantomData;
 use bin_proto::{BitDecode, BitDecodeExt, BitEncode, BitEncodeExt};
 use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness};
 
+#[allow(unused)]
 trait Boolean {
     fn set(&mut self);
 }
@@ -15,6 +16,7 @@ impl Boolean for bool {
     }
 }
 
+#[allow(unused)]
 trait TraitWithGeneric<'a, T>
 where
     T: Boolean,
@@ -35,6 +37,7 @@ impl CtxTrait for CtxStruct {
 }
 
 #[derive(Debug)]
+#[allow(unused)]
 struct CtxStructWithGenerics<'a, T>(&'a mut T);
 
 impl<'a, T> CtxTrait for CtxStructWithGenerics<'a, T>
@@ -77,18 +80,22 @@ struct CtxCheckStructWrapper(CtxCheck);
 
 #[derive(Debug, BitDecode, BitEncode)]
 #[codec(ctx = CtxStructWithGenerics<'a, bool>, ctx_generics('a))]
+#[allow(unused)]
 struct CtxCheckStructWrapperWithGenericsConcreteBool(CtxCheck);
 
 #[derive(Debug, BitDecode, BitEncode)]
 #[codec(ctx = CtxStructWithGenerics<'a, T>, ctx_generics('a, T: Boolean))]
+#[allow(unused)]
 struct CtxCheckStructWrapperWithGenerics(CtxCheck);
 
 #[derive(Debug, BitDecode, BitEncode)]
 #[codec(ctx_bounds(TraitWithGeneric<'a, bool>, CtxTrait), ctx_generics('a))]
+#[allow(unused)]
 struct CtxCheckBoundsWithGenericsConcreteBool(CtxCheck);
 
 #[derive(Debug, BitDecode, BitEncode)]
 #[codec(ctx_bounds(TraitWithGeneric<'a, T>, CtxTrait), ctx_generics('a))]
+#[allow(unused)]
 struct CtxCheckBoundsWithGenerics<T: Boolean>(CtxCheck, PhantomData<T>);
 
 #[derive(Debug, BitDecode, BitEncode)]
