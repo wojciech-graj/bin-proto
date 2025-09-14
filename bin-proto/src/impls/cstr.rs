@@ -15,6 +15,7 @@ impl<Ctx> BitEncode<Ctx> for CStr {
 }
 
 #[cfg(feature = "alloc")]
+#[allow(clippy::wildcard_imports)]
 mod decode {
     use alloc::{boxed::Box, ffi::CString};
     use bitstream_io::BitRead;

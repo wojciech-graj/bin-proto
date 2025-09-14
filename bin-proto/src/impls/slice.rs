@@ -16,6 +16,7 @@ where
 }
 
 #[cfg(feature = "alloc")]
+#[allow(clippy::wildcard_imports)]
 mod decode {
     use alloc::{boxed::Box, vec::Vec};
     use bitstream_io::BitRead;
