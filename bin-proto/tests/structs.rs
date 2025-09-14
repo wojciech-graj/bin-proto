@@ -82,11 +82,14 @@ fn named_fields_are_correctly_written() {
 #[test]
 fn named_fields_are_correctly_decoded() {
     assert_eq!(
-        Foobar {
-            a: 3,
-            b: '2' as u8,
-            c: 1,
-        },
+        (
+            Foobar {
+                a: 3,
+                b: '2' as u8,
+                c: 1,
+            },
+            24
+        ),
         Foobar::decode_bytes(&[3, '2' as u8, 1], BigEndian).unwrap()
     );
 }
@@ -102,7 +105,7 @@ fn unnamed_fields_are_correctly_written() {
 #[test]
 fn unnamed_fields_are_correctly_decoded() {
     assert_eq!(
-        BizBong(3, 1, 7),
+        (BizBong(3, 1, 7), 24),
         BizBong::decode_bytes(&[3, 1, 7], BigEndian).unwrap()
     );
 }
@@ -115,7 +118,7 @@ fn unit_structs_are_correctly_written() {
 #[test]
 fn unit_structs_are_correctly_decoded() {
     assert_eq!(
-        PartyInTheFront,
+        (PartyInTheFront, 0),
         PartyInTheFront::decode_bytes(&[], BigEndian).unwrap()
     );
 }
@@ -131,10 +134,13 @@ fn default_written_correctly() {
 #[test]
 fn default_read_correctly() {
     assert_eq!(
-        WithDefault {
-            a: 1,
-            b: Default::default()
-        },
+        (
+            WithDefault {
+                a: 1,
+                b: Default::default()
+            },
+            8
+        ),
         WithDefault::decode_bytes(&[1], BigEndian).unwrap()
     )
 }
@@ -150,7 +156,7 @@ fn pad_written_correctly() {
 #[test]
 fn pad_read_correctly() {
     assert_eq!(
-        Padded { a: 1, b: 2, c: 3 },
+        (Padded { a: 1, b: 2, c: 3 }, 49),
         Padded::decode_bytes(&[0, 128, 16, 0, 24, 0, 0], BigEndian).unwrap()
     )
 }
@@ -166,7 +172,7 @@ fn magic_written_correctly() {
 #[test]
 fn magic_read_correctly() {
     assert_eq!(
-        Magic { a: 4, b: 5 },
+        (Magic { a: 4, b: 5 }, 48),
         Magic::decode_bytes(&[9, 4, 1, 2, 3, 5], BigEndian).unwrap()
     )
 }
@@ -189,6 +195,6 @@ fn ipv4() {
 
     assert_eq!(
         IPv4Header::decode_bytes(&[0x45], BigEndian).unwrap(),
-        IPv4Header { version: 4 }
+        (IPv4Header { version: 4 }, 4)
     )
 }

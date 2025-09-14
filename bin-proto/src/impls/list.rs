@@ -45,7 +45,7 @@ macro_rules! impl_read_list {
                 R: ::bitstream_io::BitRead,
                 E: ::bitstream_io::Endianness,
             {
-                $crate::util::decode_items_to_eof::<_, E, _, _>(read,  ctx).collect()
+                $crate::util::decode_items_to_eof::<_, E, _, _>(read, ctx).collect()
             }
         }
     }

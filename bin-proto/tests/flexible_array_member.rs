@@ -10,7 +10,7 @@ struct WithFlexibleArrayMember(#[codec(flexible_array_member)] Vec<u8>);
 fn decode_flexible_array_member() {
     assert_eq!(
         WithFlexibleArrayMember::decode_bytes(&[1, 2, 3], BigEndian).unwrap(),
-        WithFlexibleArrayMember(vec![1, 2, 3])
+        (WithFlexibleArrayMember(vec![1, 2, 3]), 24)
     );
 }
 

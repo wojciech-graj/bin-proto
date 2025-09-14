@@ -53,11 +53,14 @@ pub struct BitFieldTaggedEnumContainer {
 #[test]
 fn decode_enum_variant() {
     assert_eq!(
-        Enum::Variant1 {
-            a: 64u8,
-            len: 2,
-            arr: vec![1, 2]
-        },
+        (
+            Enum::Variant1 {
+                a: 64u8,
+                len: 2,
+                arr: vec![1, 2]
+            },
+            40
+        ),
         Enum::decode_bytes(&[1, 64, 2, 1, 2], BigEndian).unwrap()
     );
 }
@@ -75,9 +78,12 @@ fn encode_enum_variant() {
 #[test]
 fn decode_enum_variant_in_container() {
     assert_eq!(
-        EnumContainer {
-            e: Enum2::Variant1(2)
-        },
+        (
+            EnumContainer {
+                e: Enum2::Variant1(2)
+            },
+            10
+        ),
         EnumContainer::decode_bytes(&[64, 128], BigEndian).unwrap()
     );
 }
@@ -97,9 +103,12 @@ fn encode_enum_variant_in_container() {
 #[test]
 fn decode_enum_variant_in_container_tagged() {
     assert_eq!(
-        TaggedEnumContainer {
-            e: Enum2::Variant1(2)
-        },
+        (
+            TaggedEnumContainer {
+                e: Enum2::Variant1(2)
+            },
+            24
+        ),
         TaggedEnumContainer::decode_bytes(&[0, 1, 2], BigEndian).unwrap()
     );
 }
@@ -119,10 +128,13 @@ fn encode_enum_variant_in_container_tagged() {
 #[test]
 fn decode_enum_variant_in_container_tagged_bitfield() {
     assert_eq!(
-        BitFieldTaggedEnumContainer {
-            discriminant: 1,
-            e: Enum2::Variant1(2)
-        },
+        (
+            BitFieldTaggedEnumContainer {
+                discriminant: 1,
+                e: Enum2::Variant1(2)
+            },
+            11
+        ),
         BitFieldTaggedEnumContainer::decode_bytes(&[32, 64], BigEndian).unwrap()
     );
 }

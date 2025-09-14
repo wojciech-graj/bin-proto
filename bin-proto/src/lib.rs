@@ -44,7 +44,7 @@
 //!         0x21, 0x37, // arr: [0x21, 0x37]
 //!         0x00, 0x01, 0x33, // prefixed_arr: [0x33]
 //!         0x01, 0x02, 0x03, // read_to_end: [0x01, 0x02, 0x03]
-//!     ], bin_proto::BigEndian).unwrap(),
+//!     ], bin_proto::BigEndian).unwrap().0,
 //!     S {
 //!         bitflag: true,
 //!         bitfield: 5,
@@ -124,6 +124,31 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// }
 /// ```
 ///
+/// # Using Context
+///
+/// The [`ctx`](#ctx) and [`ctx_bounds`](#ctx_bounds) attributes can be used to specify additional
+/// context used during codec. The context can be accessed as `__ctx`, and the tag as `__tag` in any
+/// attribute macro's `<expr>`, for example in [`tag`](#tag).
+///
+/// ```
+/// # #[cfg(feature = "alloc")]
+/// # {
+/// # use bin_proto::{BitDecode, BitEncode};
+/// struct Ctx {
+///     n: u32,
+/// }
+///
+/// #[derive(BitDecode, BitEncode)]
+/// #[codec(ctx = Ctx)]
+/// pub struct WithElementsLength {
+///     pub count: u32,
+///     pub foo: bool,
+///     #[codec(tag = count * __ctx.n)]
+///     pub data: Vec<u32>,
+/// }
+/// # }
+/// ```
+///
 /// # Attributes
 ///
 /// | Attribute | Scope | Applicability |
@@ -141,6 +166,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// | [`pad_before`](#pad_before) | field, struct | rw |
 /// | [`pad_after`](#pad_after) | field, struct | rw |
 /// | [`magic`](#magic) | field, struct | rw |
+///
 ///
 /// ## `discriminant_type`
 /// `#[codec(discriminant_type = <type>)]`
@@ -208,8 +234,8 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 ///
 /// ## `tag`
 /// `#[codec(tag = <expr>)]`
-/// - `<expr>`: arbitrary expression. Fields in parent container can be used
-///   without prefixing them with `self`.
+/// - `<expr>`: arbitrary expression. Fields in parent container can be used without prefixing them
+///   with `self`.
 ///
 /// Specify tag of field. The tag represents a length prefix for variable-length fields, and a
 /// boolean for [`Option`].
@@ -231,8 +257,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// ## `tag_type`
 /// `#[codec(tag_type = <type>[, tag_value = <expr>]?[, tag_bits = <expr>]?)]`
 /// - `<type>`: tag's type
-/// - `<expr>`: arbitrary expression. Fields in parent container should be
-///   prefixed with `self`.
+/// - `<expr>`: arbitrary expression. Fields in parent container should be prefixed with `self`.
 ///
 /// Specify tag of field. The tag represents a length prefix for variable-length fields, and a
 /// boolean for [`Option`]. The tag is placed directly before the field. The `tag_value` only has
@@ -252,7 +277,8 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 ///
 /// ## `write_value`
 /// `#[codec(write_value = <expr>)]`
-/// - `<expr>`: An expression that can be coerced to the field type, potentially using `self`
+/// - `<expr>`: An expression that can be coerced to the field type. Fields in parent container
+///   should be prefixed with `self`.
 ///
 /// Specify an expression that should be used as the field's value for writing.
 ///

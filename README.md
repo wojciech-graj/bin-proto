@@ -58,7 +58,7 @@ assert_eq!(
         0x21, 0x37, // arr: [0x21, 0x37]
         0x00, 0x01, 0x33, // prefixed_arr: [0x33]
         0x01, 0x02, 0x03, // read_to_end: [0x01, 0x02, 0x03]
-    ], bin_proto::BigEndian).unwrap(),
+    ], bin_proto::BigEndian).unwrap().0,
     S {
         bitflag: true,
         bitfield: 5,

@@ -3,14 +3,14 @@
 use bin_proto::{BitCodec, BitDecode, BitEncode};
 use bitstream_io::BigEndian;
 
-#[derive(Debug, BitDecode, BitEncode, PartialEq)]
+#[derive(Debug, Copy, Clone, BitDecode, BitEncode, PartialEq)]
 #[codec(discriminant_type = u8)]
 #[codec(bits = 4)]
 enum Version {
     V4 = 4,
 }
 
-#[derive(Debug, BitDecode, BitEncode, PartialEq)]
+#[derive(Debug, Copy, Clone, BitDecode, BitEncode, PartialEq)]
 struct Flags {
     #[codec(bits = 1)]
     reserved: bool,
@@ -20,7 +20,7 @@ struct Flags {
     more_fragments: bool,
 }
 
-#[derive(Debug, BitDecode, BitEncode, PartialEq)]
+#[derive(Debug, Copy, Clone, BitDecode, BitEncode, PartialEq)]
 struct IPv4 {
     version: Version,
     #[codec(bits = 4)]
@@ -86,6 +86,6 @@ fn can_encode_decode_ipv4() {
         source_address: [2, 1, 1, 1],
         destination_address: [2, 1, 1, 2],
     };
-    assert_eq!(parsed, IPv4::decode_bytes(&raw, BigEndian).unwrap());
+    assert_eq!((parsed, 160), IPv4::decode_bytes(&raw, BigEndian).unwrap());
     assert_eq!(raw, parsed.encode_bytes(BigEndian).unwrap().as_slice())
 }

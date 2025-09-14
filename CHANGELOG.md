@@ -1,3 +1,7 @@
+# v0.11.0
+- Return count of bits read from `BitDecodeExt::decode_bytes_ctx`, `BitCodec::decode_bytes`
+- Return count of bytes written from `BitEncodeExt::encode_bytes_ctx_buf`, `BitCodec::encode_bytes_buf`
+- Implement `BitDecode` for `Box<CStr>`, `Box<str>`, `Box<[T]>`
 # v0.10.0
 - Add support for `no_alloc`
 - Fix `no_std` support

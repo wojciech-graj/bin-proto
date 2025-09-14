@@ -59,11 +59,14 @@ pub struct PrependedBits {
 #[test]
 fn can_decode_length_prefix_3_elements() {
     assert_eq!(
-        WithElementsLength {
-            count: 3,
-            foo: true,
-            data: vec![1, 2, 3],
-        },
+        (
+            WithElementsLength {
+                count: 3,
+                foo: true,
+                data: vec![1, 2, 3],
+            },
+            136
+        ),
         WithElementsLength::decode_bytes(
             &[
                 0, 0, 0, 3, // disjoint length prefix
@@ -101,11 +104,14 @@ fn can_encode_auto_length_prefix_3_elements_enum() {
 #[test]
 fn can_decode_length_prefix_3_elements_enum() {
     assert_eq!(
-        WithElementsLengthAutoEnum::Variant {
-            count: 3,
-            foo: true,
-            data: vec![1, 2, 3],
-        },
+        (
+            WithElementsLengthAutoEnum::Variant {
+                count: 3,
+                foo: true,
+                data: vec![1, 2, 3],
+            },
+            144
+        ),
         WithElementsLengthAutoEnum::decode_bytes(
             &[
                 1, // Discriminant
@@ -145,9 +151,12 @@ fn can_encode_auto_length_prefix_3_elements() {
 #[test]
 fn can_decode_prepended_length_prefix_3_elements() {
     assert_eq!(
-        Prepended {
-            data: vec![1, 2, 3],
-        },
+        (
+            Prepended {
+                data: vec![1, 2, 3],
+            },
+            128
+        ),
         Prepended::decode_bytes(
             &[
                 0, 0, 0, 3, // length prefix
@@ -181,9 +190,12 @@ fn can_encode_prepended_length_prefix_3_elements() {
 #[test]
 fn can_decode_prepended_length_prefix_bits() {
     assert_eq!(
-        PrependedBits {
-            data: vec![1, 2, 3],
-        },
+        (
+            PrependedBits {
+                data: vec![1, 2, 3],
+            },
+            99
+        ),
         PrependedBits::decode_bytes(&[96, 0, 0, 0, 32, 0, 0, 0, 64, 0, 0, 0, 96], BigEndian,)
             .unwrap()
     );
