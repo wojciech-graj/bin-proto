@@ -214,7 +214,6 @@ macro_rules! test_roundtrip {
         ::proptest::proptest!(
             #[test]
             fn roundtrip(x in ::proptest::arbitrary::any::<$ty>()) {
-                use alloc::format; // TODO: https://github.com/proptest-rs/proptest/pull/584
                 let encoded = $crate::BitEncodeExt::encode_bytes_ctx(&x, ::bitstream_io::BigEndian, &mut (), ()).unwrap();
                 let decoded = <$ty as $crate::BitDecodeExt>::decode_bytes_ctx(&encoded, ::bitstream_io::BigEndian, &mut (), ()).unwrap().0;
                 ::proptest::prop_assert_eq!(x, decoded);

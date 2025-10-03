@@ -32,4 +32,4 @@ bitstream-io = { version = "4.6.0", default-features = false }
 core2 = { version = "0.4.0", default-features = false }
 
 [dev-dependencies]
-proptest = "1.0.0"
+proptest = "1.8.0"
