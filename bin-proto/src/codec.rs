@@ -52,7 +52,6 @@ pub trait BitEncode<Ctx = (), Tag = ()> {
 /// Utility functionality for bit-level encoding.
 pub trait BitEncodeExt<Ctx = (), Tag = ()>: BitEncode<Ctx, Tag> {
     /// Gets the raw bytes of this type with provided context and tag.
-    #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
     #[cfg(feature = "alloc")]
     fn encode_bytes_ctx<E>(&self, byte_order: E, ctx: &mut Ctx, tag: Tag) -> Result<Vec<u8>>
     where
@@ -103,7 +102,6 @@ pub trait BitCodec: BitDecode + BitEncode {
     }
 
     /// Gets the raw bytes of this type without context.
-    #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
     #[cfg(feature = "alloc")]
     fn encode_bytes<E>(&self, byte_order: E) -> Result<Vec<u8>>
     where

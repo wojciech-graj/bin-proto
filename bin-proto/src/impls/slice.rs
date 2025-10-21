@@ -25,7 +25,6 @@ mod decode {
 
     use super::*;
 
-    #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
     impl<Ctx, T> BitDecode<Ctx, Untagged> for Box<[T]>
     where
         T: BitDecode<Ctx>,
@@ -39,7 +38,6 @@ mod decode {
         }
     }
 
-    #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
     impl<Tag, Ctx, T> BitDecode<Ctx, crate::Tag<Tag>> for Box<[T]>
     where
         T: BitDecode<Ctx>,

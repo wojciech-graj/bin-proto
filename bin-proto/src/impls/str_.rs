@@ -22,7 +22,6 @@ mod decode {
 
     use super::*;
 
-    #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
     impl<Ctx> BitDecode<Ctx, Untagged> for Box<str> {
         fn decode<R, E>(read: &mut R, ctx: &mut Ctx, tag: Untagged) -> Result<Self>
         where
@@ -33,7 +32,6 @@ mod decode {
         }
     }
 
-    #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
     impl<Tag, Ctx> BitDecode<Ctx, crate::Tag<Tag>> for Box<str>
     where
         Tag: TryInto<usize>,

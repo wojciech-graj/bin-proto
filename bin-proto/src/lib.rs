@@ -473,7 +473,6 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// #[codec(magic = &[0x01, 0x02, 0x03])]
 /// pub struct Magic(#[codec(magic = b"123")] u8);
 /// ```
-#[cfg_attr(docsrs, doc(cfg(feature = "derive")))]
 #[cfg(feature = "derive")]
 pub use bin_proto_derive::{BitDecode, BitEncode};
 

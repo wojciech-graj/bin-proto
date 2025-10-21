@@ -5,7 +5,6 @@ use crate::{util, BitDecode, BitEncode, Error, Result, Untagged};
 use alloc::{string::String, vec::Vec};
 use bitstream_io::{BitRead, BitWrite, Endianness};
 
-#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
 impl<Tag, Ctx> BitDecode<Ctx, crate::Tag<Tag>> for String
 where
     Tag: TryInto<usize>,
@@ -25,7 +24,6 @@ where
     }
 }
 
-#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
 impl<Ctx> BitEncode<Ctx, Untagged> for String {
     fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, _: Untagged) -> Result<()>
     where
@@ -37,7 +35,6 @@ impl<Ctx> BitEncode<Ctx, Untagged> for String {
     }
 }
 
-#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
 impl<Ctx> BitDecode<Ctx, Untagged> for String {
     fn decode<R, E>(read: &mut R, ctx: &mut Ctx, _: Untagged) -> Result<Self>
     where

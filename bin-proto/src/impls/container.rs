@@ -1,11 +1,9 @@
 #[allow(unused)]
 macro_rules! impl_container_write {
     (
-        $(#[$attr:meta])?
         $ty:ident<$($a:lifetime,)? T $(: $tbound0:ident $(+ ?$tbound1:ident + $tbound2:lifetime)?)?>
         $(=> $f:ident)?
     ) => {
-        $(#[$attr])?
         impl<$($a,)? Ctx, Tag, T> $crate::BitEncode<Ctx, Tag> for $ty<$($a,)? T>
         where
             T: $crate::BitEncode<Ctx, Tag> $(+ $tbound0 $(+ ?$tbound1 + $tbound2)?)?,
@@ -35,8 +33,7 @@ macro_rules! impl_container_write {
 
 #[allow(unused)]
 macro_rules! impl_container_read {
-    ($(#[$attr:meta])? $ty:ident<T>) => {
-        $(#[$attr])?
+    ($ty:ident<T>) => {
         impl<Ctx, Tag, T> $crate::BitDecode<Ctx, Tag> for $ty<T>
         where
             T: $crate::BitDecode<Ctx, Tag>,
@@ -56,8 +53,8 @@ macro_rules! impl_container_read {
 mod box_ {
     use alloc::boxed::Box;
 
-    impl_container_write!(#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))] Box<T>);
-    impl_container_read!(#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))] Box<T>);
+    impl_container_write!(Box<T>);
+    impl_container_read!(Box<T>);
     test_codec!(Box<u8>; Box::new(1) => [0x01]);
     test_roundtrip!(Box<u8>);
 }
@@ -66,8 +63,8 @@ mod box_ {
 mod rc {
     use alloc::rc::Rc;
 
-    impl_container_write!(#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))] Rc<T>);
-    impl_container_read!(#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))] Rc<T>);
+    impl_container_write!(Rc<T>);
+    impl_container_read!(Rc<T>);
     test_codec!(Rc<u8>; Rc::new(1) => [0x01]);
     test_roundtrip!(Rc<u8>);
 }
@@ -76,8 +73,8 @@ mod rc {
 mod arc {
     use alloc::sync::Arc;
 
-    impl_container_write!(#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))] Arc<T>);
-    impl_container_read!(#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))] Arc<T>);
+    impl_container_write!(Arc<T>);
+    impl_container_read!(Arc<T>);
     test_codec!(Arc<u8>; Arc::new(1) => [0x01]);
     test_roundtrip!(Arc<u8>);
 }
@@ -86,7 +83,7 @@ mod arc {
 mod cow {
     use alloc::borrow::{Cow, ToOwned};
 
-    impl_container_write!(#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))] Cow<'a, T: ToOwned + ?Sized + 'a>);
+    impl_container_write!(Cow<'a, T: ToOwned + ?Sized + 'a>);
     test_encode!(Cow<u8>; Cow::Owned(1) => [0x01]);
 }
 
@@ -113,7 +110,6 @@ mod cell {
     test_encode!(Cell<u8>; Cell::new(1) => [0x01]);
 }
 
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 #[cfg(feature = "std")]
 mod rwlock {
     use std::sync::RwLock;
@@ -145,7 +141,6 @@ mod rwlock {
     }
 }
 
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 #[cfg(feature = "std")]
 mod mutex {
     use std::sync::Mutex;

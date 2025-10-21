@@ -24,7 +24,6 @@ mod decode {
 
     use super::*;
 
-    #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
     impl<Ctx> BitDecode<Ctx> for Box<CStr> {
         fn decode<R, E>(read: &mut R, ctx: &mut Ctx, tag: ()) -> Result<Self>
         where
