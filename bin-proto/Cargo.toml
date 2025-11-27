@@ -1,6 +1,6 @@
 [package]
 name = "bin-proto"
-version = "0.11.0"
+version = "0.11.1"
 authors = [
     "Wojciech Graj <me@w-graj.net>",
     "Dylan McKay <me@dylanmckay.io>"
@@ -27,7 +27,7 @@ derive = ["dep:bin-proto-derive"]
 std = ["bitstream-io/std", "core2/std", "alloc"]
 
 [dependencies]
-bin-proto-derive = { version = "0.11.0", path = "../bin-proto-derive", optional = true }
+bin-proto-derive = { version = "0.11.1", path = "../bin-proto-derive", optional = true }
 bitstream-io = { version = "4.6.0", default-features = false }
 core2 = { version = "0.4.0", default-features = false }
 
