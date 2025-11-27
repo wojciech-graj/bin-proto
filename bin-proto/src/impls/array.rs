@@ -3,6 +3,19 @@ use bitstream_io::{BitRead, BitWrite, Endianness};
 use crate::{util, BitDecode, BitEncode, Result};
 use core::mem::MaybeUninit;
 
+struct PartialGuard<T> {
+    ptr: *mut T,
+    len: usize,
+}
+
+impl<T> Drop for PartialGuard<T> {
+    fn drop(&mut self) {
+        unsafe {
+            core::ptr::drop_in_place(core::ptr::slice_from_raw_parts_mut(self.ptr, self.len));
+        }
+    }
+}
+
 impl<Ctx, T, const N: usize> BitDecode<Ctx> for [T; N]
 where
     T: BitDecode<Ctx>,
@@ -14,13 +27,19 @@ where
     {
         let elements = util::decode_items::<_, E, _, _>(N, read, ctx);
         let mut array: MaybeUninit<[T; N]> = MaybeUninit::uninit();
-        let array_ptr = array.as_mut_ptr().cast::<T>();
-        unsafe {
-            for (i, item) in elements.enumerate() {
-                array_ptr.add(i).write(item?);
+        let mut guard = PartialGuard {
+            ptr: array.as_mut_ptr().cast::<T>(),
+            len: 0,
+        };
+        for item in elements {
+            let item = item?;
+            unsafe {
+                guard.ptr.add(guard.len).write(item);
             }
-            Ok(array.assume_init())
+            guard.len += 1;
         }
+        core::mem::forget(guard);
+        Ok(unsafe { array.assume_init() })
     }
 }
 
