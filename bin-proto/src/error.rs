@@ -55,6 +55,7 @@ impl fmt::Display for Error {
 }
 
 impl From<io::Error> for Error {
+    #[inline]
     fn from(value: io::Error) -> Self {
         Self::Io(value)
     }
@@ -62,6 +63,7 @@ impl From<io::Error> for Error {
 
 #[cfg(feature = "alloc")]
 impl From<alloc::string::FromUtf8Error> for Error {
+    #[inline]
     fn from(value: alloc::string::FromUtf8Error) -> Self {
         Self::FromUtf8(value)
     }
@@ -69,24 +71,28 @@ impl From<alloc::string::FromUtf8Error> for Error {
 
 #[cfg(feature = "alloc")]
 impl From<alloc::ffi::NulError> for Error {
+    #[inline]
     fn from(value: alloc::ffi::NulError) -> Self {
         Self::Nul(value)
     }
 }
 
 impl From<core::num::TryFromIntError> for Error {
+    #[inline]
     fn from(value: core::num::TryFromIntError) -> Self {
         Self::TryFromInt(value)
     }
 }
 
 impl From<core::cell::BorrowError> for Error {
+    #[inline]
     fn from(value: core::cell::BorrowError) -> Self {
         Self::Borrow(value)
     }
 }
 
 impl From<Infallible> for Error {
+    #[inline]
     fn from(_: Infallible) -> Self {
         unreachable!()
     }
