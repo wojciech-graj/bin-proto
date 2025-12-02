@@ -19,7 +19,9 @@ pub trait BitDecode<Ctx = (), Tag = ()>: Sized {
 }
 
 /// Utility functionality for bit-level decoding.
-pub trait BitDecodeExt<Ctx = (), Tag = ()>: BitDecode<Ctx, Tag> {
+pub trait BitDecodeExt<Ctx = (), Tag = ()>:
+    BitDecode<Ctx, Tag> + bit_decode::Sealed<Ctx, Tag>
+{
     /// Parses a new value from its raw byte representation with provided context and tag.
     ///
     /// Returns a tuple of the parsed value and the number of bits read.
@@ -38,7 +40,10 @@ pub trait BitDecodeExt<Ctx = (), Tag = ()>: BitDecode<Ctx, Tag> {
     }
 }
 
-impl<T, Ctx, Tag> BitDecodeExt<Ctx, Tag> for T where T: BitDecode<Ctx, Tag> {}
+impl<T, Ctx, Tag> BitDecodeExt<Ctx, Tag> for T where
+    T: BitDecode<Ctx, Tag> + bit_decode::Sealed<Ctx, Tag>
+{
+}
 
 /// A trait for bit-level encoding.
 pub trait BitEncode<Ctx = (), Tag = ()> {
@@ -50,7 +55,9 @@ pub trait BitEncode<Ctx = (), Tag = ()> {
 }
 
 /// Utility functionality for bit-level encoding.
-pub trait BitEncodeExt<Ctx = (), Tag = ()>: BitEncode<Ctx, Tag> {
+pub trait BitEncodeExt<Ctx = (), Tag = ()>:
+    BitEncode<Ctx, Tag> + bit_encode::Sealed<Ctx, Tag>
+{
     /// Gets the raw bytes of this type with provided context and tag.
     #[cfg(feature = "alloc")]
     fn encode_bytes_ctx<E>(&self, byte_order: E, ctx: &mut Ctx, tag: Tag) -> Result<Vec<u8>>
@@ -87,10 +94,13 @@ pub trait BitEncodeExt<Ctx = (), Tag = ()>: BitEncode<Ctx, Tag> {
     }
 }
 
-impl<T, Ctx, Tag> BitEncodeExt<Ctx, Tag> for T where T: BitEncode<Ctx, Tag> {}
+impl<T, Ctx, Tag> BitEncodeExt<Ctx, Tag> for T where
+    T: BitEncode<Ctx, Tag> + bit_encode::Sealed<Ctx, Tag>
+{
+}
 
 /// A trait with helper functions for simple codecs.
-pub trait BitCodec: BitDecode + BitEncode {
+pub trait BitCodec: BitDecode + BitEncode + bit_codec::Sealed {
     /// Parses a new value from its raw byte representation without context.
     ///
     /// Returns a tuple of the parsed value and the number of bits read
@@ -121,7 +131,31 @@ pub trait BitCodec: BitDecode + BitEncode {
     }
 }
 
-impl<T> BitCodec for T where T: BitDecode + BitEncode {}
+impl<T> BitCodec for T where T: BitDecode + BitEncode + bit_codec::Sealed {}
+
+mod bit_encode {
+    use super::BitEncode;
+
+    pub trait Sealed<Ctx, Tag> {}
+
+    impl<Ctx, Tag, T> Sealed<Ctx, Tag> for T where T: BitEncode<Ctx, Tag> {}
+}
+
+mod bit_decode {
+    use super::BitDecode;
+
+    pub trait Sealed<Ctx, Tag> {}
+
+    impl<Ctx, Tag, T> Sealed<Ctx, Tag> for T where T: BitDecode<Ctx, Tag> {}
+}
+
+mod bit_codec {
+    use super::{BitDecode, BitEncode};
+
+    pub trait Sealed {}
+
+    impl<T> Sealed for T where T: BitDecode + BitEncode {}
+}
 
 macro_rules! test_decode {
     ($ty:ty | $tag:expr; $bytes:expr => $exp:expr) => {

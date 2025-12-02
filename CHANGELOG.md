@@ -1,3 +1,5 @@
+# v1.0.0
+- Seal `BitDecodeExt`, `BitEncodeExt`, `BitCodec` traits
 # v0.11.1
 - Fix potential memory leak in `BitDecode` implementation for `[T; N]`
 # v0.11.0
