@@ -1,5 +1,6 @@
 use crate::{attr::Attrs, codegen, enums};
 use proc_macro2::{Span, TokenStream};
+use syn::{parse_quote, Error, Result};
 
 pub fn decode_discriminant(attrs: &Attrs) -> TokenStream {
     if let Some(bits) = &attrs.bits {
@@ -39,80 +40,81 @@ pub fn encode_discriminant(attrs: &Attrs) -> TokenStream {
     })
 }
 
-pub fn encode_variant_fields(plan: &enums::Enum) -> TokenStream {
+pub fn encode_variant_fields(plan: &enums::Enum) -> Result<TokenStream> {
     let variant_match_branches: Vec<_> = plan
         .variants
         .iter()
         .map(|variant| {
             let variant_name = &variant.ident;
             let fields_pattern = bind_fields_pattern(variant_name, &variant.fields);
-            let encodes = codegen::encodes(&variant.fields, false);
+            let encodes = codegen::encodes(&variant.fields, false)?;
 
-            quote!(Self :: #fields_pattern => {
+            Ok(quote!(Self :: #fields_pattern => {
                 #encodes
-            })
+            }))
         })
-        .collect();
+        .collect::<Result<Vec<_>>>()?;
 
-    quote!(
+    Ok(quote!(
         match *self {
             #(#variant_match_branches,)*
         }
-    )
+    ))
 }
 
-pub fn variant_discriminant(plan: &enums::Enum, attrs: &Attrs) -> TokenStream {
-    let discriminant_ty = &plan.discriminant_ty;
-    let variant_match_branches: Vec<_> = plan
+pub fn variant_discriminant(plan: &enums::Enum) -> Result<TokenStream> {
+    let variant_match_branches = plan
         .variants
         .iter()
         .map(|variant| {
             let variant_name = &variant.ident;
             let fields_pattern = bind_fields_pattern(variant_name, &variant.fields);
-            let discriminant_expr = &variant.discriminant_value;
-            let encode_variant = if let Some(field_width) = &attrs.bits {
-                let error_message = format!(
-                    "Discriminant for variant '{}' does not fit in bitfield.",
-                    variant.ident
-                );
-                quote!(
-                    const _: () = ::core::assert!(
-                        #discriminant_expr < (1 as #discriminant_ty) << #field_width, #error_message
-                    );
+            let discriminant_expr = &variant
+                .discriminant_value
+                .as_ref()
+                .ok_or_else(|| Error::new(variant.ident.span(), "missing discriminant"))?;
 
-                    #discriminant_expr
-                )
-            } else {
-                quote!(#discriminant_expr)
-            };
-
-            quote!(Self :: #fields_pattern => {
-                #encode_variant
-            })
+            Ok(quote!(Self :: #fields_pattern => {
+                #discriminant_expr
+            }))
         })
-        .collect();
-    quote!(match *self {
+        .collect::<Result<Vec<_>>>()?;
+    Ok(quote!(match *self {
         #(#variant_match_branches,)*
-    })
+    }))
 }
 
-pub fn decode_variant_fields(plan: &enums::Enum) -> TokenStream {
-    let discriminant_match_branches = plan.variants.iter().map(|variant| {
-        let variant_name = &variant.ident;
-        let discriminant_literal = &variant.discriminant_value;
-        let (decoder, initializer) = codegen::decodes(&variant.fields);
-
-        quote!(
-            #discriminant_literal => {
-                #decoder
-                Self::#variant_name #initializer
-            }
+pub fn decode_variant_fields(plan: &enums::Enum) -> Result<TokenStream> {
+    let discriminant_match_branches = plan
+        .variants
+        .iter()
+        .filter(|variant| !variant.discriminant_other)
+        .chain(
+            plan.variants
+                .iter()
+                .filter(|variant| variant.discriminant_other),
         )
-    });
+        .map(|variant| {
+            let variant_name = &variant.ident;
+            let discriminant_literal = variant
+                .discriminant_other
+                .then(|| parse_quote!(_))
+                .or_else(|| variant.discriminant_value.clone())
+                .ok_or_else(|| Error::new(variant.ident.span(), "missing discriminant"))?;
+            let (decoder, initializer) = codegen::decodes(&variant.fields)?;
+
+            Ok(quote!(
+                #discriminant_literal => {
+                    #decoder
+                    Self::#variant_name #initializer
+                }
+            ))
+        })
+        .collect::<Result<Vec<_>>>()?;
 
     let discriminant_ty = &plan.discriminant_ty;
 
-    quote!(
+    Ok(quote!(
         {
             match ::core::convert::TryInto::<#discriminant_ty>::try_into(__tag.0)
                 .map_err(|_| ::bin_proto::Error::TagConvert)? {
@@ -122,7 +124,7 @@ pub fn decode_variant_fields(plan: &enums::Enum) -> TokenStream {
                 },
             }
         }
-    )
+    ))
 }
 
 pub fn bind_fields_pattern(parent_name: &syn::Ident, fields: &syn::Fields) -> TokenStream {

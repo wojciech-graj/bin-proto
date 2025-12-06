@@ -24,6 +24,8 @@ pub enum Enum<'a, T: BitDecode + BitEncode> {
 #[codec(discriminant_type = u8)]
 #[codec(bits = 2)]
 pub enum Enum2 {
+    #[codec(discriminant = 3, other)]
+    CatchAll(u8),
     #[codec(discriminant = 1)]
     Variant1(u8),
     #[codec(discriminant = 2)]
@@ -149,5 +151,29 @@ fn encode_enum_variant_in_container_tagged_bitfield() {
         .encode_bytes(BigEndian)
         .unwrap(),
         vec![64, 63, 224]
+    );
+}
+
+#[test]
+fn encode_enum_variant_catch_all() {
+    assert_eq!(
+        Enum2::CatchAll(8).encode_bytes(BigEndian).unwrap(),
+        vec![194, 0]
+    );
+}
+
+#[test]
+fn decode_enum_variant_catch_all_discriminant() {
+    assert_eq!(
+        (Enum2::CatchAll(8), 10),
+        Enum2::decode_bytes(&[194, 0], BigEndian).unwrap()
+    );
+}
+
+#[test]
+fn decode_enum_variant_catch_all() {
+    assert_eq!(
+        (Enum2::CatchAll(8), 10),
+        Enum2::decode_bytes(&[2, 0], BigEndian).unwrap()
     );
 }

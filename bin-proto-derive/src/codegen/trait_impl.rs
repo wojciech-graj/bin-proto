@@ -1,7 +1,7 @@
 use crate::attr::{Attrs, Ctx};
 
 use proc_macro2::{Span, TokenStream};
-use syn::{parse_quote, punctuated::Punctuated, spanned::Spanned, Token};
+use syn::{parse_quote, punctuated::Punctuated, spanned::Spanned, Result, Token};
 
 #[allow(clippy::large_enum_variant)]
 pub enum TraitImplType {
@@ -16,12 +16,9 @@ pub fn impl_trait_for(
     ast: &syn::DeriveInput,
     impl_body: &TokenStream,
     typ: &TraitImplType,
-) -> TokenStream {
+) -> Result<TokenStream> {
     let name = &ast.ident;
-    let attrs = match Attrs::parse(ast.attrs.as_slice(), None, ast.span()) {
-        Ok(attrs) => attrs,
-        Err(e) => return e.to_compile_error(),
-    };
+    let attrs = Attrs::parse(ast.attrs.as_slice(), None, ast.span())?;
 
     let generics = &ast.generics;
     let (_, ty_generics, _) = generics.split_for_impl();
@@ -90,11 +87,11 @@ pub fn impl_trait_for(
     };
 
     let (impl_generics, _, where_clause) = generics.split_for_impl();
-    quote!(
+    Ok(quote!(
         #[automatically_derived]
         impl #impl_generics ::bin_proto::#trait_name<#trait_generics> for #name #ty_generics
         #where_clause {
             #impl_body
         }
-    )
+    ))
 }

@@ -3,39 +3,39 @@ pub mod trait_impl;
 
 use crate::attr::{AttrKind, Attrs, Tag};
 use proc_macro2::TokenStream;
-use syn::{spanned::Spanned, Error};
+use syn::{spanned::Spanned, Error, Result};
 
-pub fn decodes(fields: &syn::Fields) -> (TokenStream, TokenStream) {
-    match *fields {
-        syn::Fields::Named(ref fields) => decode_named_fields(fields),
-        syn::Fields::Unnamed(ref fields) => (TokenStream::new(), decode_unnamed_fields(fields)),
-        syn::Fields::Unit => (TokenStream::new(), TokenStream::new()),
+pub fn decodes(fields: &syn::Fields) -> Result<(TokenStream, TokenStream)> {
+    match fields {
+        syn::Fields::Named(fields) => decode_named_fields(fields),
+        syn::Fields::Unnamed(fields) => Ok((TokenStream::new(), decode_unnamed_fields(fields)?)),
+        syn::Fields::Unit => Ok((TokenStream::new(), TokenStream::new())),
     }
 }
 
-pub fn encodes(fields: &syn::Fields, self_prefix: bool) -> TokenStream {
-    match *fields {
-        syn::Fields::Named(ref fields) => encode_named_fields(fields, self_prefix),
-        syn::Fields::Unnamed(ref fields) => encode_unnamed_fields(fields, self_prefix),
-        syn::Fields::Unit => TokenStream::new(),
+pub fn encodes(fields: &syn::Fields, self_prefix: bool) -> Result<TokenStream> {
+    match fields {
+        syn::Fields::Named(fields) => encode_named_fields(fields, self_prefix),
+        syn::Fields::Unnamed(fields) => encode_unnamed_fields(fields, self_prefix),
+        syn::Fields::Unit => Ok(TokenStream::new()),
     }
 }
 
-fn decode_named_fields(fields_named: &syn::FieldsNamed) -> (TokenStream, TokenStream) {
-    let fields: Vec<_> = fields_named
+fn decode_named_fields(fields_named: &syn::FieldsNamed) -> Result<(TokenStream, TokenStream)> {
+    let fields = fields_named
         .named
         .iter()
         .map(|field| {
             let field_name = &field.ident;
             let field_ty = &field.ty;
 
-            let decode = decode(field);
+            let decode = decode(field)?;
 
-            quote!(
+            Ok(quote!(
                 let #field_name : #field_ty = #decode;
-            )
+            ))
         })
-        .collect();
+        .collect::<Result<Vec<_>>>()?;
 
     let field_initializers: Vec<_> = fields_named
         .named
@@ -47,21 +47,18 @@ fn decode_named_fields(fields_named: &syn::FieldsNamed) -> (TokenStream, TokenSt
         })
         .collect();
 
-    (
+    Ok((
         quote!( #( #fields )* ),
         quote!( { #( #field_initializers ),* } ),
-    )
+    ))
 }
 
 pub fn decode_pad(pad: &syn::Expr) -> TokenStream {
     quote!(::bin_proto::BitRead::skip(__io_reader, #pad)?;)
 }
 
-fn decode(field: &syn::Field) -> TokenStream {
-    let attrs = match Attrs::parse(field.attrs.as_slice(), Some(AttrKind::Field), field.span()) {
-        Ok(attrs) => attrs,
-        Err(e) => return e.to_compile_error(),
-    };
+fn decode(field: &syn::Field) -> Result<TokenStream> {
+    let attrs = Attrs::parse(field.attrs.as_slice(), Some(AttrKind::Field), field.span())?;
 
     let pad_before = attrs.pad_before.as_ref().map(decode_pad);
     let pad_after = attrs.pad_after.as_ref().map(decode_pad);
@@ -96,24 +93,21 @@ fn decode(field: &syn::Field) -> TokenStream {
         quote!(::bin_proto::BitDecode::decode::<_, __E>(__io_reader, __ctx, #tag)?)
     };
 
-    quote!({
+    Ok(quote!({
         #pad_before
         #magic
         let decoded = #decode;
         #pad_after
         decoded
-    })
+    }))
 }
 
 pub fn encode_pad(pad: &syn::Expr) -> TokenStream {
     quote!(::bin_proto::BitWrite::pad(__io_writer, #pad)?;)
 }
 
-fn encode(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
-    let attrs = match Attrs::parse(field.attrs.as_slice(), Some(AttrKind::Field), field.span()) {
-        Ok(attrs) => attrs,
-        Err(e) => return e.to_compile_error(),
-    };
+fn encode(field: &syn::Field, field_name: &TokenStream) -> Result<TokenStream> {
+    let attrs = Attrs::parse(field.attrs.as_slice(), Some(AttrKind::Field), field.span())?;
 
     let pad_before = attrs.pad_before.as_ref().map(encode_pad);
     let pad_after = attrs.pad_after.as_ref().map(encode_pad);
@@ -136,7 +130,7 @@ fn encode(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
     }) = attrs.tag
     {
         let Some(write_value) = write_value else {
-            return Error::new(field.span(), "Tag must specify 'write_value'").to_compile_error();
+            return Err(Error::new(field.span(), "Tag must specify 'write_value'"));
         };
         let tag = if let Some(bits) = bits {
             quote!(::bin_proto::Bits::<#bits>)
@@ -174,17 +168,17 @@ fn encode(field: &syn::Field, field_name: &TokenStream) -> TokenStream {
         )
     };
 
-    quote!({
+    Ok(quote!({
         #pad_before
         #magic
         let encoded = #encode;
         #pad_after
         encoded
-    })
+    }))
 }
 
-fn encode_named_fields(fields_named: &syn::FieldsNamed, self_prefix: bool) -> TokenStream {
-    let field_encoders: Vec<_> = fields_named
+fn encode_named_fields(fields_named: &syn::FieldsNamed, self_prefix: bool) -> Result<TokenStream> {
+    let field_encoders = fields_named
         .named
         .iter()
         .map(|field| {
@@ -198,32 +192,35 @@ fn encode_named_fields(fields_named: &syn::FieldsNamed, self_prefix: bool) -> To
                 },
             )
         })
-        .collect();
+        .collect::<Result<Vec<_>>>()?;
 
-    quote!( #( #field_encoders );* )
+    Ok(quote!( #( #field_encoders );* ))
 }
 
-fn decode_unnamed_fields(fields_unnamed: &syn::FieldsUnnamed) -> TokenStream {
-    let field_initializers: Vec<_> = fields_unnamed
+fn decode_unnamed_fields(fields_unnamed: &syn::FieldsUnnamed) -> Result<TokenStream> {
+    let field_initializers = fields_unnamed
         .unnamed
         .iter()
         .map(|field| {
             let field_ty = &field.ty;
-            let decode = decode(field);
+            let decode = decode(field)?;
 
-            quote!(
+            Ok(quote!(
                 {
                     let res: #field_ty = #decode;
                     res
                 }
-            )
+            ))
         })
-        .collect();
+        .collect::<Result<Vec<_>>>()?;
 
-    quote!( ( #( #field_initializers ),* ) )
+    Ok(quote!( ( #( #field_initializers ),* ) ))
 }
 
-fn encode_unnamed_fields(fields_unnamed: &syn::FieldsUnnamed, self_prefix: bool) -> TokenStream {
+fn encode_unnamed_fields(
+    fields_unnamed: &syn::FieldsUnnamed,
+    self_prefix: bool,
+) -> Result<TokenStream> {
     let field_encoders: Vec<_> = fields_unnamed
         .unnamed
         .iter()
@@ -235,13 +232,11 @@ fn encode_unnamed_fields(fields_unnamed: &syn::FieldsUnnamed, self_prefix: bool)
                 &if self_prefix {
                     quote!(&self. #field_index)
                 } else {
-                    format!("field_{}", field_index.index)
-                        .parse()
-                        .unwrap_or_else(|e| Error::from(e).into_compile_error())
+                    format!("field_{}", field_index.index).parse()?
                 },
             )
         })
-        .collect();
+        .collect::<Result<Vec<_>>>()?;
 
-    quote!( #( #field_encoders );* )
+    Ok(quote!( #( #field_encoders );* ))
 }

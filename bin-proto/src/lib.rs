@@ -155,6 +155,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// |-|-|-|
 /// | [`discriminant_type`](#discriminant_type) | enum | rw |
 /// | [`discriminant`](#discriminant) | variant | rw |
+/// | [`other`](#other) | variant | r |
 /// | [`bits`](#bits) | field, enum | rw |
 /// | [`flexible_array_member`](#flexible_array_member) | field | rw |
 /// | [`tag`](#tag) | field | rw |
@@ -166,7 +167,6 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// | [`pad_before`](#pad_before) | field, struct | rw |
 /// | [`pad_after`](#pad_after) | field, struct | rw |
 /// | [`magic`](#magic) | field, struct | rw |
-///
 ///
 /// ## `discriminant_type`
 /// `#[codec(discriminant_type = <type>)]`
@@ -201,6 +201,24 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// ```
 ///
 /// Specify the discriminant for a variant.
+///
+/// ## `other`
+/// `#[codec(other)]`
+///
+/// ```
+/// # use bin_proto::{BitDecode, BitEncode};
+/// #[derive(BitDecode, BitEncode)]
+/// #[codec(discriminant_type = u8)]
+/// enum Example {
+///     #[codec(discriminant = 1)]
+///     Variant1,
+///     #[codec(discriminant = 2, other)]
+///     CatchAll,
+/// }
+/// ```
+///
+/// Decode the specified variant if the discriminant doesn't match any other variants. A
+/// discriminant value can still be provided for the variant, and will be used when encoding.
 ///
 /// ## `bits`
 /// `#[codec(bits = <width>)]`

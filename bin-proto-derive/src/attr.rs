@@ -16,6 +16,7 @@ pub struct Attrs {
     pub pad_before: Option<syn::Expr>,
     pub tag: Option<Tag>,
     pub write_value: Option<syn::Expr>,
+    pub other: bool,
 }
 
 pub enum Ctx {
@@ -202,6 +203,10 @@ impl Attrs {
                     "magic" => {
                         expect_attr_kind!(AttrKind::Struct | AttrKind::Field, kind, meta);
                         attrs.magic = Some(meta.value()?.parse()?);
+                    }
+                    "other" => {
+                        expect_attr_kind!(AttrKind::Variant, kind, meta);
+                        attrs.other = true;
                     }
                     _ => {
                         return Err(meta.error("unrecognized attribute"));

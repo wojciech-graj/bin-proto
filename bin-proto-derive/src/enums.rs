@@ -8,7 +8,8 @@ pub struct Enum {
 
 pub struct EnumVariant {
     pub ident: syn::Ident,
-    pub discriminant_value: syn::Expr,
+    pub discriminant_value: Option<syn::Expr>,
+    pub discriminant_other: bool,
     pub fields: syn::Fields,
 }
 
@@ -16,7 +17,7 @@ impl Enum {
     pub fn try_new(ast: &syn::DeriveInput, e: &syn::DataEnum) -> Result<Self> {
         let attrs = Attrs::parse(ast.attrs.as_slice(), Some(AttrKind::Enum), ast.span())?;
 
-        let plan = Self {
+        Ok(Self {
             discriminant_ty: attrs.discriminant_type.ok_or_else(|| {
                 Error::new(ast.span(), "enum missing 'discriminant_type' attribute.")
             })?,
@@ -30,22 +31,16 @@ impl Enum {
                         variant.span(),
                     )?;
 
-                    let discriminant_value = match variant.discriminant.as_ref().map(|a| &a.1) {
-                        Some(expr_lit) => expr_lit.clone(),
-                        None => attrs.discriminant.ok_or_else(|| {
-                            Error::new(variant.span(), "No discriminant for variant")
-                        })?,
-                    };
-
-                    let variant = EnumVariant {
+                    Ok(EnumVariant {
                         ident: variant.ident.clone(),
-                        discriminant_value,
+                        discriminant_value: attrs
+                            .discriminant
+                            .or_else(|| variant.discriminant.as_ref().map(|a| a.1.clone())),
+                        discriminant_other: attrs.other,
                         fields: variant.fields.clone(),
-                    };
-                    Ok(variant)
+                    })
                 })
                 .collect::<Result<_>>()?,
-        };
-        Ok(plan)
+        })
     }
 }
