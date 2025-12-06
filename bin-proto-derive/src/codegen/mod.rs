@@ -60,13 +60,15 @@ pub fn decode_pad(pad: &syn::Expr) -> TokenStream {
 fn decode(field: &syn::Field) -> Result<TokenStream> {
     let attrs = Attrs::parse(field.attrs.as_slice(), Some(AttrKind::Field), field.span())?;
 
+    if attrs.skip_decode {
+        return Ok(quote!(::core::default::Default::default()));
+    }
+
     let pad_before = attrs.pad_before.as_ref().map(decode_pad);
     let pad_after = attrs.pad_after.as_ref().map(decode_pad);
     let magic = attrs.decode_magic();
 
-    let decode = if attrs.default {
-        quote!(::core::default::Default::default())
-    } else if let Some(Tag::Prepend { typ, bits, .. }) = attrs.tag {
+    let decode = if let Some(Tag::Prepend { typ, bits, .. }) = attrs.tag {
         let tag = if let Some(bits) = bits {
             quote!(::bin_proto::Bits::<#bits>)
         } else {
@@ -108,6 +110,10 @@ pub fn encode_pad(pad: &syn::Expr) -> TokenStream {
 
 fn encode(field: &syn::Field, field_name: &TokenStream) -> Result<TokenStream> {
     let attrs = Attrs::parse(field.attrs.as_slice(), Some(AttrKind::Field), field.span())?;
+
+    if attrs.skip_encode {
+        return Ok(TokenStream::new());
+    }
 
     let pad_before = attrs.pad_before.as_ref().map(encode_pad);
     let pad_after = attrs.pad_after.as_ref().map(encode_pad);
@@ -168,13 +174,12 @@ fn encode(field: &syn::Field, field_name: &TokenStream) -> Result<TokenStream> {
         )
     };
 
-    Ok(quote!({
+    Ok(quote!(
         #pad_before
         #magic
-        let encoded = #encode;
+        #encode;
         #pad_after
-        encoded
-    }))
+    ))
 }
 
 fn encode_named_fields(fields_named: &syn::FieldsNamed, self_prefix: bool) -> Result<TokenStream> {
@@ -194,7 +199,7 @@ fn encode_named_fields(fields_named: &syn::FieldsNamed, self_prefix: bool) -> Re
         })
         .collect::<Result<Vec<_>>>()?;
 
-    Ok(quote!( #( #field_encoders );* ))
+    Ok(quote!( #( #field_encoders )* ))
 }
 
 fn decode_unnamed_fields(fields_unnamed: &syn::FieldsUnnamed) -> Result<TokenStream> {
@@ -238,5 +243,5 @@ fn encode_unnamed_fields(
         })
         .collect::<Result<Vec<_>>>()?;
 
-    Ok(quote!( #( #field_encoders );* ))
+    Ok(quote!( #( #field_encoders )* ))
 }

@@ -44,7 +44,7 @@ pub struct StructWithExistingBoundedGenerics<
 #[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
 pub struct WithDefault {
     a: u8,
-    #[codec(default)]
+    #[codec(skip_decode)]
     b: u8,
 }
 

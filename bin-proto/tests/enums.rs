@@ -39,13 +39,13 @@ pub struct EnumContainer {
 
 #[derive(Debug, BitDecode, BitEncode, PartialEq)]
 pub struct TaggedEnumContainer {
-    #[codec(tag_type = u16, tag_value = ::bin_proto::Discriminable::discriminant(&self.e) as u16)]
+    #[codec(tag_type = u16, tag_value = ::bin_proto::Discriminable::discriminant(&self.e).unwrap() as u16)]
     e: Enum2,
 }
 
 #[derive(Debug, BitDecode, BitEncode, PartialEq)]
 pub struct BitFieldTaggedEnumContainer {
-    #[codec(write_value = ::bin_proto::Discriminable::discriminant(&self.e))]
+    #[codec(write_value = ::bin_proto::Discriminable::discriminant(&self.e).unwrap())]
     #[codec(bits = 3)]
     discriminant: u8,
     #[codec(tag = discriminant)]

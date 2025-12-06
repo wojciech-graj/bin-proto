@@ -10,6 +10,8 @@ pub struct EnumVariant {
     pub ident: syn::Ident,
     pub discriminant_value: Option<syn::Expr>,
     pub discriminant_other: bool,
+    pub skip_encode: bool,
+    pub skip_decode: bool,
     pub fields: syn::Fields,
 }
 
@@ -37,6 +39,8 @@ impl Enum {
                             .discriminant
                             .or_else(|| variant.discriminant.as_ref().map(|a| a.1.clone())),
                         discriminant_other: attrs.other,
+                        skip_encode: attrs.skip_encode,
+                        skip_decode: attrs.skip_decode,
                         fields: variant.fields.clone(),
                     })
                 })

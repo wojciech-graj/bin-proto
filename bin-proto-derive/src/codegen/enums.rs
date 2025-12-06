@@ -35,19 +35,23 @@ pub fn encode_discriminant(attrs: &Attrs) -> TokenStream {
         ))
     };
     quote!({
-        let __tag = <Self as ::bin_proto::Discriminable>::discriminant(self);
+        let __tag = <Self as ::bin_proto::Discriminable>::discriminant(self).ok_or(::bin_proto::Error::EncodeSkipped)?;
         #encode_tag?;
     })
 }
 
 pub fn encode_variant_fields(plan: &enums::Enum) -> Result<TokenStream> {
-    let variant_match_branches: Vec<_> = plan
+    let variant_match_branches = plan
         .variants
         .iter()
         .map(|variant| {
             let variant_name = &variant.ident;
             let fields_pattern = bind_fields_pattern(variant_name, &variant.fields);
-            let encodes = codegen::encodes(&variant.fields, false)?;
+            let encodes = if variant.skip_encode {
+                quote!(return ::core::result::Result::Err(::bin_proto::Error::EncodeSkipped))
+            } else {
+                codegen::encodes(&variant.fields, false)?
+            };
 
             Ok(quote!(Self :: #fields_pattern => {
                 #encodes
@@ -56,7 +60,7 @@ pub fn encode_variant_fields(plan: &enums::Enum) -> Result<TokenStream> {
         .collect::<Result<Vec<_>>>()?;
 
     Ok(quote!(
-        match *self {
+        match self {
             #(#variant_match_branches,)*
         }
     ))
@@ -69,17 +73,22 @@ pub fn variant_discriminant(plan: &enums::Enum) -> Result<TokenStream> {
         .map(|variant| {
             let variant_name = &variant.ident;
             let fields_pattern = bind_fields_pattern(variant_name, &variant.fields);
-            let discriminant_expr = &variant
-                .discriminant_value
-                .as_ref()
-                .ok_or_else(|| Error::new(variant.ident.span(), "missing discriminant"))?;
+            let discriminant_expr = if variant.skip_encode {
+                quote!(::core::option::Option::None)
+            } else {
+                let discriminant = variant
+                    .discriminant_value
+                    .as_ref()
+                    .ok_or_else(|| Error::new(variant.ident.span(), "missing discriminant"))?;
+                quote!(::core::option::Option::Some(#discriminant))
+            };
 
             Ok(quote!(Self :: #fields_pattern => {
                 #discriminant_expr
             }))
         })
         .collect::<Result<Vec<_>>>()?;
-    Ok(quote!(match *self {
+    Ok(quote!(match self {
         #(#variant_match_branches,)*
     }))
 }
@@ -94,6 +103,7 @@ pub fn decode_variant_fields(plan: &enums::Enum) -> Result<TokenStream> {
                 .iter()
                 .filter(|variant| variant.discriminant_other),
         )
+        .filter(|variant| !variant.skip_decode)
         .map(|variant| {
             let variant_name = &variant.ident;
             let discriminant_literal = variant

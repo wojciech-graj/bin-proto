@@ -59,7 +59,10 @@ fn impl_codec(ast: &syn::DeriveInput, codec_type: Operation) -> Result<TokenStre
     match ast.data {
         syn::Data::Struct(ref s) => impl_for_struct(ast, s, codec_type),
         syn::Data::Enum(ref e) => impl_for_enum(ast, e, codec_type),
-        syn::Data::Union(..) => Err(Error::new(ast.span(), "Codec is not derivable on Unions")),
+        syn::Data::Union(..) => Err(Error::new(
+            ast.span(),
+            "bin-proto traits are not derivable on unions",
+        )),
     }
 }
 
@@ -220,7 +223,7 @@ fn impl_for_enum(
             let impl_body = quote!(
                 type Discriminant = #discriminant_ty;
 
-                fn discriminant(&self) -> Self::Discriminant {
+                fn discriminant(&self) -> ::core::option::Option<Self::Discriminant> {
                     #variant_discriminant
                 }
             );

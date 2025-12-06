@@ -163,7 +163,9 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// | [`write_value`](#write_value) | field | w |
 /// | [`ctx`](#ctx) | container | rw |
 /// | [`ctx_bounds`](#ctx_bounds) | container | rw |
-/// | [`default`](#default) | field | r |
+/// | [`skip_encode`](#skip_encode) | field, variant | w |
+/// | [`skip_decode`](#skip_decode) | field, variant | r |
+/// | [`skip`](#skip) | field, variant | rw |
 /// | [`pad_before`](#pad_before) | field, struct | rw |
 /// | [`pad_after`](#pad_after) | field, struct | rw |
 /// | [`magic`](#magic) | field, struct | rw |
@@ -446,15 +448,69 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// pub struct WithCtx;
 /// ```
 ///
-/// ## `default`
-/// `#[codec(default)]`
+/// ## `skip_encode`
+/// `#[codec(skip_encode)]`
 ///
-/// Use [`Default::default`] instead of attempting to read field.
+/// If applied to a field, skip the field when encoding. If applied to an enum variant, return an
+/// Error if the variant is attempted to be encoded.
 ///
 /// ```
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
-/// pub struct Struct(#[codec(default)] u8);
+/// pub struct Struct(#[codec(skip_encode)] u8);
+/// ```
+///
+/// ```
+/// # use bin_proto::BitEncode;
+/// #[derive(BitEncode)]
+/// #[codec(discriminant_type = u8)]
+/// pub enum Enum {
+///     #[codec(skip_encode)]
+///     Skip
+/// }
+/// ```
+///
+/// ## `skip_decode`
+/// `#[codec(skip_decode)]`
+///
+/// If applied to a field, use [`Default::default`] instead of attempting to read field. If applied
+/// to an enum variant, don't generate code for decoding.
+///
+/// ```
+/// # use bin_proto::{BitDecode, BitEncode};
+/// #[derive(BitDecode, BitEncode)]
+/// pub struct Struct(#[codec(skip_decode)] u8);
+/// ```
+///
+/// ```
+/// # use bin_proto::BitDecode;
+/// #[derive(BitDecode)]
+/// #[codec(discriminant_type = u8)]
+/// pub enum Enum {
+///     #[codec(skip_decode)]
+///     Skip
+/// }
+/// ```
+///
+/// ## `skip`
+/// `#[codec(skip)]`
+///
+/// Equivalent to combining [`skip_encode`](#skip_encode) and [`skip_decode`](#skip_decode).
+///
+/// ```
+/// # use bin_proto::{BitDecode, BitEncode};
+/// #[derive(BitDecode, BitEncode)]
+/// pub struct Struct(#[codec(skip)] u8);
+/// ```
+///
+/// ```
+/// # use bin_proto::{BitDecode, BitEncode};
+/// #[derive(BitDecode, BitEncode)]
+/// #[codec(discriminant_type = u8)]
+/// pub enum Enum {
+///     #[codec(skip)]
+///     Skip
+/// }
 /// ```
 ///
 /// ## `pad_before`

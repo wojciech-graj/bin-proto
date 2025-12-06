@@ -2,12 +2,14 @@ use proc_macro2::{Span, TokenStream};
 use std::fmt;
 use syn::{parenthesized, punctuated::Punctuated, Error, Result, Token};
 
+#[allow(clippy::struct_excessive_bools)]
 #[derive(Default)]
 pub struct Attrs {
     pub bits: Option<syn::Expr>,
     pub ctx: Option<Ctx>,
     pub ctx_generics: Option<Vec<syn::GenericParam>>,
-    pub default: bool,
+    pub skip_encode: bool,
+    pub skip_decode: bool,
     pub discriminant: Option<syn::Expr>,
     pub discriminant_type: Option<syn::Type>,
     pub flexible_array_member: bool,
@@ -188,9 +190,18 @@ impl Attrs {
                         expect_attr_kind!(AttrKind::Field, kind, meta);
                         tag_bits = Some(meta.value()?.parse()?);
                     }
-                    "default" => {
-                        expect_attr_kind!(AttrKind::Field, kind, meta);
-                        attrs.default = true;
+                    "skip_encode" => {
+                        expect_attr_kind!(AttrKind::Field | AttrKind::Variant, kind, meta);
+                        attrs.skip_encode = true;
+                    }
+                    "skip_decode" => {
+                        expect_attr_kind!(AttrKind::Field | AttrKind::Variant, kind, meta);
+                        attrs.skip_decode = true;
+                    }
+                    "skip" => {
+                        expect_attr_kind!(AttrKind::Field | AttrKind::Variant, kind, meta);
+                        attrs.skip_encode = true;
+                        attrs.skip_decode = true;
                     }
                     "pad_before" => {
                         expect_attr_kind!(AttrKind::Struct | AttrKind::Field, kind, meta);
