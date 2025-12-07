@@ -140,11 +140,11 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 ///
 /// #[derive(BitDecode, BitEncode)]
 /// #[codec(ctx = Ctx)]
-/// pub struct WithElementsLength {
-///     pub count: u32,
-///     pub foo: bool,
+/// struct WithElementsLength {
+///     count: u32,
+///     foo: bool,
 ///     #[codec(tag = count * __ctx.n)]
-///     pub data: Vec<u32>,
+///     data: Vec<u32>,
 /// }
 /// # }
 /// ```
@@ -191,6 +191,8 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// `#[codec(discriminant = <value>)]`
 /// - `<value>`: unique value of the discriminant's type
 ///
+/// Specify the discriminant for a variant.
+///
 /// ```
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
@@ -202,10 +204,11 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// }
 /// ```
 ///
-/// Specify the discriminant for a variant.
-///
 /// ## `other`
 /// `#[codec(other)]`
+///
+/// Decode the specified variant if the discriminant doesn't match any other variants. A
+/// discriminant value can still be provided for the variant, and will be used when encoding.
 ///
 /// ```
 /// # use bin_proto::{BitDecode, BitEncode};
@@ -218,9 +221,6 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 ///     CatchAll,
 /// }
 /// ```
-///
-/// Decode the specified variant if the discriminant doesn't match any other variants. A
-/// discriminant value can still be provided for the variant, and will be used when encoding.
 ///
 /// ## `bits`
 /// `#[codec(bits = <width>)]`
@@ -265,11 +265,11 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// # {
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
-/// pub struct WithElementsLength {
-///     pub count: u32,
-///     pub foo: bool,
+/// struct WithElementsLength {
+///     count: u32,
+///     foo: bool,
 ///     #[codec(tag = count as usize)]
-///     pub data: Vec<u32>,
+///     data: Vec<u32>,
 /// }
 /// # }
 /// ```
@@ -288,9 +288,9 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// # {
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
-/// pub struct WithElementsLength {
+/// struct WithElementsLength {
 ///     #[codec(tag_type = u16, tag_value = self.data.len() as u16, tag_bits = 13)]
-///     pub data: Vec<u32>,
+///     data: Vec<u32>,
 /// }
 /// # }
 /// ```
@@ -307,12 +307,12 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// # {
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
-/// pub struct WithElementsLengthAuto {
+/// struct WithElementsLengthAuto {
 ///     #[codec(write_value = self.data.len() as u32)]
-///     pub count: u32,
-///     pub foo: bool,
+///     count: u32,
+///     foo: bool,
 ///     #[codec(tag = count as usize)]
-///     pub data: Vec<u32>,
+///     data: Vec<u32>,
 /// }
 /// # }
 /// ```
@@ -329,9 +329,9 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// # #[cfg(feature = "alloc")]
 /// # {
 /// # use bin_proto::{BitDecode, BitEncode, BitEncodeExt};
-/// pub struct Ctx;
+/// struct Ctx;
 ///
-/// pub struct NeedsCtx;
+/// struct NeedsCtx;
 ///
 /// impl BitDecode<Ctx> for NeedsCtx {
 ///     fn decode<R, E>(
@@ -366,7 +366,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 ///
 /// #[derive(BitDecode, BitEncode)]
 /// #[codec(ctx = Ctx)]
-/// pub struct WithCtx(NeedsCtx);
+/// struct WithCtx(NeedsCtx);
 ///
 /// WithCtx(NeedsCtx)
 ///     .encode_bytes_ctx(bin_proto::BigEndian, &mut Ctx, ())
@@ -379,16 +379,16 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// # use std::marker::PhantomData;
 /// #[derive(BitDecode, BitEncode)]
 /// #[codec(ctx = Ctx)]
-/// pub struct NestedCodec<Ctx, A: BitDecode<Ctx> + BitEncode<Ctx>>(A, PhantomData<Ctx>);
+/// struct NestedCodec<Ctx, A: BitDecode<Ctx> + BitEncode<Ctx>>(A, PhantomData<Ctx>);
 /// ```
 ///
 /// ```
 /// # use bin_proto::{BitDecode, BitEncode};
-/// pub struct Ctx<'a, T: Copy>(&'a T);
+/// struct Ctx<'a, T: Copy>(&'a T);
 ///
 /// #[derive(BitDecode, BitEncode)]
 /// #[codec(ctx = Ctx<'a, T>, ctx_generics('a, T: Copy))]
-/// pub struct WithCtx;
+/// struct WithCtx;
 /// ```
 ///
 /// ## `ctx_bounds`
@@ -401,9 +401,9 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 ///
 /// ```
 /// # use bin_proto::{BitDecode, BitEncode};
-/// pub trait CtxTrait {};
+/// trait CtxTrait {};
 ///
-/// pub struct NeedsCtx;
+/// struct NeedsCtx;
 ///
 /// impl<Ctx: CtxTrait> BitDecode<Ctx> for NeedsCtx {
 ///     fn decode<R, E>(
@@ -438,14 +438,14 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 ///
 /// #[derive(BitDecode, BitEncode)]
 /// #[codec(ctx_bounds(CtxTrait))]
-/// pub struct WithCtx(NeedsCtx);
+/// struct WithCtx(NeedsCtx);
 /// ```
 ///
 /// ```
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
 /// #[codec(ctx_bounds(From<&'a i32>), ctx_generics('a))]
-/// pub struct WithCtx;
+/// struct WithCtx;
 /// ```
 ///
 /// ## `skip_encode`
@@ -457,14 +457,14 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// ```
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
-/// pub struct Struct(#[codec(skip_encode)] u8);
+/// struct Struct(#[codec(skip_encode)] u8);
 /// ```
 ///
 /// ```
 /// # use bin_proto::BitEncode;
 /// #[derive(BitEncode)]
 /// #[codec(discriminant_type = u8)]
-/// pub enum Enum {
+/// enum Enum {
 ///     #[codec(skip_encode)]
 ///     Skip
 /// }
@@ -479,14 +479,14 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// ```
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
-/// pub struct Struct(#[codec(skip_decode)] u8);
+/// struct Struct(#[codec(skip_decode)] u8);
 /// ```
 ///
 /// ```
 /// # use bin_proto::BitDecode;
 /// #[derive(BitDecode)]
 /// #[codec(discriminant_type = u8)]
-/// pub enum Enum {
+/// enum Enum {
 ///     #[codec(skip_decode)]
 ///     Skip
 /// }
@@ -500,14 +500,14 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// ```
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
-/// pub struct Struct(#[codec(skip)] u8);
+/// struct Struct(#[codec(skip)] u8);
 /// ```
 ///
 /// ```
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
 /// #[codec(discriminant_type = u8)]
-/// pub enum Enum {
+/// enum Enum {
 ///     #[codec(skip)]
 ///     Skip
 /// }
@@ -521,7 +521,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// ```
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
-/// pub struct Struct(#[codec(pad_before = 3)] u8);
+/// struct Struct(#[codec(pad_before = 3)] u8);
 /// ```
 ///
 /// ## `pad_after`
@@ -532,7 +532,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// ```
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
-/// pub struct Struct(#[codec(pad_after = 3)] u8);
+/// struct Struct(#[codec(pad_after = 3)] u8);
 /// ```
 ///
 /// ## `magic`
@@ -545,7 +545,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
 /// #[codec(magic = &[0x01, 0x02, 0x03])]
-/// pub struct Magic(#[codec(magic = b"123")] u8);
+/// struct Magic(#[codec(magic = b"123")] u8);
 /// ```
 #[cfg(feature = "derive")]
 pub use bin_proto_derive::{BitDecode, BitEncode};
