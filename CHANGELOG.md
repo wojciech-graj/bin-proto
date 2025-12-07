@@ -5,6 +5,7 @@
 - Modify `Discriminable::discriminant` to return `Option`
 - Add `&'static str` field for message to `Error::Other`
 - Add `BitDecodeExt::decode_all_bytes_ctx` and `BitCodec::decode_all_bytes`
+- Rename `#[codec(flexible_array_member)]` to `#[codec(untagged)]`
 # v0.11.1
 - Fix potential memory leak in `BitDecode` implementation for `[T; N]`
 # v0.11.0

@@ -45,7 +45,7 @@ struct S {
     arr: Vec<u8>,
     #[codec(tag_type = u16, tag_value = self.prefixed_arr.len() as u16)]
     prefixed_arr: Vec<u8>,
-    #[codec(flexible_array_member)]
+    #[codec(untagged)]
     read_to_end: Vec<u8>,
 }
 

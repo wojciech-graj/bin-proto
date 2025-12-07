@@ -4,10 +4,10 @@ use bin_proto::{BitCodec, BitDecode, BitEncode};
 use bitstream_io::BigEndian;
 
 #[derive(Debug, BitDecode, BitEncode, PartialEq)]
-struct WithFlexibleArrayMember(#[codec(flexible_array_member)] Vec<u8>);
+struct WithFlexibleArrayMember(#[codec(untagged)] Vec<u8>);
 
 #[test]
-fn decode_flexible_array_member() {
+fn decode_untagged() {
     assert_eq!(
         WithFlexibleArrayMember::decode_bytes(&[1, 2, 3], BigEndian).unwrap(),
         (WithFlexibleArrayMember(vec![1, 2, 3]), 24)
@@ -15,7 +15,7 @@ fn decode_flexible_array_member() {
 }
 
 #[test]
-fn encodes_flexible_array_member() {
+fn encodes_untagged() {
     assert_eq!(
         WithFlexibleArrayMember(vec![1, 2, 3])
             .encode_bytes(BigEndian)

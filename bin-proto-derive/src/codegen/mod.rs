@@ -85,7 +85,7 @@ fn decode(field: &syn::Field) -> Result<TokenStream> {
     } else {
         let tag = if let Some(field_width) = attrs.bits {
             quote!(::bin_proto::Bits::<#field_width>)
-        } else if attrs.flexible_array_member {
+        } else if attrs.untagged {
             quote!(::bin_proto::Untagged)
         } else if let Some(Tag::External(tag)) = attrs.tag {
             quote!(::bin_proto::Tag(#tag))
@@ -162,7 +162,7 @@ fn encode(field: &syn::Field, field_name: &TokenStream) -> Result<TokenStream> {
     } else {
         let tag = if let Some(field_width) = attrs.bits {
             quote!(::bin_proto::Bits::<#field_width>)
-        } else if matches!(attrs.tag, Some(Tag::External(_))) || attrs.flexible_array_member {
+        } else if matches!(attrs.tag, Some(Tag::External(_))) || attrs.untagged {
             quote!(::bin_proto::Untagged)
         } else {
             quote!(())

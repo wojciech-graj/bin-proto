@@ -31,7 +31,7 @@
 //!     arr: Vec<u8>,
 //!     #[codec(tag_type = u16, tag_value = self.prefixed_arr.len() as u16)]
 //!     prefixed_arr: Vec<u8>,
-//!     #[codec(flexible_array_member)]
+//!     #[codec(untagged)]
 //!     read_to_end: Vec<u8>,
 //! }
 //!
@@ -157,7 +157,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// | [`discriminant`](#discriminant) | variant | rw |
 /// | [`other`](#other) | variant | r |
 /// | [`bits`](#bits) | field, enum | rw |
-/// | [`flexible_array_member`](#flexible_array_member) | field | rw |
+/// | [`untagged`](#untagged) | field | rw |
 /// | [`tag`](#tag) | field | rw |
 /// | [`tag_type`](#tag_type) | field | rw |
 /// | [`write_value`](#write_value) | field | w |
@@ -237,8 +237,8 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// struct Nibble(#[codec(bits = 4)] u8);
 /// ```
 ///
-/// ## `flexible_array_member`
-/// `#[codec(flexible_array_member)]`
+/// ## `untagged`
+/// `#[codec(untagged)]`
 ///
 /// Variable-length field is final field in container, hence lacks a length prefix and should be
 /// read until eof.
@@ -248,7 +248,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// # {
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
-/// struct ReadToEnd(#[codec(flexible_array_member)] Vec<u8>);
+/// struct ReadToEnd(#[codec(untagged)] Vec<u8>);
 /// # }
 /// ```
 ///
@@ -575,7 +575,7 @@ pub struct Bits<const C: u32>;
 /// #[derive(BitDecode, BitEncode)]
 /// struct MutuallyExclusiveAttrs {
 ///     pub length: u8,
-///     #[codec(flexible_array_member)]
+///     #[codec(untagged)]
 ///     #[codec(tag = length as usize)]
 ///     pub reason: alloc::string::String,
 /// }

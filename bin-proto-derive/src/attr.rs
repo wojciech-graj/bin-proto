@@ -12,7 +12,7 @@ pub struct Attrs {
     pub skip_decode: bool,
     pub discriminant: Option<syn::Expr>,
     pub discriminant_type: Option<syn::Type>,
-    pub flexible_array_member: bool,
+    pub untagged: bool,
     pub magic: Option<syn::Expr>,
     pub pad_after: Option<syn::Expr>,
     pub pad_before: Option<syn::Expr>,
@@ -126,9 +126,9 @@ impl Attrs {
                 };
 
                 match ident.to_string().as_str() {
-                    "flexible_array_member" => {
+                    "untagged" => {
                         expect_attr_kind!(AttrKind::Field, kind, meta);
-                        attrs.flexible_array_member = true;
+                        attrs.untagged = true;
                     }
                     "discriminant_type" => {
                         expect_attr_kind!(AttrKind::Enum, kind, meta);
@@ -258,19 +258,15 @@ impl Attrs {
             }
         }
 
-        if [
-            attrs.bits.is_some(),
-            attrs.flexible_array_member,
-            attrs.tag.is_some(),
-        ]
-        .iter()
-        .filter(|b| **b)
-        .count()
+        if [attrs.bits.is_some(), attrs.untagged, attrs.tag.is_some()]
+            .iter()
+            .filter(|b| **b)
+            .count()
             > 1
         {
             return Err(Error::new(
                 span,
-                "bits, flexible_array_member, and tag are mutually-exclusive attributes",
+                "bits, untagged, and tag are mutually-exclusive attributes",
             ));
         }
 
