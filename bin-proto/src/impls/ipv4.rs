@@ -5,14 +5,12 @@ use bitstream_io::{BitRead, BitWrite, Endianness};
 use crate::{BitDecode, BitEncode, Result};
 
 impl<Ctx> BitDecode<Ctx> for Ipv4Addr {
-    fn decode<R, E>(read: &mut R, ctx: &mut Ctx, tag: ()) -> Result<Self>
+    fn decode<R, E>(read: &mut R, ctx: &mut Ctx, (): ()) -> Result<Self>
     where
         R: BitRead,
         E: Endianness,
     {
-        let bytes: [u8; 4] = BitDecode::decode::<_, E>(read, ctx, tag)?;
-
-        Ok(Self::new(bytes[0], bytes[1], bytes[2], bytes[3]))
+        u32::decode::<_, E>(read, ctx, ()).map(Self::from_bits)
     }
 }
 
@@ -22,7 +20,7 @@ impl<Ctx> BitEncode<Ctx> for Ipv4Addr {
         W: BitWrite,
         E: Endianness,
     {
-        self.octets().encode::<_, E>(write, ctx, ())
+        self.to_bits().encode::<_, E>(write, ctx, ())
     }
 }
 
