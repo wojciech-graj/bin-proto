@@ -2,7 +2,8 @@
 macro_rules! impl_read_map {
     (
         $ty:ident<K: $kbound0:ident $(+ $kbound1:ident)?, V
-        $(, $h:ident : $hbound0:ident + $hbound1:ident)?>
+        $(, $h:ident : $hbound0:ident + $hbound1:ident)?>,
+        $new:expr
     ) => {
         impl<Tag, Ctx, K, V, $($h)?> $crate::BitDecode<Ctx, $crate::Tag<Tag>> for $ty<K, V, $($h)?>
         where
@@ -20,12 +21,16 @@ macro_rules! impl_read_map {
                 R: ::bitstream_io::BitRead,
                 E: ::bitstream_io::Endianness,
             {
-                $crate::util::decode_items::<_, E, _, _>(
-                    ::core::convert::TryInto::try_into(tag.0)
-                        .map_err(|_| $crate::Error::TagConvert)?,
-                    read,
-                    ctx
-                ).collect()
+                let item_count = ::core::convert::TryInto::try_into(tag.0)
+                    .map_err(|_| $crate::Error::TagConvert)?;
+                let mut this = ($new)(item_count);
+                for _ in 0..item_count {
+                    this.insert(
+                        $crate::BitDecode::<_, _>::decode::<_, E>(read, ctx, ())?,
+                        $crate::BitDecode::<_, _>::decode::<_, E>(read, ctx, ())?
+                    );
+                }
+                ::core::result::Result::Ok(this)
             }
         }
 
@@ -85,7 +90,7 @@ mod hash_map {
     use std::collections::HashMap;
 
     impl_write_map!(HashMap<K: Eq + Hash, V, H>);
-    impl_read_map!(HashMap<K: Eq + Hash, V, H: BuildHasher + Default>);
+    impl_read_map!(HashMap<K: Eq + Hash, V, H: BuildHasher + Default>, |n| Self::with_capacity_and_hasher(n, H::default()));
 
     #[cfg(test)]
     mod tests {
@@ -104,7 +109,7 @@ mod b_tree_map {
     use alloc::collections::btree_map::BTreeMap;
 
     impl_write_map!(BTreeMap<K: Ord, V>);
-    impl_read_map!(BTreeMap<K: Ord, V>);
+    impl_read_map!(BTreeMap<K: Ord, V>, |_| Self::new());
 
     #[cfg(test)]
     mod tests {

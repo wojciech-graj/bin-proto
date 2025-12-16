@@ -25,14 +25,13 @@ where
         R: BitRead,
         E: Endianness,
     {
-        let elements = util::decode_items::<_, E, _, _>(N, read, ctx);
         let mut array: MaybeUninit<[T; N]> = MaybeUninit::uninit();
         let mut guard = PartialGuard {
             ptr: array.as_mut_ptr().cast::<T>(),
             len: 0,
         };
-        for item in elements {
-            let item = item?;
+        while guard.len < N {
+            let item = T::decode::<_, E>(read, ctx, ())?;
             unsafe {
                 guard.ptr.add(guard.len).write(item);
             }

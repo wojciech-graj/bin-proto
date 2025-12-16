@@ -9,6 +9,7 @@
 - Rename `#[codec(flexible_array_member)]` to `#[codec(untagged)]`
 - Treat `Ipv4Addr` and `Ipv6Addr` as `u32` and `u128` respectively for codec
 - Optimize `String` encode
+- Optimize decode for variable-length tagged types
 # v0.11.1
 - Fix potential memory leak in `BitDecode` implementation for `[T; N]`
 # v0.11.0

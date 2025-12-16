@@ -1,5 +1,7 @@
 #![cfg(feature = "alloc")]
 
+use std::vec::Vec;
+
 use crate::{util, BitDecode, BitEncode, Error, Result, Untagged};
 
 use alloc::string::String;
@@ -14,12 +16,11 @@ where
         R: BitRead,
         E: Endianness,
     {
-        let bytes = util::decode_items::<_, E, _, _>(
-            tag.0.try_into().map_err(|_| Error::TagConvert)?,
-            read,
-            ctx,
-        )
-        .collect::<Result<_>>()?;
+        let item_count = tag.0.try_into().map_err(|_| Error::TagConvert)?;
+        let mut bytes = Vec::with_capacity(item_count);
+        for _ in 0..item_count {
+            bytes.push(u8::decode::<_, E>(read, ctx, ())?);
+        }
         Ok(Self::from_utf8(bytes)?)
     }
 }

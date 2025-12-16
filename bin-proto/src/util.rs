@@ -10,20 +10,6 @@ use std::io;
 #[cfg(not(feature = "std"))]
 use core2::io;
 
-/// Reads a specified number of items from a stream.
-pub fn decode_items<'a, R, E, Ctx, T>(
-    item_count: usize,
-    read: &'a mut R,
-    ctx: &'a mut Ctx,
-) -> impl Iterator<Item = Result<T>> + use<'a, R, E, Ctx, T>
-where
-    R: BitRead,
-    E: Endianness,
-    T: BitDecode<Ctx>,
-{
-    iter::repeat_with(|| T::decode::<_, E>(read, ctx, ())).take(item_count)
-}
-
 /// [`BitEncode`]s an iterator of parcels to the stream.
 ///
 /// Does not include a length prefix.
