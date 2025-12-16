@@ -2,7 +2,7 @@
 
 use crate::{util, BitDecode, BitEncode, Error, Result, Untagged};
 
-use alloc::{string::String, vec::Vec};
+use alloc::string::String;
 use bitstream_io::{BitRead, BitWrite, Endianness};
 
 impl<Tag, Ctx> BitDecode<Ctx, crate::Tag<Tag>> for String
@@ -30,8 +30,7 @@ impl<Ctx> BitEncode<Ctx, Untagged> for String {
         W: BitWrite,
         E: Endianness,
     {
-        let bytes: Vec<_> = self.bytes().collect();
-        util::encode_items::<_, E, _, _>(&bytes, write, ctx)
+        util::encode_items::<_, E, _, _>(self.as_bytes(), write, ctx)
     }
 }
 
