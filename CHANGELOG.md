@@ -1,3 +1,5 @@
+# v0.12.2
+- Implement `BitEncode<_, Bits>` and `BitDecode<_, Bits` for `u128` and `i128`
 # v0.12.1
 - Fix no_std + alloc
 # v0.12.0

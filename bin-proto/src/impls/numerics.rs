@@ -208,6 +208,8 @@ impl_bitfield_for_numeric!(u32 => u32);
 impl_bitfield_for_numeric!(i32 => i32);
 impl_bitfield_for_numeric!(u64 => u64);
 impl_bitfield_for_numeric!(i64 => i64);
+impl_bitfield_for_numeric!(u128 => u128);
+impl_bitfield_for_numeric!(i128 => i128);
 
 impl_bitfield_for_numeric!(NonZeroU8 => u8);
 impl_bitfield_for_numeric!(NonZeroI8 => i8);
@@ -215,6 +217,8 @@ impl_bitfield_for_numeric!(NonZeroU16 => u16);
 impl_bitfield_for_numeric!(NonZeroI16 => i16);
 impl_bitfield_for_numeric!(NonZeroU32 => u32);
 impl_bitfield_for_numeric!(NonZeroI32 => i32);
+impl_bitfield_for_numeric!(NonZeroU128 => u128);
+impl_bitfield_for_numeric!(NonZeroI128 => i128);
 
 #[cfg(target_pointer_width = "16")]
 mod size {
