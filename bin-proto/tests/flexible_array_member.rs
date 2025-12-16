@@ -4,7 +4,7 @@ use bin_proto::{BitCodec, BitDecode, BitEncode};
 use bitstream_io::BigEndian;
 
 #[derive(Debug, BitDecode, BitEncode, PartialEq)]
-struct WithFlexibleArrayMember(#[codec(untagged)] Vec<u8>);
+struct WithFlexibleArrayMember(#[bin_proto(untagged)] Vec<u8>);
 
 #[test]
 fn decode_untagged() {

@@ -116,7 +116,7 @@ impl Attrs {
         let mut ctx_bounds = None;
 
         for attr in attribs {
-            if !attr.path().is_ident("codec") {
+            if !attr.path().is_ident("bin_proto") {
                 continue;
             }
 

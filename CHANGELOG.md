@@ -1,4 +1,5 @@
 # v1.0.0
+- Rename `#[codec(...)]` to `#[bin_proto(...)]` to avoid potential conflicts with other crates
 - Seal `BitDecodeExt`, `BitEncodeExt`, `BitCodec` traits
 - Add `#[codec(other)]` attribute
 - Replace `#[codec(default)]` with `#[codec(skip_encode)]`, `#[codec(skip_decode)]`, `#[codec(skip)]`

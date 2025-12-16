@@ -4,35 +4,35 @@ use bin_proto::{BitCodec, BitDecode, BitEncode};
 use bitstream_io::BigEndian;
 
 #[derive(Debug, Copy, Clone, BitDecode, BitEncode, PartialEq)]
-#[codec(discriminant_type = u8)]
-#[codec(bits = 4)]
+#[bin_proto(discriminant_type = u8)]
+#[bin_proto(bits = 4)]
 enum Version {
     V4 = 4,
 }
 
 #[derive(Debug, Copy, Clone, BitDecode, BitEncode, PartialEq)]
 struct Flags {
-    #[codec(bits = 1)]
+    #[bin_proto(bits = 1)]
     reserved: bool,
-    #[codec(bits = 1)]
+    #[bin_proto(bits = 1)]
     dont_fragment: bool,
-    #[codec(bits = 1)]
+    #[bin_proto(bits = 1)]
     more_fragments: bool,
 }
 
 #[derive(Debug, Copy, Clone, BitDecode, BitEncode, PartialEq)]
 struct IPv4 {
     version: Version,
-    #[codec(bits = 4)]
+    #[bin_proto(bits = 4)]
     internet_header_length: u8,
-    #[codec(bits = 6)]
+    #[bin_proto(bits = 6)]
     differentiated_services_code_point: u8,
-    #[codec(bits = 2)]
+    #[bin_proto(bits = 2)]
     explicit_congestion_notification: u8,
     total_length: u16,
     identification: u16,
     flags: Flags,
-    #[codec(bits = 13)]
+    #[bin_proto(bits = 13)]
     fragment_offset: u16,
     time_to_live: u8,
     protocol: u8,

@@ -75,31 +75,31 @@ impl<Ctx: CtxTrait> BitEncode<Ctx> for CtxCheck {
 }
 
 #[derive(Debug, BitDecode, BitEncode)]
-#[codec(ctx = CtxStruct)]
+#[bin_proto(ctx = CtxStruct)]
 struct CtxCheckStructWrapper(CtxCheck);
 
 #[derive(Debug, BitDecode, BitEncode)]
-#[codec(ctx = CtxStructWithGenerics<'a, bool>, ctx_generics('a))]
+#[bin_proto(ctx = CtxStructWithGenerics<'a, bool>, ctx_generics('a))]
 #[allow(unused)]
 struct CtxCheckStructWrapperWithGenericsConcreteBool(CtxCheck);
 
 #[derive(Debug, BitDecode, BitEncode)]
-#[codec(ctx = CtxStructWithGenerics<'a, T>, ctx_generics('a, T: Boolean))]
+#[bin_proto(ctx = CtxStructWithGenerics<'a, T>, ctx_generics('a, T: Boolean))]
 #[allow(unused)]
 struct CtxCheckStructWrapperWithGenerics(CtxCheck);
 
 #[derive(Debug, BitDecode, BitEncode)]
-#[codec(ctx_bounds(TraitWithGeneric<'a, bool>, CtxTrait), ctx_generics('a))]
+#[bin_proto(ctx_bounds(TraitWithGeneric<'a, bool>, CtxTrait), ctx_generics('a))]
 #[allow(unused)]
 struct CtxCheckBoundsWithGenericsConcreteBool(CtxCheck);
 
 #[derive(Debug, BitDecode, BitEncode)]
-#[codec(ctx_bounds(TraitWithGeneric<'a, T>, CtxTrait), ctx_generics('a))]
+#[bin_proto(ctx_bounds(TraitWithGeneric<'a, T>, CtxTrait), ctx_generics('a))]
 #[allow(unused)]
 struct CtxCheckBoundsWithGenerics<T: Boolean>(CtxCheck, PhantomData<T>);
 
 #[derive(Debug, BitDecode, BitEncode)]
-#[codec(ctx_bounds(CtxTrait))]
+#[bin_proto(ctx_bounds(CtxTrait))]
 struct CtxCheckTraitWrapper(CtxCheck);
 
 #[test]

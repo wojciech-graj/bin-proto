@@ -19,14 +19,14 @@ pub struct BizBong(u8, u8, pub u8);
 pub struct PartyInTheFront;
 
 #[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
-#[codec(ctx = ())]
+#[bin_proto(ctx = ())]
 pub struct NamedFieldsWithGenerics<A: BitDecode + BitEncode, D: BitDecode + BitEncode> {
     pub value: A,
     pub del: D,
 }
 
 #[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
-#[codec(ctx = Ctx)]
+#[bin_proto(ctx = Ctx)]
 pub struct UnnamedFieldsWithGenerics<
     Ctx,
     A: BitDecode<Ctx> + BitEncode<Ctx>,
@@ -34,7 +34,7 @@ pub struct UnnamedFieldsWithGenerics<
 >(A, D, PhantomData<Ctx>);
 
 #[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
-#[codec(ctx = ())]
+#[bin_proto(ctx = ())]
 pub struct StructWithExistingBoundedGenerics<
     A: ::std::fmt::Display + ::std::fmt::Debug + BitDecode + BitEncode,
 > {
@@ -44,24 +44,24 @@ pub struct StructWithExistingBoundedGenerics<
 #[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
 pub struct WithDefault {
     a: u8,
-    #[codec(skip_decode)]
+    #[bin_proto(skip_decode)]
     b: u8,
 }
 
 #[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
-#[codec(pad_before = 1, pad_after = 12)]
+#[bin_proto(pad_before = 1, pad_after = 12)]
 pub struct Padded {
     a: u8,
-    #[codec(pad_before = 4, pad_after = 8)]
+    #[bin_proto(pad_before = 4, pad_after = 8)]
     b: u8,
     c: u8,
 }
 
 #[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
-#[codec(magic = &[0x09u8])]
+#[bin_proto(magic = &[0x09u8])]
 pub struct Magic {
     a: u8,
-    #[codec(magic = b"\x01\x02\x03")]
+    #[bin_proto(magic = b"\x01\x02\x03")]
     b: u8,
 }
 
@@ -189,7 +189,7 @@ fn incorrect_magic_fails() {
 fn ipv4() {
     #[derive(Debug, BitDecode, BitEncode, PartialEq, Eq)]
     struct IPv4Header {
-        #[codec(bits = 4)]
+        #[bin_proto(bits = 4)]
         version: u8,
     }
 

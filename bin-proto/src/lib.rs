@@ -10,28 +10,28 @@
 //! # {
 //! # use bin_proto::{BitDecode, BitEncode, BitCodec};
 //! #[derive(Debug, BitDecode, BitEncode, PartialEq)]
-//! #[codec(discriminant_type = u8)]
-//! #[codec(bits = 4)]
+//! #[bin_proto(discriminant_type = u8)]
+//! #[bin_proto(bits = 4)]
 //! enum E {
 //!     V1 = 1,
-//!     #[codec(discriminant = 4)]
+//!     #[bin_proto(discriminant = 4)]
 //!     V4,
 //! }
 //!
 //! #[derive(Debug, BitDecode, BitEncode, PartialEq)]
 //! struct S {
-//!     #[codec(bits = 1)]
+//!     #[bin_proto(bits = 1)]
 //!     bitflag: bool,
-//!     #[codec(bits = 3)]
+//!     #[bin_proto(bits = 3)]
 //!     bitfield: u8,
 //!     enum_: E,
-//!     #[codec(write_value = self.arr.len() as u8)]
+//!     #[bin_proto(write_value = self.arr.len() as u8)]
 //!     arr_len: u8,
-//!     #[codec(tag = arr_len as usize)]
+//!     #[bin_proto(tag = arr_len as usize)]
 //!     arr: Vec<u8>,
-//!     #[codec(tag_type = u16, tag_value = self.prefixed_arr.len() as u16)]
+//!     #[bin_proto(tag_type = u16, tag_value = self.prefixed_arr.len() as u16)]
 //!     prefixed_arr: Vec<u8>,
-//!     #[codec(untagged)]
+//!     #[bin_proto(untagged)]
 //!     read_to_end: Vec<u8>,
 //! }
 //!
@@ -139,11 +139,11 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// }
 ///
 /// #[derive(BitDecode, BitEncode)]
-/// #[codec(ctx = Ctx)]
+/// #[bin_proto(ctx = Ctx)]
 /// struct WithElementsLength {
 ///     count: u32,
 ///     foo: bool,
-///     #[codec(tag = count * __ctx.n)]
+///     #[bin_proto(tag = count * __ctx.n)]
 ///     data: Vec<u32>,
 /// }
 /// # }
@@ -171,7 +171,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// | [`magic`](#magic) | field, struct | rw |
 ///
 /// ## `discriminant_type`
-/// `#[codec(discriminant_type = <type>)]`
+/// `#[bin_proto(discriminant_type = <type>)]`
 /// - `<type>`: an arbitrary type that implements [`BitDecode`] or [`BitEncode`]
 ///
 /// Specify if enum variant should be determined by a string or interger representation of its
@@ -180,7 +180,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// ```
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
-/// #[codec(discriminant_type = u8)]
+/// #[bin_proto(discriminant_type = u8)]
 /// enum Example {
 ///     Variant1 = 1,
 ///     Variant5 = 5,
@@ -188,7 +188,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// ```
 ///
 /// ## `discriminant`
-/// `#[codec(discriminant = <value>)]`
+/// `#[bin_proto(discriminant = <value>)]`
 /// - `<value>`: unique value of the discriminant's type
 ///
 /// Specify the discriminant for a variant.
@@ -196,16 +196,16 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// ```
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
-/// #[codec(discriminant_type = u8)]
+/// #[bin_proto(discriminant_type = u8)]
 /// enum Example {
-///     #[codec(discriminant = 1)]
+///     #[bin_proto(discriminant = 1)]
 ///     Variant1,
 ///     Variant5 = 5,
 /// }
 /// ```
 ///
 /// ## `other`
-/// `#[codec(other)]`
+/// `#[bin_proto(other)]`
 ///
 /// Decode the specified variant if the discriminant doesn't match any other variants. A
 /// discriminant value can still be provided for the variant, and will be used when encoding.
@@ -213,17 +213,17 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// ```
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
-/// #[codec(discriminant_type = u8)]
+/// #[bin_proto(discriminant_type = u8)]
 /// enum Example {
-///     #[codec(discriminant = 1)]
+///     #[bin_proto(discriminant = 1)]
 ///     Variant1,
-///     #[codec(discriminant = 2, other)]
+///     #[bin_proto(discriminant = 2, other)]
 ///     CatchAll,
 /// }
 /// ```
 ///
 /// ## `bits`
-/// `#[codec(bits = <width>)]`
+/// `#[bin_proto(bits = <width>)]`
 ///
 /// Determine width of field in bits.
 ///
@@ -234,11 +234,11 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// ```
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
-/// struct Nibble(#[codec(bits = 4)] u8);
+/// struct Nibble(#[bin_proto(bits = 4)] u8);
 /// ```
 ///
 /// ## `untagged`
-/// `#[codec(untagged)]`
+/// `#[bin_proto(untagged)]`
 ///
 /// Variable-length field is final field in container, hence lacks a length prefix and should be
 /// read until eof.
@@ -248,12 +248,12 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// # {
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
-/// struct ReadToEnd(#[codec(untagged)] Vec<u8>);
+/// struct ReadToEnd(#[bin_proto(untagged)] Vec<u8>);
 /// # }
 /// ```
 ///
 /// ## `tag`
-/// `#[codec(tag = <expr>)]`
+/// `#[bin_proto(tag = <expr>)]`
 /// - `<expr>`: arbitrary expression. Fields in parent container can be used without prefixing them
 ///   with `self`.
 ///
@@ -268,14 +268,14 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// struct WithElementsLength {
 ///     count: u32,
 ///     foo: bool,
-///     #[codec(tag = count as usize)]
+///     #[bin_proto(tag = count as usize)]
 ///     data: Vec<u32>,
 /// }
 /// # }
 /// ```
 ///
 /// ## `tag_type`
-/// `#[codec(tag_type = <type>[, tag_value = <expr>]?[, tag_bits = <expr>]?)]`
+/// `#[bin_proto(tag_type = <type>[, tag_value = <expr>]?[, tag_bits = <expr>]?)]`
 /// - `<type>`: tag's type
 /// - `<expr>`: arbitrary expression. Fields in parent container should be prefixed with `self`.
 ///
@@ -289,14 +289,14 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
 /// struct WithElementsLength {
-///     #[codec(tag_type = u16, tag_value = self.data.len() as u16, tag_bits = 13)]
+///     #[bin_proto(tag_type = u16, tag_value = self.data.len() as u16, tag_bits = 13)]
 ///     data: Vec<u32>,
 /// }
 /// # }
 /// ```
 ///
 /// ## `write_value`
-/// `#[codec(write_value = <expr>)]`
+/// `#[bin_proto(write_value = <expr>)]`
 /// - `<expr>`: An expression that can be coerced to the field type. Fields in parent container
 ///   should be prefixed with `self`.
 ///
@@ -308,17 +308,17 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
 /// struct WithElementsLengthAuto {
-///     #[codec(write_value = self.data.len() as u32)]
+///     #[bin_proto(write_value = self.data.len() as u32)]
 ///     count: u32,
 ///     foo: bool,
-///     #[codec(tag = count as usize)]
+///     #[bin_proto(tag = count as usize)]
 ///     data: Vec<u32>,
 /// }
 /// # }
 /// ```
 ///
 /// ## `ctx`
-/// `#[codec(ctx = <type>)[, ctx_generics(<generic>[, <generic>]*)]?]`
+/// `#[bin_proto(ctx = <type>)[, ctx_generics(<generic>[, <generic>]*)]?]`
 /// - `<type>`: The type of the context. Either a concrete type, or one of the container's generics
 /// - `<generic>`: Any generics used by the context type, with optional bounds. E.g.
 ///   `T: Copy` for a [`Vec<T>`](alloc::vec::Vec) context.
@@ -365,7 +365,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// }
 ///
 /// #[derive(BitDecode, BitEncode)]
-/// #[codec(ctx = Ctx)]
+/// #[bin_proto(ctx = Ctx)]
 /// struct WithCtx(NeedsCtx);
 ///
 /// WithCtx(NeedsCtx)
@@ -378,7 +378,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// # use bin_proto::{BitDecode, BitEncode};
 /// # use std::marker::PhantomData;
 /// #[derive(BitDecode, BitEncode)]
-/// #[codec(ctx = Ctx)]
+/// #[bin_proto(ctx = Ctx)]
 /// struct NestedCodec<Ctx, A: BitDecode<Ctx> + BitEncode<Ctx>>(A, PhantomData<Ctx>);
 /// ```
 ///
@@ -387,12 +387,12 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// struct Ctx<'a, T: Copy>(&'a T);
 ///
 /// #[derive(BitDecode, BitEncode)]
-/// #[codec(ctx = Ctx<'a, T>, ctx_generics('a, T: Copy))]
+/// #[bin_proto(ctx = Ctx<'a, T>, ctx_generics('a, T: Copy))]
 /// struct WithCtx;
 /// ```
 ///
 /// ## `ctx_bounds`
-/// `#[codec(ctx_bounds(<bound>[, <bound>]*)[, ctx_generics(<generic>[, <generic>]*)]?)]`
+/// `#[bin_proto(ctx_bounds(<bound>[, <bound>]*)[, ctx_generics(<generic>[, <generic>]*)]?)]`
 /// - `<bounds>`: Trait bounds that must be satisfied by the context
 /// - `<generic>`: Any generics used by the context type. E.g. `'a` for a context with a
 ///   [`From<&'a i32>`](From) bound.
@@ -437,19 +437,19 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// }
 ///
 /// #[derive(BitDecode, BitEncode)]
-/// #[codec(ctx_bounds(CtxTrait))]
+/// #[bin_proto(ctx_bounds(CtxTrait))]
 /// struct WithCtx(NeedsCtx);
 /// ```
 ///
 /// ```
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
-/// #[codec(ctx_bounds(From<&'a i32>), ctx_generics('a))]
+/// #[bin_proto(ctx_bounds(From<&'a i32>), ctx_generics('a))]
 /// struct WithCtx;
 /// ```
 ///
 /// ## `skip_encode`
-/// `#[codec(skip_encode)]`
+/// `#[bin_proto(skip_encode)]`
 ///
 /// If applied to a field, skip the field when encoding. If applied to an enum variant, return an
 /// Error if the variant is attempted to be encoded.
@@ -457,21 +457,21 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// ```
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
-/// struct Struct(#[codec(skip_encode)] u8);
+/// struct Struct(#[bin_proto(skip_encode)] u8);
 /// ```
 ///
 /// ```
 /// # use bin_proto::BitEncode;
 /// #[derive(BitEncode)]
-/// #[codec(discriminant_type = u8)]
+/// #[bin_proto(discriminant_type = u8)]
 /// enum Enum {
-///     #[codec(skip_encode)]
+///     #[bin_proto(skip_encode)]
 ///     Skip
 /// }
 /// ```
 ///
 /// ## `skip_decode`
-/// `#[codec(skip_decode)]`
+/// `#[bin_proto(skip_decode)]`
 ///
 /// If applied to a field, use [`Default::default`] instead of attempting to read field. If applied
 /// to an enum variant, don't generate code for decoding.
@@ -479,64 +479,64 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// ```
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
-/// struct Struct(#[codec(skip_decode)] u8);
+/// struct Struct(#[bin_proto(skip_decode)] u8);
 /// ```
 ///
 /// ```
 /// # use bin_proto::BitDecode;
 /// #[derive(BitDecode)]
-/// #[codec(discriminant_type = u8)]
+/// #[bin_proto(discriminant_type = u8)]
 /// enum Enum {
-///     #[codec(skip_decode)]
+///     #[bin_proto(skip_decode)]
 ///     Skip
 /// }
 /// ```
 ///
 /// ## `skip`
-/// `#[codec(skip)]`
+/// `#[bin_proto(skip)]`
 ///
 /// Equivalent to combining [`skip_encode`](#skip_encode) and [`skip_decode`](#skip_decode).
 ///
 /// ```
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
-/// struct Struct(#[codec(skip)] u8);
+/// struct Struct(#[bin_proto(skip)] u8);
 /// ```
 ///
 /// ```
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
-/// #[codec(discriminant_type = u8)]
+/// #[bin_proto(discriminant_type = u8)]
 /// enum Enum {
-///     #[codec(skip)]
+///     #[bin_proto(skip)]
 ///     Skip
 /// }
 /// ```
 ///
 /// ## `pad_before`
-/// `#[codec(pad_before = <expr>)]`
+/// `#[bin_proto(pad_before = <expr>)]`
 ///
 /// Insert 0 bits when writing and skip bits when reading, prior to processing the field.
 ///
 /// ```
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
-/// struct Struct(#[codec(pad_before = 3)] u8);
+/// struct Struct(#[bin_proto(pad_before = 3)] u8);
 /// ```
 ///
 /// ## `pad_after`
-/// `#[codec(pad_after = <expr>)]`
+/// `#[bin_proto(pad_after = <expr>)]`
 ///
 /// Insert 0 bits when writing and skip bits when reading, after processing the field.
 ///
 /// ```
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
-/// struct Struct(#[codec(pad_after = 3)] u8);
+/// struct Struct(#[bin_proto(pad_after = 3)] u8);
 /// ```
 ///
 /// ## `magic`
-/// `#[codec(magic = <expr>)]`
+/// `#[bin_proto(magic = <expr>)]`
 /// - `<expr>`: Must evaluate to `&[u8; _]`
 ///
 /// Indicates that the value must be present immediately preceding the field or struct.
@@ -544,8 +544,8 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// ```
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
-/// #[codec(magic = &[0x01, 0x02, 0x03])]
-/// struct Magic(#[codec(magic = b"123")] u8);
+/// #[bin_proto(magic = &[0x01, 0x02, 0x03])]
+/// struct Magic(#[bin_proto(magic = b"123")] u8);
 /// ```
 #[cfg(feature = "derive")]
 pub use bin_proto_derive::{BitDecode, BitEncode};
@@ -575,8 +575,8 @@ pub struct Bits<const C: u32>;
 /// #[derive(BitDecode, BitEncode)]
 /// struct MutuallyExclusiveAttrs {
 ///     pub length: u8,
-///     #[codec(untagged)]
-///     #[codec(tag = length as usize)]
+///     #[bin_proto(untagged)]
+///     #[bin_proto(tag = length as usize)]
 ///     pub reason: alloc::string::String,
 /// }
 /// ```

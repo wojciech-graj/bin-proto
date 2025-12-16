@@ -6,29 +6,29 @@ use bin_proto::{BitCodec, BitDecode, BitEncode};
 use bitstream_io::BigEndian;
 
 #[derive(Debug, BitDecode, BitEncode, PartialEq)]
-#[codec(discriminant_type = u8)]
-#[codec(ctx = ())]
+#[bin_proto(discriminant_type = u8)]
+#[bin_proto(ctx = ())]
 pub enum Enum<'a, T: BitDecode + BitEncode> {
-    #[codec(discriminant = 1)]
+    #[bin_proto(discriminant = 1)]
     Variant1 {
         a: T,
         len: u8,
-        #[codec(tag = len as usize)]
+        #[bin_proto(tag = len as usize)]
         arr: Vec<u8>,
     },
-    #[codec(discriminant = 2)]
+    #[bin_proto(discriminant = 2)]
     Variant2(u32, bool, PhantomData<&'a T>),
 }
 
 #[derive(Debug, BitDecode, BitEncode, PartialEq)]
-#[codec(discriminant_type = u8)]
-#[codec(bits = 2)]
+#[bin_proto(discriminant_type = u8)]
+#[bin_proto(bits = 2)]
 pub enum Enum2 {
-    #[codec(discriminant = 3, other)]
+    #[bin_proto(discriminant = 3, other)]
     CatchAll(u8),
-    #[codec(discriminant = 1)]
+    #[bin_proto(discriminant = 1)]
     Variant1(u8),
-    #[codec(discriminant = 2)]
+    #[bin_proto(discriminant = 2)]
     Variant2(u16),
 }
 
@@ -39,16 +39,16 @@ pub struct EnumContainer {
 
 #[derive(Debug, BitDecode, BitEncode, PartialEq)]
 pub struct TaggedEnumContainer {
-    #[codec(tag_type = u16, tag_value = ::bin_proto::Discriminable::discriminant(&self.e).unwrap() as u16)]
+    #[bin_proto(tag_type = u16, tag_value = ::bin_proto::Discriminable::discriminant(&self.e).unwrap() as u16)]
     e: Enum2,
 }
 
 #[derive(Debug, BitDecode, BitEncode, PartialEq)]
 pub struct BitFieldTaggedEnumContainer {
-    #[codec(write_value = ::bin_proto::Discriminable::discriminant(&self.e).unwrap())]
-    #[codec(bits = 3)]
+    #[bin_proto(write_value = ::bin_proto::Discriminable::discriminant(&self.e).unwrap())]
+    #[bin_proto(bits = 3)]
     discriminant: u8,
-    #[codec(tag = discriminant)]
+    #[bin_proto(tag = discriminant)]
     e: Enum2,
 }
 

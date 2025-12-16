@@ -35,7 +35,7 @@ enum Operation {
     Encode,
 }
 
-#[proc_macro_derive(BitDecode, attributes(codec))]
+#[proc_macro_derive(BitDecode, attributes(bin_proto))]
 pub fn decode(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let ast: syn::DeriveInput = parse_macro_input!(input as syn::DeriveInput);
     match impl_codec(&ast, Operation::Decode) {
@@ -45,7 +45,7 @@ pub fn decode(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     .into()
 }
 
-#[proc_macro_derive(BitEncode, attributes(codec))]
+#[proc_macro_derive(BitEncode, attributes(bin_proto))]
 pub fn encode(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let ast: syn::DeriveInput = parse_macro_input!(input as syn::DeriveInput);
     match impl_codec(&ast, Operation::Encode) {

@@ -5,53 +5,53 @@ use bitstream_io::BigEndian;
 
 #[derive(Debug, BitDecode, BitEncode, PartialEq, Eq)]
 struct SkipEncode {
-    #[codec(skip_encode)]
+    #[bin_proto(skip_encode)]
     a: u8,
     b: u8,
 }
 
 #[derive(Debug, BitDecode, BitEncode, PartialEq, Eq)]
 struct SkipDecode {
-    #[codec(skip_decode)]
+    #[bin_proto(skip_decode)]
     a: u8,
     b: u8,
 }
 
 #[derive(Debug, BitDecode, BitEncode, PartialEq, Eq)]
 struct Skip {
-    #[codec(skip)]
+    #[bin_proto(skip)]
     a: u8,
     b: u8,
 }
 
 #[derive(Debug, BitDecode, BitEncode, PartialEq, Eq)]
-#[codec(discriminant_type = u8)]
+#[bin_proto(discriminant_type = u8)]
 enum SkipEncodeEnum {
-    #[codec(discriminant = 1)]
+    #[bin_proto(discriminant = 1)]
     A,
-    #[codec(discriminant = 2)]
-    #[codec(skip_encode)]
+    #[bin_proto(discriminant = 2)]
+    #[bin_proto(skip_encode)]
     B,
 }
 
 #[derive(Debug, BitDecode, BitEncode, PartialEq, Eq)]
-#[codec(discriminant_type = u8)]
+#[bin_proto(discriminant_type = u8)]
 enum SkipDecodeEnum {
-    #[codec(discriminant = 1)]
+    #[bin_proto(discriminant = 1)]
     A,
-    #[codec(discriminant = 2)]
-    #[codec(skip_decode)]
+    #[bin_proto(discriminant = 2)]
+    #[bin_proto(skip_decode)]
     #[allow(unused)]
     B,
 }
 
 #[derive(Debug, BitDecode, BitEncode, PartialEq, Eq)]
-#[codec(discriminant_type = u8)]
+#[bin_proto(discriminant_type = u8)]
 enum SkipEnum {
-    #[codec(discriminant = 1)]
+    #[bin_proto(discriminant = 1)]
     A,
-    #[codec(discriminant = 2)]
-    #[codec(skip)]
+    #[bin_proto(discriminant = 2)]
+    #[bin_proto(skip)]
     B,
 }
 
