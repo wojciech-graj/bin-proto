@@ -1,4 +1,4 @@
-# v1.0.0
+# v0.12.0
 - Rename `#[codec(...)]` to `#[bin_proto(...)]` to avoid potential conflicts with other crates
 - Seal `BitDecodeExt`, `BitEncodeExt`, `BitCodec` traits
 - Add `#[codec(other)]` attribute

@@ -1,6 +1,6 @@
 [package]
 name = "bin-proto-derive"
-version = "1.0.0"
+version = "0.12.0"
 authors = ["Wojciech Graj <me@w-graj.net>"]
 edition = "2021"
 rust-version = "1.83.0"
