@@ -1,10 +1,8 @@
 #![cfg(feature = "alloc")]
 
-use std::vec::Vec;
-
 use crate::{util, BitDecode, BitEncode, Error, Result, Untagged};
 
-use alloc::string::String;
+use alloc::{string::String, vec::Vec};
 use bitstream_io::{BitRead, BitWrite, Endianness};
 
 impl<Tag, Ctx> BitDecode<Ctx, crate::Tag<Tag>> for String

@@ -1,3 +1,5 @@
+# v0.12.1
+- Fix no_std + alloc
 # v0.12.0
 - Rename `#[codec(...)]` to `#[bin_proto(...)]` to avoid potential conflicts with other crates
 - Seal `BitDecodeExt`, `BitEncodeExt`, `BitCodec` traits
