@@ -24,28 +24,28 @@ Define a type with the `#[derive(bin_proto::BitDecode, bin_proto::BitEncode)]` a
 use bin_proto::{BitDecode, BitEncode, BitCodec};
 
 #[derive(Debug, BitDecode, BitEncode, PartialEq)]
-#[codec(discriminant_type = u8)]
-#[codec(bits = 4)]
+#[bin_proto(discriminant_type = u8)]
+#[bin_proto(bits = 4)]
 enum E {
     V1 = 1,
-    #[codec(discriminant = 4)]
+    #[bin_proto(discriminant = 4)]
     V4,
 }
 
 #[derive(Debug, BitDecode, BitEncode, PartialEq)]
 struct S {
-    #[codec(bits = 1)]
+    #[bin_proto(bits = 1)]
     bitflag: bool,
-    #[codec(bits = 3)]
+    #[bin_proto(bits = 3)]
     bitfield: u8,
     enum_: E,
-    #[codec(write_value = self.arr.len() as u8)]
+    #[bin_proto(write_value = self.arr.len() as u8)]
     arr_len: u8,
-    #[codec(tag = arr_len as usize)]
+    #[bin_proto(tag = arr_len as usize)]
     arr: Vec<u8>,
-    #[codec(tag_type = u16, tag_value = self.prefixed_arr.len() as u16)]
+    #[bin_proto(tag_type = u16, tag_value = self.prefixed_arr.len() as u16)]
     prefixed_arr: Vec<u8>,
-    #[codec(untagged)]
+    #[bin_proto(untagged)]
     read_to_end: Vec<u8>,
 }
 
@@ -112,7 +112,7 @@ impl BitEncode<Ctx> for NeedsCtx {
 }
 
 #[derive(BitDecode, BitEncode)]
-#[codec(ctx = Ctx)]
+#[bin_proto(ctx = Ctx)]
 pub struct WithCtx(NeedsCtx);
 
 WithCtx(NeedsCtx)
