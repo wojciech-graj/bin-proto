@@ -73,6 +73,15 @@
 //! - [`Untagged`]: Specifies that the type has a tag used during decoding, but this tag is not
 //!   written during encoding
 //! - [`Bits`]: Specified that the type is a bitfield, and can have a variable number of bits
+//!
+//! # Features
+//!
+//! - `std` — Enables support for types in the standard library.
+//! - `alloc` — Enables support for types in the `alloc` crate.
+//! - `derive` — Provides procedural macros for deriving traits [`BitEncode`] and [`BitDecode`].
+//! - `prepend-tags` — Enables tag prepending for common types ([`Option`], [`str`], etc.), removing
+//!   the need for explicit tag specification for encoding/decoding. **WARNING**: length tags are
+//!   encoded as `usize`, meaning they may vary if targets have different pointer widths.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![cfg_attr(docsrs, feature(rustdoc_internals))]

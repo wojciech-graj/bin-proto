@@ -48,6 +48,26 @@ macro_rules! impl_read_list {
                 $crate::util::decode_items_to_eof::<_, E, _, _>(read, ctx).collect()
             }
         }
+
+        #[cfg(feature = "prepend-tags")]
+        impl<Ctx, T, $($h)?> $crate::BitDecode<Ctx> for $ty<T, $($h)?>
+        where
+            T: $crate::BitDecode<Ctx> $(+ $tbound0 $(+ $tbound1)?)?,
+            $($h: $hbound0 + $hbound1)?
+        {
+            fn decode<R, E>(
+                read: &mut R,
+                ctx: &mut Ctx,
+                (): (),
+            ) -> $crate::Result<Self>
+            where
+                R: ::bitstream_io::BitRead,
+                E: ::bitstream_io::Endianness,
+            {
+                let tag: usize = $crate::BitDecode::decode::<_, E>(read, ctx, ())?;
+                $crate::BitDecode::decode::<_, E>(read, ctx, $crate::Tag(tag))
+            }
+        }
     }
 }
 
@@ -70,6 +90,25 @@ macro_rules! impl_write_list {
                 $crate::util::encode_items::<_, E, _, _>(self.iter(), write,  ctx)
             }
         }
+
+        #[cfg(feature = "prepend-tags")]
+        impl<Ctx, T, $($h)?> $crate::BitEncode<Ctx> for $ty<T, $($h)?>
+        where
+            T: $crate::BitEncode<Ctx> $(+ $tbound0 $(+ $tbound1)?)?
+        {
+            fn encode<W, E>(&self,
+                write: &mut W,
+                ctx: &mut Ctx,
+                (): (),
+            ) -> $crate::Result<()>
+            where
+                W: ::bitstream_io::BitWrite,
+                E: ::bitstream_io::Endianness,
+            {
+                $crate::BitEncode::encode::<_, E>(&self.len(), write, ctx, ())?;
+                $crate::BitEncode::encode::<_, E>(self, write, ctx, $crate::Untagged)
+            }
+        }
     }
 }
 
@@ -89,6 +128,9 @@ mod vec {
         test_untagged_and_codec!(
             Vec<u8>| Untagged, Tag(3); alloc::vec![1, 2, 3] => [0x01, 0x02, 0x03]
         );
+
+        #[cfg(feature = "prepend-tags")]
+        test_roundtrip!(Vec::<i32>);
     }
 }
 
@@ -108,6 +150,9 @@ mod linked_list {
         test_untagged_and_codec!(
             LinkedList<u8>| Untagged, Tag(3); [1, 2, 3].into() => [0x01, 0x02, 0x03]
         );
+
+        #[cfg(feature = "prepend-tags")]
+        test_roundtrip!(LinkedList::<i32>);
     }
 }
 
@@ -127,6 +172,9 @@ mod vec_deque {
         test_untagged_and_codec!(
             VecDeque<u8>| Untagged, Tag(3); [1, 2, 3].into() => [0x01, 0x02, 0x03]
         );
+
+        #[cfg(feature = "prepend-tags")]
+        test_roundtrip!(VecDeque::<i32>);
     }
 }
 
@@ -146,6 +194,9 @@ mod b_tree_set {
         test_untagged_and_codec!(
             BTreeSet<u8>| Untagged, Tag(3); [1, 2, 3].into() => [0x01, 0x02, 0x03]
         );
+
+        #[cfg(feature = "prepend-tags")]
+        test_roundtrip!(BTreeSet::<i32>);
     }
 }
 
@@ -201,5 +252,8 @@ mod hash_set {
         use super::*;
 
         test_untagged_and_codec!(HashSet<u8>| Untagged, Tag(1); [1].into() => [0x01]);
+
+        #[cfg(feature = "prepend-tags")]
+        test_roundtrip!(HashSet::<i32>);
     }
 }

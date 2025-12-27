@@ -1,14 +1,26 @@
-use crate::{util, BitEncode, Result};
+use crate::{util, BitEncode, Result, Untagged};
 
 use bitstream_io::{BitWrite, Endianness};
 
+impl<Ctx> BitEncode<Ctx, Untagged> for str {
+    fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, _: Untagged) -> Result<()>
+    where
+        W: BitWrite,
+        E: Endianness,
+    {
+        util::encode_items::<_, E, _, _>(self.as_bytes(), write, ctx)
+    }
+}
+
+#[cfg(feature = "prepend-tags")]
 impl<Ctx> BitEncode<Ctx> for str {
     fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, (): ()) -> Result<()>
     where
         W: BitWrite,
         E: Endianness,
     {
-        util::encode_items::<_, E, _, _>(self.as_bytes(), write, ctx)
+        self.len().encode::<_, E>(write, ctx, ())?;
+        self.encode::<_, E>(write, ctx, Untagged)
     }
 }
 
@@ -18,7 +30,7 @@ mod decode {
     use alloc::{boxed::Box, string::String};
     use bitstream_io::BitRead;
 
-    use crate::{BitDecode, Untagged};
+    use crate::BitDecode;
 
     use super::*;
 
@@ -45,6 +57,17 @@ mod decode {
         }
     }
 
+    #[cfg(feature = "prepend-tags")]
+    impl<Ctx> BitDecode<Ctx> for Box<str> {
+        fn decode<R, E>(read: &mut R, ctx: &mut Ctx, (): ()) -> Result<Self>
+        where
+            R: BitRead,
+            E: Endianness,
+        {
+            String::decode::<_, E>(read, ctx, ()).map(Into::into)
+        }
+    }
+
     test_decode!(Box<str>| crate::Tag(3); [b'a', b'b', b'c'] => "abc".into());
 
     #[cfg(test)]
@@ -55,4 +78,4 @@ mod decode {
     }
 }
 
-test_encode!(&str; "abc" => [b'a', b'b', b'c']);
+test_encode!(&str| Untagged; "abc" => [b'a', b'b', b'c']);

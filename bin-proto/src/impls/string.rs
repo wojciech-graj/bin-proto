@@ -44,4 +44,31 @@ impl<Ctx> BitDecode<Ctx, Untagged> for String {
     }
 }
 
+#[cfg(feature = "prepend-tags")]
+impl<Ctx> BitEncode<Ctx> for String {
+    fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, (): ()) -> Result<()>
+    where
+        W: BitWrite,
+        E: Endianness,
+    {
+        self.len().encode::<_, E>(write, ctx, ())?;
+        self.encode::<_, E>(write, ctx, Untagged)
+    }
+}
+
+#[cfg(feature = "prepend-tags")]
+impl<Ctx> BitDecode<Ctx> for String {
+    fn decode<R, E>(read: &mut R, ctx: &mut Ctx, (): ()) -> Result<Self>
+    where
+        R: BitRead,
+        E: Endianness,
+    {
+        let tag = usize::decode::<_, E>(read, ctx, ())?;
+        Self::decode::<_, E>(read, ctx, crate::Tag(tag))
+    }
+}
+
 test_untagged_and_codec!(String| Untagged, crate::Tag(3); "abc".into() => [b'a', b'b', b'c']);
+
+#[cfg(feature = "prepend-tags")]
+test_roundtrip!(String);

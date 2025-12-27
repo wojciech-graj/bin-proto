@@ -1,6 +1,6 @@
 [package]
 name = "bin-proto"
-version = "0.12.2"
+version = "0.12.3"
 authors = ["Wojciech Graj <me@w-graj.net>"]
 edition = "2021"
 rust-version = "1.83.0"
@@ -21,6 +21,7 @@ rustdoc-args = ["--cfg", "docsrs"]
 alloc = ["bitstream-io/alloc", "core2/alloc"]
 default = ["alloc", "derive", "std"]
 derive = ["dep:bin-proto-derive"]
+prepend-tags = []
 std = ["bitstream-io/std", "core2/std", "alloc"]
 
 [dependencies]

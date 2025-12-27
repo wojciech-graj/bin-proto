@@ -29,21 +29,18 @@ jobs:
     - name: Install cargo-binstall
       uses: cargo-bins/cargo-binstall@main
 
+    - name: Install cargo-hack
+      run: cargo binstall --no-confirm cargo-hack
+
     - name: Test
-      run: cargo test
-
-    - name: Test (no_std)
-      run: cargo test --no-default-features --features derive
-
-    - name: Test (no_std, alloc)
-      run: cargo test --no-default-features --features derive,alloc
+      run: cargo hack test --feature-powerset
 
     - name: Clippy
-      run: cargo clippy
+      run: cargo hack clippy --feature-powerset
 
     - name: Bench
       working-directory: bench
-      run: cargo +nightly bench
+      run: cargo +nightly benchi
 
     - name: Install cargo-msrv
       run: cargo binstall --no-confirm cargo-msrv

@@ -52,6 +52,27 @@ macro_rules! impl_read_map {
                 $crate::util::decode_items_to_eof::<_, E, _, _>(read,  ctx).collect()
             }
         }
+
+        #[cfg(feature = "prepend-tags")]
+        impl<Ctx, K, V, $($h)?> $crate::BitDecode<Ctx> for $ty<K, V, $($h)?>
+        where
+            K: $crate::BitDecode<Ctx> + $kbound0 $(+ $kbound1)?,
+            V: $crate::BitDecode<Ctx>,
+            $($h: $hbound0 + $hbound1)?
+        {
+            fn decode<R, E>(
+                read: &mut R,
+                ctx: &mut Ctx,
+                (): (),
+            ) -> $crate::Result<Self>
+            where
+                R: ::bitstream_io::BitRead,
+                E: ::bitstream_io::Endianness,
+            {
+                let tag: usize = $crate::BitDecode::decode::<_, E>(read, ctx, ())?;
+                $crate::BitDecode::decode::<_, E>(read, ctx, $crate::Tag(tag))
+            }
+        }
     };
 }
 
@@ -81,6 +102,27 @@ macro_rules! impl_write_map {
                 Ok(())
             }
         }
+
+        #[cfg(feature = "prepend-tags")]
+        impl<Ctx, K, V, $($h)?> $crate::BitEncode<Ctx> for $ty<K, V, $($h)?>
+        where
+            K: $crate::BitEncode<Ctx> + $kbound0 $(+ $kbound1)?,
+            V: $crate::BitEncode<Ctx>
+        {
+            fn encode<W, E>(
+                &self,
+                write: &mut W,
+                ctx: &mut Ctx,
+                (): (),
+            ) -> $crate::Result<()>
+            where
+                W: ::bitstream_io::BitWrite,
+                E: ::bitstream_io::Endianness,
+            {
+                $crate::BitEncode::encode::<_, E>(&self.len(), write, ctx, ())?;
+                $crate::BitEncode::encode::<_, E>(self, write, ctx, $crate::Untagged)
+            }
+        }
     }
 }
 
@@ -101,6 +143,9 @@ mod hash_map {
         test_untagged_and_codec!(
             HashMap<u8, u8>| Untagged, Tag(1); [(1, 2)].into() => [0x01, 0x02]
         );
+
+        #[cfg(feature = "prepend-tags")]
+        test_roundtrip!(HashMap::<i32, i64>);
     }
 }
 
@@ -121,5 +166,8 @@ mod b_tree_map {
             BTreeMap<u8, u8>| Untagged, Tag(3);
             [(1, 2), (3, 4), (5, 6)].into() => [0x01, 0x02, 0x03, 0x04, 0x05, 0x06]
         );
+
+        #[cfg(feature = "prepend-tags")]
+        test_roundtrip!(BTreeMap::<i32, i64>);
     }
 }
