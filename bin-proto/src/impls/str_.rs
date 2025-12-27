@@ -76,6 +76,9 @@ mod decode {
 
         test_decode!(Box<str>| Untagged; [b'a', b'b', b'c'] => "abc".into());
     }
+
+    #[cfg(feature = "prepend-tags")]
+    test_roundtrip!(Box<str>);
 }
 
 test_encode!(&str| Untagged; "abc" => [b'a', b'b', b'c']);

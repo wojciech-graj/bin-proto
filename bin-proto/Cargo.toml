@@ -1,6 +1,6 @@
 [package]
 name = "bin-proto"
-version = "0.12.3"
+version = "0.12.4"
 authors = ["Wojciech Graj <me@w-graj.net>"]
 edition = "2021"
 rust-version = "1.83.0"

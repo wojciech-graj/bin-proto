@@ -16,14 +16,17 @@ where
 }
 
 #[cfg(feature = "prepend-tags")]
-impl<Ctx, T> BitEncode<Ctx> for [T] {
+impl<Ctx, T> BitEncode<Ctx> for [T]
+where
+    T: BitEncode<Ctx>,
+{
     fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, (): ()) -> Result<()>
     where
         W: BitWrite,
         E: Endianness,
     {
         self.len().encode::<_, E>(write, ctx, ())?;
-        self.encode::<_, E>(write, ctx, ())
+        self.encode::<_, E>(write, ctx, Untagged)
     }
 }
 
@@ -86,6 +89,9 @@ mod decode {
 
         test_decode!(Box<[u8]>| Untagged; [0x01, 0x02, 0x03] => Box::new([1, 2, 3]));
     }
+
+    #[cfg(feature = "prepend-tags")]
+    test_roundtrip!(Box<[i32]>);
 }
 
 test_encode!(&[u8]| Untagged; &[1, 2, 3] => [0x01, 0x02, 0x03]);

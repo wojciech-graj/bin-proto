@@ -1,12 +1,11 @@
-#[allow(unused)]
 macro_rules! impl_container_write {
     (
-        $ty:ident<$($a:lifetime,)? T $(: $tbound0:ident $(+ ?$tbound1:ident + $tbound2:lifetime)?)?>
+        $ty:ident<$($a:lifetime,)? T $(: ?$tbound0:ident $(+ $tbound1:ident + $tbound2:lifetime)?)?>
         $(=> $f:ident)?
     ) => {
         impl<$($a,)? Ctx, Tag, T> $crate::BitEncode<Ctx, Tag> for $ty<$($a,)? T>
         where
-            T: $crate::BitEncode<Ctx, Tag> $(+ $tbound0 $(+ ?$tbound1 + $tbound2)?)?,
+            T: $crate::BitEncode<Ctx, Tag> $(+ ?$tbound0 $(+ $tbound1 + $tbound2)?)?,
         {
             fn encode<W, E>(
                 &self,
@@ -33,10 +32,10 @@ macro_rules! impl_container_write {
 
 #[allow(unused)]
 macro_rules! impl_container_read {
-    ($ty:ident<T>) => {
+    ($ty:ident<T $(: ?$tbound:ident)?>) => {
         impl<Ctx, Tag, T> $crate::BitDecode<Ctx, Tag> for $ty<T>
         where
-            T: $crate::BitDecode<Ctx, Tag>,
+            T: $crate::BitDecode<Ctx, Tag> $(+ ?$tbound)?,
         {
             fn decode<R, E>(read: &mut R, ctx: &mut Ctx, tag: Tag) -> $crate::Result<Self>
             where
@@ -53,8 +52,8 @@ macro_rules! impl_container_read {
 mod box_ {
     use alloc::boxed::Box;
 
-    impl_container_write!(Box<T>);
-    impl_container_read!(Box<T>);
+    impl_container_write!(Box<T: ?Sized>);
+    impl_container_read!(Box<T: ?Sized>);
     test_codec!(Box<u8>; Box::new(1) => [0x01]);
     test_roundtrip!(Box<u8>);
 }
@@ -63,8 +62,8 @@ mod box_ {
 mod rc {
     use alloc::rc::Rc;
 
-    impl_container_write!(Rc<T>);
-    impl_container_read!(Rc<T>);
+    impl_container_write!(Rc<T: ?Sized>);
+    impl_container_read!(Rc<T: ?Sized>);
     test_codec!(Rc<u8>; Rc::new(1) => [0x01]);
     test_roundtrip!(Rc<u8>);
 }
@@ -73,8 +72,8 @@ mod rc {
 mod arc {
     use alloc::sync::Arc;
 
-    impl_container_write!(Arc<T>);
-    impl_container_read!(Arc<T>);
+    impl_container_write!(Arc<T: ?Sized>);
+    impl_container_read!(Arc<T: ?Sized>);
     test_codec!(Arc<u8>; Arc::new(1) => [0x01]);
     test_roundtrip!(Arc<u8>);
 }
@@ -83,7 +82,7 @@ mod arc {
 mod cow {
     use alloc::borrow::{Cow, ToOwned};
 
-    impl_container_write!(Cow<'a, T: ToOwned + ?Sized + 'a>);
+    impl_container_write!(Cow<'a, T: ?Sized + ToOwned + 'a>);
     test_encode!(Cow<u8>; Cow::Owned(1) => [0x01]);
 }
 
@@ -114,7 +113,7 @@ mod cell {
 mod rwlock {
     use std::sync::RwLock;
 
-    impl_container_write!(RwLock<T> => read);
+    impl_container_write!(RwLock<T: ?Sized> => read);
 
     #[cfg(test)]
     mod tests {
@@ -145,13 +144,13 @@ mod rwlock {
 mod mutex {
     use std::sync::Mutex;
 
-    impl_container_write!(Mutex<T> => lock);
+    impl_container_write!(Mutex<T: ?Sized> => lock);
     test_encode!(Mutex<u8>; Mutex::new(1) => [0x01]);
 }
 
 mod ref_cell {
     use core::cell::RefCell;
 
-    impl_container_write!(RefCell<T> => try_borrow);
+    impl_container_write!(RefCell<T: ?Sized> => try_borrow);
     test_encode!(RefCell<u8>; RefCell::new(1) => [0x01]);
 }

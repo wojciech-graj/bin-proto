@@ -1,3 +1,6 @@
+# v0.12.4
+- Add `?Sized` bound to container contents (e.g. `Box<T>`)
+- Fix tag prepended slice encoding
 # v0.12.3
 - Add `prepend-tags` feature
 # v0.12.2
