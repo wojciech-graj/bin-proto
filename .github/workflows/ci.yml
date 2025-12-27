@@ -38,10 +38,6 @@ jobs:
     - name: Clippy
       run: cargo hack clippy --feature-powerset
 
-    - name: Bench
-      working-directory: bench
-      run: cargo +nightly benchi
-
     - name: Install cargo-msrv
       run: cargo binstall --no-confirm cargo-msrv
 

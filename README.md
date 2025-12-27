@@ -16,6 +16,8 @@ bit streams, as their `BitRead` and `BitWrite` traits are being used internally.
 
 An alternative to [deku](https://crates.io/crates/deku) and [binrw](https://crates.io/crates/binrw).
 
+See [rust_serialization_benchmark](https://github.com/djkoloski/rust_serialization_benchmark) for performance figures.
+
 ## Example
 
 Define a type with the `#[derive(bin_proto::BitDecode, bin_proto::BitEncode)]` attributes.
@@ -119,7 +121,3 @@ WithCtx(NeedsCtx)
     .encode_bytes_ctx(bin_proto::BigEndian, &mut Ctx, ())
     .unwrap();
 ```
-
-## Performance / Alternatives
-
-See [GitHub Actions](https://github.com/wojciech-graj/bin-proto/actions) for latest benchmark results with comparison against deku.

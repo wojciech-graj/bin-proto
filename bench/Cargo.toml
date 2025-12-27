@@ -1,9 +1,0 @@
-[package]
-name = "bin-proto-bench"
-version = "0.0.0"
-edition = "2021"
-publish = false
-
-[dependencies]
-bin-proto = { path = "../bin-proto" }
-deku = "0.19.0"
