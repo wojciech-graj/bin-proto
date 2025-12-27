@@ -20,12 +20,6 @@ jobs:
         profile: minimal
         components: clippy
 
-    - name: Set up Rust - Nightly
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: nightly
-        profile: minimal
-
     - name: Install cargo-binstall
       uses: cargo-bins/cargo-binstall@main
 
@@ -37,6 +31,19 @@ jobs:
 
     - name: Clippy
       run: cargo hack clippy --feature-powerset
+
+    - name: Set up Rust - Nightly
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: nightly
+        profile: minimal
+        components: miri
+
+    - name: Miri
+      env:
+        PROPTEST_CASES: 16
+        MIRIFLAGS: -Zmiri-disable-isolation
+      run: cargo +nightly miri test --all-features
 
     - name: Install cargo-msrv
       run: cargo binstall --no-confirm cargo-msrv
