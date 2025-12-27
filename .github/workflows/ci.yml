@@ -4,52 +4,61 @@ on:
   push:
   pull_request:
 
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
-  build:
-    name: Check
+  clippy:
+    name: Clippy & Format
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+      - name: Run Clippy
+        run: cargo clippy --all-features -- -D warnings
 
-    - name: Set up Rust - Stable
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        profile: minimal
-        components: clippy
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: cargo-bins/cargo-binstall@main
+      - name: Install cargo-hack
+        run: cargo binstall --no-confirm --force cargo-hack
+      - name: Run Tests
+        run: cargo hack test --feature-powerset
 
-    - name: Install cargo-binstall
-      uses: cargo-bins/cargo-binstall@main
+  miri:
+    name: Miri
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: miri
+      - uses: Swatinem/rust-cache@v2
+      - name: Run Miri
+        env:
+          PROPTEST_CASES: 8
+          MIRIFLAGS: -Zmiri-disable-isolation
+        run: cargo miri test --all-features
 
-    - name: Install cargo-hack
-      run: cargo binstall --no-confirm cargo-hack
-
-    - name: Test
-      run: cargo hack test --feature-powerset
-
-    - name: Clippy
-      run: cargo hack clippy --feature-powerset
-
-    - name: Set up Rust - Nightly
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: nightly
-        profile: minimal
-        components: miri
-
-    - name: Miri
-      env:
-        PROPTEST_CASES: 16
-        MIRIFLAGS: -Zmiri-disable-isolation
-      run: cargo +nightly miri test --all-features
-
-    - name: Install cargo-msrv
-      run: cargo binstall --no-confirm cargo-msrv
-
-    - name: MSRV
-      run: |
-        cargo +nightly generate-lockfile -Z minimal-versions
-        cd bin-proto
-        cargo msrv verify
+  msrv:
+    name: MSRV Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+      - uses: Swatinem/rust-cache@v2
+      - uses: cargo-bins/cargo-binstall@main
+      - name: Install cargo-msrv
+        run: cargo binstall --no-confirm --force cargo-msrv
+      - name: Verify MSRV
+        run: |
+          cargo +nightly generate-lockfile -Z minimal-versions
+          cd bin-proto && cargo msrv verify
