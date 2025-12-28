@@ -52,3 +52,10 @@ mod saturating {
     impl_newtype!(Saturating);
     test_roundtrip!(Saturating<u8>);
 }
+
+mod reverse {
+    use core::cmp::Reverse;
+
+    impl_newtype!(Reverse);
+    test_roundtrip!(Reverse<u8>);
+}
