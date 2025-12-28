@@ -50,5 +50,5 @@ mod saturating {
     use core::num::Saturating;
 
     impl_newtype!(Saturating);
-    // TODO: https://github.com/proptest-rs/proptest/pull/585
+    test_roundtrip!(Saturating<u8>);
 }
