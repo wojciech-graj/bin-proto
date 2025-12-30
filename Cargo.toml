@@ -4,6 +4,6 @@ members = [
   "bin-proto-derive",
 ]
 exclude = [
-  "bench",
+  "tests",
 ]
 resolver = "2"

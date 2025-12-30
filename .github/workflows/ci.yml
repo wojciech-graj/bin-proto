@@ -62,3 +62,29 @@ jobs:
         run: |
           cargo +nightly generate-lockfile -Z minimal-versions
           cd bin-proto && cargo msrv verify
+
+  no_std:
+    name: Check no_std
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-none
+      - uses: Swatinem/rust-cache@v2
+      - name: Build
+        run: cargo b --package tests --target x86_64-unknown-none
+        working-directory: tests
+
+  alloc:
+    name: Check alloc
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-none
+      - uses: Swatinem/rust-cache@v2
+      - name: Build
+        run: cargo b --package tests --target x86_64-unknown-none --features alloc
+        working-directory: tests

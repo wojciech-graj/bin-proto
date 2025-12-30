@@ -268,7 +268,7 @@ macro_rules! test_codec {
 
 macro_rules! test_roundtrip {
     ($ty:ty) => {
-        #[cfg(all(test, feature = "alloc"))]
+        #[cfg(all(test, feature = "std"))]
         ::proptest::proptest!(
             #[test]
             fn roundtrip(x in ::proptest::arbitrary::any::<$ty>()) {
