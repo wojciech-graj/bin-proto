@@ -72,19 +72,9 @@ jobs:
         with:
           targets: x86_64-unknown-none
       - uses: Swatinem/rust-cache@v2
-      - name: Build
-        run: cargo b --package tests --target x86_64-unknown-none
-        working-directory: tests
-
-  alloc:
-    name: Check alloc
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: x86_64-unknown-none
-      - uses: Swatinem/rust-cache@v2
-      - name: Build
-        run: cargo b --package tests --target x86_64-unknown-none --features alloc
-        working-directory: tests
+      - name: Install cargo-no-std
+        run: cargo install cargo-no-std
+      - name: Check no_std
+        run: cargo no-std --package bin-proto --no-default-features --features prepend-tags
+      - name: Check alloc
+        run: cargo no-std --package bin-proto --no-default-features --alloc --features "prepend-tags alloc"

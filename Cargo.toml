@@ -3,7 +3,4 @@ members = [
   "bin-proto",
   "bin-proto-derive",
 ]
-exclude = [
-  "tests",
-]
 resolver = "2"
