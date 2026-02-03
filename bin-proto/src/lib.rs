@@ -565,7 +565,7 @@ mod codec;
 mod discriminable;
 mod error;
 mod impls;
-mod util;
+pub mod util;
 
 pub extern crate bitstream_io;
 

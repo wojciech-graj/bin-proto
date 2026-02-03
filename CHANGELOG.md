@@ -1,5 +1,6 @@
 # v0.12.5
 - Implement `BitDecode` and `BitEncode` on `Reverse`
+- Make `util` module public
 # v0.12.4
 - Add `?Sized` bound to container contents (e.g. `Box<T>`)
 - Fix tag prepended slice encoding

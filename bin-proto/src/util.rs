@@ -29,7 +29,7 @@ where
     Ok(())
 }
 
-#[allow(unused)]
+/// [`BitDecode`]s items until EOF
 pub fn decode_items_to_eof<'a, R, E, Ctx, T>(
     read: &'a mut R,
     ctx: &'a mut Ctx,
