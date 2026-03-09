@@ -116,116 +116,119 @@ impl Attrs {
         let mut ctx_bounds = None;
 
         for attr in attribs {
-            if !attr.path().is_ident("bin_proto") {
-                continue;
-            }
+            if attr.path().is_ident("bin_proto") {
+                attr.parse_nested_meta(|meta| {
+                    let Some(ident) = meta.path.get_ident() else {
+                        return Err(meta.error("unrecognized attribute"));
+                    };
 
-            attr.parse_nested_meta(|meta| {
-                let Some(ident) = meta.path.get_ident() else {
-                    return Err(meta.error("unrecognized attribute"));
-                };
-
-                match ident.to_string().as_str() {
-                    "untagged" => {
-                        expect_attr_kind!(AttrKind::Field, kind, meta);
-                        attrs.untagged = true;
-                    }
-                    "discriminant_type" => {
-                        expect_attr_kind!(AttrKind::Enum, kind, meta);
-                        attrs.discriminant_type = Some(meta.value()?.parse()?);
-                    }
-                    "discriminant" => {
-                        expect_attr_kind!(AttrKind::Variant, kind, meta);
-                        attrs.discriminant = Some(meta.value()?.parse()?);
-                    }
-                    "ctx" => {
-                        expect_attr_kind!(AttrKind::Enum | AttrKind::Struct, kind, meta);
-                        ctx = Some(meta.value()?.parse()?);
-                    }
-                    "ctx_generics" => {
-                        expect_attr_kind!(AttrKind::Enum | AttrKind::Struct, kind, meta);
-                        let content;
-                        parenthesized!(content in meta.input);
-                        attrs.ctx_generics = Some(
+                    match ident.to_string().as_str() {
+                        "untagged" => {
+                            expect_attr_kind!(AttrKind::Field, kind, meta);
+                            attrs.untagged = true;
+                        }
+                        "discriminant_type" => {
+                            expect_attr_kind!(AttrKind::Enum, kind, meta);
+                            attrs.discriminant_type = Some(meta.value()?.parse()?);
+                        }
+                        "discriminant" => {
+                            expect_attr_kind!(AttrKind::Variant, kind, meta);
+                            attrs.discriminant = Some(meta.value()?.parse()?);
+                        }
+                        "ctx" => {
+                            expect_attr_kind!(AttrKind::Enum | AttrKind::Struct, kind, meta);
+                            ctx = Some(meta.value()?.parse()?);
+                        }
+                        "ctx_generics" => {
+                            expect_attr_kind!(AttrKind::Enum | AttrKind::Struct, kind, meta);
+                            let content;
+                            parenthesized!(content in meta.input);
+                            attrs.ctx_generics = Some(
                             Punctuated::<syn::GenericParam, Token![,]>::parse_separated_nonempty(
                                 &content,
                             )?
                             .into_iter()
                             .collect(),
                         );
-                    }
-                    "ctx_bounds" => {
-                        expect_attr_kind!(AttrKind::Enum | AttrKind::Struct, kind, meta);
-                        let content;
-                        parenthesized!(content in meta.input);
-                        ctx_bounds = Some(
+                        }
+                        "ctx_bounds" => {
+                            expect_attr_kind!(AttrKind::Enum | AttrKind::Struct, kind, meta);
+                            let content;
+                            parenthesized!(content in meta.input);
+                            ctx_bounds = Some(
                             Punctuated::<syn::TypeParamBound, Token![,]>::parse_separated_nonempty(
                                 &content,
                             )?
                             .into_iter()
                             .collect(),
                         );
+                        }
+                        "bits" => {
+                            expect_attr_kind!(AttrKind::Enum | AttrKind::Field, kind, meta);
+                            attrs.bits = Some(meta.value()?.parse()?);
+                        }
+                        "write_value" => {
+                            expect_attr_kind!(AttrKind::Field, kind, meta);
+                            attrs.write_value = Some(meta.value()?.parse()?);
+                        }
+                        "tag" => {
+                            expect_attr_kind!(AttrKind::Field, kind, meta);
+                            tag = Some(meta.value()?.parse()?);
+                        }
+                        "tag_type" => {
+                            expect_attr_kind!(AttrKind::Field, kind, meta);
+                            tag_type = Some(meta.value()?.parse()?);
+                        }
+                        "tag_value" => {
+                            expect_attr_kind!(AttrKind::Field, kind, meta);
+                            tag_value = Some(meta.value()?.parse()?);
+                        }
+                        "tag_bits" => {
+                            expect_attr_kind!(AttrKind::Field, kind, meta);
+                            tag_bits = Some(meta.value()?.parse()?);
+                        }
+                        "skip_encode" => {
+                            expect_attr_kind!(AttrKind::Field | AttrKind::Variant, kind, meta);
+                            attrs.skip_encode = true;
+                        }
+                        "skip_decode" => {
+                            expect_attr_kind!(AttrKind::Field | AttrKind::Variant, kind, meta);
+                            attrs.skip_decode = true;
+                        }
+                        "skip" => {
+                            expect_attr_kind!(AttrKind::Field | AttrKind::Variant, kind, meta);
+                            attrs.skip_encode = true;
+                            attrs.skip_decode = true;
+                        }
+                        "pad_before" => {
+                            expect_attr_kind!(AttrKind::Struct | AttrKind::Field, kind, meta);
+                            attrs.pad_before = Some(meta.value()?.parse()?);
+                        }
+                        "pad_after" => {
+                            expect_attr_kind!(AttrKind::Struct | AttrKind::Field, kind, meta);
+                            attrs.pad_after = Some(meta.value()?.parse()?);
+                        }
+                        "magic" => {
+                            expect_attr_kind!(AttrKind::Struct | AttrKind::Field, kind, meta);
+                            attrs.magic = Some(meta.value()?.parse()?);
+                        }
+                        "other" => {
+                            expect_attr_kind!(AttrKind::Variant, kind, meta);
+                            attrs.other = true;
+                        }
+                        _ => {
+                            return Err(meta.error("unrecognized attribute"));
+                        }
                     }
-                    "bits" => {
-                        expect_attr_kind!(AttrKind::Enum | AttrKind::Field, kind, meta);
-                        attrs.bits = Some(meta.value()?.parse()?);
-                    }
-                    "write_value" => {
-                        expect_attr_kind!(AttrKind::Field, kind, meta);
-                        attrs.write_value = Some(meta.value()?.parse()?);
-                    }
-                    "tag" => {
-                        expect_attr_kind!(AttrKind::Field, kind, meta);
-                        tag = Some(meta.value()?.parse()?);
-                    }
-                    "tag_type" => {
-                        expect_attr_kind!(AttrKind::Field, kind, meta);
-                        tag_type = Some(meta.value()?.parse()?);
-                    }
-                    "tag_value" => {
-                        expect_attr_kind!(AttrKind::Field, kind, meta);
-                        tag_value = Some(meta.value()?.parse()?);
-                    }
-                    "tag_bits" => {
-                        expect_attr_kind!(AttrKind::Field, kind, meta);
-                        tag_bits = Some(meta.value()?.parse()?);
-                    }
-                    "skip_encode" => {
-                        expect_attr_kind!(AttrKind::Field | AttrKind::Variant, kind, meta);
-                        attrs.skip_encode = true;
-                    }
-                    "skip_decode" => {
-                        expect_attr_kind!(AttrKind::Field | AttrKind::Variant, kind, meta);
-                        attrs.skip_decode = true;
-                    }
-                    "skip" => {
-                        expect_attr_kind!(AttrKind::Field | AttrKind::Variant, kind, meta);
-                        attrs.skip_encode = true;
-                        attrs.skip_decode = true;
-                    }
-                    "pad_before" => {
-                        expect_attr_kind!(AttrKind::Struct | AttrKind::Field, kind, meta);
-                        attrs.pad_before = Some(meta.value()?.parse()?);
-                    }
-                    "pad_after" => {
-                        expect_attr_kind!(AttrKind::Struct | AttrKind::Field, kind, meta);
-                        attrs.pad_after = Some(meta.value()?.parse()?);
-                    }
-                    "magic" => {
-                        expect_attr_kind!(AttrKind::Struct | AttrKind::Field, kind, meta);
-                        attrs.magic = Some(meta.value()?.parse()?);
-                    }
-                    "other" => {
-                        expect_attr_kind!(AttrKind::Variant, kind, meta);
-                        attrs.other = true;
-                    }
-                    _ => {
-                        return Err(meta.error("unrecognized attribute"));
-                    }
-                }
 
-                Ok(())
-            })?;
+                    Ok(())
+                })?;
+            } else if attr.path().is_ident("repr")
+                && kind.is_none_or(|kind| kind == AttrKind::Enum)
+                && attrs.discriminant_type.is_none()
+            {
+                attrs.discriminant_type = Some(attr.parse_args()?);
+            }
         }
 
         match (tag, tag_type, tag_value, tag_bits) {

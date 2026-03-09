@@ -52,6 +52,13 @@ pub struct BitFieldTaggedEnumContainer {
     e: Enum2,
 }
 
+#[derive(Debug, BitDecode, BitEncode, PartialEq)]
+#[repr(u8)]
+pub enum Repr {
+    VariantA = 1,
+    VariantB = 2,
+}
+
 #[test]
 fn decode_enum_variant() {
     assert_eq!(
@@ -176,4 +183,17 @@ fn decode_enum_variant_catch_all() {
         (Enum2::CatchAll(8), 10),
         Enum2::decode_bytes(&[2, 0], BigEndian).unwrap()
     );
+}
+
+#[test]
+fn decode_enum_repr() {
+    assert_eq!(
+        (Repr::VariantA, 8),
+        Repr::decode_bytes(&[1], BigEndian).unwrap()
+    );
+}
+
+#[test]
+fn encode_enum_repr() {
+    assert_eq!(Repr::VariantB.encode_bytes(BigEndian).unwrap(), vec![2]);
 }

@@ -186,10 +186,22 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// Specify if enum variant should be determined by a string or interger representation of its
 /// discriminant.
 ///
+/// Falls back to the type specified in `#[repr(...)]` if not present.
+///
 /// ```
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
 /// #[bin_proto(discriminant_type = u8)]
+/// enum Example {
+///     Variant1 = 1,
+///     Variant5 = 5,
+/// }
+/// ```
+///
+/// ```
+/// # use bin_proto::{BitDecode, BitEncode};
+/// #[derive(BitDecode, BitEncode)]
+/// #[repr(u8)]
 /// enum Example {
 ///     Variant1 = 1,
 ///     Variant5 = 5,

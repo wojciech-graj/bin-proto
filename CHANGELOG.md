@@ -1,3 +1,5 @@
+# v0.12.6
+- Fall back to `#[repr(...)]` if `#[discriminant_type(...)]` is missing
 # v0.12.5
 - Implement `BitDecode` and `BitEncode` on `Reverse`
 - Make `util` module public
