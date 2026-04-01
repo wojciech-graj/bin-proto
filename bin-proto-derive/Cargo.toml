@@ -11,7 +11,7 @@ readme = "../README.md"
 repository = "https://github.com/wojciech-graj/bin-proto"
 documentation = "https://docs.rs/bin-proto"
 keywords = ["binary", "encode", "decode", "serialize", "deserialize"]
-categories = ["encoding", "parsing"]
+categories = ["encoding", "parsing", "no-std::no-alloc"]
 
 [lib]
 proc-macro = true
