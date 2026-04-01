@@ -5,28 +5,28 @@ edition = "2021"
 rust-version = "1.84.0"
 
 description = "Conversion to/from binary for arbitrary types"
-license = "MIT"
+documentation = "https://docs.rs/bin-proto"
 readme = "../README.md"
 repository = "https://github.com/wojciech-graj/bin-proto"
-documentation = "https://docs.rs/bin-proto"
-keywords = ["binary", "encode", "decode", "serialize", "deserialize"]
-categories = ["encoding", "parsing", "no-std::no-alloc"]
+license = "MIT"
+keywords = ["binary", "decode", "deserialize", "encode", "serialize"]
+categories = ["encoding", "no-std::no-alloc", "parsing"]
 
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
-[features]
-alloc = ["bitstream-io/alloc", "core2/alloc"]
-default = ["alloc", "derive", "std"]
-derive = ["dep:bin-proto-derive"]
-prepend-tags = []
-std = ["bitstream-io/std", "core2/std", "alloc"]
-
 [dependencies]
-bin-proto-derive = { version = "0.12.2", path = "../bin-proto-derive", optional = true }
+bin-proto-derive = { path = "../bin-proto-derive", version = "0.12.2", optional = true }
 bitstream-io = { version = "4.6.0", default-features = false }
 core2 = { version = "0.4.0", default-features = false }
 
 [dev-dependencies]
 proptest = "1.8.0"
+
+[features]
+default = ["alloc", "derive", "std"]
+alloc = ["bitstream-io/alloc", "core2/alloc"]
+derive = ["dep:bin-proto-derive"]
+prepend-tags = []
+std = ["alloc", "bitstream-io/std", "core2/std"]

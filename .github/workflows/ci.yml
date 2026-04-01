@@ -9,16 +9,40 @@ env:
 
 jobs:
   clippy:
-    name: Clippy & Format
+    name: Clippy
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
-          components: clippy, rustfmt
+          components: clippy
       - uses: Swatinem/rust-cache@v2
       - name: Run Clippy
         run: cargo clippy --all-features -- -D warnings
+
+  rustfmt:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: Run Rustfmt
+        run: cargo fmt --check
+
+  tombi:
+    name: Validate TOML
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: tombi-toml/setup-tombi@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Validate TOML files
+        run: tombi lint
+      - name: Format TOML files
+        run: tombi format --check
 
   test:
     name: Test Suite

@@ -5,17 +5,17 @@ edition = "2021"
 rust-version = "1.84.0"
 
 description = "Derive macros for bin-proto"
-license = "MIT"
+documentation = "https://docs.rs/bin-proto"
 readme = "../README.md"
 repository = "https://github.com/wojciech-graj/bin-proto"
-documentation = "https://docs.rs/bin-proto"
-keywords = ["binary", "encode", "decode", "serialize", "deserialize"]
-categories = ["encoding", "parsing", "no-std::no-alloc"]
+license = "MIT"
+keywords = ["binary", "decode", "deserialize", "encode", "serialize"]
+categories = ["encoding", "no-std::no-alloc", "parsing"]
 
 [lib]
 proc-macro = true
 
 [dependencies]
-syn = { version = "2.0.32", features = ["full"] }
-quote = "1.0.0"
 proc-macro2 = "1.0.0"
+quote = "1.0.0"
+syn = { version = "2.0.32", features = ["full"] }
