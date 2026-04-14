@@ -5,7 +5,7 @@ use std::io::{self, Cursor};
 
 use bitstream_io::{BitRead, BitReader, BitWrite, BitWriter, Endianness};
 #[cfg(not(feature = "std"))]
-use core2::io::{self, Cursor};
+use no_std_io2::io::{self, Cursor};
 
 use crate::{Error, Result};
 
@@ -244,7 +244,7 @@ macro_rules! test_encode {
                 let mut buffer = [0u8; 16];
                 value
                     .encode::<_, ::bitstream_io::BigEndian>(
-                        &mut ::bitstream_io::BitWriter::endian(&mut ::core2::io::Cursor::new(buffer.as_mut_slice()), ::bitstream_io::BigEndian),
+                        &mut ::bitstream_io::BitWriter::endian(&mut ::no_std_io2::io::Cursor::new(buffer.as_mut_slice()), ::bitstream_io::BigEndian),
                         &mut (),
                         ($($tag)?),
                     )

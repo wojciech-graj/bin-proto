@@ -8,7 +8,7 @@ use core::iter;
 use std::io;
 
 #[cfg(not(feature = "std"))]
-use core2::io;
+use no_std_io2::io;
 
 /// [`BitEncode`]s an iterator of parcels to the stream.
 ///

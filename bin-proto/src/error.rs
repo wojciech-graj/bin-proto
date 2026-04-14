@@ -5,7 +5,7 @@ use core::{convert::Infallible, fmt};
 use std::io;
 
 #[cfg(not(feature = "std"))]
-use core2::io;
+use no_std_io2::io;
 
 /// Alias for a Result with the error type [`Error`].
 pub type Result<T> = core::result::Result<T, Error>;

@@ -1,3 +1,5 @@
+# v0.12.7
+- Switch from `core2` to `no_std_io2`, as core2 was yanked
 # v0.12.6
 - Fall back to `#[repr(...)]` if `#[discriminant_type(...)]` is missing
 # v0.12.5
