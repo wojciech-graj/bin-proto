@@ -3,14 +3,15 @@ use proc_macro2::{Span, TokenStream};
 use syn::{parse_quote, Error, Result};
 
 pub fn decode_discriminant(attrs: &Attrs) -> TokenStream {
+    let crate_path = attrs.crate_path();
     if let Some(bits) = &attrs.bits {
-        quote!(::bin_proto::BitDecode::decode::<_, __E>(
+        quote!(#crate_path::BitDecode::decode::<_, __E>(
             __io_reader,
             __ctx,
-            ::bin_proto::Bits::<#bits>,
+            #crate_path::Bits::<#bits>,
         ))
     } else {
-        quote!(::bin_proto::BitDecode::decode::<_, __E>(
+        quote!(#crate_path::BitDecode::decode::<_, __E>(
             __io_reader,
             __ctx,
             (),
@@ -19,15 +20,16 @@ pub fn decode_discriminant(attrs: &Attrs) -> TokenStream {
 }
 
 pub fn encode_discriminant(attrs: &Attrs) -> TokenStream {
+    let crate_path = attrs.crate_path();
     let encode_tag = if let Some(bits) = &attrs.bits {
-        quote!(::bin_proto::BitEncode::encode::<_, __E>(
+        quote!(#crate_path::BitEncode::encode::<_, __E>(
             &__tag,
             __io_writer,
             __ctx,
-            ::bin_proto::Bits::<#bits>,
+            #crate_path::Bits::<#bits>,
         ))
     } else {
-        quote!(::bin_proto::BitEncode::encode::<_, __E>(
+        quote!(#crate_path::BitEncode::encode::<_, __E>(
             &__tag,
             __io_writer,
             __ctx,
@@ -35,12 +37,13 @@ pub fn encode_discriminant(attrs: &Attrs) -> TokenStream {
         ))
     };
     quote!({
-        let __tag = <Self as ::bin_proto::Discriminable>::discriminant(self).ok_or(::bin_proto::Error::EncodeSkipped)?;
+        let __tag = <Self as #crate_path::Discriminable>::discriminant(self).ok_or(#crate_path::Error::EncodeSkipped)?;
         #encode_tag?;
     })
 }
 
 pub fn encode_variant_fields(plan: &enums::Enum) -> Result<TokenStream> {
+    let crate_path = &plan.crate_path;
     let variant_match_branches = plan
         .variants
         .iter()
@@ -48,9 +51,9 @@ pub fn encode_variant_fields(plan: &enums::Enum) -> Result<TokenStream> {
             let variant_name = &variant.ident;
             let fields_pattern = bind_fields_pattern(variant_name, &variant.fields);
             let encodes = if variant.skip_encode {
-                quote!(return ::core::result::Result::Err(::bin_proto::Error::EncodeSkipped))
+                quote!(return ::core::result::Result::Err(#crate_path::Error::EncodeSkipped))
             } else {
-                codegen::encodes(&variant.fields, false)?
+                codegen::encodes(crate_path, &variant.fields, false)?
             };
 
             Ok(quote!(Self :: #fields_pattern => {
@@ -94,6 +97,7 @@ pub fn variant_discriminant(plan: &enums::Enum) -> Result<TokenStream> {
 }
 
 pub fn decode_variant_fields(plan: &enums::Enum) -> Result<TokenStream> {
+    let crate_path = &plan.crate_path;
     let discriminant_match_branches = plan
         .variants
         .iter()
@@ -111,7 +115,7 @@ pub fn decode_variant_fields(plan: &enums::Enum) -> Result<TokenStream> {
                 .then(|| parse_quote!(_))
                 .or_else(|| variant.discriminant_value.clone())
                 .ok_or_else(|| Error::new(variant.ident.span(), "missing discriminant"))?;
-            let (decoder, initializer) = codegen::decodes(&variant.fields)?;
+            let (decoder, initializer) = codegen::decodes(crate_path, &variant.fields)?;
 
             Ok(quote!(
                 #discriminant_literal => {
@@ -127,10 +131,10 @@ pub fn decode_variant_fields(plan: &enums::Enum) -> Result<TokenStream> {
     Ok(quote!(
         {
             match ::core::convert::TryInto::<#discriminant_ty>::try_into(__tag.0)
-                .map_err(|_| ::bin_proto::Error::TagConvert)? {
+                .map_err(|_| #crate_path::Error::TagConvert)? {
                 #(#discriminant_match_branches,)*
                 unknown_discriminant => {
-                    return Err(::bin_proto::Error::Discriminant);
+                    return Err(#crate_path::Error::Discriminant);
                 },
             }
         }

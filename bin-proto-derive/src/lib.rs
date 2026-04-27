@@ -72,14 +72,14 @@ fn impl_for_struct(
     codec_type: Operation,
 ) -> Result<TokenStream> {
     let attrs = Attrs::parse(ast.attrs.as_slice(), Some(AttrKind::Struct), ast.span())?;
-
+    let crate_path = attrs.crate_path();
     let ctx_ty = attrs.ctx_ty();
 
     let (impl_body, trait_type) = match codec_type {
         Operation::Decode => {
-            let (decodes, initializers) = codegen::decodes(&strukt.fields)?;
-            let pad_before = attrs.pad_before.as_ref().map(decode_pad);
-            let pad_after = attrs.pad_after.as_ref().map(decode_pad);
+            let (decodes, initializers) = codegen::decodes(&crate_path, &strukt.fields)?;
+            let pad_before = attrs.pad_before.as_ref().map(decode_pad(&crate_path));
+            let pad_after = attrs.pad_after.as_ref().map(decode_pad(&crate_path));
             let magic = attrs.decode_magic();
 
             (
@@ -88,10 +88,10 @@ fn impl_for_struct(
                         __io_reader: &mut __R,
                         __ctx: &mut #ctx_ty,
                         __tag: (),
-                    ) -> ::bin_proto::Result<Self>
+                    ) -> #crate_path::Result<Self>
                     where
-                        __R: ::bin_proto::BitRead,
-                        __E: ::bin_proto::Endianness,
+                        __R: #crate_path::BitRead,
+                        __E: #crate_path::Endianness,
                     {
                         #pad_before
                         #magic
@@ -104,9 +104,9 @@ fn impl_for_struct(
             )
         }
         Operation::Encode => {
-            let encodes = codegen::encodes(&strukt.fields, true)?;
-            let pad_before = attrs.pad_before.as_ref().map(encode_pad);
-            let pad_after = attrs.pad_after.as_ref().map(encode_pad);
+            let encodes = codegen::encodes(&crate_path, &strukt.fields, true)?;
+            let pad_before = attrs.pad_before.as_ref().map(encode_pad(&crate_path));
+            let pad_after = attrs.pad_after.as_ref().map(encode_pad(&crate_path));
             let magic = attrs.encode_magic();
 
             (
@@ -116,10 +116,10 @@ fn impl_for_struct(
                         __io_writer: &mut __W,
                         __ctx: &mut #ctx_ty,
                         (): (),
-                    ) -> ::bin_proto::Result<()>
+                    ) -> #crate_path::Result<()>
                     where
-                        __W: ::bin_proto::BitWrite,
-                        __E: ::bin_proto::Endianness,
+                        __W: #crate_path::BitWrite,
+                        __E: #crate_path::Endianness,
                     {
                         #pad_before
                         #magic
@@ -144,6 +144,7 @@ fn impl_for_enum(
 ) -> Result<TokenStream> {
     let plan = enums::Enum::try_new(ast, e)?;
     let attrs = Attrs::parse(ast.attrs.as_slice(), Some(AttrKind::Enum), ast.span())?;
+    let crate_path = attrs.crate_path();
     let discriminant_ty = &plan.discriminant_ty;
     let ctx_ty = attrs.ctx_ty();
 
@@ -154,11 +155,11 @@ fn impl_for_enum(
                 fn decode<__R, __E>(
                     __io_reader: &mut __R,
                     __ctx: &mut #ctx_ty,
-                    __tag: ::bin_proto::Tag<__Tag>,
-                ) -> ::bin_proto::Result<Self>
+                    __tag: #crate_path::Tag<__Tag>,
+                ) -> #crate_path::Result<Self>
                 where
-                    __R: ::bin_proto::BitRead,
-                    __E: ::bin_proto::Endianness,
+                    __R: #crate_path::BitRead,
+                    __E: #crate_path::Endianness,
                 {
                     ::core::result::Result::Ok(#decode_variant)
                 }
@@ -175,16 +176,16 @@ fn impl_for_enum(
                     __io_reader: &mut __R,
                     __ctx: &mut #ctx_ty,
                     __tag: (),
-                ) -> ::bin_proto::Result<Self>
+                ) -> #crate_path::Result<Self>
                 where
-                    __R: ::bin_proto::BitRead,
-                    __E: ::bin_proto::Endianness,
+                    __R: #crate_path::BitRead,
+                    __E: #crate_path::Endianness,
                 {
                     let __tag: #discriminant_ty = #decode_discriminant?;
-                    <Self as ::bin_proto::BitDecode<_, ::bin_proto::Tag<#discriminant_ty>>>::decode::<_, __E>(
+                    <Self as #crate_path::BitDecode<_, #crate_path::Tag<#discriminant_ty>>>::decode::<_, __E>(
                         __io_reader,
                         __ctx,
-                        ::bin_proto::Tag(__tag)
+                        #crate_path::Tag(__tag)
                     )
                 }
             );
@@ -197,18 +198,18 @@ fn impl_for_enum(
         }
         Operation::Encode => {
             let encode_variant = codegen::enums::encode_variant_fields(&plan)?;
-            let pad_before = attrs.pad_before.as_ref().map(encode_pad);
-            let pad_after = attrs.pad_after.as_ref().map(encode_pad);
+            let pad_before = attrs.pad_before.as_ref().map(encode_pad(&crate_path));
+            let pad_after = attrs.pad_after.as_ref().map(encode_pad(&crate_path));
             let impl_body = quote!(
                 fn encode<__W, __E>(
                     &self,
                     __io_writer: &mut __W,
                     __ctx: &mut #ctx_ty,
-                    __tag: ::bin_proto::Untagged,
-                ) -> ::bin_proto::Result<()>
+                    __tag: #crate_path::Untagged,
+                ) -> #crate_path::Result<()>
                 where
-                    __W: ::bin_proto::BitWrite,
-                    __E: ::bin_proto::Endianness,
+                    __W: #crate_path::BitWrite,
+                    __E: #crate_path::Endianness,
                 {
                     #pad_before
                     #encode_variant
@@ -237,18 +238,18 @@ fn impl_for_enum(
                     __io_writer: &mut __W,
                     __ctx: &mut #ctx_ty,
                     (): (),
-                ) -> ::bin_proto::Result<()>
+                ) -> #crate_path::Result<()>
                 where
-                    __W: ::bin_proto::BitWrite,
-                    __E: ::bin_proto::Endianness,
+                    __W: #crate_path::BitWrite,
+                    __E: #crate_path::Endianness,
                 {
                     #pad_before
                     #encode_discriminant
-                    let res = <Self as ::bin_proto::BitEncode<_, _>>::encode::<_, __E>(
+                    let res = <Self as #crate_path::BitEncode<_, _>>::encode::<_, __E>(
                         self,
                         __io_writer,
                         __ctx,
-                        ::bin_proto::Untagged
+                        #crate_path::Untagged
                     )?;
                     #pad_after
                     ::core::result::Result::Ok(res)

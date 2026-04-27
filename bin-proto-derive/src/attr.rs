@@ -19,6 +19,7 @@ pub struct Attrs {
     pub tag: Option<Tag>,
     pub write_value: Option<syn::Expr>,
     pub other: bool,
+    pub crate_path: Option<TokenStream>,
 }
 
 pub enum Ctx {
@@ -80,14 +81,15 @@ impl Attrs {
 
     pub fn decode_magic(&self) -> TokenStream {
         if let Some(magic) = &self.magic {
+            let crate_path = self.crate_path();
             quote!(
-                let magic: [u8; (#magic).len()] = ::bin_proto::BitDecode::decode::<_, __E>(
+                let magic: [u8; (#magic).len()] = #crate_path::BitDecode::decode::<_, __E>(
                     __io_reader,
                     __ctx,
                     ()
                 )?;
                 if magic != *(#magic) {
-                    return ::core::result::Result::Err(::bin_proto::Error::Magic(#magic));
+                    return ::core::result::Result::Err(#crate_path::Error::Magic(#magic));
                 }
             )
         } else {
@@ -97,9 +99,17 @@ impl Attrs {
 
     pub fn encode_magic(&self) -> TokenStream {
         if let Some(magic) = &self.magic {
-            quote!(::bin_proto::BitEncode::encode::<_, __E>(#magic, __io_writer, __ctx, ())?;)
+            let crate_path = self.crate_path();
+            quote!(#crate_path::BitEncode::encode::<_, __E>(#magic, __io_writer, __ctx, ())?;)
         } else {
             TokenStream::new()
+        }
+    }
+    pub fn crate_path(&self) -> TokenStream {
+        if let Some(ref path) = self.crate_path {
+            quote!(#path)
+        } else {
+            quote!(::bin_proto)
         }
     }
 
@@ -215,6 +225,10 @@ impl Attrs {
                         "other" => {
                             expect_attr_kind!(AttrKind::Variant, kind, meta);
                             attrs.other = true;
+                        }
+                        "crate" => {
+                            let path: syn::LitStr = meta.value()?.parse()?;
+                            attrs.crate_path = Some(path.parse()?);
                         }
                         _ => {
                             return Err(meta.error("unrecognized attribute"));
