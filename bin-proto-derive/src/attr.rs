@@ -115,8 +115,20 @@ impl Attrs {
     }
 
     #[allow(clippy::too_many_lines, clippy::cognitive_complexity)]
-    pub fn parse(attribs: &[syn::Attribute], kind: Option<AttrKind>, span: Span) -> Result<Self> {
-        let mut attrs = Self::default();
+    pub fn parse(
+        parent: Option<&Self>,
+        attribs: &[syn::Attribute],
+        kind: Option<AttrKind>,
+        span: Span,
+    ) -> Result<Self> {
+        let mut attrs = if let Some(parent) = parent {
+            Self {
+                crate_path: parent.crate_path.clone(),
+                ..Default::default()
+            }
+        } else {
+            Self::default()
+        };
 
         let mut tag = None;
         let mut tag_type = None;

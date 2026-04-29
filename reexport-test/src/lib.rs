@@ -12,6 +12,7 @@ pub enum Enum<'a, T: BitDecode + BitEncode> {
     #[bin_proto(discriminant = 1)]
     Variant1 {
         a: T,
+        #[bin_proto(magic = b"ABC")]
         len: u8,
         #[bin_proto(tag = len as usize)]
         arr: Vec<u8>,
@@ -29,9 +30,9 @@ fn decode_reexported_enum_variant() {
                 len: 2,
                 arr: vec![1, 2]
             },
-            40
+            64
         ),
-        Enum::decode_bytes(&[1, 64, 2, 1, 2], BigEndian).unwrap()
+        Enum::decode_bytes(&[1, 64, 65, 66, 67, 2, 1, 2], BigEndian).unwrap()
     );
 }
 

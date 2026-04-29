@@ -71,13 +71,18 @@ fn impl_for_struct(
     strukt: &syn::DataStruct,
     codec_type: Operation,
 ) -> Result<TokenStream> {
-    let attrs = Attrs::parse(ast.attrs.as_slice(), Some(AttrKind::Struct), ast.span())?;
+    let attrs = Attrs::parse(
+        None,
+        ast.attrs.as_slice(),
+        Some(AttrKind::Struct),
+        ast.span(),
+    )?;
     let crate_path = attrs.crate_path();
     let ctx_ty = attrs.ctx_ty();
 
     let (impl_body, trait_type) = match codec_type {
         Operation::Decode => {
-            let (decodes, initializers) = codegen::decodes(&crate_path, &strukt.fields)?;
+            let (decodes, initializers) = codegen::decodes(&attrs, &strukt.fields)?;
             let pad_before = attrs
                 .pad_before
                 .as_ref()
@@ -110,7 +115,7 @@ fn impl_for_struct(
             )
         }
         Operation::Encode => {
-            let encodes = codegen::encodes(&crate_path, &strukt.fields, true)?;
+            let encodes = codegen::encodes(&attrs, &strukt.fields, true)?;
             let pad_before = attrs
                 .pad_before
                 .as_ref()
@@ -154,8 +159,8 @@ fn impl_for_enum(
     e: &syn::DataEnum,
     codec_type: Operation,
 ) -> Result<TokenStream> {
-    let plan = enums::Enum::try_new(ast, e)?;
-    let attrs = Attrs::parse(ast.attrs.as_slice(), Some(AttrKind::Enum), ast.span())?;
+    let attrs = Attrs::parse(None, ast.attrs.as_slice(), Some(AttrKind::Enum), ast.span())?;
+    let plan = enums::Enum::try_new(&attrs, ast, e)?;
     let crate_path = attrs.crate_path();
     let discriminant_ty = &plan.discriminant_ty;
     let ctx_ty = attrs.ctx_ty();

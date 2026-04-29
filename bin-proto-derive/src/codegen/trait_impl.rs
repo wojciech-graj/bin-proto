@@ -18,7 +18,7 @@ pub fn impl_trait_for(
     typ: &TraitImplType,
 ) -> Result<TokenStream> {
     let name = &ast.ident;
-    let attrs = Attrs::parse(ast.attrs.as_slice(), None, ast.span())?;
+    let attrs = Attrs::parse(None, ast.attrs.as_slice(), None, ast.span())?;
     let crate_path = attrs.crate_path();
 
     let generics = &ast.generics;

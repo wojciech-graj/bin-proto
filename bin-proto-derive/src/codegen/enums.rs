@@ -43,7 +43,7 @@ pub fn encode_discriminant(attrs: &Attrs) -> TokenStream {
 }
 
 pub fn encode_variant_fields(plan: &enums::Enum) -> Result<TokenStream> {
-    let crate_path = &plan.crate_path;
+    let crate_path = plan.parent_attrs.crate_path();
     let variant_match_branches = plan
         .variants
         .iter()
@@ -53,7 +53,7 @@ pub fn encode_variant_fields(plan: &enums::Enum) -> Result<TokenStream> {
             let encodes = if variant.skip_encode {
                 quote!(return ::core::result::Result::Err(#crate_path::Error::EncodeSkipped))
             } else {
-                codegen::encodes(crate_path, &variant.fields, false)?
+                codegen::encodes(plan.parent_attrs, &variant.fields, false)?
             };
 
             Ok(quote!(Self :: #fields_pattern => {
@@ -97,7 +97,7 @@ pub fn variant_discriminant(plan: &enums::Enum) -> Result<TokenStream> {
 }
 
 pub fn decode_variant_fields(plan: &enums::Enum) -> Result<TokenStream> {
-    let crate_path = &plan.crate_path;
+    let crate_path = plan.parent_attrs.crate_path();
     let discriminant_match_branches = plan
         .variants
         .iter()
@@ -115,7 +115,7 @@ pub fn decode_variant_fields(plan: &enums::Enum) -> Result<TokenStream> {
                 .then(|| parse_quote!(_))
                 .or_else(|| variant.discriminant_value.clone())
                 .ok_or_else(|| Error::new(variant.ident.span(), "missing discriminant"))?;
-            let (decoder, initializer) = codegen::decodes(crate_path, &variant.fields)?;
+            let (decoder, initializer) = codegen::decodes(plan.parent_attrs, &variant.fields)?;
 
             Ok(quote!(
                 #discriminant_literal => {

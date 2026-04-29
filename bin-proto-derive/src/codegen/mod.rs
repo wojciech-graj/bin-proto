@@ -5,34 +5,31 @@ use crate::attr::{AttrKind, Attrs, Tag};
 use proc_macro2::TokenStream;
 use syn::{spanned::Spanned, Error, Result};
 
-pub fn decodes(
-    crate_path: &TokenStream,
-    fields: &syn::Fields,
-) -> Result<(TokenStream, TokenStream)> {
+pub fn decodes(parent_attrs: &Attrs, fields: &syn::Fields) -> Result<(TokenStream, TokenStream)> {
     match fields {
-        syn::Fields::Named(fields) => decode_named_fields(crate_path, fields),
+        syn::Fields::Named(fields) => decode_named_fields(parent_attrs, fields),
         syn::Fields::Unnamed(fields) => Ok((
             TokenStream::new(),
-            decode_unnamed_fields(crate_path, fields)?,
+            decode_unnamed_fields(parent_attrs, fields)?,
         )),
         syn::Fields::Unit => Ok((TokenStream::new(), TokenStream::new())),
     }
 }
 
 pub fn encodes(
-    crate_path: &TokenStream,
+    parent_attrs: &Attrs,
     fields: &syn::Fields,
     self_prefix: bool,
 ) -> Result<TokenStream> {
     match fields {
-        syn::Fields::Named(fields) => encode_named_fields(crate_path, fields, self_prefix),
-        syn::Fields::Unnamed(fields) => encode_unnamed_fields(crate_path, fields, self_prefix),
+        syn::Fields::Named(fields) => encode_named_fields(parent_attrs, fields, self_prefix),
+        syn::Fields::Unnamed(fields) => encode_unnamed_fields(parent_attrs, fields, self_prefix),
         syn::Fields::Unit => Ok(TokenStream::new()),
     }
 }
 
 fn decode_named_fields(
-    crate_path: &TokenStream,
+    parent_attrs: &Attrs,
     fields_named: &syn::FieldsNamed,
 ) -> Result<(TokenStream, TokenStream)> {
     let fields = fields_named
@@ -42,7 +39,7 @@ fn decode_named_fields(
             let field_name = &field.ident;
             let field_ty = &field.ty;
 
-            let decode = decode(crate_path, field)?;
+            let decode = decode(parent_attrs, field)?;
 
             Ok(quote!(
                 let #field_name : #field_ty = #decode;
@@ -70,21 +67,28 @@ pub fn decode_pad(crate_path: &TokenStream, pad: &syn::Expr) -> TokenStream {
     quote!(#crate_path::BitRead::skip(__io_reader, #pad)?;)
 }
 
-fn decode(crate_path: &TokenStream, field: &syn::Field) -> Result<TokenStream> {
-    let attrs = Attrs::parse(field.attrs.as_slice(), Some(AttrKind::Field), field.span())?;
+fn decode(parent_attrs: &Attrs, field: &syn::Field) -> Result<TokenStream> {
+    let attrs = Attrs::parse(
+        Some(parent_attrs),
+        field.attrs.as_slice(),
+        Some(AttrKind::Field),
+        field.span(),
+    )?;
 
     if attrs.skip_decode {
         return Ok(quote!(::core::default::Default::default()));
     }
 
+    let crate_path = attrs.crate_path();
+
     let pad_before = attrs
         .pad_before
         .as_ref()
-        .map(|pad| decode_pad(crate_path, pad));
+        .map(|pad| decode_pad(&crate_path, pad));
     let pad_after = attrs
         .pad_after
         .as_ref()
-        .map(|pad| decode_pad(crate_path, pad));
+        .map(|pad| decode_pad(&crate_path, pad));
     let magic = attrs.decode_magic();
 
     let decode = if let Some(Tag::Prepend { typ, bits, .. }) = attrs.tag {
@@ -127,25 +131,28 @@ pub fn encode_pad(crate_path: &TokenStream, pad: &syn::Expr) -> TokenStream {
     quote!(#crate_path::BitWrite::pad(__io_writer, #pad)?;)
 }
 
-fn encode(
-    crate_path: &TokenStream,
-    field: &syn::Field,
-    field_name: &TokenStream,
-) -> Result<TokenStream> {
-    let attrs = Attrs::parse(field.attrs.as_slice(), Some(AttrKind::Field), field.span())?;
+fn encode(parent: &Attrs, field: &syn::Field, field_name: &TokenStream) -> Result<TokenStream> {
+    let attrs = Attrs::parse(
+        Some(parent),
+        field.attrs.as_slice(),
+        Some(AttrKind::Field),
+        field.span(),
+    )?;
 
     if attrs.skip_encode {
         return Ok(TokenStream::new());
     }
 
+    let crate_path = attrs.crate_path();
+
     let pad_before = attrs
         .pad_before
         .as_ref()
-        .map(|pad| encode_pad(crate_path, pad));
+        .map(|pad| encode_pad(&crate_path, pad));
     let pad_after = attrs
         .pad_after
         .as_ref()
-        .map(|pad| encode_pad(crate_path, pad));
+        .map(|pad| encode_pad(&crate_path, pad));
     let magic = attrs.encode_magic();
 
     let field_ref = if let Some(value) = attrs.write_value {
@@ -212,7 +219,7 @@ fn encode(
 }
 
 fn encode_named_fields(
-    crate_path: &TokenStream,
+    parent_attrs: &Attrs,
     fields_named: &syn::FieldsNamed,
     self_prefix: bool,
 ) -> Result<TokenStream> {
@@ -222,7 +229,7 @@ fn encode_named_fields(
         .map(|field| {
             let field_name = &field.ident;
             encode(
-                crate_path,
+                parent_attrs,
                 field,
                 &if self_prefix {
                     quote!(&self. #field_name)
@@ -237,7 +244,7 @@ fn encode_named_fields(
 }
 
 fn decode_unnamed_fields(
-    crate_path: &TokenStream,
+    parent_attrs: &Attrs,
     fields_unnamed: &syn::FieldsUnnamed,
 ) -> Result<TokenStream> {
     let field_initializers = fields_unnamed
@@ -245,7 +252,7 @@ fn decode_unnamed_fields(
         .iter()
         .map(|field| {
             let field_ty = &field.ty;
-            let decode = decode(crate_path, field)?;
+            let decode = decode(parent_attrs, field)?;
 
             Ok(quote!(
                 {
@@ -260,7 +267,7 @@ fn decode_unnamed_fields(
 }
 
 fn encode_unnamed_fields(
-    crate_path: &TokenStream,
+    parent_attrs: &Attrs,
     fields_unnamed: &syn::FieldsUnnamed,
     self_prefix: bool,
 ) -> Result<TokenStream> {
@@ -271,7 +278,7 @@ fn encode_unnamed_fields(
         .map(|(field_index, field)| {
             let field_index = syn::Index::from(field_index);
             encode(
-                crate_path,
+                parent_attrs,
                 field,
                 &if self_prefix {
                     quote!(&self. #field_index)

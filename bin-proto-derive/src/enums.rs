@@ -1,11 +1,11 @@
-use crate::attr::{AttrKind, Attrs};
-use proc_macro2::TokenStream;
 use syn::{spanned::Spanned, Error, Result};
 
-pub struct Enum {
+use crate::attr::{AttrKind, Attrs};
+
+pub struct Enum<'a> {
     pub discriminant_ty: syn::Type,
     pub variants: Vec<EnumVariant>,
-    pub crate_path: TokenStream,
+    pub parent_attrs: &'a Attrs,
 }
 
 pub struct EnumVariant {
@@ -17,12 +17,19 @@ pub struct EnumVariant {
     pub fields: syn::Fields,
 }
 
-impl Enum {
-    pub fn try_new(ast: &syn::DeriveInput, e: &syn::DataEnum) -> Result<Self> {
-        let attrs = Attrs::parse(ast.attrs.as_slice(), Some(AttrKind::Enum), ast.span())?;
-        let crate_path = attrs.crate_path();
+impl<'a> Enum<'a> {
+    pub fn try_new(
+        parent_attrs: &'a Attrs,
+        ast: &syn::DeriveInput,
+        e: &syn::DataEnum,
+    ) -> Result<Self> {
+        let attrs = Attrs::parse(
+            Some(parent_attrs),
+            ast.attrs.as_slice(),
+            Some(AttrKind::Enum),
+            ast.span(),
+        )?;
         Ok(Self {
-            crate_path,
             discriminant_ty: attrs.discriminant_type.ok_or_else(|| {
                 Error::new(ast.span(), "enum missing 'discriminant_type' attribute.")
             })?,
@@ -31,6 +38,7 @@ impl Enum {
                 .iter()
                 .map(|variant| {
                     let attrs = Attrs::parse(
+                        Some(parent_attrs),
                         variant.attrs.as_slice(),
                         Some(AttrKind::Variant),
                         variant.span(),
@@ -48,6 +56,7 @@ impl Enum {
                     })
                 })
                 .collect::<Result<_>>()?,
+            parent_attrs,
         })
     }
 }
