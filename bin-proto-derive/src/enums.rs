@@ -1,9 +1,11 @@
 use crate::attr::{AttrKind, Attrs};
+use proc_macro2::TokenStream;
 use syn::{spanned::Spanned, Error, Result};
 
 pub struct Enum {
     pub discriminant_ty: syn::Type,
     pub variants: Vec<EnumVariant>,
+    pub crate_path: TokenStream,
 }
 
 pub struct EnumVariant {
@@ -18,8 +20,9 @@ pub struct EnumVariant {
 impl Enum {
     pub fn try_new(ast: &syn::DeriveInput, e: &syn::DataEnum) -> Result<Self> {
         let attrs = Attrs::parse(ast.attrs.as_slice(), Some(AttrKind::Enum), ast.span())?;
-
+        let crate_path = attrs.crate_path();
         Ok(Self {
+            crate_path,
             discriminant_ty: attrs.discriminant_type.ok_or_else(|| {
                 Error::new(ast.span(), "enum missing 'discriminant_type' attribute.")
             })?,

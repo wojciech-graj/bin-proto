@@ -19,6 +19,7 @@ pub fn impl_trait_for(
 ) -> Result<TokenStream> {
     let name = &ast.ident;
     let attrs = Attrs::parse(ast.attrs.as_slice(), None, ast.span())?;
+    let crate_path = attrs.crate_path();
 
     let generics = &ast.generics;
     let (_, ty_generics, _) = generics.split_for_impl();
@@ -64,7 +65,7 @@ pub fn impl_trait_for(
         TraitImplType::Decode => quote!(BitDecode),
         TraitImplType::Encode => quote!(BitEncode),
         TraitImplType::UntaggedEncode => {
-            trait_generics.push(quote!(::bin_proto::Untagged));
+            trait_generics.push(quote!(#crate_path::Untagged));
             quote!(BitEncode)
         }
         TraitImplType::TaggedDecode(discriminant) => {
@@ -80,7 +81,7 @@ pub fn impl_trait_for(
                     eq_token: None,
                     default: None,
                 }));
-            trait_generics.push(quote!(::bin_proto::Tag<__Tag>));
+            trait_generics.push(quote!(#crate_path::Tag<__Tag>));
             quote!(BitDecode)
         }
         TraitImplType::Discriminable => quote!(Discriminable),
@@ -89,7 +90,7 @@ pub fn impl_trait_for(
     let (impl_generics, _, where_clause) = generics.split_for_impl();
     Ok(quote!(
         #[automatically_derived]
-        impl #impl_generics ::bin_proto::#trait_name<#trait_generics> for #name #ty_generics
+        impl #impl_generics #crate_path::#trait_name<#trait_generics> for #name #ty_generics
         #where_clause {
             #impl_body
         }

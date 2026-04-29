@@ -1,3 +1,5 @@
+# v0.12.8
+- Add `#[bin_proto(crate = ...)]` attribute (https://github.com/wojciech-graj/bin-proto/pull/9)
 # v0.12.7
 - Switch from `core2` to `no_std_io2`, as core2 was yanked
 # v0.12.6
