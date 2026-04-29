@@ -19,7 +19,7 @@ pub struct Attrs {
     pub tag: Option<Tag>,
     pub write_value: Option<syn::Expr>,
     pub other: bool,
-    pub crate_path: Option<TokenStream>,
+    pub crate_path: Option<syn::Path>,
 }
 
 pub enum Ctx {
