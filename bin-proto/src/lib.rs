@@ -178,6 +178,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// | [`pad_before`](#pad_before) | field, struct | rw |
 /// | [`pad_after`](#pad_after) | field, struct | rw |
 /// | [`magic`](#magic) | field, struct | rw |
+/// | [`crate`](#crate) | struct, enum | rw |
 ///
 /// ## `discriminant_type`
 /// `#[bin_proto(discriminant_type = <type>)]`
@@ -567,6 +568,21 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// #[derive(BitDecode, BitEncode)]
 /// #[bin_proto(magic = &[0x01, 0x02, 0x03])]
 /// struct Magic(#[bin_proto(magic = b"123")] u8);
+/// ```
+///
+/// ## `crate`
+/// `#[bin_proto(crate = <path>)]`
+///
+/// Specify the path to the `bin-proto` crate to be used in generated code. This is typically
+/// only applicable when invoking re-exported derives from a public macro in a different crate.
+///
+/// ```
+/// # use bin_proto::{BitDecode, BitEncode};
+/// use bin_proto as renamed;
+///
+/// #[derive(BitDecode, BitEncode)]
+/// #[bin_proto(crate = renamed)]
+/// struct Struct;
 /// ```
 #[cfg(feature = "derive")]
 pub use bin_proto_derive::{BitDecode, BitEncode};

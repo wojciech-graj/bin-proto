@@ -78,8 +78,14 @@ fn impl_for_struct(
     let (impl_body, trait_type) = match codec_type {
         Operation::Decode => {
             let (decodes, initializers) = codegen::decodes(&crate_path, &strukt.fields)?;
-            let pad_before = attrs.pad_before.as_ref().map(decode_pad(&crate_path));
-            let pad_after = attrs.pad_after.as_ref().map(decode_pad(&crate_path));
+            let pad_before = attrs
+                .pad_before
+                .as_ref()
+                .map(|pad| decode_pad(&crate_path, pad));
+            let pad_after = attrs
+                .pad_after
+                .as_ref()
+                .map(|pad| decode_pad(&crate_path, pad));
             let magic = attrs.decode_magic();
 
             (
@@ -105,8 +111,14 @@ fn impl_for_struct(
         }
         Operation::Encode => {
             let encodes = codegen::encodes(&crate_path, &strukt.fields, true)?;
-            let pad_before = attrs.pad_before.as_ref().map(encode_pad(&crate_path));
-            let pad_after = attrs.pad_after.as_ref().map(encode_pad(&crate_path));
+            let pad_before = attrs
+                .pad_before
+                .as_ref()
+                .map(|pad| encode_pad(&crate_path, pad));
+            let pad_after = attrs
+                .pad_after
+                .as_ref()
+                .map(|pad| encode_pad(&crate_path, pad));
             let magic = attrs.encode_magic();
 
             (
@@ -198,8 +210,14 @@ fn impl_for_enum(
         }
         Operation::Encode => {
             let encode_variant = codegen::enums::encode_variant_fields(&plan)?;
-            let pad_before = attrs.pad_before.as_ref().map(encode_pad(&crate_path));
-            let pad_after = attrs.pad_after.as_ref().map(encode_pad(&crate_path));
+            let pad_before = attrs
+                .pad_before
+                .as_ref()
+                .map(|pad| encode_pad(&crate_path, pad));
+            let pad_after = attrs
+                .pad_after
+                .as_ref()
+                .map(|pad| encode_pad(&crate_path, pad));
             let impl_body = quote!(
                 fn encode<__W, __E>(
                     &self,

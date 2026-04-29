@@ -1,15 +1,12 @@
-#![cfg(all(feature = "derive", feature = "alloc"))]
-
-pub mod test {
-    pub use bin_proto as deep_nested_dep;
-}
+#![cfg(test)]
 
 use std::marker::PhantomData;
-use test::deep_nested_dep::{BigEndian, BitCodec, BitDecode, BitEncode};
+
+use reexport::{BigEndian, BitCodec, BitDecode, BitEncode};
 
 #[derive(Debug, BitDecode, BitEncode, PartialEq)]
 #[bin_proto(discriminant_type = u8)]
-#[bin_proto(crate = "test::deep_nested_dep")]
+#[bin_proto(crate = reexport)]
 #[bin_proto(ctx = ())]
 pub enum Enum<'a, T: BitDecode + BitEncode> {
     #[bin_proto(discriminant = 1)]

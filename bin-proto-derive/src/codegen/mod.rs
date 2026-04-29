@@ -66,8 +66,8 @@ fn decode_named_fields(
     ))
 }
 
-pub fn decode_pad(crate_path: &TokenStream) -> impl FnOnce(&syn::Expr) -> TokenStream + use<'_> {
-    move |pad| quote!(#crate_path::BitRead::skip(__io_reader, #pad)?;)
+pub fn decode_pad(crate_path: &TokenStream, pad: &syn::Expr) -> TokenStream {
+    quote!(#crate_path::BitRead::skip(__io_reader, #pad)?;)
 }
 
 fn decode(crate_path: &TokenStream, field: &syn::Field) -> Result<TokenStream> {
@@ -77,8 +77,14 @@ fn decode(crate_path: &TokenStream, field: &syn::Field) -> Result<TokenStream> {
         return Ok(quote!(::core::default::Default::default()));
     }
 
-    let pad_before = attrs.pad_before.as_ref().map(decode_pad(&crate_path));
-    let pad_after = attrs.pad_after.as_ref().map(decode_pad(&crate_path));
+    let pad_before = attrs
+        .pad_before
+        .as_ref()
+        .map(|pad| decode_pad(crate_path, pad));
+    let pad_after = attrs
+        .pad_after
+        .as_ref()
+        .map(|pad| decode_pad(crate_path, pad));
     let magic = attrs.decode_magic();
 
     let decode = if let Some(Tag::Prepend { typ, bits, .. }) = attrs.tag {
@@ -117,8 +123,8 @@ fn decode(crate_path: &TokenStream, field: &syn::Field) -> Result<TokenStream> {
     }))
 }
 
-pub fn encode_pad(crate_path: &TokenStream) -> impl FnOnce(&syn::Expr) -> TokenStream + use<'_> {
-    move |pad| quote!(#crate_path::BitWrite::pad(__io_writer, #pad)?;)
+pub fn encode_pad(crate_path: &TokenStream, pad: &syn::Expr) -> TokenStream {
+    quote!(#crate_path::BitWrite::pad(__io_writer, #pad)?;)
 }
 
 fn encode(
@@ -132,8 +138,14 @@ fn encode(
         return Ok(TokenStream::new());
     }
 
-    let pad_before = attrs.pad_before.as_ref().map(encode_pad(&crate_path));
-    let pad_after = attrs.pad_after.as_ref().map(encode_pad(&crate_path));
+    let pad_before = attrs
+        .pad_before
+        .as_ref()
+        .map(|pad| encode_pad(crate_path, pad));
+    let pad_after = attrs
+        .pad_after
+        .as_ref()
+        .map(|pad| encode_pad(crate_path, pad));
     let magic = attrs.encode_magic();
 
     let field_ref = if let Some(value) = attrs.write_value {

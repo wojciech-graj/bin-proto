@@ -105,8 +105,9 @@ impl Attrs {
             TokenStream::new()
         }
     }
+
     pub fn crate_path(&self) -> TokenStream {
-        if let Some(ref path) = self.crate_path {
+        if let Some(path) = &self.crate_path {
             quote!(#path)
         } else {
             quote!(::bin_proto)
@@ -227,8 +228,8 @@ impl Attrs {
                             attrs.other = true;
                         }
                         "crate" => {
-                            let path: syn::LitStr = meta.value()?.parse()?;
-                            attrs.crate_path = Some(path.parse()?);
+                            expect_attr_kind!(AttrKind::Enum | AttrKind::Struct, kind, meta);
+                            attrs.crate_path = Some(meta.value()?.parse()?);
                         }
                         _ => {
                             return Err(meta.error("unrecognized attribute"));
