@@ -82,16 +82,17 @@ impl Attrs {
     pub fn decode_magic(&self) -> TokenStream {
         if let Some(magic) = &self.magic {
             let crate_path = self.crate_path();
-            quote!(
-                let magic: [u8; (#magic).len()] = #crate_path::BitDecode::decode::<_, __E>(
+            quote!({
+                const MAGIC: &[u8] = #magic;
+                let magic: [u8; MAGIC.len()] = #crate_path::BitDecode::decode::<_, __E>(
                     __io_reader,
                     __ctx,
                     ()
                 )?;
-                if magic != *(#magic) {
-                    return ::core::result::Result::Err(#crate_path::Error::Magic(#magic));
+                if magic != *MAGIC {
+                    return ::core::result::Result::Err(#crate_path::Error::Magic(MAGIC));
                 }
-            )
+            })
         } else {
             TokenStream::new()
         }
@@ -100,7 +101,10 @@ impl Attrs {
     pub fn encode_magic(&self) -> TokenStream {
         if let Some(magic) = &self.magic {
             let crate_path = self.crate_path();
-            quote!(#crate_path::BitEncode::encode::<_, __E>(#magic, __io_writer, __ctx, ())?;)
+            quote!({
+                const MAGIC: &[u8] = #magic;
+                #crate_path::BitEncode::encode::<_, __E>(MAGIC, __io_writer, __ctx, #crate_path::Untagged)?;
+            })
         } else {
             TokenStream::new()
         }

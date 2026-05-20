@@ -65,6 +65,10 @@ pub struct Magic {
     b: u8,
 }
 
+#[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
+#[bin_proto(magic = &[0x11])]
+pub struct Magic2;
+
 #[test]
 fn named_fields_are_correctly_written() {
     assert_eq!(
@@ -180,8 +184,29 @@ fn magic_read_correctly() {
 #[test]
 fn incorrect_magic_fails() {
     assert!(matches!(
-        &Magic::decode_bytes(&[10, 4, 1, 2, 3, 5], BigEndian),
+        Magic::decode_bytes(&[10, 4, 1, 2, 3, 5], BigEndian),
         Err(Error::Magic(&[9]))
+    ));
+}
+
+#[test]
+fn magic_unit_written_correctly() {
+    assert_eq!(vec![0x11], Magic2.encode_bytes(BigEndian).unwrap())
+}
+
+#[test]
+fn magic_unit_read_correctly() {
+    assert_eq!(
+        (Magic2, 8),
+        Magic2::decode_bytes(&[0x11], BigEndian).unwrap()
+    )
+}
+
+#[test]
+fn incorrect_magic_unit_fails() {
+    assert!(matches!(
+        Magic2::decode_bytes(&[0x12], BigEndian),
+        Err(Error::Magic(&[0x11]))
     ));
 }
 
