@@ -1,0 +1,5 @@
+# TODO: remove this once MSRV reaches rust >= 1.94
+[[schemas]]
+toml-version = "v1.0.0"
+path = "tombi://www.schemastore.org/cargo.json"
+include = ["Cargo.toml"]
