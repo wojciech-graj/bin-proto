@@ -21,6 +21,7 @@ mod enums;
 
 use attr::{AttrKind, Attrs};
 use codegen::{
+    bounds::FieldBounds,
     decode_pad, encode_pad,
     trait_impl::{impl_trait_for, TraitImplType},
 };
@@ -79,6 +80,10 @@ fn impl_for_struct(
     )?;
     let crate_path = attrs.crate_path();
     let ctx_ty = attrs.ctx_ty();
+
+    let mut bounds = FieldBounds::new(&attrs, &ast.generics, codec_type);
+    bounds.add_fields(&strukt.fields)?;
+    let predicates = bounds.into_predicates();
 
     let (impl_body, trait_type) = match codec_type {
         Operation::Decode => {
@@ -150,7 +155,7 @@ fn impl_for_struct(
         }
     };
 
-    impl_trait_for(ast, &impl_body, &trait_type)
+    impl_trait_for(ast, &impl_body, &trait_type, &predicates)
 }
 
 #[allow(clippy::too_many_lines)]
@@ -164,6 +169,23 @@ fn impl_for_enum(
     let crate_path = attrs.crate_path();
     let discriminant_ty = &plan.discriminant_ty;
     let ctx_ty = attrs.ctx_ty();
+
+    let mut bounds = FieldBounds::new(&attrs, &ast.generics, codec_type);
+    for variant in &plan.variants {
+        let skipped = match codec_type {
+            Operation::Decode => variant.skip_decode,
+            Operation::Encode => variant.skip_encode,
+        };
+        if !skipped {
+            bounds.add_fields(&variant.fields)?;
+        }
+    }
+    let discriminant_tag = attrs
+        .bits
+        .as_ref()
+        .map_or_else(|| quote!(()), |bits| quote!(#crate_path::Bits<{ #bits }>));
+    bounds.add_bound(&quote!(#discriminant_ty), &discriminant_tag);
+    let predicates = bounds.into_predicates();
 
     Ok(match codec_type {
         Operation::Decode => {
@@ -185,6 +207,7 @@ fn impl_for_enum(
                 ast,
                 &impl_body,
                 &TraitImplType::TaggedDecode(discriminant_ty.clone()),
+                &predicates,
             )?;
 
             let decode_discriminant = decode_discriminant(&attrs);
@@ -206,7 +229,7 @@ fn impl_for_enum(
                     )
                 }
             );
-            let decode_impl = impl_trait_for(ast, &impl_body, &TraitImplType::Decode)?;
+            let decode_impl = impl_trait_for(ast, &impl_body, &TraitImplType::Decode, &predicates)?;
 
             quote!(
                 #tagged_decode_impl
@@ -241,7 +264,7 @@ fn impl_for_enum(
                 }
             );
             let untagged_encode_impl =
-                impl_trait_for(ast, &impl_body, &TraitImplType::UntaggedEncode)?;
+                impl_trait_for(ast, &impl_body, &TraitImplType::UntaggedEncode, &predicates)?;
 
             let variant_discriminant = variant_discriminant(&plan)?;
             let impl_body = quote!(
@@ -252,7 +275,7 @@ fn impl_for_enum(
                 }
             );
             let discriminable_impl =
-                impl_trait_for(ast, &impl_body, &TraitImplType::Discriminable)?;
+                impl_trait_for(ast, &impl_body, &TraitImplType::Discriminable, &[])?;
 
             let encode_discriminant = encode_discriminant(&attrs);
             let impl_body = quote!(
@@ -278,7 +301,7 @@ fn impl_for_enum(
                     ::core::result::Result::Ok(res)
                 }
             );
-            let encode_impl = impl_trait_for(ast, &impl_body, &TraitImplType::Encode)?;
+            let encode_impl = impl_trait_for(ast, &impl_body, &TraitImplType::Encode, &predicates)?;
 
             quote!(
                 #untagged_encode_impl

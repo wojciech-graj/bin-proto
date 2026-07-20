@@ -41,6 +41,41 @@ pub struct StructWithExistingBoundedGenerics<
     foo: A,
 }
 
+// Regression tests: deriving on generic types must work without an explicit
+// `#[bin_proto(ctx = ...)]` attribute or manual bounds. The derive is expected
+// to emit the necessary `where` predicates itself.
+#[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
+pub struct GenericStructNoExplicitCtx<T> {
+    pub field: T,
+}
+
+#[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
+pub struct GenericStructPreBounded<T: BitEncode + BitDecode> {
+    pub field: T,
+}
+
+#[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
+pub struct GenericStructNestedField<T> {
+    pub len: u8,
+    #[bin_proto(tag_type = u8, tag_value = self.items.len() as u8)]
+    pub items: Vec<T>,
+    pub boxed: Box<T>,
+    pub marker: PhantomData<T>,
+}
+
+#[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
+pub struct GenericStructSkippedField<T, U> {
+    pub used: T,
+    #[bin_proto(skip)]
+    pub unused: Option<U>,
+}
+
+#[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
+pub struct GenericStructBitField<T> {
+    #[bin_proto(bits = 4)]
+    pub field: T,
+}
+
 #[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
 pub struct WithDefault {
     a: u8,
@@ -208,6 +243,56 @@ fn incorrect_magic_unit_fails() {
         Magic2::decode_bytes(&[0x12], BigEndian),
         Err(Error::Magic(&[0x11]))
     ));
+}
+
+#[test]
+fn generic_struct_roundtrips() {
+    let value = GenericStructNoExplicitCtx { field: 0x42u16 };
+    let bytes = value.encode_bytes(BigEndian).unwrap();
+    assert_eq!(vec![0x00, 0x42], bytes);
+    assert_eq!(
+        (value, 16),
+        GenericStructNoExplicitCtx::decode_bytes(&bytes, BigEndian).unwrap()
+    );
+}
+
+#[test]
+fn generic_struct_nested_field_roundtrips() {
+    let value = GenericStructNestedField {
+        len: 3,
+        items: vec![1u8, 2, 3],
+        boxed: Box::new(7u8),
+        marker: PhantomData,
+    };
+    let bytes = value.encode_bytes(BigEndian).unwrap();
+    assert_eq!(vec![3, 3, 1, 2, 3, 7], bytes);
+    assert_eq!(
+        (value, 48),
+        GenericStructNestedField::decode_bytes(&bytes, BigEndian).unwrap()
+    );
+}
+
+#[test]
+fn generic_struct_skipped_field_roundtrips() {
+    // `U` must not require codec bounds because the field is skipped.
+    struct NoCodec;
+    let value = GenericStructSkippedField::<u8, NoCodec> {
+        used: 5,
+        unused: None,
+    };
+    let bytes = value.encode_bytes(BigEndian).unwrap();
+    assert_eq!(vec![5], bytes);
+}
+
+#[test]
+fn generic_struct_bitfield_roundtrips() {
+    let value = GenericStructBitField { field: 0x0Fu8 };
+    let bytes = value.encode_bytes(BigEndian).unwrap();
+    assert_eq!(vec![0xF0], bytes);
+    assert_eq!(
+        (value, 4),
+        GenericStructBitField::decode_bytes(&bytes, BigEndian).unwrap()
+    );
 }
 
 #[test]
