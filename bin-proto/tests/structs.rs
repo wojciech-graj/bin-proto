@@ -41,9 +41,6 @@ pub struct StructWithExistingBoundedGenerics<
     foo: A,
 }
 
-// Regression tests: deriving on generic types must work without an explicit
-// `#[bin_proto(ctx = ...)]` attribute or manual bounds. The derive is expected
-// to emit the necessary `where` predicates itself.
 #[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
 pub struct GenericStructNoExplicitCtx<T> {
     pub field: T,
@@ -103,6 +100,19 @@ pub struct Magic {
 #[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
 #[bin_proto(magic = &[0x11])]
 pub struct Magic2;
+
+pub trait Gat {
+    type Assoc<'a>: Copy;
+}
+
+#[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
+pub struct WithGat<T>
+where
+    T: Gat,
+{
+    gat: T::Assoc<'static>,
+    _phantom: PhantomData<T>,
+}
 
 #[test]
 fn named_fields_are_correctly_written() {

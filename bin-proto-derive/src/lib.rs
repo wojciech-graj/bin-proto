@@ -184,7 +184,7 @@ fn impl_for_enum(
         .bits
         .as_ref()
         .map_or_else(|| quote!(()), |bits| quote!(#crate_path::Bits<{ #bits }>));
-    bounds.add_bound(&quote!(#discriminant_ty), &discriminant_tag);
+    bounds.add_bound(discriminant_ty, &discriminant_tag);
     let predicates = bounds.into_predicates();
 
     Ok(match codec_type {

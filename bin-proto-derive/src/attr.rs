@@ -22,6 +22,7 @@ pub struct Attrs {
     pub crate_path: Option<syn::Path>,
 }
 
+#[derive(Clone)]
 pub enum Ctx {
     Concrete(syn::Type),
     Bounds(Vec<syn::TypeParamBound>),
@@ -128,6 +129,7 @@ impl Attrs {
         let mut attrs = if let Some(parent) = parent {
             Self {
                 crate_path: parent.crate_path.clone(),
+                ctx: parent.ctx.clone(),
                 ..Default::default()
             }
         } else {
