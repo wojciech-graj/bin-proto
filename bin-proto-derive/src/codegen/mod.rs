@@ -1,3 +1,4 @@
+pub mod bounds;
 pub mod enums;
 pub mod trait_impl;
 

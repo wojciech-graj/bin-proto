@@ -16,6 +16,7 @@ pub fn impl_trait_for(
     ast: &syn::DeriveInput,
     impl_body: &TokenStream,
     typ: &TraitImplType,
+    extra_predicates: &[syn::WherePredicate],
 ) -> Result<TokenStream> {
     let name = &ast.ident;
     let attrs = Attrs::parse(None, ast.attrs.as_slice(), None, ast.span())?;
@@ -86,6 +87,13 @@ pub fn impl_trait_for(
         }
         TraitImplType::Discriminable => quote!(Discriminable),
     };
+
+    if !extra_predicates.is_empty() {
+        generics
+            .make_where_clause()
+            .predicates
+            .extend(extra_predicates.iter().cloned());
+    }
 
     let (impl_generics, _, where_clause) = generics.split_for_impl();
     Ok(quote!(

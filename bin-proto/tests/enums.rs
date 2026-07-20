@@ -59,6 +59,17 @@ pub enum Repr {
     VariantB = 2,
 }
 
+// Regression test: deriving on a generic enum must work without an explicit
+// `#[bin_proto(ctx = ...)]` attribute or manual bounds.
+#[derive(Debug, BitDecode, BitEncode, PartialEq)]
+#[bin_proto(discriminant_type = u8)]
+pub enum GenericEnumNoExplicitCtx<T> {
+    #[bin_proto(discriminant = 1)]
+    Value(T),
+    #[bin_proto(discriminant = 2)]
+    Empty,
+}
+
 #[test]
 fn decode_enum_variant() {
     assert_eq!(
@@ -196,4 +207,19 @@ fn decode_enum_repr() {
 #[test]
 fn encode_enum_repr() {
     assert_eq!(Repr::VariantB.encode_bytes(BigEndian).unwrap(), vec![2]);
+}
+
+#[test]
+fn generic_enum_roundtrips() {
+    let value = GenericEnumNoExplicitCtx::Value(0x1234u16);
+    let bytes = value.encode_bytes(BigEndian).unwrap();
+    assert_eq!(vec![1, 0x12, 0x34], bytes);
+    assert_eq!(
+        (value, 24),
+        GenericEnumNoExplicitCtx::decode_bytes(&bytes, BigEndian).unwrap()
+    );
+    assert_eq!(
+        (GenericEnumNoExplicitCtx::<u16>::Empty, 8),
+        GenericEnumNoExplicitCtx::decode_bytes(&[2], BigEndian).unwrap()
+    );
 }
