@@ -55,7 +55,6 @@ pub fn impl_trait_for(
                     ident: ident.clone(),
                     colon_token: None,
                     bounds,
-                    eq_token: None,
                     default: None,
                 }));
             quote!(#ident)
@@ -79,7 +78,6 @@ pub fn impl_trait_for(
                     ident: syn::Ident::new("__Tag", Span::call_site()),
                     colon_token: None,
                     bounds,
-                    eq_token: None,
                     default: None,
                 }));
             trait_generics.push(quote!(#crate_path::Tag<__Tag>));

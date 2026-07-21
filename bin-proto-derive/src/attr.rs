@@ -24,7 +24,7 @@ pub struct Attrs {
 
 #[derive(Clone)]
 pub enum Ctx {
-    Concrete(syn::Type),
+    Concrete(Box<syn::Type>),
     Bounds(Vec<syn::TypeParamBound>),
 }
 
