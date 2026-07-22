@@ -1,3 +1,5 @@
+# v0.12.9
+- Bound eager pre-allocation when decoding length-prefixed collections, so an untrusted length prefix can no longer cause a huge allocation or a `capacity overflow` panic
 # v0.12.8
 - Add `#[bin_proto(crate = ...)]` attribute (https://github.com/wojciech-graj/bin-proto/pull/9)
 # v0.12.7

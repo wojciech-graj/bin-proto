@@ -23,7 +23,7 @@ macro_rules! impl_read_map {
             {
                 let item_count = ::core::convert::TryInto::try_into(tag.0)
                     .map_err(|_| $crate::Error::TagConvert)?;
-                let mut this = ($new)(item_count);
+                let mut this = ($new)($crate::util::cautious_capacity::<(K, V)>(item_count));
                 for _ in 0..item_count {
                     this.insert(
                         $crate::BitDecode::<_, _>::decode::<_, E>(read, ctx, ())?,

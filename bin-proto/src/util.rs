@@ -44,3 +44,43 @@ where
         other => Some(other),
     })
 }
+
+/// Upper bound, in bytes, on capacity reserved up front for a length-prefixed
+/// collection, so a hostile length prefix can't trigger a huge allocation (or a
+/// `capacity overflow` panic) before any element is read.
+#[cfg(feature = "alloc")]
+const MAX_PREALLOC_BYTES: usize = 1024 * 1024;
+
+/// Capacity to reserve for `len` upcoming `T`s, capped by [`MAX_PREALLOC_BYTES`].
+///
+/// `len` comes from an untrusted length prefix and is only a hint: the collection
+/// still grows on push, so capping never changes what decodes, it only bounds the
+/// eager reservation.
+#[cfg(feature = "alloc")]
+#[inline]
+pub(crate) fn cautious_capacity<T>(len: usize) -> usize {
+    let elem = core::mem::size_of::<T>().max(1);
+    len.min(MAX_PREALLOC_BYTES / elem)
+}
+
+#[cfg(all(test, feature = "alloc"))]
+mod tests {
+    use super::cautious_capacity;
+
+    #[test]
+    fn caps_hostile_count() {
+        assert_eq!(cautious_capacity::<u8>(usize::MAX), 1024 * 1024);
+        assert_eq!(cautious_capacity::<u128>(usize::MAX), 1024 * 1024 / 16);
+    }
+
+    #[test]
+    fn passes_through_legitimate_count() {
+        assert_eq!(cautious_capacity::<u32>(10), 10);
+        assert_eq!(cautious_capacity::<u8>(0), 0);
+    }
+
+    #[test]
+    fn zero_sized_type_does_not_divide_by_zero() {
+        assert_eq!(cautious_capacity::<()>(5), 5);
+    }
+}
