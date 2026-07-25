@@ -45,42 +45,89 @@ where
     })
 }
 
-/// Upper bound, in bytes, on capacity reserved up front for a length-prefixed
-/// collection, so a hostile length prefix can't trigger a huge allocation (or a
-/// `capacity overflow` panic) before any element is read.
-#[cfg(feature = "alloc")]
-const MAX_PREALLOC_BYTES: usize = 1024 * 1024;
-
-/// Capacity to reserve for `len` upcoming `T`s, capped by [`MAX_PREALLOC_BYTES`].
+/// Reserve capacity for `len` upcoming elements without panicking.
 ///
-/// `len` comes from an untrusted length prefix and is only a hint: the collection
-/// still grows on push, so capping never changes what decodes, it only bounds the
-/// eager reservation.
+/// Inherent `try_reserve` returns `Err` rather than aborting on capacity overflow or a
+/// legitimately-too-large reservation, so a hostile length prefix degrades to a normal
+/// [`Error::Alloc`] instead of an OOM/panic. `LinkedList`, `BTreeSet` and `BTreeMap`
+/// have no contiguous backing buffer — they never pre-allocate on decode, so their
+/// impl is a no-op.
 #[cfg(feature = "alloc")]
-#[inline]
-pub(crate) fn cautious_capacity<T>(len: usize) -> usize {
-    let elem = core::mem::size_of::<T>().max(1);
-    len.min(MAX_PREALLOC_BYTES / elem)
+pub trait Reservable<T> {
+    /// Try to reserve capacity for `len` more elements, returning `Err` on failure.
+    fn try_reserve_hint(&mut self, len: usize) -> Result<()>;
 }
 
-#[cfg(all(test, feature = "alloc"))]
-mod tests {
-    use super::cautious_capacity;
-
-    #[test]
-    fn caps_hostile_count() {
-        assert_eq!(cautious_capacity::<u8>(usize::MAX), 1024 * 1024);
-        assert_eq!(cautious_capacity::<u128>(usize::MAX), 1024 * 1024 / 16);
+#[cfg(feature = "alloc")]
+impl<T> Reservable<T> for alloc::vec::Vec<T> {
+    #[inline]
+    fn try_reserve_hint(&mut self, len: usize) -> Result<()> {
+        Self::try_reserve(self, len).map_err(Error::from)
     }
+}
 
-    #[test]
-    fn passes_through_legitimate_count() {
-        assert_eq!(cautious_capacity::<u32>(10), 10);
-        assert_eq!(cautious_capacity::<u8>(0), 0);
+#[cfg(feature = "alloc")]
+impl<T> Reservable<T> for alloc::collections::VecDeque<T> {
+    #[inline]
+    fn try_reserve_hint(&mut self, len: usize) -> Result<()> {
+        Self::try_reserve(self, len).map_err(Error::from)
     }
+}
 
-    #[test]
-    fn zero_sized_type_does_not_divide_by_zero() {
-        assert_eq!(cautious_capacity::<()>(5), 5);
+#[cfg(feature = "alloc")]
+impl<T> Reservable<T> for alloc::collections::BinaryHeap<T> {
+    #[inline]
+    fn try_reserve_hint(&mut self, len: usize) -> Result<()> {
+        Self::try_reserve(self, len).map_err(Error::from)
+    }
+}
+
+#[cfg(feature = "std")]
+impl<T, H> Reservable<T> for std::collections::HashSet<T, H>
+where
+    T: core::hash::Hash + core::cmp::Eq,
+    H: core::hash::BuildHasher,
+{
+    #[inline]
+    fn try_reserve_hint(&mut self, len: usize) -> Result<()> {
+        Self::try_reserve(self, len).map_err(Error::from)
+    }
+}
+
+#[cfg(feature = "std")]
+impl<K, V, H> Reservable<(K, V)> for std::collections::HashMap<K, V, H>
+where
+    K: core::hash::Hash + core::cmp::Eq,
+    H: core::hash::BuildHasher,
+{
+    #[inline]
+    fn try_reserve_hint(&mut self, len: usize) -> Result<()> {
+        Self::try_reserve(self, len).map_err(Error::from)
+    }
+}
+
+// `LinkedList`, `BTreeSet` and `BTreeMap` have no contiguous backing buffer, so they
+// never over-reserve on decode — the reservation is a no-op.
+#[cfg(feature = "alloc")]
+impl<T> Reservable<T> for alloc::collections::LinkedList<T> {
+    #[inline]
+    fn try_reserve_hint(&mut self, _len: usize) -> Result<()> {
+        Ok(())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<T> Reservable<T> for alloc::collections::BTreeSet<T> {
+    #[inline]
+    fn try_reserve_hint(&mut self, _len: usize) -> Result<()> {
+        Ok(())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<K, V> Reservable<(K, V)> for alloc::collections::BTreeMap<K, V> {
+    #[inline]
+    fn try_reserve_hint(&mut self, _len: usize) -> Result<()> {
+        Ok(())
     }
 }

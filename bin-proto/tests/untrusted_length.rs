@@ -1,5 +1,9 @@
 //! A large untrusted length prefix must not force a huge up-front allocation or a
 //! capacity-overflow panic before a single element has been read from the stream.
+//!
+//! Collections now reserve capacity through `try_reserve`, so a hostile count
+//! degrades to a normal `Error::Alloc` rather than aborting on capacity overflow or
+//! attempting a multi-GB reservation the heap cannot satisfy.
 #![cfg(feature = "std")]
 
 use std::collections::{BTreeMap, BTreeSet, BinaryHeap, HashMap, HashSet, LinkedList, VecDeque};
@@ -37,6 +41,16 @@ fn hostile_length_prefix_errors_not_panics() {
     assert_hostile_len_errors!(LinkedList<u8>);
     assert_hostile_len_errors!(BTreeSet<u8>);
     assert_hostile_len_errors!(BTreeMap<u8, u8>);
+}
+
+// A count too large to reserve still errors even when the stream is non-empty, so
+// the failure comes from `try_reserve` rather than waiting until the read loop
+// under-runs — i.e. the panic/OOM vector is closed before a single byte is read.
+#[test]
+fn hostile_count_errors_pre_read() {
+    let nonempty: &[u8] = &[0xFF; 4];
+    let res = Vec::<u8>::decode_bytes_ctx(nonempty, BigEndian, &mut (), Tag(usize::MAX));
+    assert!(res.is_err());
 }
 
 #[test]

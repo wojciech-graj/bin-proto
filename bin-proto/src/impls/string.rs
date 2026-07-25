@@ -15,7 +15,8 @@ where
         E: Endianness,
     {
         let item_count = tag.0.try_into().map_err(|_| Error::TagConvert)?;
-        let mut bytes = Vec::with_capacity(util::cautious_capacity::<u8>(item_count));
+        let mut bytes = Vec::new();
+        util::Reservable::<u8>::try_reserve_hint(&mut bytes, item_count)?;
         for _ in 0..item_count {
             bytes.push(u8::decode::<_, E>(read, ctx, ())?);
         }

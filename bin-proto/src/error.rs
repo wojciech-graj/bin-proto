@@ -23,6 +23,9 @@ pub enum Error {
     Borrow(core::cell::BorrowError),
     Discriminant,
     TagConvert,
+    #[cfg(feature = "alloc")]
+    #[allow(missing_docs)]
+    Alloc(alloc::collections::TryReserveError),
     #[cfg(feature = "std")]
     Poison,
     Underrun {
@@ -50,6 +53,8 @@ impl fmt::Display for Error {
             Self::Borrow(e) => write!(f, "{e}"),
             Self::Discriminant => write!(f, "unknown enum discriminant"),
             Self::TagConvert => write!(f, "failed to convert tag"),
+            #[cfg(feature = "alloc")]
+            Self::Alloc(e) => write!(f, "allocation failed: {e}"),
             #[cfg(feature = "std")]
             Self::Poison => write!(f, "poisoned lock"),
             Self::Magic(expected) => write!(f, "magic mismatch. Expected: {expected:?}."),
@@ -108,6 +113,14 @@ impl From<Infallible> for Error {
     #[inline]
     fn from(_: Infallible) -> Self {
         unreachable!()
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<alloc::collections::TryReserveError> for Error {
+    #[inline]
+    fn from(value: alloc::collections::TryReserveError) -> Self {
+        Self::Alloc(value)
     }
 }
 

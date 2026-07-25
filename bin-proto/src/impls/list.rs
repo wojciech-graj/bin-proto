@@ -23,7 +23,8 @@ macro_rules! impl_read_list {
             {
                 let item_count = ::core::convert::TryInto::try_into(tag.0)
                     .map_err(|_| $crate::Error::TagConvert)?;
-                let mut this = ($new)($crate::util::cautious_capacity::<T>(item_count));
+                let mut this = ($new)();
+                $crate::util::Reservable::<T>::try_reserve_hint(&mut this, item_count)?;
                 for _ in 0..item_count {
                     this.$push($crate::BitDecode::<_, _>::decode::<_, E>(read, ctx, ())?);
                 }
@@ -116,7 +117,7 @@ macro_rules! impl_write_list {
 mod vec {
     use alloc::vec::Vec;
 
-    impl_read_list!(Vec<T>, |n| Self::with_capacity(n), push);
+    impl_read_list!(Vec<T>, || Self::new(), push);
     impl_write_list!(Vec<T>);
 
     #[cfg(test)]
@@ -138,7 +139,7 @@ mod vec {
 mod linked_list {
     use alloc::collections::linked_list::LinkedList;
 
-    impl_read_list!(LinkedList<T>, |_| Self::new(), push_back);
+    impl_read_list!(LinkedList<T>, || Self::new(), push_back);
     impl_write_list!(LinkedList<T>);
 
     #[cfg(test)]
@@ -160,7 +161,7 @@ mod linked_list {
 mod vec_deque {
     use alloc::collections::vec_deque::VecDeque;
 
-    impl_read_list!(VecDeque<T>, |n| Self::with_capacity(n), push_back);
+    impl_read_list!(VecDeque<T>, || Self::new(), push_back);
     impl_write_list!(VecDeque<T>);
 
     #[cfg(test)]
@@ -182,7 +183,7 @@ mod vec_deque {
 mod b_tree_set {
     use alloc::collections::btree_set::BTreeSet;
 
-    impl_read_list!(BTreeSet<T: Ord>, |_| Self::new(), insert);
+    impl_read_list!(BTreeSet<T: Ord>, || Self::new(), insert);
     impl_write_list!(BTreeSet<T: Ord>);
 
     #[cfg(test)]
@@ -204,7 +205,7 @@ mod b_tree_set {
 mod binary_heap {
     use alloc::collections::binary_heap::BinaryHeap;
 
-    impl_read_list!(BinaryHeap<T: Ord>, |n| Self::with_capacity(n), push);
+    impl_read_list!(BinaryHeap<T: Ord>, || Self::new(), push);
     impl_write_list!(BinaryHeap<T: Ord>);
 
     #[cfg(test)]
@@ -242,7 +243,7 @@ mod hash_set {
     use core::hash::{BuildHasher, Hash};
     use std::collections::HashSet;
 
-    impl_read_list!(HashSet<T: Hash + Eq, H: BuildHasher + Default>, |n| Self::with_capacity_and_hasher(n, H::default()), insert);
+    impl_read_list!(HashSet<T: Hash + Eq, H: BuildHasher + Default>, || Self::with_hasher(H::default()), insert);
     impl_write_list!(HashSet<T: Hash + Eq, H>);
 
     #[cfg(test)]
