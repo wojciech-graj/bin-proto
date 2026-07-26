@@ -90,6 +90,8 @@ mod decode {
         test_decode!(Box<[u8]>| Untagged; [0x01, 0x02, 0x03] => Box::new([1, 2, 3]));
     }
 
+    test_length_tag_decode!(Box<[u8]>);
+
     #[cfg(feature = "prepend-tags")]
     test_roundtrip!(Box<[i32]>);
 }

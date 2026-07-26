@@ -3,7 +3,7 @@ macro_rules! impl_read_map {
     (
         $ty:ident<K: $kbound0:ident $(+ $kbound1:ident)?, V
         $(, $h:ident : $hbound0:ident + $hbound1:ident)?>,
-        $new:expr
+        |$item_count:ident| $new:expr
     ) => {
         impl<Tag, Ctx, K, V, $($h)?> $crate::BitDecode<Ctx, $crate::Tag<Tag>> for $ty<K, V, $($h)?>
         where
@@ -21,10 +21,10 @@ macro_rules! impl_read_map {
                 R: ::bitstream_io::BitRead,
                 E: ::bitstream_io::Endianness,
             {
-                let item_count = ::core::convert::TryInto::try_into(tag.0)
+                let $item_count = ::core::convert::TryInto::try_into(tag.0)
                     .map_err(|_| $crate::Error::TagConvert)?;
-                let mut this = ($new)(item_count);
-                for _ in 0..item_count {
+                let mut this = $new;
+                for _ in 0..$item_count {
                     this.insert(
                         $crate::BitDecode::<_, _>::decode::<_, E>(read, ctx, ())?,
                         $crate::BitDecode::<_, _>::decode::<_, E>(read, ctx, ())?
@@ -132,7 +132,14 @@ mod hash_map {
     use std::collections::HashMap;
 
     impl_write_map!(HashMap<K: Eq + Hash, V, H>);
-    impl_read_map!(HashMap<K: Eq + Hash, V, H: BuildHasher + Default>, |n| Self::with_capacity_and_hasher(n, H::default()));
+    impl_read_map!(
+        HashMap<K: Eq + Hash, V, H: BuildHasher + Default>,
+        |n| {
+            let mut this = Self::with_hasher(H::default());
+            this.try_reserve(n)?;
+            this
+        }
+    );
 
     #[cfg(test)]
     mod tests {
@@ -144,6 +151,8 @@ mod hash_map {
             HashMap<u8, u8>| Untagged, Tag(1); [(1, 2)].into() => [0x01, 0x02]
         );
 
+        test_length_tag_decode!(HashMap<u8, u8>);
+
         #[cfg(feature = "prepend-tags")]
         test_roundtrip!(HashMap::<i32, i64>);
     }
@@ -154,7 +163,7 @@ mod b_tree_map {
     use alloc::collections::btree_map::BTreeMap;
 
     impl_write_map!(BTreeMap<K: Ord, V>);
-    impl_read_map!(BTreeMap<K: Ord, V>, |_| Self::new());
+    impl_read_map!(BTreeMap<K: Ord, V>, |n| Self::new());
 
     #[cfg(test)]
     mod tests {

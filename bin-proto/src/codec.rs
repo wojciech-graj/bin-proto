@@ -292,3 +292,25 @@ macro_rules! test_untagged_and_codec {
         }
     }
 }
+
+#[allow(unused)]
+macro_rules! test_length_tag_decode {
+    ($ty:ty) => {
+        #[cfg(all(test, feature = "alloc"))]
+        #[test]
+        fn decode_try_reserve() {
+            // TODO: use assert_matches in rust >=1.96.0
+            assert!(matches!(
+                <$ty as $crate::BitDecode::<(), _>>::decode::<_, ::bitstream_io::BigEndian>(
+                    &mut ::bitstream_io::BitReader::endian(
+                        [0u8; 0].as_slice(),
+                        ::bitstream_io::BigEndian
+                    ),
+                    &mut (),
+                    $crate::Tag(usize::MAX),
+                ),
+                Err($crate::Error::TryReserve(_))
+            ));
+        }
+    };
+}

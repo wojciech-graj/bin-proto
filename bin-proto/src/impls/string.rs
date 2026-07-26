@@ -15,7 +15,8 @@ where
         E: Endianness,
     {
         let item_count = tag.0.try_into().map_err(|_| Error::TagConvert)?;
-        let mut bytes = Vec::with_capacity(item_count);
+        let mut bytes = Vec::new();
+        bytes.try_reserve_exact(item_count)?;
         for _ in 0..item_count {
             bytes.push(u8::decode::<_, E>(read, ctx, ())?);
         }
@@ -69,6 +70,8 @@ impl<Ctx> BitDecode<Ctx> for String {
 }
 
 test_untagged_and_codec!(String| Untagged, crate::Tag(3); "abc".into() => [b'a', b'b', b'c']);
+
+test_length_tag_decode!(String);
 
 #[cfg(feature = "prepend-tags")]
 test_roundtrip!(String);

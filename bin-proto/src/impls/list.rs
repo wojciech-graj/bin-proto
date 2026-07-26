@@ -3,7 +3,7 @@ macro_rules! impl_read_list {
     (
         $ty:ident<T $(: $tbound0:ident $(+ $tbound1:ident)?)?
         $(, $h:ident: $hbound0:ident + $hbound1:ident)?>,
-        $new:expr,
+        |$item_count:ident| $new:expr,
         $push:ident
     ) => {
         impl<Tag, Ctx, T, $($h)?> $crate::BitDecode<Ctx, $crate::Tag<Tag>> for $ty<T, $($h)?>
@@ -21,10 +21,10 @@ macro_rules! impl_read_list {
                 R: ::bitstream_io::BitRead,
                 E: ::bitstream_io::Endianness,
             {
-                let item_count = ::core::convert::TryInto::try_into(tag.0)
+                let $item_count = ::core::convert::TryInto::try_into(tag.0)
                     .map_err(|_| $crate::Error::TagConvert)?;
-                let mut this = ($new)(item_count);
-                for _ in 0..item_count {
+                let mut this = $new;
+                for _ in 0..$item_count {
                     this.$push($crate::BitDecode::<_, _>::decode::<_, E>(read, ctx, ())?);
                 }
                 ::core::result::Result::Ok(this)
@@ -116,7 +116,15 @@ macro_rules! impl_write_list {
 mod vec {
     use alloc::vec::Vec;
 
-    impl_read_list!(Vec<T>, |n| Self::with_capacity(n), push);
+    impl_read_list!(
+        Vec<T>,
+        |n| {
+            let mut this = Self::new();
+            this.try_reserve_exact(n)?;
+            this
+        },
+        push
+    );
     impl_write_list!(Vec<T>);
 
     #[cfg(test)]
@@ -129,6 +137,8 @@ mod vec {
             Vec<u8>| Untagged, Tag(3); alloc::vec![1, 2, 3] => [0x01, 0x02, 0x03]
         );
 
+        test_length_tag_decode!(Vec<u8>);
+
         #[cfg(feature = "prepend-tags")]
         test_roundtrip!(Vec::<i32>);
     }
@@ -138,7 +148,7 @@ mod vec {
 mod linked_list {
     use alloc::collections::linked_list::LinkedList;
 
-    impl_read_list!(LinkedList<T>, |_| Self::new(), push_back);
+    impl_read_list!(LinkedList<T>, |n| Self::new(), push_back);
     impl_write_list!(LinkedList<T>);
 
     #[cfg(test)]
@@ -160,7 +170,15 @@ mod linked_list {
 mod vec_deque {
     use alloc::collections::vec_deque::VecDeque;
 
-    impl_read_list!(VecDeque<T>, |n| Self::with_capacity(n), push_back);
+    impl_read_list!(
+        VecDeque<T>,
+        |n| {
+            let mut this = Self::new();
+            this.try_reserve_exact(n)?;
+            this
+        },
+        push_back
+    );
     impl_write_list!(VecDeque<T>);
 
     #[cfg(test)]
@@ -173,6 +191,8 @@ mod vec_deque {
             VecDeque<u8>| Untagged, Tag(3); [1, 2, 3].into() => [0x01, 0x02, 0x03]
         );
 
+        test_length_tag_decode!(VecDeque<u8>);
+
         #[cfg(feature = "prepend-tags")]
         test_roundtrip!(VecDeque::<i32>);
     }
@@ -182,7 +202,7 @@ mod vec_deque {
 mod b_tree_set {
     use alloc::collections::btree_set::BTreeSet;
 
-    impl_read_list!(BTreeSet<T: Ord>, |_| Self::new(), insert);
+    impl_read_list!(BTreeSet<T: Ord>, |n| Self::new(), insert);
     impl_write_list!(BTreeSet<T: Ord>);
 
     #[cfg(test)]
@@ -204,7 +224,15 @@ mod b_tree_set {
 mod binary_heap {
     use alloc::collections::binary_heap::BinaryHeap;
 
-    impl_read_list!(BinaryHeap<T: Ord>, |n| Self::with_capacity(n), push);
+    impl_read_list!(
+        BinaryHeap<T: Ord>,
+        |n| {
+            let mut this = Self::new();
+            this.try_reserve_exact(n)?;
+            this
+        },
+        push
+    );
     impl_write_list!(BinaryHeap<T: Ord>);
 
     #[cfg(test)]
@@ -234,6 +262,8 @@ mod binary_heap {
         }
 
         test_encode!(BinaryHeap<u8>| Untagged; [1].into() => [0x01]);
+
+        test_length_tag_decode!(BinaryHeap<u8>);
     }
 }
 
@@ -242,7 +272,15 @@ mod hash_set {
     use core::hash::{BuildHasher, Hash};
     use std::collections::HashSet;
 
-    impl_read_list!(HashSet<T: Hash + Eq, H: BuildHasher + Default>, |n| Self::with_capacity_and_hasher(n, H::default()), insert);
+    impl_read_list!(
+        HashSet<T: Hash + Eq, H: BuildHasher + Default>,
+        |n| {
+            let mut this = Self::with_hasher(H::default());
+            this.try_reserve(n)?;
+            this
+        },
+        insert
+    );
     impl_write_list!(HashSet<T: Hash + Eq, H>);
 
     #[cfg(test)]
@@ -252,6 +290,8 @@ mod hash_set {
         use super::*;
 
         test_untagged_and_codec!(HashSet<u8>| Untagged, Tag(1); [1].into() => [0x01]);
+
+        test_length_tag_decode!(HashSet<u8>);
 
         #[cfg(feature = "prepend-tags")]
         test_roundtrip!(HashSet::<i32>);

@@ -1,3 +1,6 @@
+# v0.12.9
+- Add `Error::TryReserve` variant
+- Return error instead of panicking if allocating a collection would cause an OOM
 # v0.12.8
 - Add `#[bin_proto(crate = ...)]` attribute (https://github.com/wojciech-graj/bin-proto/pull/9)
 # v0.12.7
