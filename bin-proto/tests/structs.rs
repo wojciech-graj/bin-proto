@@ -2,7 +2,7 @@
 
 use std::marker::PhantomData;
 
-use bin_proto::{BitCodec, BitDecode, BitEncode, Error};
+use bin_proto::{error::ErrorKind, BitCodec, BitDecode, BitEncode};
 use bitstream_io::BigEndian;
 
 #[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
@@ -238,10 +238,12 @@ fn magic_read_correctly() {
 
 #[test]
 fn incorrect_magic_fails() {
-    assert!(matches!(
-        Magic::decode_bytes(&[10, 4, 1, 2, 3, 5], BigEndian),
-        Err(Error::Magic(&[9]))
-    ));
+    assert_eq!(
+        ErrorKind::Magic,
+        Magic::decode_bytes(&[10, 4, 1, 2, 3, 5], BigEndian)
+            .unwrap_err()
+            .kind()
+    );
 }
 
 #[test]
@@ -259,10 +261,10 @@ fn magic_unit_read_correctly() {
 
 #[test]
 fn incorrect_magic_unit_fails() {
-    assert!(matches!(
-        Magic2::decode_bytes(&[0x12], BigEndian),
-        Err(Error::Magic(&[0x11]))
-    ));
+    assert_eq!(
+        ErrorKind::Magic,
+        Magic2::decode_bytes(&[0x12], BigEndian).unwrap_err().kind()
+    );
 }
 
 #[test]

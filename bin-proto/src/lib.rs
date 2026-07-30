@@ -608,7 +608,8 @@ pub(crate) use std::io;
 mod codec;
 
 mod discriminable;
-mod error;
+#[allow(missing_docs)]
+pub mod error;
 mod impls;
 pub mod util;
 

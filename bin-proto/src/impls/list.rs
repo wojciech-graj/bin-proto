@@ -22,7 +22,7 @@ macro_rules! impl_read_list {
                 E: ::bitstream_io::Endianness,
             {
                 let $item_count = ::core::convert::TryInto::try_into(tag.0)
-                    .map_err(|_| $crate::Error::TagConvert)?;
+                    .map_err(|_| $crate::Error::from_inner($crate::error::ErrorCause::TagConvert))?;
                 let mut this = $new;
                 for _ in 0..$item_count {
                     this.$push($crate::BitDecode::<_, _>::decode::<_, E>(read, ctx, ())?);

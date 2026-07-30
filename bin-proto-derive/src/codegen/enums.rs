@@ -37,7 +37,7 @@ pub fn encode_discriminant(attrs: &Attrs) -> TokenStream {
         ))
     };
     quote!({
-        let __tag = <Self as #crate_path::Discriminable>::discriminant(self).ok_or(#crate_path::Error::EncodeSkipped)?;
+        let __tag = <Self as #crate_path::Discriminable>::discriminant(self).ok_or(#crate_path::Error::from_inner(#crate_path::error::ErrorCause::EncodeSkipped))?;
         #encode_tag?;
     })
 }
@@ -51,7 +51,7 @@ pub fn encode_variant_fields(plan: &enums::Enum) -> Result<TokenStream> {
             let variant_name = &variant.ident;
             let fields_pattern = bind_fields_pattern(variant_name, &variant.fields);
             let encodes = if variant.skip_encode {
-                quote!(return ::core::result::Result::Err(#crate_path::Error::EncodeSkipped))
+                quote!(return ::core::result::Result::Err(#crate_path::Error::from_inner(#crate_path::error::ErrorCause::EncodeSkipped)))
             } else {
                 codegen::encodes(plan.parent_attrs, &variant.fields)?
             };
@@ -131,10 +131,10 @@ pub fn decode_variant_fields(plan: &enums::Enum) -> Result<TokenStream> {
     Ok(quote!(
         {
             match ::core::convert::TryInto::<#discriminant_ty>::try_into(__tag.0)
-                .map_err(|_| #crate_path::Error::TagConvert)? {
+                .map_err(|_| #crate_path::Error::from_inner(#crate_path::error::ErrorCause::TagConvert))? {
                 #(#discriminant_match_branches,)*
                 unknown_discriminant => {
-                    return Err(#crate_path::Error::Discriminant);
+                    return Err(#crate_path::Error::from_inner(#crate_path::error::ErrorCause::Discriminant));
                 },
             }
         }

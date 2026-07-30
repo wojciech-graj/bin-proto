@@ -4,6 +4,7 @@ use alloc::vec::Vec;
 use bitstream_io::{BitRead, BitReader, BitWrite, BitWriter, Endianness};
 
 use crate::{
+    error::ErrorCause,
     io::{self, Cursor},
     Error, Result,
 };
@@ -49,10 +50,10 @@ pub trait BitDecodeExt<Ctx = (), Tag = ()>:
         if read_bits == available_bits {
             Ok(decoded)
         } else {
-            Err(Error::Underrun {
+            Err(Error::from_inner(ErrorCause::Underrun {
                 read_bits,
                 available_bits,
-            })
+            }))
         }
     }
 }
@@ -298,8 +299,8 @@ macro_rules! test_length_tag_decode {
         #[cfg(all(test, feature = "alloc"))]
         #[test]
         fn decode_try_reserve() {
-            // TODO: use assert_matches in rust >=1.96.0
-            assert!(matches!(
+            assert_eq!(
+                $crate::error::ErrorKind::TryReserve,
                 <$ty as $crate::BitDecode::<(), _>>::decode::<_, ::bitstream_io::BigEndian>(
                     &mut ::bitstream_io::BitReader::endian(
                         [0u8; 0].as_slice(),
@@ -307,9 +308,10 @@ macro_rules! test_length_tag_decode {
                     ),
                     &mut (),
                     $crate::Tag(usize::MAX),
-                ),
-                Err($crate::Error::TryReserve(_))
-            ));
+                )
+                .unwrap_err()
+                .kind()
+            );
         }
     };
 }

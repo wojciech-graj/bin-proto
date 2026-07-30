@@ -1,6 +1,6 @@
 #![cfg(all(feature = "derive", feature = "alloc"))]
 
-use bin_proto::{BitCodec, BitDecode, BitEncode, Error};
+use bin_proto::{error::ErrorKind, BitCodec, BitDecode, BitEncode};
 use bitstream_io::BigEndian;
 
 #[derive(Debug, BitDecode, BitEncode, PartialEq, Eq)]
@@ -24,16 +24,16 @@ fn assert_true_encode() {
 
 #[test]
 fn assert_false_decode() {
-    assert!(matches!(
-        Assert::decode_bytes(&[0x02], BigEndian),
-        Err(Error::Assert(_))
-    ));
+    assert_eq!(
+        ErrorKind::Assert,
+        Assert::decode_bytes(&[0x02], BigEndian).unwrap_err().kind()
+    );
 }
 
 #[test]
 fn assert_false_encode() {
-    assert!(matches!(
-        Assert { a: 2 }.encode_bytes(BigEndian),
-        Err(Error::Assert(_))
-    ));
+    assert_eq!(
+        ErrorKind::Assert,
+        Assert { a: 2 }.encode_bytes(BigEndian).unwrap_err().kind()
+    );
 }

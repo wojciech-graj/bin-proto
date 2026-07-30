@@ -4,13 +4,88 @@ use core::{convert::Infallible, fmt};
 
 use crate::io;
 
-/// Alias for a Result with the error type [`Error`].
+/// Alias for a [`Result`](core::result::Result) with the error type [`Error`].
 pub type Result<T> = core::result::Result<T, Error>;
 
-#[derive(Debug)]
+/// Category of codec error.
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 #[non_exhaustive]
 #[allow(missing_docs)]
-pub enum Error {
+pub enum ErrorKind {
+    Io(io::ErrorKind),
+    #[cfg(feature = "alloc")]
+    FromUtf8,
+    #[cfg(feature = "alloc")]
+    Nul,
+    TryFromInt,
+    Borrow,
+    Discriminant,
+    TagConvert,
+    #[cfg(feature = "std")]
+    Poison,
+    Underrun,
+    EncodeSkipped,
+    Magic,
+    #[cfg(feature = "alloc")]
+    TryReserve,
+    Assert,
+    Other,
+}
+
+/// Codec error.
+#[derive(Debug)]
+pub struct Error {
+    inner: ErrorCause,
+}
+
+impl Error {
+    #[doc(hidden)]
+    #[inline]
+    #[must_use]
+    pub const fn from_inner(inner: ErrorCause) -> Self {
+        Self { inner }
+    }
+
+    /// Create a new error from a static string.
+    #[inline]
+    #[must_use]
+    pub const fn msg(msg: &'static str) -> Self {
+        Self {
+            inner: ErrorCause::Other(msg),
+        }
+    }
+
+    /// Create a new error from an arbitrary error.
+    #[inline]
+    #[must_use]
+    #[cfg(feature = "alloc")]
+    pub fn custom<E>(inner: E) -> Self
+    where
+        E: Into<Box<dyn core::error::Error + Send + Sync>>,
+    {
+        Self {
+            inner: ErrorCause::Boxed(inner.into()),
+        }
+    }
+
+    /// Returns the corresponding [`ErrorKind`] for this error.
+    #[inline]
+    #[must_use]
+    pub fn kind(&self) -> ErrorKind {
+        self.inner.kind()
+    }
+}
+
+impl From<ErrorCause> for Error {
+    fn from(inner: ErrorCause) -> Self {
+        Self { inner }
+    }
+}
+
+#[derive(Debug)]
+#[doc(hidden)]
+#[allow(missing_docs)]
+pub enum ErrorCause {
     Io(io::Error),
     #[cfg(feature = "alloc")]
     FromUtf8(alloc::string::FromUtf8Error),
@@ -38,7 +113,40 @@ pub enum Error {
     Other(&'static str),
 }
 
+impl ErrorCause {
+    pub(crate) fn kind(&self) -> ErrorKind {
+        match self {
+            Self::Io(error) => ErrorKind::Io(error.kind()),
+            #[cfg(feature = "alloc")]
+            Self::FromUtf8(_) => ErrorKind::FromUtf8,
+            #[cfg(feature = "alloc")]
+            Self::Nul(_) => ErrorKind::Nul,
+            Self::TryFromInt(_) => ErrorKind::TryFromInt,
+            Self::Borrow(_) => ErrorKind::Borrow,
+            Self::Discriminant => ErrorKind::Discriminant,
+            Self::TagConvert => ErrorKind::TagConvert,
+            #[cfg(feature = "std")]
+            Self::Poison => ErrorKind::Poison,
+            Self::Underrun { .. } => ErrorKind::Underrun,
+            Self::EncodeSkipped => ErrorKind::EncodeSkipped,
+            Self::Magic(_) => ErrorKind::Magic,
+            #[cfg(feature = "alloc")]
+            Self::TryReserve(_) => ErrorKind::TryReserve,
+            Self::Assert(_) => ErrorKind::Assert,
+            #[cfg(feature = "alloc")]
+            Self::Boxed(_) => ErrorKind::Other,
+            Self::Other(_) => ErrorKind::Other,
+        }
+    }
+}
+
 impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.inner.fmt(f)
+    }
+}
+
+impl fmt::Display for ErrorCause {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Io(e) => write!(f, "{e}"),
@@ -73,7 +181,9 @@ impl fmt::Display for Error {
 impl From<io::Error> for Error {
     #[inline]
     fn from(value: io::Error) -> Self {
-        Self::Io(value)
+        Self {
+            inner: ErrorCause::Io(value),
+        }
     }
 }
 
@@ -81,7 +191,9 @@ impl From<io::Error> for Error {
 impl From<alloc::string::FromUtf8Error> for Error {
     #[inline]
     fn from(value: alloc::string::FromUtf8Error) -> Self {
-        Self::FromUtf8(value)
+        Self {
+            inner: ErrorCause::FromUtf8(value),
+        }
     }
 }
 
@@ -89,21 +201,27 @@ impl From<alloc::string::FromUtf8Error> for Error {
 impl From<alloc::ffi::NulError> for Error {
     #[inline]
     fn from(value: alloc::ffi::NulError) -> Self {
-        Self::Nul(value)
+        Self {
+            inner: ErrorCause::Nul(value),
+        }
     }
 }
 
 impl From<core::num::TryFromIntError> for Error {
     #[inline]
     fn from(value: core::num::TryFromIntError) -> Self {
-        Self::TryFromInt(value)
+        Self {
+            inner: ErrorCause::TryFromInt(value),
+        }
     }
 }
 
 impl From<core::cell::BorrowError> for Error {
     #[inline]
     fn from(value: core::cell::BorrowError) -> Self {
-        Self::Borrow(value)
+        Self {
+            inner: ErrorCause::Borrow(value),
+        }
     }
 }
 
@@ -117,7 +235,9 @@ impl From<Infallible> for Error {
 #[cfg(feature = "std")]
 impl<T> From<std::sync::PoisonError<T>> for Error {
     fn from(_: std::sync::PoisonError<T>) -> Self {
-        Self::Poison
+        Self {
+            inner: ErrorCause::Poison,
+        }
     }
 }
 
@@ -125,7 +245,9 @@ impl<T> From<std::sync::PoisonError<T>> for Error {
 impl From<alloc::collections::TryReserveError> for Error {
     #[inline]
     fn from(value: alloc::collections::TryReserveError) -> Self {
-        Self::TryReserve(value)
+        Self {
+            inner: ErrorCause::TryReserve(value),
+        }
     }
 }
 

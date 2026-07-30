@@ -1,4 +1,5 @@
 # v1.0.0
+- Convert `Error` into opaque type
 - Add `Error::TryReserve` variant
 - Return error instead of panicking if allocating a collection would cause an OOM
 - Allow not prefixing fields with `self` in `#[bin_proto(tag = ..., tag_type = ..., write_value = ...)]` expressions

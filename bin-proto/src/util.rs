@@ -3,7 +3,7 @@
 use bitstream_io::{BitRead, BitWrite, Endianness};
 use core::iter;
 
-use crate::{io, BitDecode, BitEncode, Error, Result};
+use crate::{error::ErrorKind, io, BitDecode, BitEncode, Result};
 
 /// [`BitEncode`]s an iterator.
 ///
@@ -21,7 +21,7 @@ where
     Ok(())
 }
 
-/// [`BitDecode`]s items until EOF
+/// [`BitDecode`]s items until EOF.
 pub fn decode_items_to_eof<'a, R, E, Ctx, T>(
     read: &'a mut R,
     ctx: &'a mut Ctx,
@@ -32,7 +32,7 @@ where
     T: BitDecode<Ctx>,
 {
     iter::from_fn(|| match T::decode::<_, E>(read, ctx, ()) {
-        Err(Error::Io(e)) if e.kind() == io::ErrorKind::UnexpectedEof => None,
+        Err(e) if e.kind() == ErrorKind::Io(io::ErrorKind::UnexpectedEof) => None,
         other => Some(other),
     })
 }

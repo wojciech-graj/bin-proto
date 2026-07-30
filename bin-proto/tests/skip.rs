@@ -1,6 +1,6 @@
 #![cfg(all(feature = "derive", feature = "alloc"))]
 
-use bin_proto::{BitCodec, BitDecode, BitEncode, Error};
+use bin_proto::{error::ErrorKind, BitCodec, BitDecode, BitEncode};
 use bitstream_io::BigEndian;
 
 #[derive(Debug, BitDecode, BitEncode, PartialEq, Eq)]
@@ -101,15 +101,19 @@ fn skip_encode_enum() {
 fn skip_decode_enum() {
     let (decoded, _) = SkipDecodeEnum::decode_bytes(&[1], BigEndian).unwrap();
     assert_eq!(decoded, SkipDecodeEnum::A);
-
-    let result = SkipDecodeEnum::decode_bytes(&[2], BigEndian);
-    assert!(matches!(result, Err(Error::Discriminant)));
+    assert_eq!(
+        ErrorKind::Discriminant,
+        SkipDecodeEnum::decode_bytes(&[2], BigEndian)
+            .unwrap_err()
+            .kind()
+    );
 }
 
 #[test]
 fn skip_enum() {
     assert!(SkipEnum::B.encode_bytes(BigEndian).is_err());
-
-    let result = SkipEnum::decode_bytes(&[2], BigEndian);
-    assert!(matches!(result, Err(Error::Discriminant)));
+    assert_eq!(
+        ErrorKind::Discriminant,
+        SkipEnum::decode_bytes(&[2], BigEndian).unwrap_err().kind()
+    );
 }

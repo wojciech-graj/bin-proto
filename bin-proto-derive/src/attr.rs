@@ -93,7 +93,7 @@ impl Attrs {
                     ()
                 )?;
                 if magic != *MAGIC {
-                    return ::core::result::Result::Err(#crate_path::Error::Magic(MAGIC));
+                    return ::core::result::Result::Err(#crate_path::Error::from_inner(#crate_path::error::ErrorCause::Magic(MAGIC)));
                 }
             })
         } else {
@@ -118,7 +118,7 @@ impl Attrs {
             let crate_path = self.crate_path();
             let assert_str = assert.to_token_stream().to_string();
             quote!(if !(#assert) {
-                return ::core::result::Result::Err(#crate_path::Error::Assert(#assert_str));
+                return ::core::result::Result::Err(#crate_path::Error::from_inner(#crate_path::error::ErrorCause::Assert(#assert_str)));
             })
         } else {
             TokenStream::new()

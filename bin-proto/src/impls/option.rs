@@ -1,6 +1,6 @@
 use bitstream_io::{BitRead, BitWrite, Endianness};
 
-use crate::{BitDecode, BitEncode, Error, Result, Untagged};
+use crate::{error::ErrorCause, BitDecode, BitEncode, Error, Result, Untagged};
 
 impl<Tag, Ctx, T> BitDecode<Ctx, crate::Tag<Tag>> for Option<T>
 where
@@ -12,7 +12,11 @@ where
         R: BitRead,
         E: Endianness,
     {
-        if tag.0.try_into().map_err(|_| Error::TagConvert)? {
+        if tag
+            .0
+            .try_into()
+            .map_err(|_| Error::from_inner(ErrorCause::TagConvert))?
+        {
             let value = T::decode::<_, E>(read, ctx, ())?;
             Ok(Some(value))
         } else {

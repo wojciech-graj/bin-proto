@@ -1,6 +1,6 @@
 #![cfg(feature = "alloc")]
 
-use crate::{util, BitDecode, BitEncode, Error, Result, Untagged};
+use crate::{error::ErrorCause, util, BitDecode, BitEncode, Error, Result, Untagged};
 
 use alloc::{string::String, vec::Vec};
 use bitstream_io::{BitRead, BitWrite, Endianness};
@@ -14,7 +14,10 @@ where
         R: BitRead,
         E: Endianness,
     {
-        let item_count = tag.0.try_into().map_err(|_| Error::TagConvert)?;
+        let item_count = tag
+            .0
+            .try_into()
+            .map_err(|_| Error::from_inner(ErrorCause::TagConvert))?;
         let mut bytes = Vec::new();
         bytes.try_reserve_exact(item_count)?;
         for _ in 0..item_count {

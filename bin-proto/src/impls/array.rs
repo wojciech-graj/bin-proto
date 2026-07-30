@@ -64,7 +64,7 @@ mod test {
 
     use bitstream_io::BigEndian;
 
-    use crate::{BitDecodeExt, Error};
+    use crate::{error::ErrorCause, BitDecodeExt, Error};
 
     use super::*;
 
@@ -92,7 +92,7 @@ mod test {
         {
             let mut state = ctx.0.borrow_mut();
             if state.decoded {
-                Err(Error::Other(""))
+                Err(Error::from_inner(ErrorCause::Other("")))
             } else {
                 state.decoded = true;
                 Ok(Self(ctx.0))
