@@ -599,6 +599,10 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// ```
 #[cfg(feature = "derive")]
 pub use bin_proto_derive::{BitDecode, BitEncode};
+#[cfg(not(feature = "std"))]
+pub(crate) use no_std_io2::io;
+#[cfg(feature = "std")]
+pub(crate) use std::io;
 
 #[macro_use]
 mod codec;

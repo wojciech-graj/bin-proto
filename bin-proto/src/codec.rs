@@ -1,13 +1,12 @@
 #[cfg(feature = "alloc")]
 use alloc::vec::Vec;
-#[cfg(feature = "std")]
-use std::io::{self, Cursor};
 
 use bitstream_io::{BitRead, BitReader, BitWrite, BitWriter, Endianness};
-#[cfg(not(feature = "std"))]
-use no_std_io2::io::{self, Cursor};
 
-use crate::{Error, Result};
+use crate::{
+    io::{self, Cursor},
+    Error, Result,
+};
 
 /// A trait for bit-level decoding.
 pub trait BitDecode<Ctx = (), Tag = ()>: Sized {
@@ -244,7 +243,7 @@ macro_rules! test_encode {
                 let mut buffer = [0u8; 16];
                 value
                     .encode::<_, ::bitstream_io::BigEndian>(
-                        &mut ::bitstream_io::BitWriter::endian(&mut ::no_std_io2::io::Cursor::new(buffer.as_mut_slice()), ::bitstream_io::BigEndian),
+                        &mut ::bitstream_io::BitWriter::endian(&mut $crate::io::Cursor::new(buffer.as_mut_slice()), ::bitstream_io::BigEndian),
                         &mut (),
                         ($($tag)?),
                     )

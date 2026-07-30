@@ -1,14 +1,9 @@
 //! Helper functions for dealing with iterators
 
-use crate::{BitDecode, BitEncode, Error, Result};
-
 use bitstream_io::{BitRead, BitWrite, Endianness};
 use core::iter;
-#[cfg(feature = "std")]
-use std::io;
 
-#[cfg(not(feature = "std"))]
-use no_std_io2::io;
+use crate::{io, BitDecode, BitEncode, Error, Result};
 
 /// [`BitEncode`]s an iterator.
 ///

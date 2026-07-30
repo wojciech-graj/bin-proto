@@ -1,11 +1,8 @@
 #[cfg(feature = "alloc")]
 use alloc::boxed::Box;
 use core::{convert::Infallible, fmt};
-#[cfg(feature = "std")]
-use std::io;
 
-#[cfg(not(feature = "std"))]
-use no_std_io2::io;
+use crate::io;
 
 /// Alias for a Result with the error type [`Error`].
 pub type Result<T> = core::result::Result<T, Error>;
