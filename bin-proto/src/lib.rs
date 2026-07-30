@@ -25,11 +25,11 @@
 //!     #[bin_proto(bits = 3)]
 //!     bitfield: u8,
 //!     enum_: E,
-//!     #[bin_proto(write_value = self.arr.len() as u8)]
+//!     #[bin_proto(write_value = arr.len() as u8)]
 //!     arr_len: u8,
 //!     #[bin_proto(tag = arr_len as usize)]
 //!     arr: Vec<u8>,
-//!     #[bin_proto(tag_type = u16, tag_value = self.prefixed_arr.len() as u16)]
+//!     #[bin_proto(tag_type = u16, tag_value = prefixed_arr.len() as u16)]
 //!     prefixed_arr: Vec<u8>,
 //!     #[bin_proto(untagged)]
 //!     read_to_end: Vec<u8>,
@@ -276,8 +276,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 ///
 /// ## `tag`
 /// `#[bin_proto(tag = <expr>)]`
-/// - `<expr>`: arbitrary expression. Fields in parent container can be used without prefixing them
-///   with `self`.
+/// - `<expr>`: arbitrary expression.
 ///
 /// Specify tag of field. The tag represents a length prefix for variable-length fields, and a
 /// boolean for [`Option`].
@@ -298,8 +297,8 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 ///
 /// ## `tag_type`
 /// `#[bin_proto(tag_type = <type>[, tag_value = <expr>]?[, tag_bits = <expr>]?)]`
-/// - `<type>`: tag's type
-/// - `<expr>`: arbitrary expression. Fields in parent container should be prefixed with `self`.
+/// - `<type>`: tag's type.
+/// - `<expr>`: arbitrary expression.
 ///
 /// Specify tag of field. The tag represents a length prefix for variable-length fields, and a
 /// boolean for [`Option`]. The tag is placed directly before the field. The `tag_value` only has
@@ -311,7 +310,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
 /// struct WithElementsLength {
-///     #[bin_proto(tag_type = u16, tag_value = self.data.len() as u16, tag_bits = 13)]
+///     #[bin_proto(tag_type = u16, tag_value = data.len() as u16, tag_bits = 13)]
 ///     data: Vec<u32>,
 /// }
 /// # }
@@ -319,8 +318,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 ///
 /// ## `write_value`
 /// `#[bin_proto(write_value = <expr>)]`
-/// - `<expr>`: An expression that can be coerced to the field type. Fields in parent container
-///   should be prefixed with `self`.
+/// - `<expr>`: An expression that can be coerced to the field type.
 ///
 /// Specify an expression that should be used as the field's value for writing.
 ///
@@ -330,7 +328,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
 /// struct WithElementsLengthAuto {
-///     #[bin_proto(write_value = self.data.len() as u32)]
+///     #[bin_proto(write_value = data.len() as u32)]
 ///     count: u32,
 ///     foo: bool,
 ///     #[bin_proto(tag = count as usize)]

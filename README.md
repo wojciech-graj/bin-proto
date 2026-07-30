@@ -41,11 +41,11 @@ struct S {
     #[bin_proto(bits = 3)]
     bitfield: u8,
     enum_: E,
-    #[bin_proto(write_value = self.arr.len() as u8)]
+    #[bin_proto(write_value = arr.len() as u8)]
     arr_len: u8,
     #[bin_proto(tag = arr_len as usize)]
     arr: Vec<u8>,
-    #[bin_proto(tag_type = u16, tag_value = self.prefixed_arr.len() as u16)]
+    #[bin_proto(tag_type = u16, tag_value = prefixed_arr.len() as u16)]
     prefixed_arr: Vec<u8>,
     #[bin_proto(untagged)]
     read_to_end: Vec<u8>,

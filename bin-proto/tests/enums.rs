@@ -37,15 +37,32 @@ pub struct EnumContainer {
     e: Enum2,
 }
 
+// Deprecated
 #[derive(Debug, BitDecode, BitEncode, PartialEq)]
-pub struct TaggedEnumContainer {
+pub struct TaggedEnumContainerSelf {
     #[bin_proto(tag_type = u16, tag_value = ::bin_proto::Discriminable::discriminant(&self.e).unwrap() as u16)]
     e: Enum2,
 }
 
 #[derive(Debug, BitDecode, BitEncode, PartialEq)]
-pub struct BitFieldTaggedEnumContainer {
+pub struct TaggedEnumContainer {
+    #[bin_proto(tag_type = u16, tag_value = ::bin_proto::Discriminable::discriminant(e).unwrap() as u16)]
+    e: Enum2,
+}
+
+// Deprecated
+#[derive(Debug, BitDecode, BitEncode, PartialEq)]
+pub struct BitFieldTaggedEnumContainerSelf {
     #[bin_proto(write_value = ::bin_proto::Discriminable::discriminant(&self.e).unwrap())]
+    #[bin_proto(bits = 3)]
+    discriminant: u8,
+    #[bin_proto(tag = discriminant)]
+    e: Enum2,
+}
+
+#[derive(Debug, BitDecode, BitEncode, PartialEq)]
+pub struct BitFieldTaggedEnumContainer {
+    #[bin_proto(write_value = ::bin_proto::Discriminable::discriminant(e).unwrap())]
     #[bin_proto(bits = 3)]
     discriminant: u8,
     #[bin_proto(tag = discriminant)]

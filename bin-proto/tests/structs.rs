@@ -51,10 +51,20 @@ pub struct GenericStructPreBounded<T: BitEncode + BitDecode> {
     pub field: T,
 }
 
+// Deprecated
+#[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
+pub struct GenericStructNestedFieldSelf<T> {
+    pub len: u8,
+    #[bin_proto(tag_type = u8, tag_value = self.items.len() as u8)]
+    pub items: Vec<T>,
+    pub boxed: Box<T>,
+    pub marker: PhantomData<T>,
+}
+
 #[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
 pub struct GenericStructNestedField<T> {
     pub len: u8,
-    #[bin_proto(tag_type = u8, tag_value = self.items.len() as u8)]
+    #[bin_proto(tag_type = u8, tag_value = items.len() as u8)]
     pub items: Vec<T>,
     pub boxed: Box<T>,
     pub marker: PhantomData<T>,

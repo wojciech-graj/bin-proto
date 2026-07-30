@@ -17,14 +17,10 @@ pub fn decodes(parent_attrs: &Attrs, fields: &syn::Fields) -> Result<(TokenStrea
     }
 }
 
-pub fn encodes(
-    parent_attrs: &Attrs,
-    fields: &syn::Fields,
-    self_prefix: bool,
-) -> Result<TokenStream> {
+pub fn encodes(parent_attrs: &Attrs, fields: &syn::Fields) -> Result<TokenStream> {
     match fields {
-        syn::Fields::Named(fields) => encode_named_fields(parent_attrs, fields, self_prefix),
-        syn::Fields::Unnamed(fields) => encode_unnamed_fields(parent_attrs, fields, self_prefix),
+        syn::Fields::Named(fields) => encode_named_fields(parent_attrs, fields),
+        syn::Fields::Unnamed(fields) => encode_unnamed_fields(parent_attrs, fields),
         syn::Fields::Unit => Ok(TokenStream::new()),
     }
 }
@@ -222,22 +218,13 @@ fn encode(parent: &Attrs, field: &syn::Field, field_name: &TokenStream) -> Resul
 fn encode_named_fields(
     parent_attrs: &Attrs,
     fields_named: &syn::FieldsNamed,
-    self_prefix: bool,
 ) -> Result<TokenStream> {
     let field_encoders = fields_named
         .named
         .iter()
         .map(|field| {
             let field_name = &field.ident;
-            encode(
-                parent_attrs,
-                field,
-                &if self_prefix {
-                    quote!(&self. #field_name)
-                } else {
-                    quote!(#field_name)
-                },
-            )
+            encode(parent_attrs, field, &quote!(#field_name))
         })
         .collect::<Result<Vec<_>>>()?;
 
@@ -270,7 +257,6 @@ fn decode_unnamed_fields(
 fn encode_unnamed_fields(
     parent_attrs: &Attrs,
     fields_unnamed: &syn::FieldsUnnamed,
-    self_prefix: bool,
 ) -> Result<TokenStream> {
     let field_encoders: Vec<_> = fields_unnamed
         .unnamed
@@ -281,11 +267,7 @@ fn encode_unnamed_fields(
             encode(
                 parent_attrs,
                 field,
-                &if self_prefix {
-                    quote!(&self. #field_index)
-                } else {
-                    format!("field_{}", field_index.index).parse()?
-                },
+                &format!("field_{}", field_index.index).parse()?,
             )
         })
         .collect::<Result<Vec<_>>>()?;

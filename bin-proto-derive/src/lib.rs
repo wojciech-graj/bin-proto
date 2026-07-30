@@ -26,6 +26,7 @@ use codegen::{
     trait_impl::{impl_trait_for, TraitImplType},
 };
 use proc_macro2::TokenStream;
+use quote::ToTokens;
 use syn::{parse_macro_input, spanned::Spanned, Error, Result};
 
 use crate::codegen::enums::{decode_discriminant, encode_discriminant, variant_discriminant};
@@ -120,7 +121,7 @@ fn impl_for_struct(
             )
         }
         Operation::Encode => {
-            let encodes = codegen::encodes(&attrs, &strukt.fields, true)?;
+            let encodes = codegen::encodes(&attrs, &strukt.fields)?;
             let pad_before = attrs
                 .pad_before
                 .as_ref()
@@ -130,6 +131,20 @@ fn impl_for_struct(
                 .as_ref()
                 .map(|pad| encode_pad(&crate_path, pad));
             let magic = attrs.encode_magic();
+            let binds = strukt
+                .fields
+                .iter()
+                .enumerate()
+                .map(|(i, field)| {
+                    if let Some(ident) = &field.ident {
+                        quote!(#ident)
+                    } else {
+                        let idx = syn::Index::from(i).to_token_stream();
+                        let bind = format_ident!("field_{i}");
+                        quote!(#idx: #bind)
+                    }
+                })
+                .collect::<Vec<_>>();
 
             (
                 quote!(
@@ -143,6 +158,9 @@ fn impl_for_struct(
                         __W: #crate_path::BitWrite,
                         __E: #crate_path::Endianness,
                     {
+                        let Self {
+                            #(#binds),*
+                        } = self;
                         #pad_before
                         #magic
                         #encodes

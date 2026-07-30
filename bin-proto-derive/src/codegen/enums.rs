@@ -53,7 +53,7 @@ pub fn encode_variant_fields(plan: &enums::Enum) -> Result<TokenStream> {
             let encodes = if variant.skip_encode {
                 quote!(return ::core::result::Result::Err(#crate_path::Error::EncodeSkipped))
             } else {
-                codegen::encodes(plan.parent_attrs, &variant.fields, false)?
+                codegen::encodes(plan.parent_attrs, &variant.fields)?
             };
 
             Ok(quote!(Self :: #fields_pattern => {
