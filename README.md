@@ -43,7 +43,7 @@ struct S {
     enum_: E,
     #[bin_proto(write_value = arr.len() as u8)]
     arr_len: u8,
-    #[bin_proto(tag = arr_len as usize)]
+    #[bin_proto(tag = *arr_len as usize)]
     arr: Vec<u8>,
     #[bin_proto(tag_type = u16, tag_value = prefixed_arr.len() as u16)]
     prefixed_arr: Vec<u8>,

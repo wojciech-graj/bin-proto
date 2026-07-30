@@ -1,4 +1,5 @@
 use proc_macro2::{Span, TokenStream};
+use quote::ToTokens;
 use std::fmt;
 use syn::{parenthesized, punctuated::Punctuated, Error, Result, Token};
 
@@ -20,6 +21,7 @@ pub struct Attrs {
     pub write_value: Option<syn::Expr>,
     pub other: bool,
     pub crate_path: Option<syn::Path>,
+    pub assert: Option<syn::Expr>,
 }
 
 #[derive(Clone)]
@@ -105,6 +107,18 @@ impl Attrs {
             quote!({
                 const MAGIC: &[u8] = #magic;
                 #crate_path::BitEncode::encode::<_, __E>(MAGIC, __io_writer, __ctx, #crate_path::Untagged)?;
+            })
+        } else {
+            TokenStream::new()
+        }
+    }
+
+    pub fn codec_assert(&self) -> TokenStream {
+        if let Some(assert) = &self.assert {
+            let crate_path = self.crate_path();
+            let assert_str = assert.to_token_stream().to_string();
+            quote!(if !(#assert) {
+                return ::core::result::Result::Err(#crate_path::Error::Assert(#assert_str));
             })
         } else {
             TokenStream::new()
@@ -248,6 +262,10 @@ impl Attrs {
                         "crate" => {
                             expect_attr_kind!(AttrKind::Enum | AttrKind::Struct, kind, meta);
                             attrs.crate_path = Some(meta.value()?.parse()?);
+                        }
+                        "assert" => {
+                            expect_attr_kind!(AttrKind::Field, kind, meta);
+                            attrs.assert = Some(meta.value()?.parse()?);
                         }
                         _ => {
                             return Err(meta.error("unrecognized attribute"));

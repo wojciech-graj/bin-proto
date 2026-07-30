@@ -27,7 +27,7 @@
 //!     enum_: E,
 //!     #[bin_proto(write_value = arr.len() as u8)]
 //!     arr_len: u8,
-//!     #[bin_proto(tag = arr_len as usize)]
+//!     #[bin_proto(tag = *arr_len as usize)]
 //!     arr: Vec<u8>,
 //!     #[bin_proto(tag_type = u16, tag_value = prefixed_arr.len() as u16)]
 //!     prefixed_arr: Vec<u8>,
@@ -162,6 +162,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 ///
 /// | Attribute | Scope | Applicability |
 /// |-|-|-|
+/// | [`assert`](#assert) | field | rw |
 /// | [`discriminant_type`](#discriminant_type) | enum | rw |
 /// | [`discriminant`](#discriminant) | variant | rw |
 /// | [`other`](#other) | variant | r |
@@ -179,6 +180,20 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// | [`pad_after`](#pad_after) | field, struct | rw |
 /// | [`magic`](#magic) | field, struct | rw |
 /// | [`crate`](#crate) | struct, enum | rw |
+///
+/// ## `assert`
+/// `#[bin_proto(assert = <expr>)]`
+///
+/// Check that condition is met before encoding field, and after decoding field.
+///
+/// ```
+/// # use bin_proto::{BitDecode, BitEncode};
+/// #[derive(BitDecode, BitEncode)]
+/// struct S {
+///     #[bin_proto(assert = *a == 1)]
+///     a: u8,
+/// }
+/// ```
 ///
 /// ## `discriminant_type`
 /// `#[bin_proto(discriminant_type = <type>)]`
@@ -289,7 +304,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// struct WithElementsLength {
 ///     count: u32,
 ///     foo: bool,
-///     #[bin_proto(tag = count as usize)]
+///     #[bin_proto(tag = *count as usize)]
 ///     data: Vec<u32>,
 /// }
 /// # }
@@ -331,7 +346,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 ///     #[bin_proto(write_value = data.len() as u32)]
 ///     count: u32,
 ///     foo: bool,
-///     #[bin_proto(tag = count as usize)]
+///     #[bin_proto(tag = *count as usize)]
 ///     data: Vec<u32>,
 /// }
 /// # }

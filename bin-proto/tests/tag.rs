@@ -12,7 +12,7 @@ pub struct Prefix {
 pub struct WithElementsLength {
     pub count: u32,
     pub foo: bool,
-    #[bin_proto(tag = count as usize)]
+    #[bin_proto(tag = *count as usize)]
     pub data: Vec<u32>,
 }
 
@@ -22,22 +22,12 @@ pub struct OptionalWriteValue {
     pub data: Vec<u32>,
 }
 
-// Deprecated
-#[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
-pub struct WithElementsLengthAutoSelf {
-    #[bin_proto(write_value = self.data.len() as u32)]
-    pub count: u32,
-    pub foo: bool,
-    #[bin_proto(tag = count as usize)]
-    pub data: Vec<u32>,
-}
-
 #[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
 pub struct WithElementsLengthAuto {
     #[bin_proto(write_value = data.len() as u32)]
     pub count: u32,
     pub foo: bool,
-    #[bin_proto(tag = count as usize)]
+    #[bin_proto(tag = *count as usize)]
     pub data: Vec<u32>,
 }
 
@@ -49,28 +39,14 @@ pub enum WithElementsLengthAutoEnum {
         #[bin_proto(write_value = data.len() as u32)]
         count: u32,
         foo: bool,
-        #[bin_proto(tag = count as usize)]
+        #[bin_proto(tag = *count as usize)]
         data: Vec<u32>,
     },
-}
-
-// Deprecated
-#[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
-pub struct PrependedSelf {
-    #[bin_proto(tag_type = u32, tag_value = self.data.len() as u32)]
-    pub data: Vec<u32>,
 }
 
 #[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
 pub struct Prepended {
     #[bin_proto(tag_type = u32, tag_value = data.len() as u32)]
-    pub data: Vec<u32>,
-}
-
-// Deprecated
-#[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
-pub struct PrependedBitsSelf {
-    #[bin_proto(tag_type = u32, tag_value = self.data.len() as u32, tag_bits = 3)]
     pub data: Vec<u32>,
 }
 

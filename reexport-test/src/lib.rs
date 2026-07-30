@@ -14,7 +14,7 @@ pub enum Enum<'a, T: BitDecode + BitEncode> {
         a: T,
         #[bin_proto(magic = b"ABC")]
         len: u8,
-        #[bin_proto(tag = len as usize)]
+        #[bin_proto(tag = *len as usize)]
         arr: Vec<u8>,
     },
     #[bin_proto(discriminant = 2)]
