@@ -87,7 +87,7 @@ macro_rules! impl_write_list {
                 W: ::bitstream_io::BitWrite,
                 E: ::bitstream_io::Endianness,
             {
-                $crate::util::encode_items::<_, E, _, _>(self.iter(), write,  ctx)
+                $crate::util::encode_items::<_, _, E, _, _>(self.iter(), write,  ctx)
             }
         }
 

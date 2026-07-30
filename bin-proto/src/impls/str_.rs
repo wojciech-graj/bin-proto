@@ -8,7 +8,7 @@ impl<Ctx> BitEncode<Ctx, Untagged> for str {
         W: BitWrite,
         E: Endianness,
     {
-        util::encode_items::<_, E, _, _>(self.as_bytes(), write, ctx)
+        util::encode_items::<_, _, E, _, _>(self.as_bytes(), write, ctx)
     }
 }
 

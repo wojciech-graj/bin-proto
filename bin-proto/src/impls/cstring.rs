@@ -28,7 +28,7 @@ impl<Ctx> BitEncode<Ctx> for CString {
         W: BitWrite,
         E: Endianness,
     {
-        util::encode_items::<_, E, _, _>(self.to_bytes_with_nul().iter(), write, ctx)
+        util::encode_items::<_, _, E, _, _>(self.to_bytes_with_nul().iter(), write, ctx)
     }
 }
 

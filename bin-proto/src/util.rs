@@ -10,18 +10,15 @@ use std::io;
 #[cfg(not(feature = "std"))]
 use no_std_io2::io;
 
-/// [`BitEncode`]s an iterator of parcels to the stream.
+/// [`BitEncode`]s an iterator.
 ///
 /// Does not include a length prefix.
-pub fn encode_items<'a, W, E, Ctx, T>(
-    items: impl IntoIterator<Item = &'a T>,
-    write: &mut W,
-    ctx: &mut Ctx,
-) -> Result<()>
+pub fn encode_items<I, W, E, Ctx, T>(items: I, write: &mut W, ctx: &mut Ctx) -> Result<()>
 where
+    I: IntoIterator<Item = T>,
     W: BitWrite,
     E: Endianness,
-    T: BitEncode<Ctx> + 'a,
+    T: BitEncode<Ctx>,
 {
     for item in items {
         item.encode::<_, E>(write, ctx, ())?;

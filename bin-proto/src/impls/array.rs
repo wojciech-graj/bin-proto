@@ -51,7 +51,7 @@ where
         W: BitWrite,
         E: Endianness,
     {
-        util::encode_items::<_, E, _, _>(self.iter(), write, ctx)
+        util::encode_items::<_, _, E, _, _>(self.iter(), write, ctx)
     }
 }
 
