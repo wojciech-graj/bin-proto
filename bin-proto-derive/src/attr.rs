@@ -48,14 +48,21 @@ pub enum AttrKind {
     Field,
 }
 
+#[derive(Clone, Copy)]
+pub enum TemporalDirection {
+    Before,
+    After,
+}
+
 impl fmt::Display for AttrKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Enum => write!(f, "enum"),
-            Self::Struct => write!(f, "struct"),
-            Self::Variant => write!(f, "variant"),
-            Self::Field => write!(f, "field"),
+            Self::Enum => "enum",
+            Self::Struct => "struct",
+            Self::Variant => "variant",
+            Self::Field => "field",
         }
+        .fmt(f)
     }
 }
 
@@ -86,14 +93,16 @@ impl Attrs {
         if let Some(magic) = &self.magic {
             let crate_path = self.crate_path();
             quote!({
-                const MAGIC: &[u8] = #magic;
-                let magic: [u8; MAGIC.len()] = #crate_path::BitDecode::<__E, _, _>::decode(
-                    __io_reader,
-                    __ctx,
-                    ()
-                )?;
-                if magic != *MAGIC {
-                    return ::core::result::Result::Err(#crate_path::Error::from_inner(#crate_path::error::ErrorCause::Magic(MAGIC)));
+                let magic: &[u8] = #magic;
+                for expected in magic.iter() {
+                    let read: u8 = #crate_path::BitDecode::<__E, _, _>::decode(
+                        __io_reader,
+                        __ctx,
+                        ()
+                    )?;
+                    if read != *expected {
+                        return ::core::result::Result::Err(#crate_path::Error::from_inner(#crate_path::error::ErrorCause::Magic));
+                    }
                 }
             })
         } else {
@@ -104,10 +113,9 @@ impl Attrs {
     pub fn encode_magic(&self) -> TokenStream {
         if let Some(magic) = &self.magic {
             let crate_path = self.crate_path();
-            quote!({
-                const MAGIC: &[u8] = #magic;
-                #crate_path::BitEncode::<__E, _, _>::encode(MAGIC, __io_writer, __ctx, #crate_path::Untagged)?;
-            })
+            quote!(
+                <[u8] as #crate_path::BitEncode::<__E, _, _>>::encode(#magic, __io_writer, __ctx, #crate_path::Untagged)?;
+            )
         } else {
             TokenStream::new()
         }
@@ -130,6 +138,32 @@ impl Attrs {
             quote!(#path)
         } else {
             quote!(::bin_proto)
+        }
+    }
+
+    pub fn decode_pad(&self, dir: TemporalDirection) -> TokenStream {
+        let pad = match dir {
+            TemporalDirection::Before => &self.pad_before,
+            TemporalDirection::After => &self.pad_after,
+        };
+        if let Some(pad) = pad {
+            let crate_path = self.crate_path();
+            quote!(#crate_path::BitRead::skip(__io_reader, #pad)?;)
+        } else {
+            TokenStream::new()
+        }
+    }
+
+    pub fn encode_pad(&self, dir: TemporalDirection) -> TokenStream {
+        let pad = match dir {
+            TemporalDirection::Before => &self.pad_before,
+            TemporalDirection::After => &self.pad_after,
+        };
+        if let Some(pad) = pad {
+            let crate_path = self.crate_path();
+            quote!(#crate_path::BitWrite::pad(__io_writer, #pad)?;)
+        } else {
+            TokenStream::new()
         }
     }
 

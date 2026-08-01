@@ -1,45 +1,49 @@
 use crate::{attr::Attrs, codegen, enums};
-use proc_macro2::{Span, TokenStream};
+use proc_macro2::TokenStream;
 use syn::{parse_quote, Error, Result};
 
-pub fn decode_discriminant(attrs: &Attrs) -> TokenStream {
-    let crate_path = attrs.crate_path();
-    if let Some(bits) = &attrs.bits {
-        quote!(#crate_path::BitDecode::<__E, _, _>::decode(
-            __io_reader,
-            __ctx,
-            #crate_path::Bits::<#bits>,
-        ))
-    } else {
-        quote!(#crate_path::BitDecode::<__E, _, _>::decode(
-            __io_reader,
-            __ctx,
-            (),
-        ))
-    }
-}
+use crate::field::FieldsExt;
 
-pub fn encode_discriminant(attrs: &Attrs) -> TokenStream {
-    let crate_path = attrs.crate_path();
-    let encode_tag = if let Some(bits) = &attrs.bits {
-        quote!(#crate_path::BitEncode::<__E, _, _>::encode(
-            &__tag,
-            __io_writer,
-            __ctx,
-            #crate_path::Bits::<#bits>,
-        ))
-    } else {
-        quote!(#crate_path::BitEncode::<__E, _, _>::encode(
-            &__tag,
-            __io_writer,
-            __ctx,
-            (),
-        ))
-    };
-    quote!({
-        let __tag = <Self as #crate_path::Discriminable>::discriminant(self).ok_or(#crate_path::Error::from_inner(#crate_path::error::ErrorCause::EncodeSkipped))?;
-        #encode_tag?;
-    })
+impl Attrs {
+    pub fn decode_discriminant(&self) -> TokenStream {
+        let crate_path = self.crate_path();
+        if let Some(bits) = &self.bits {
+            quote!(#crate_path::BitDecode::<__E, _, _>::decode(
+                __io_reader,
+                __ctx,
+                #crate_path::Bits::<#bits>,
+            ))
+        } else {
+            quote!(#crate_path::BitDecode::<__E, _, _>::decode(
+                __io_reader,
+                __ctx,
+                (),
+            ))
+        }
+    }
+
+    pub fn encode_discriminant(&self) -> TokenStream {
+        let crate_path = self.crate_path();
+        let encode_tag = if let Some(bits) = &self.bits {
+            quote!(#crate_path::BitEncode::<__E, _, _>::encode(
+                &__tag,
+                __io_writer,
+                __ctx,
+                #crate_path::Bits::<#bits>,
+            ))
+        } else {
+            quote!(#crate_path::BitEncode::<__E, _, _>::encode(
+                &__tag,
+                __io_writer,
+                __ctx,
+                (),
+            ))
+        };
+        quote!({
+            let __tag = <Self as #crate_path::Discriminable>::discriminant(self).ok_or(#crate_path::Error::from_inner(#crate_path::error::ErrorCause::EncodeSkipped))?;
+            #encode_tag?;
+        })
+    }
 }
 
 pub fn encode_variant_fields(plan: &enums::Enum) -> Result<TokenStream> {
@@ -49,20 +53,21 @@ pub fn encode_variant_fields(plan: &enums::Enum) -> Result<TokenStream> {
         .iter()
         .map(|variant| {
             let variant_name = &variant.ident;
-            let fields_pattern = bind_fields_pattern(variant_name, &variant.fields);
+            let fields_pattern = fields_pattern(&variant.fields);
             let encodes = if variant.skip_encode {
                 quote!(return ::core::result::Result::Err(#crate_path::Error::from_inner(#crate_path::error::ErrorCause::EncodeSkipped)))
             } else {
                 codegen::encodes(plan.parent_attrs, &variant.fields)?
             };
 
-            Ok(quote!(Self :: #fields_pattern => {
+            Ok(quote!(Self :: #variant_name #fields_pattern => {
                 #encodes
             }))
         })
         .collect::<Result<Vec<_>>>()?;
 
     Ok(quote!(
+        #[allow(non_shorthand_field_patterns)]
         match self {
             #(#variant_match_branches,)*
         }
@@ -75,7 +80,7 @@ pub fn variant_discriminant(plan: &enums::Enum) -> Result<TokenStream> {
         .iter()
         .map(|variant| {
             let variant_name = &variant.ident;
-            let fields_pattern = bind_fields_pattern(variant_name, &variant.fields);
+            let fields_pattern = fields_pattern(&variant.fields);
             let discriminant_expr = if variant.skip_encode {
                 quote!(::core::option::Option::None)
             } else {
@@ -86,14 +91,18 @@ pub fn variant_discriminant(plan: &enums::Enum) -> Result<TokenStream> {
                 quote!(::core::option::Option::Some(#discriminant))
             };
 
-            Ok(quote!(Self :: #fields_pattern => {
+            Ok(quote!(Self :: #variant_name #fields_pattern => {
                 #discriminant_expr
             }))
         })
         .collect::<Result<Vec<_>>>()?;
-    Ok(quote!(match self {
-        #(#variant_match_branches,)*
-    }))
+
+    Ok(quote!(
+        #[allow(non_shorthand_field_patterns)]
+        match self {
+            #(#variant_match_branches,)*
+        }
+    ))
 }
 
 pub fn decode_variant_fields(plan: &enums::Enum) -> Result<TokenStream> {
@@ -133,7 +142,7 @@ pub fn decode_variant_fields(plan: &enums::Enum) -> Result<TokenStream> {
             match ::core::convert::TryInto::<#discriminant_ty>::try_into(__tag.0)
                 .map_err(|_| #crate_path::Error::from_inner(#crate_path::error::ErrorCause::TagConvert))? {
                 #(#discriminant_match_branches,)*
-                unknown_discriminant => {
+                _ => {
                     return Err(#crate_path::Error::from_inner(#crate_path::error::ErrorCause::Discriminant));
                 },
             }
@@ -141,28 +150,10 @@ pub fn decode_variant_fields(plan: &enums::Enum) -> Result<TokenStream> {
     ))
 }
 
-pub fn bind_fields_pattern(parent_name: &syn::Ident, fields: &syn::Fields) -> TokenStream {
-    match *fields {
-        syn::Fields::Named(ref fields_named) => {
-            let field_name_refs = fields_named
-                .named
-                .iter()
-                .map(|f| &f.ident)
-                .map(|n| quote!( ref #n ));
-            quote!(
-                #parent_name { #( #field_name_refs ),* }
-            )
-        }
-        syn::Fields::Unnamed(ref fields_unnamed) => {
-            let binding_names: Vec<_> = (0..fields_unnamed.unnamed.len())
-                .map(|i| syn::Ident::new(format!("field_{i}").as_str(), Span::call_site()))
-                .collect();
-
-            let field_refs: Vec<_> = binding_names.iter().map(|i| quote!( ref #i )).collect();
-            quote!(
-                #parent_name ( #( #field_refs ),* )
-            )
-        }
-        syn::Fields::Unit => quote!(#parent_name),
-    }
+fn fields_pattern(fields: &syn::Fields) -> TokenStream {
+    let fields = fields
+        .fields()
+        .map(|field| field.field_value())
+        .collect::<Vec<_>>();
+    quote!( { #(#fields),* } )
 }

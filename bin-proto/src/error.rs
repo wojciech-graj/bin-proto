@@ -104,7 +104,7 @@ pub enum ErrorCause {
         available_bits: u64,
     },
     EncodeSkipped,
-    Magic(&'static [u8]),
+    Magic,
     #[cfg(feature = "alloc")]
     TryReserve(alloc::collections::TryReserveError),
     Assert(&'static str),
@@ -131,7 +131,7 @@ impl ErrorCause {
             Self::Poison => ErrorKind::Poison,
             Self::Underrun { .. } => ErrorKind::Underrun,
             Self::EncodeSkipped => ErrorKind::EncodeSkipped,
-            Self::Magic(_) => ErrorKind::Magic,
+            Self::Magic => ErrorKind::Magic,
             #[cfg(feature = "alloc")]
             Self::TryReserve(_) => ErrorKind::TryReserve,
             Self::Assert(_) => ErrorKind::Assert,
@@ -162,7 +162,7 @@ impl fmt::Display for ErrorCause {
             Self::TagConvert => write!(f, "failed to convert tag"),
             #[cfg(feature = "std")]
             Self::Poison => write!(f, "poisoned lock"),
-            Self::Magic(expected) => write!(f, "magic mismatch. Expected: {expected:?}."),
+            Self::Magic => write!(f, "magic mismatch"),
             Self::Underrun {
                 read_bits: read,
                 available_bits: available,

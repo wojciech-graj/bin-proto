@@ -18,18 +18,18 @@ extern crate quote;
 mod attr;
 mod codegen;
 mod enums;
+mod field;
 
-use attr::{AttrKind, Attrs};
+use attr::{AttrKind, Attrs, TemporalDirection};
 use codegen::{
     bounds::FieldBounds,
-    decode_pad, encode_pad,
     trait_impl::{impl_trait_for, TraitImplType},
 };
+use field::FieldsExt;
 use proc_macro2::TokenStream;
-use quote::ToTokens;
-use syn::{parse_macro_input, spanned::Spanned, Error, Result};
+use syn::{parse_macro_input, parse_quote, spanned::Spanned, Error, Result};
 
-use crate::codegen::enums::{decode_discriminant, encode_discriminant, variant_discriminant};
+use crate::codegen::enums::variant_discriminant;
 
 #[derive(Clone, Copy)]
 enum Operation {
@@ -58,9 +58,9 @@ pub fn encode(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 }
 
 fn impl_codec(ast: &syn::DeriveInput, codec_type: Operation) -> Result<TokenStream> {
-    match ast.data {
-        syn::Data::Struct(ref s) => impl_for_struct(ast, s, codec_type),
-        syn::Data::Enum(ref e) => impl_for_enum(ast, e, codec_type),
+    match &ast.data {
+        syn::Data::Struct(s) => impl_for_struct(ast, s, codec_type),
+        syn::Data::Enum(e) => impl_for_enum(ast, e, codec_type),
         syn::Data::Union(..) => Err(Error::new(
             ast.span(),
             "bin-proto traits are not derivable on unions",
@@ -71,7 +71,7 @@ fn impl_codec(ast: &syn::DeriveInput, codec_type: Operation) -> Result<TokenStre
 fn impl_for_struct(
     ast: &syn::DeriveInput,
     strukt: &syn::DataStruct,
-    codec_type: Operation,
+    operation: Operation,
 ) -> Result<TokenStream> {
     let attrs = Attrs::parse(
         None,
@@ -82,21 +82,15 @@ fn impl_for_struct(
     let crate_path = attrs.crate_path();
     let ctx_ty = attrs.ctx_ty();
 
-    let mut bounds = FieldBounds::new(&attrs, codec_type);
+    let mut bounds = FieldBounds::new(&attrs, operation);
     bounds.add_fields(&strukt.fields)?;
     let predicates = bounds.into_predicates();
 
-    let (impl_body, trait_type) = match codec_type {
+    let (impl_body, trait_type) = match operation {
         Operation::Decode => {
             let (decodes, initializers) = codegen::decodes(&attrs, &strukt.fields)?;
-            let pad_before = attrs
-                .pad_before
-                .as_ref()
-                .map(|pad| decode_pad(&crate_path, pad));
-            let pad_after = attrs
-                .pad_after
-                .as_ref()
-                .map(|pad| decode_pad(&crate_path, pad));
+            let pad_before = attrs.decode_pad(TemporalDirection::Before);
+            let pad_after = attrs.decode_pad(TemporalDirection::After);
             let magic = attrs.decode_magic();
 
             (
@@ -121,28 +115,13 @@ fn impl_for_struct(
         }
         Operation::Encode => {
             let encodes = codegen::encodes(&attrs, &strukt.fields)?;
-            let pad_before = attrs
-                .pad_before
-                .as_ref()
-                .map(|pad| encode_pad(&crate_path, pad));
-            let pad_after = attrs
-                .pad_after
-                .as_ref()
-                .map(|pad| encode_pad(&crate_path, pad));
+            let pad_before = attrs.encode_pad(TemporalDirection::Before);
+            let pad_after = attrs.encode_pad(TemporalDirection::After);
             let magic = attrs.encode_magic();
-            let binds = strukt
+            let fields = strukt
                 .fields
-                .iter()
-                .enumerate()
-                .map(|(i, field)| {
-                    if let Some(ident) = &field.ident {
-                        quote!(#ident)
-                    } else {
-                        let idx = syn::Index::from(i).to_token_stream();
-                        let bind = format_ident!("field_{i}");
-                        quote!(#idx: #bind)
-                    }
-                })
+                .fields()
+                .map(|field| field.field_value())
                 .collect::<Vec<_>>();
 
             (
@@ -156,8 +135,9 @@ fn impl_for_struct(
                     where
                         __W: #crate_path::BitWrite + ?::core::marker::Sized,
                     {
+                        #[allow(non_shorthand_field_patterns)]
                         let Self {
-                            #(#binds),*
+                            #(#fields),*
                         } = self;
                         #pad_before
                         #magic
@@ -199,8 +179,8 @@ fn impl_for_enum(
     let discriminant_tag = attrs
         .bits
         .as_ref()
-        .map_or_else(|| quote!(()), |bits| quote!(#crate_path::Bits<{ #bits }>));
-    bounds.add_bound(discriminant_ty, &discriminant_tag);
+        .map(|bits| parse_quote!(#crate_path::Bits<{ #bits }>));
+    bounds.add_bound(discriminant_ty, discriminant_tag);
     let predicates = bounds.into_predicates();
 
     Ok(match codec_type {
@@ -225,7 +205,7 @@ fn impl_for_enum(
                 &predicates,
             )?;
 
-            let decode_discriminant = decode_discriminant(&attrs);
+            let decode_discriminant = attrs.decode_discriminant();
             let impl_body = quote!(
                 fn decode<__R>(
                     __io_reader: &mut __R,
@@ -252,14 +232,8 @@ fn impl_for_enum(
         }
         Operation::Encode => {
             let encode_variant = codegen::enums::encode_variant_fields(&plan)?;
-            let pad_before = attrs
-                .pad_before
-                .as_ref()
-                .map(|pad| encode_pad(&crate_path, pad));
-            let pad_after = attrs
-                .pad_after
-                .as_ref()
-                .map(|pad| encode_pad(&crate_path, pad));
+            let pad_before = attrs.encode_pad(TemporalDirection::Before);
+            let pad_after = attrs.encode_pad(TemporalDirection::After);
             let impl_body = quote!(
                 fn encode<__W>(
                     &self,
@@ -290,7 +264,7 @@ fn impl_for_enum(
             let discriminable_impl =
                 impl_trait_for(ast, &impl_body, &TraitImplType::Discriminable, &[])?;
 
-            let encode_discriminant = encode_discriminant(&attrs);
+            let encode_discriminant = attrs.encode_discriminant();
             let impl_body = quote!(
                 fn encode<__W>(
                     &self,

@@ -1,4 +1,3 @@
-use proc_macro2::TokenStream;
 use syn::{parse_quote, spanned::Spanned, Result, Type};
 
 use crate::{
@@ -60,30 +59,30 @@ impl<'a> FieldBounds<'a> {
                 // bitfield tag.
                 let tag_tag = bits
                     .as_ref()
-                    .map_or_else(|| quote!(()), |bits| quote!(#crate_path::Bits<{ #bits }>));
-                self.add_bound(typ, &tag_tag);
-                match self.operation {
-                    Operation::Decode => Some(quote!(#crate_path::Tag<#typ>)),
-                    Operation::Encode => Some(quote!(#crate_path::Untagged)),
-                }
+                    .map(|bits| parse_quote!(#crate_path::Bits<{ #bits }>));
+                self.add_bound(typ, tag_tag);
+                Some(Some(match self.operation {
+                    Operation::Decode => parse_quote!(#crate_path::Tag<#typ>),
+                    Operation::Encode => parse_quote!(#crate_path::Untagged),
+                }))
             }
             Some(Tag::External(_)) => match self.operation {
                 // The tag type is the type of an arbitrary expression, which
                 // cannot be named here, so no bound can be generated.
                 Operation::Decode => None,
-                Operation::Encode => Some(quote!(#crate_path::Untagged)),
+                Operation::Encode => Some(Some(parse_quote!(#crate_path::Untagged))),
             },
             None => Some(if let Some(bits) = &attrs.bits {
-                quote!(#crate_path::Bits<{ #bits }>)
+                Some(parse_quote!(#crate_path::Bits<{ #bits }>))
             } else if attrs.untagged {
-                quote!(#crate_path::Untagged)
+                Some(parse_quote!(#crate_path::Untagged))
             } else {
-                quote!(())
+                None
             }),
         };
 
         if let Some(tag_ty) = field_tag {
-            self.add_bound(&field.ty, &tag_ty);
+            self.add_bound(&field.ty, tag_ty);
         }
 
         Ok(())
@@ -91,13 +90,14 @@ impl<'a> FieldBounds<'a> {
 
     /// Adds a `BitDecode`/`BitEncode` bound for `ty` with the given tag type,
     /// if `ty` mentions a generic type parameter.
-    pub fn add_bound(&mut self, ty: &Type, tag_ty: &TokenStream) {
+    pub fn add_bound(&mut self, ty: &Type, tag_ty: Option<Type>) {
         let crate_path = self.parent_attrs.crate_path();
         let ctx_ty = self.parent_attrs.ctx_ty();
         let trait_name = match self.operation {
             Operation::Decode => quote!(BitDecode),
             Operation::Encode => quote!(BitEncode),
         };
+        let tag_ty = tag_ty.unwrap_or_else(|| parse_quote!(()));
 
         self.predicates
             .push(parse_quote!(#ty: #crate_path::#trait_name<__E, #ctx_ty, #tag_ty>));
