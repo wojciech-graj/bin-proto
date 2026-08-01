@@ -184,40 +184,24 @@ macro_rules! test_encode {
         #[cfg(test)]
         #[test]
         fn encode() {
-            use $crate::BitEncode;
+            use $crate::BitEncodeExt;
 
             let exp: &[u8] = &$exp;
             let value: $ty = $value;
 
-            #[cfg(feature = "alloc")]
-            {
-                let mut buffer: ::alloc::vec::Vec<u8> = ::alloc::vec::Vec::new();
-                value
-                    .encode::<_, ::bitstream_io::BigEndian>(
-                        &mut ::bitstream_io::BitWriter::<_, ::bitstream_io::BigEndian>::new(&mut buffer),
-                        &mut (),
-                        ($($tag)?),
-                    )
-                    .unwrap();
-                assert_eq!(exp, &buffer);
-            }
-
-            #[cfg(not(feature = "alloc"))]
-            {
-                let mut buffer = [0u8; 16];
-                value
-                    .encode::<_, ::bitstream_io::BigEndian>(
-                        &mut ::bitstream_io::BitWriter::<_, ::bitstream_io::BigEndian>::new(&mut $crate::io::Cursor::new(buffer.as_mut_slice())),
-                        &mut (),
-                        ($($tag)?),
-                    )
-                    .unwrap();
-                assert_eq!(exp, &buffer[..exp.len()]);
-                assert!(::core::iter::Iterator::all(
-                    &mut ::core::iter::IntoIterator::into_iter(&buffer[exp.len()..]),
-                    |x| *x == 0)
-                );
-            }
+            let mut buffer = [0u8; 16];
+            value
+                .encode_bytes_ctx_buf::<::bitstream_io::BigEndian, _, _>(
+                    &mut buffer,
+                    &mut (),
+                    ($($tag)?),
+                )
+                .unwrap();
+            assert_eq!(exp, &buffer[..exp.len()]);
+            assert!(::core::iter::Iterator::all(
+                &mut ::core::iter::IntoIterator::into_iter(&buffer[exp.len()..]),
+                |x| *x == 0)
+            );
         }
     };
 }
@@ -235,8 +219,12 @@ macro_rules! test_roundtrip {
         ::proptest::proptest!(
             #[test]
             fn roundtrip(x in ::proptest::arbitrary::any::<$ty>()) {
-                let encoded = $crate::BitEncodeExt::encode_bytes::<::bitstream_io::BigEndian>(&x).unwrap();
-                let decoded = <$ty as $crate::BitDecodeExt>::decode_bytes::<::bitstream_io::BigEndian>(&encoded).unwrap().0;
+                let encoded = $crate::BitEncodeExt::encode_bytes::<::bitstream_io::BigEndian>(&x);
+                ::proptest::prop_assert!(encoded.is_ok());
+                let encoded = encoded.unwrap();
+                let decoded = <$ty as $crate::BitDecodeExt>::decode_all_bytes::<::bitstream_io::BigEndian>(&encoded);
+                ::proptest::prop_assert!(decoded.is_ok());
+                let decoded = decoded.unwrap();
                 ::proptest::prop_assert_eq!(x, decoded);
             }
         );

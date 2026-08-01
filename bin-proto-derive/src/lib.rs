@@ -82,7 +82,7 @@ fn impl_for_struct(
     let crate_path = attrs.crate_path();
     let ctx_ty = attrs.ctx_ty();
 
-    let mut bounds = FieldBounds::new(&attrs, &ast.generics, codec_type);
+    let mut bounds = FieldBounds::new(&attrs, codec_type);
     bounds.add_fields(&strukt.fields)?;
     let predicates = bounds.into_predicates();
 
@@ -188,7 +188,7 @@ fn impl_for_enum(
     let discriminant_ty = &plan.discriminant_ty;
     let ctx_ty = attrs.ctx_ty();
 
-    let mut bounds = FieldBounds::new(&attrs, &ast.generics, codec_type);
+    let mut bounds = FieldBounds::new(&attrs, codec_type);
     for variant in &plan.variants {
         let skipped = match codec_type {
             Operation::Decode => variant.skip_decode,

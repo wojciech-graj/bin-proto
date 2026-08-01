@@ -36,3 +36,40 @@ where
         other => Some(other),
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use bitstream_io::{BigEndian, BitReader};
+
+    use crate::Error;
+
+    use super::*;
+
+    #[derive(Debug)]
+    struct CannotDecode;
+
+    impl<Ctx> BitDecode<Ctx> for CannotDecode {
+        fn decode<R, E>(_: &mut R, _: &mut Ctx, (): ()) -> Result<Self>
+        where
+            R: BitRead,
+            E: Endianness,
+        {
+            Err(Error::msg(""))
+        }
+    }
+
+    #[test]
+    fn decode_items_to_eof_other_error() {
+        assert_eq!(
+            ErrorKind::Other,
+            decode_items_to_eof::<_, BigEndian, _, CannotDecode>(
+                &mut BitReader::<_, BigEndian>::new(&[] as &[u8]),
+                &mut ()
+            )
+            .next()
+            .unwrap()
+            .unwrap_err()
+            .kind()
+        );
+    }
+}

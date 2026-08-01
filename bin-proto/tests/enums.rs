@@ -23,6 +23,7 @@ pub enum Enum<'a, T: BitDecode + BitEncode> {
 #[derive(Debug, BitDecode, BitEncode, PartialEq)]
 #[bin_proto(discriminant_type = u8)]
 #[bin_proto(bits = 2)]
+#[repr(u16)]
 pub enum Enum2 {
     #[bin_proto(discriminant = 3, other)]
     CatchAll(u8),

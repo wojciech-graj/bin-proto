@@ -102,6 +102,18 @@ struct CtxCheckBoundsWithGenerics<T: Boolean>(CtxCheck, PhantomData<T>);
 #[bin_proto(ctx_bounds(CtxTrait))]
 struct CtxCheckTraitWrapper(CtxCheck);
 
+#[allow(unused)]
+#[derive(Debug, BitEncode, BitDecode)]
+#[bin_proto(ctx_bounds(CtxTrait))]
+struct WithCtx<T> {
+    field: T,
+}
+
+#[allow(unused)]
+#[derive(Debug, BitEncode, BitDecode)]
+#[bin_proto(ctx = CtxStruct)]
+struct UsesWithCtx(WithCtx<CtxCheck>);
+
 #[test]
 fn decode_ctx_passed() {
     let mut ctx = CtxStruct(false);

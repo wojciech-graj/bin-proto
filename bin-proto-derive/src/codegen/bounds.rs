@@ -1,12 +1,5 @@
-use std::collections::HashSet;
-
 use proc_macro2::TokenStream;
-use syn::{
-    parse_quote,
-    spanned::Spanned,
-    visit::{self, Visit},
-    Ident, Result, Type,
-};
+use syn::{parse_quote, spanned::Spanned, Result, Type};
 
 use crate::{
     attr::{AttrKind, Attrs, Tag},
@@ -22,16 +15,14 @@ use crate::{
 /// would unnecessarily restrict the impl (and break recursive types).
 pub struct FieldBounds<'a> {
     parent_attrs: &'a Attrs,
-    type_params: HashSet<&'a Ident>,
     operation: Operation,
     predicates: Vec<syn::WherePredicate>,
 }
 
 impl<'a> FieldBounds<'a> {
-    pub fn new(parent_attrs: &'a Attrs, generics: &'a syn::Generics, operation: Operation) -> Self {
+    pub const fn new(parent_attrs: &'a Attrs, operation: Operation) -> Self {
         Self {
             parent_attrs,
-            type_params: generics.type_params().map(|param| &param.ident).collect(),
             operation,
             predicates: Vec::new(),
         }
@@ -101,10 +92,6 @@ impl<'a> FieldBounds<'a> {
     /// Adds a `BitDecode`/`BitEncode` bound for `ty` with the given tag type,
     /// if `ty` mentions a generic type parameter.
     pub fn add_bound(&mut self, ty: &Type, tag_ty: &TokenStream) {
-        if !mentions_ident(ty, &self.type_params) {
-            return;
-        }
-
         let crate_path = self.parent_attrs.crate_path();
         let ctx_ty = self.parent_attrs.ctx_ty();
         let trait_name = match self.operation {
@@ -119,38 +106,4 @@ impl<'a> FieldBounds<'a> {
     pub fn into_predicates(self) -> Vec<syn::WherePredicate> {
         self.predicates
     }
-}
-
-struct TypeParamVisitor<'a> {
-    type_params: &'a HashSet<&'a Ident>,
-    mentions: bool,
-}
-
-impl<'ast> Visit<'ast> for TypeParamVisitor<'_> {
-    fn visit_path(&mut self, node: &'ast syn::Path) {
-        if self.mentions {
-            return;
-        }
-
-        if node.leading_colon.is_none() {
-            if let Some(first_segment) = node.segments.first() {
-                if self.type_params.contains(&first_segment.ident) {
-                    self.mentions = true;
-                    return;
-                }
-            }
-        }
-
-        visit::visit_path(self, node);
-    }
-}
-
-/// Whether any identifier in `tokens` structurally represents one of the `type_params`.
-fn mentions_ident(typ: &Type, type_params: &HashSet<&Ident>) -> bool {
-    let mut visitor = TypeParamVisitor {
-        type_params,
-        mentions: false,
-    };
-    visitor.visit_type(typ);
-    visitor.mentions
 }

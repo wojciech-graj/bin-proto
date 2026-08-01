@@ -143,7 +143,6 @@ impl Attrs {
         let mut attrs = if let Some(parent) = parent {
             Self {
                 crate_path: parent.crate_path.clone(),
-                ctx: parent.ctx.clone(),
                 ..Default::default()
             }
         } else {

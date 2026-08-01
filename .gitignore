@@ -3,3 +3,4 @@ Cargo.lock
 *.profraw
 *.profdata
 .DS_Store
+mutants.out*/
