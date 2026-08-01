@@ -102,8 +102,8 @@ fn decode(
             quote!(())
         };
         quote!({
-            let __tag: #typ = #crate_path::BitDecode::decode::<_, __E>(__io_reader, __ctx, #tag)?;
-            #crate_path::BitDecode::decode::<_, __E>(
+            let __tag: #typ = #crate_path::BitDecode::<__E, _, _>::decode(__io_reader, __ctx, #tag)?;
+            #crate_path::BitDecode::<__E, _, _>::decode(
                 __io_reader,
                 __ctx,
                 #crate_path::Tag(__tag)
@@ -119,7 +119,7 @@ fn decode(
         } else {
             quote!(())
         };
-        quote!(#crate_path::BitDecode::decode::<_, __E>(__io_reader, __ctx, #tag)?)
+        quote!(#crate_path::BitDecode::<__E, _, _>::decode(__io_reader, __ctx, #tag)?)
     };
 
     Ok(quote!(
@@ -187,13 +187,13 @@ fn encode(parent: &Attrs, field: &syn::Field, field_name: &TokenStream) -> Resul
         };
         quote!(
             {
-                <#typ as #crate_path::BitEncode::<_, _>>::encode::<_, __E>(
+                <#typ as #crate_path::BitEncode::<__E, _, _>>::encode(
                     &{#write_value},
                     __io_writer,
                     __ctx,
                     #tag
                 )?;
-                #crate_path::BitEncode::encode::<_, __E>(
+                #crate_path::BitEncode::<__E, _, _>::encode(
                     #field_ref,
                     __io_writer,
                     __ctx,
@@ -211,7 +211,7 @@ fn encode(parent: &Attrs, field: &syn::Field, field_name: &TokenStream) -> Resul
         };
         quote!(
             {
-                #crate_path::BitEncode::encode::<_, __E>(#field_ref, __io_writer, __ctx, #tag)?
+                #crate_path::BitEncode::<__E, _, _>::encode(#field_ref, __io_writer, __ctx, #tag)?
             }
         )
     };

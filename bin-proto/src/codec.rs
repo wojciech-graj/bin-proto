@@ -10,12 +10,14 @@ use crate::{
 };
 
 /// A trait for bit-level decoding.
-pub trait BitDecode<Ctx = (), Tag = ()>: Sized {
+pub trait BitDecode<E, Ctx = (), Tag = ()>: Sized
+where
+    E: Endianness,
+{
     /// Reads self from a stream.
-    fn decode<R, E>(read: &mut R, ctx: &mut Ctx, tag: Tag) -> Result<Self>
+    fn decode<R>(read: &mut R, ctx: &mut Ctx, tag: Tag) -> Result<Self>
     where
-        R: BitRead + ?Sized,
-        E: Endianness;
+        R: BitRead + ?Sized;
 }
 
 /// Utility functionality for bit-level decoding.
@@ -25,11 +27,11 @@ pub trait BitDecodeExt {
     /// Returns a tuple of the parsed value and the number of bits read.
     fn decode_bytes_ctx<E, Ctx, Tag>(bytes: &[u8], ctx: &mut Ctx, tag: Tag) -> Result<(Self, u64)>
     where
-        Self: BitDecode<Ctx, Tag>,
+        Self: BitDecode<E, Ctx, Tag>,
         E: Endianness,
     {
         let mut buffer = BitReader::<_, E>::new(io::Cursor::new(bytes));
-        let this = Self::decode::<_, E>(&mut buffer, ctx, tag)?;
+        let this = Self::decode(&mut buffer, ctx, tag)?;
         Ok((this, buffer.position_in_bits()?))
     }
 
@@ -37,10 +39,10 @@ pub trait BitDecodeExt {
     /// entire buffer.
     fn decode_all_bytes_ctx<E, Ctx, Tag>(bytes: &[u8], ctx: &mut Ctx, tag: Tag) -> Result<Self>
     where
-        Self: BitDecode<Ctx, Tag>,
+        Self: BitDecode<E, Ctx, Tag>,
         E: Endianness,
     {
-        let (decoded, read_bits) = Self::decode_bytes_ctx::<E, _, _>(bytes, ctx, tag)?;
+        let (decoded, read_bits) = Self::decode_bytes_ctx(bytes, ctx, tag)?;
         let available_bits = u64::try_from(bytes.len())? * 8;
         if read_bits == available_bits {
             Ok(decoded)
@@ -57,7 +59,7 @@ pub trait BitDecodeExt {
     /// Returns a tuple of the parsed value and the number of bits read.
     fn decode_bytes<E>(bytes: &[u8]) -> Result<(Self, u64)>
     where
-        Self: BitDecode,
+        Self: BitDecode<E>,
         E: Endianness,
     {
         Self::decode_bytes_ctx::<E, _, _>(bytes, &mut (), ())
@@ -66,7 +68,7 @@ pub trait BitDecodeExt {
     /// Parses a new value from its raw byte representation, consuming entire buffer.
     fn decode_all_bytes<E>(bytes: &[u8]) -> Result<Self>
     where
-        Self: BitDecode,
+        Self: BitDecode<E>,
         E: Endianness,
     {
         Self::decode_all_bytes_ctx::<E, _, _>(bytes, &mut (), ())
@@ -76,12 +78,14 @@ pub trait BitDecodeExt {
 impl<T> BitDecodeExt for T {}
 
 /// A trait for bit-level encoding.
-pub trait BitEncode<Ctx = (), Tag = ()> {
+pub trait BitEncode<E, Ctx = (), Tag = ()>
+where
+    E: Endianness,
+{
     /// Writes a value to a stream.
-    fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, tag: Tag) -> Result<()>
+    fn encode<W>(&self, write: &mut W, ctx: &mut Ctx, tag: Tag) -> Result<()>
     where
-        W: BitWrite + ?Sized,
-        E: Endianness;
+        W: BitWrite + ?Sized;
 }
 
 /// Utility functionality for bit-level encoding.
@@ -90,12 +94,12 @@ pub trait BitEncodeExt {
     #[cfg(feature = "alloc")]
     fn encode_bytes_ctx<E, Ctx, Tag>(&self, ctx: &mut Ctx, tag: Tag) -> Result<Vec<u8>>
     where
-        Self: BitEncode<Ctx, Tag>,
+        Self: BitEncode<E, Ctx, Tag>,
         E: Endianness,
     {
         let mut data = Vec::new();
         let mut writer = BitWriter::<_, E>::new(&mut data);
-        self.encode::<_, E>(&mut writer, ctx, tag)?;
+        self.encode(&mut writer, ctx, tag)?;
         writer.byte_align()?;
 
         Ok(data)
@@ -111,12 +115,12 @@ pub trait BitEncodeExt {
         tag: Tag,
     ) -> Result<u64>
     where
-        Self: BitEncode<Ctx, Tag>,
+        Self: BitEncode<E, Ctx, Tag>,
         E: Endianness,
     {
         let mut cursor = Cursor::new(buf);
         let mut writer = BitWriter::<_, E>::new(&mut cursor);
-        self.encode::<_, E>(&mut writer, ctx, tag)?;
+        self.encode(&mut writer, ctx, tag)?;
         writer.byte_align()?;
 
         Ok(cursor.position())
@@ -126,10 +130,10 @@ pub trait BitEncodeExt {
     #[cfg(feature = "alloc")]
     fn encode_bytes<E>(&self) -> Result<Vec<u8>>
     where
-        Self: BitEncode,
+        Self: BitEncode<E>,
         E: Endianness,
     {
-        self.encode_bytes_ctx::<E, _, _>(&mut (), ())
+        self.encode_bytes_ctx(&mut (), ())
     }
 
     /// Fills the buffer with the raw bytes of this type.
@@ -137,10 +141,10 @@ pub trait BitEncodeExt {
     /// Returns the number of bytes written.
     fn encode_bytes_buf<E>(&self, buf: &mut [u8]) -> Result<u64>
     where
-        Self: BitEncode,
+        Self: BitEncode<E>,
         E: Endianness,
     {
-        self.encode_bytes_ctx_buf::<E, _, _>(buf, &mut (), ())
+        self.encode_bytes_ctx_buf(buf, &mut (), ())
     }
 }
 
@@ -153,11 +157,11 @@ macro_rules! test_decode {
         fn decode() {
             let bytes: &[u8] = &$bytes;
             let exp: $ty = $exp;
-            let read: $ty = $crate::BitDecode::<(), _>::decode::<_, ::bitstream_io::BigEndian>(
-                &mut ::bitstream_io::BitReader::<_, ::bitstream_io::BigEndian>::new(bytes),
-                &mut (),
-                $tag,
-            )
+            let read: $ty = $crate::BitDecodeExt::decode_all_bytes_ctx::<
+                ::bitstream_io::BigEndian,
+                (),
+                _,
+            >(bytes, &mut (), $tag)
             .unwrap();
             assert_eq!(exp, read);
         }
@@ -168,12 +172,8 @@ macro_rules! test_decode {
         fn decode() {
             let bytes: &[u8] = &$bytes;
             let exp: $ty = $exp;
-            let decoded: $ty = $crate::BitDecode::decode::<_, ::bitstream_io::BigEndian>(
-                &mut ::bitstream_io::BitReader::<_, ::bitstream_io::BigEndian>::new(bytes),
-                &mut (),
-                (),
-            )
-            .unwrap();
+            let decoded: $ty =
+                $crate::BitDecodeExt::decode_all_bytes::<::bitstream_io::BigEndian>(bytes).unwrap();
             assert_eq!(exp, decoded);
         }
     };
@@ -249,7 +249,7 @@ macro_rules! test_length_tag_decode {
         fn decode_try_reserve() {
             assert_eq!(
                 $crate::error::ErrorKind::TryReserve,
-                <$ty as $crate::BitDecode::<(), _>>::decode::<_, ::bitstream_io::BigEndian>(
+                <$ty as $crate::BitDecode::<::bitstream_io::BigEndian, (), _>>::decode(
                     &mut ::bitstream_io::BitReader::<_, ::bitstream_io::BigEndian>::new(
                         [0u8; 0].as_slice()
                     ),

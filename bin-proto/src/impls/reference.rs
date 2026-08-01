@@ -2,16 +2,16 @@ use bitstream_io::{BitWrite, Endianness};
 
 use crate::{BitEncode, Result};
 
-impl<Ctx, Tag, T> BitEncode<Ctx, Tag> for &T
+impl<E, Ctx, Tag, T> BitEncode<E, Ctx, Tag> for &T
 where
-    T: BitEncode<Ctx, Tag> + ?Sized,
+    E: Endianness,
+    T: BitEncode<E, Ctx, Tag> + ?Sized,
 {
-    fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, tag: Tag) -> Result<()>
+    fn encode<W>(&self, write: &mut W, ctx: &mut Ctx, tag: Tag) -> Result<()>
     where
         W: BitWrite + ?Sized,
-        E: Endianness,
     {
-        (**self).encode::<_, E>(write, ctx, tag)
+        (**self).encode(write, ctx, tag)
     }
 }
 

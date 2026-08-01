@@ -2,22 +2,22 @@ use bitstream_io::{BitRead, BitWrite, Endianness};
 
 use crate::{error::ErrorCause, BitDecode, BitEncode, Error, Result, Untagged};
 
-impl<Tag, Ctx, T> BitDecode<Ctx, crate::Tag<Tag>> for Option<T>
+impl<E, Tag, Ctx, T> BitDecode<E, Ctx, crate::Tag<Tag>> for Option<T>
 where
-    T: BitDecode<Ctx>,
+    E: Endianness,
+    T: BitDecode<E, Ctx>,
     Tag: TryInto<bool>,
 {
-    fn decode<R, E>(read: &mut R, ctx: &mut Ctx, tag: crate::Tag<Tag>) -> Result<Self>
+    fn decode<R>(read: &mut R, ctx: &mut Ctx, tag: crate::Tag<Tag>) -> Result<Self>
     where
         R: BitRead + ?Sized,
-        E: Endianness,
     {
         if tag
             .0
             .try_into()
             .map_err(|_| Error::from_inner(ErrorCause::TagConvert))?
         {
-            let value = T::decode::<_, E>(read, ctx, ())?;
+            let value = T::decode(read, ctx, ())?;
             Ok(Some(value))
         } else {
             Ok(None)
@@ -25,49 +25,49 @@ where
     }
 }
 
-impl<Ctx, T> BitEncode<Ctx, Untagged> for Option<T>
+impl<E, Ctx, T> BitEncode<E, Ctx, Untagged> for Option<T>
 where
-    T: BitEncode<Ctx>,
+    E: Endianness,
+    T: BitEncode<E, Ctx>,
 {
-    fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, _: Untagged) -> Result<()>
+    fn encode<W>(&self, write: &mut W, ctx: &mut Ctx, _: Untagged) -> Result<()>
     where
         W: BitWrite + ?Sized,
-        E: Endianness,
     {
         if let Some(ref value) = *self {
-            value.encode::<_, E>(write, ctx, ())?;
+            value.encode(write, ctx, ())?;
         }
         Ok(())
     }
 }
 
 #[cfg(feature = "prepend-tags")]
-impl<Ctx, T> BitEncode<Ctx> for Option<T>
+impl<E, Ctx, T> BitEncode<E, Ctx> for Option<T>
 where
-    T: BitEncode<Ctx>,
+    E: Endianness,
+    T: BitEncode<E, Ctx>,
 {
-    fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, (): ()) -> Result<()>
+    fn encode<W>(&self, write: &mut W, ctx: &mut Ctx, (): ()) -> Result<()>
     where
         W: BitWrite + ?Sized,
-        E: Endianness,
     {
-        self.is_some().encode::<_, E>(write, ctx, ())?;
-        self.encode::<_, E>(write, ctx, Untagged)
+        BitEncode::<E, _>::encode(&self.is_some(), write, ctx, ())?;
+        self.encode(write, ctx, Untagged)
     }
 }
 
 #[cfg(feature = "prepend-tags")]
-impl<Ctx, T> BitDecode<Ctx> for Option<T>
+impl<E, Ctx, T> BitDecode<E, Ctx> for Option<T>
 where
-    T: BitDecode<Ctx>,
+    E: Endianness,
+    T: BitDecode<E, Ctx>,
 {
-    fn decode<R, E>(read: &mut R, ctx: &mut Ctx, (): ()) -> Result<Self>
+    fn decode<R>(read: &mut R, ctx: &mut Ctx, (): ()) -> Result<Self>
     where
         R: BitRead + ?Sized,
-        E: Endianness,
     {
-        let tag = bool::decode::<_, E>(read, ctx, ())?;
-        Self::decode::<_, E>(read, ctx, crate::Tag(tag))
+        let tag: bool = BitDecode::<E, _>::decode(read, ctx, ())?;
+        Self::decode(read, ctx, crate::Tag(tag))
     }
 }
 

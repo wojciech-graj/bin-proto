@@ -87,7 +87,7 @@ impl Attrs {
             let crate_path = self.crate_path();
             quote!({
                 const MAGIC: &[u8] = #magic;
-                let magic: [u8; MAGIC.len()] = #crate_path::BitDecode::decode::<_, __E>(
+                let magic: [u8; MAGIC.len()] = #crate_path::BitDecode::<__E, _, _>::decode(
                     __io_reader,
                     __ctx,
                     ()
@@ -106,7 +106,7 @@ impl Attrs {
             let crate_path = self.crate_path();
             quote!({
                 const MAGIC: &[u8] = #magic;
-                #crate_path::BitEncode::encode::<_, __E>(MAGIC, __io_writer, __ctx, #crate_path::Untagged)?;
+                #crate_path::BitEncode::<__E, _, _>::encode(MAGIC, __io_writer, __ctx, #crate_path::Untagged)?;
             })
         } else {
             TokenStream::new()

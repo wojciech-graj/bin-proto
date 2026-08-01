@@ -3,21 +3,25 @@ use bitstream_io::{BitRead, BitWrite, Endianness};
 use crate::{BitDecode, BitEncode, Result};
 use core::marker::PhantomPinned;
 
-impl<Ctx> BitDecode<Ctx> for PhantomPinned {
-    fn decode<R, E>(_: &mut R, _: &mut Ctx, (): ()) -> Result<Self>
+impl<E, Ctx> BitDecode<E, Ctx> for PhantomPinned
+where
+    E: Endianness,
+{
+    fn decode<R>(_: &mut R, _: &mut Ctx, (): ()) -> Result<Self>
     where
         R: BitRead + ?Sized,
-        E: Endianness,
     {
         Ok(Self)
     }
 }
 
-impl<Ctx> BitEncode<Ctx> for PhantomPinned {
-    fn encode<W, E>(&self, _: &mut W, _: &mut Ctx, (): ()) -> Result<()>
+impl<E, Ctx> BitEncode<E, Ctx> for PhantomPinned
+where
+    E: Endianness,
+{
+    fn encode<W>(&self, _: &mut W, _: &mut Ctx, (): ()) -> Result<()>
     where
         W: BitWrite + ?Sized,
-        E: Endianness,
     {
         Ok(())
     }

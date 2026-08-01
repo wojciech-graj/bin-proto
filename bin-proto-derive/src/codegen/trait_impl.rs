@@ -39,6 +39,11 @@ pub fn impl_trait_for(
             generics.params.extend(ctx_generics);
         }
 
+        trait_generics.push(quote!(__E));
+        generics
+            .params
+            .push(parse_quote!(__E: #crate_path::Endianness));
+
         trait_generics.push(if let Some(Ctx::Concrete(ctx)) = attrs.ctx {
             quote!(#ctx)
         } else {

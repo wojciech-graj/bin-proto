@@ -2,31 +2,31 @@ use bitstream_io::{BitWrite, Endianness};
 
 use crate::{util, BitEncode, Result, Untagged};
 
-impl<Ctx, T> BitEncode<Ctx, Untagged> for [T]
+impl<E, Ctx, T> BitEncode<E, Ctx, Untagged> for [T]
 where
-    T: BitEncode<Ctx>,
+    E: Endianness,
+    T: BitEncode<E, Ctx>,
 {
-    fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, _: Untagged) -> Result<()>
+    fn encode<W>(&self, write: &mut W, ctx: &mut Ctx, _: Untagged) -> Result<()>
     where
         W: BitWrite + ?Sized,
-        E: Endianness,
     {
         util::encode_items::<_, _, E, _, _>(self.iter(), write, ctx)
     }
 }
 
 #[cfg(feature = "prepend-tags")]
-impl<Ctx, T> BitEncode<Ctx> for [T]
+impl<E, Ctx, T> BitEncode<E, Ctx> for [T]
 where
-    T: BitEncode<Ctx>,
+    E: Endianness,
+    T: BitEncode<E, Ctx>,
 {
-    fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, (): ()) -> Result<()>
+    fn encode<W>(&self, write: &mut W, ctx: &mut Ctx, (): ()) -> Result<()>
     where
         W: BitWrite + ?Sized,
-        E: Endianness,
     {
-        self.len().encode::<_, E>(write, ctx, ())?;
-        self.encode::<_, E>(write, ctx, Untagged)
+        BitEncode::<E, _>::encode(&self.len(), write, ctx, ())?;
+        self.encode(write, ctx, Untagged)
     }
 }
 
@@ -40,44 +40,44 @@ mod decode {
 
     use super::*;
 
-    impl<Ctx, T> BitDecode<Ctx, Untagged> for Box<[T]>
+    impl<E, Ctx, T> BitDecode<E, Ctx, Untagged> for Box<[T]>
     where
-        T: BitDecode<Ctx>,
+        E: Endianness,
+        T: BitDecode<E, Ctx>,
     {
-        fn decode<R, E>(read: &mut R, ctx: &mut Ctx, tag: Untagged) -> Result<Self>
+        fn decode<R>(read: &mut R, ctx: &mut Ctx, tag: Untagged) -> Result<Self>
         where
             R: BitRead + ?Sized,
-            E: Endianness,
         {
-            Vec::decode::<_, E>(read, ctx, tag).map(Into::into)
+            Vec::decode(read, ctx, tag).map(Into::into)
         }
     }
 
-    impl<Tag, Ctx, T> BitDecode<Ctx, crate::Tag<Tag>> for Box<[T]>
+    impl<E, Ctx, Tag, T> BitDecode<E, Ctx, crate::Tag<Tag>> for Box<[T]>
     where
-        T: BitDecode<Ctx>,
+        E: Endianness,
+        T: BitDecode<E, Ctx>,
         Tag: TryInto<usize>,
     {
-        fn decode<R, E>(read: &mut R, ctx: &mut Ctx, tag: crate::Tag<Tag>) -> Result<Self>
+        fn decode<R>(read: &mut R, ctx: &mut Ctx, tag: crate::Tag<Tag>) -> Result<Self>
         where
             R: BitRead + ?Sized,
-            E: Endianness,
         {
-            Vec::decode::<_, E>(read, ctx, tag).map(Into::into)
+            <Vec<T> as BitDecode<E, _, _>>::decode(read, ctx, tag).map(Into::into)
         }
     }
 
     #[cfg(feature = "prepend-tags")]
-    impl<Ctx, T> BitDecode<Ctx> for Box<[T]>
+    impl<E, Ctx, T> BitDecode<E, Ctx> for Box<[T]>
     where
-        T: BitDecode<Ctx>,
+        E: Endianness,
+        T: BitDecode<E, Ctx>,
     {
-        fn decode<R, E>(read: &mut R, ctx: &mut Ctx, (): ()) -> Result<Self>
+        fn decode<R>(read: &mut R, ctx: &mut Ctx, (): ()) -> Result<Self>
         where
             R: BitRead + ?Sized,
-            E: Endianness,
         {
-            Vec::decode::<_, E>(read, ctx, ()).map(Into::into)
+            Vec::decode(read, ctx, ()).map(Into::into)
         }
     }
 

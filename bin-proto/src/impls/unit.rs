@@ -2,21 +2,25 @@ use bitstream_io::{BitRead, BitWrite, Endianness};
 
 use crate::{BitDecode, BitEncode, Result};
 
-impl<Ctx> BitDecode<Ctx> for () {
-    fn decode<R, E>(_: &mut R, _: &mut Ctx, (): ()) -> Result<Self>
+impl<E, Ctx> BitDecode<E, Ctx> for ()
+where
+    E: Endianness,
+{
+    fn decode<R>(_: &mut R, _: &mut Ctx, (): ()) -> Result<Self>
     where
         R: BitRead + ?Sized,
-        E: Endianness,
     {
         Ok(())
     }
 }
 
-impl<Ctx> BitEncode<Ctx> for () {
-    fn encode<W, E>(&self, _: &mut W, _: &mut Ctx, (): ()) -> Result<()>
+impl<E, Ctx> BitEncode<E, Ctx> for ()
+where
+    E: Endianness,
+{
+    fn encode<W>(&self, _: &mut W, _: &mut Ctx, (): ()) -> Result<()>
     where
         W: BitWrite + ?Sized,
-        E: Endianness,
     {
         Ok(())
     }

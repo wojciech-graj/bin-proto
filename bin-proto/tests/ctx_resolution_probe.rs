@@ -1,6 +1,6 @@
 #![cfg(all(feature = "derive", feature = "alloc"))]
 
-use bin_proto::{BitDecode, BitDecodeExt, BitEncode, BitEncodeExt};
+use bin_proto::{BitDecode, BitDecodeExt, BitEncode, BitEncodeExt, LittleEndian};
 use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness};
 
 struct CustomCtx;
@@ -9,30 +9,39 @@ struct CustomCtx;
 #[derive(Debug, PartialEq, Eq)]
 struct CtxSensitive;
 
-impl BitEncode<()> for CtxSensitive {
-    fn encode<W: BitWrite + ?Sized, E: Endianness>(
+impl<E> BitEncode<E, ()> for CtxSensitive
+where
+    E: Endianness,
+{
+    fn encode<W: BitWrite + ?Sized>(
         &self,
         w: &mut W,
         _: &mut (),
         (): (),
     ) -> Result<(), bin_proto::Error> {
-        BitEncode::<(), ()>::encode::<_, E>(&0xAAu8, w, &mut (), ())
+        BitEncode::<E, (), ()>::encode(&0xAAu8, w, &mut (), ())
     }
 }
 
-impl BitEncode<CustomCtx> for CtxSensitive {
-    fn encode<W: BitWrite + ?Sized, E: Endianness>(
+impl<E> BitEncode<E, CustomCtx> for CtxSensitive
+where
+    E: Endianness,
+{
+    fn encode<W: BitWrite + ?Sized>(
         &self,
         w: &mut W,
         _: &mut CustomCtx,
         (): (),
     ) -> Result<(), bin_proto::Error> {
-        BitEncode::<(), ()>::encode::<_, E>(&0xBBu8, w, &mut (), ())
+        BitEncode::<E, (), ()>::encode(&0xBBu8, w, &mut (), ())
     }
 }
 
-impl BitDecode<()> for CtxSensitive {
-    fn decode<R: BitRead + ?Sized, E: Endianness>(
+impl<E> BitDecode<E, ()> for CtxSensitive
+where
+    E: Endianness,
+{
+    fn decode<R: BitRead + ?Sized>(
         _: &mut R,
         _: &mut (),
         (): (),
@@ -41,8 +50,11 @@ impl BitDecode<()> for CtxSensitive {
     }
 }
 
-impl BitDecode<CustomCtx> for CtxSensitive {
-    fn decode<R: BitRead + ?Sized, E: Endianness>(
+impl<E> BitDecode<E, CustomCtx> for CtxSensitive
+where
+    E: Endianness,
+{
+    fn decode<R: BitRead + ?Sized>(
         _: &mut R,
         _: &mut CustomCtx,
         (): (),
@@ -52,7 +64,7 @@ impl BitDecode<CustomCtx> for CtxSensitive {
 }
 
 #[derive(Debug, PartialEq, Eq, BitEncode, BitDecode)]
-struct Pre<T: BitEncode + BitDecode> {
+struct Pre<T: BitEncode<LittleEndian> + BitDecode<LittleEndian>> {
     field: T,
 }
 

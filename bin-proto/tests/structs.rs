@@ -20,24 +20,18 @@ pub struct PartyInTheFront;
 
 #[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
 #[bin_proto(ctx = ())]
-pub struct NamedFieldsWithGenerics<A: BitDecode + BitEncode, D: BitDecode + BitEncode> {
+pub struct NamedFieldsWithGenerics<A, D> {
     pub value: A,
     pub del: D,
 }
 
 #[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
 #[bin_proto(ctx = Ctx)]
-pub struct UnnamedFieldsWithGenerics<
-    Ctx,
-    A: BitDecode<Ctx> + BitEncode<Ctx>,
-    D: BitDecode<Ctx> + BitEncode<Ctx>,
->(A, D, PhantomData<Ctx>);
+pub struct UnnamedFieldsWithGenerics<Ctx, A, D>(A, D, PhantomData<Ctx>);
 
 #[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
 #[bin_proto(ctx = ())]
-pub struct StructWithExistingBoundedGenerics<
-    A: ::core::fmt::Display + ::core::fmt::Debug + BitDecode + BitEncode,
-> {
+pub struct StructWithExistingBoundedGenerics<A: ::core::fmt::Display + ::core::fmt::Debug> {
     foo: A,
 }
 
@@ -47,7 +41,7 @@ pub struct GenericStructNoExplicitCtx<T> {
 }
 
 #[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
-pub struct GenericStructPreBounded<T: BitEncode + BitDecode> {
+pub struct GenericStructPreBounded<T> {
     pub field: T,
 }
 

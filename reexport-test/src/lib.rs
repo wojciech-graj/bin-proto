@@ -8,7 +8,7 @@ use reexport::{BigEndian, BitDecode, BitDecodeExt, BitEncode, BitEncodeExt};
 #[bin_proto(discriminant_type = u8)]
 #[bin_proto(crate = reexport)]
 #[bin_proto(ctx = ())]
-pub enum Enum<'a, T: BitDecode + BitEncode> {
+pub enum Enum<'a, T> {
     #[bin_proto(discriminant = 1)]
     Variant1 {
         a: T,

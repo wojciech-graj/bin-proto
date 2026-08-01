@@ -5,29 +5,30 @@ use crate::{BitDecode, BitEncode, Result};
 macro_rules! impl_tuple {
     ($($idx:tt $t:ident),*) => {
         #[cfg_attr(docsrs, doc(hidden))]
-        impl<Ctx, $($t,)*> $crate::BitDecode<Ctx> for ($($t,)*)
+        impl<E, Ctx, $($t,)*> $crate::BitDecode<E, Ctx> for ($($t,)*)
         where
-            $($t: $crate::BitDecode<Ctx>,)*
+            E: ::bitstream_io::Endianness,
+            $($t: $crate::BitDecode<E, Ctx>,)*
         {
-            fn decode<R, E>(
+            fn decode<R>(
                 read: &mut R,
                 ctx: &mut Ctx,
                 (): (),
             ) -> $crate::Result<Self>
             where
                 R: ::bitstream_io::BitRead + ?Sized,
-                E: ::bitstream_io::Endianness,
             {
-                Ok(($(<$t as $crate::BitDecode<Ctx>>::decode::<_, E>(read,  ctx, ())?,)*))
+                Ok(($(<$t as $crate::BitDecode<E, Ctx>>::decode(read,  ctx, ())?,)*))
             }
         }
 
         #[cfg_attr(docsrs, doc(hidden))]
-        impl<Ctx, $($t,)*> $crate::BitEncode<Ctx> for ($($t,)*)
+        impl<E, Ctx, $($t,)*> $crate::BitEncode<E, Ctx> for ($($t,)*)
         where
-            $($t: $crate::BitEncode<Ctx>,)*
+            E: ::bitstream_io::Endianness,
+            $($t: $crate::BitEncode<E, Ctx>,)*
         {
-            fn encode<W, E>(
+            fn encode<W>(
                 &self,
                 write: &mut W,
                 ctx: &mut Ctx,
@@ -35,10 +36,9 @@ macro_rules! impl_tuple {
             ) -> $crate::Result<()>
             where
                 W: ::bitstream_io::BitWrite + ?Sized,
-                E: ::bitstream_io::Endianness,
             {
                 $(
-                    $crate::BitEncode::encode::<_, E>(&self.$idx, write,  ctx, ())?;
+                    $crate::BitEncode::<E, _>::encode(&self.$idx, write, ctx, ())?;
                 )*
                 Ok(())
             }
@@ -51,16 +51,16 @@ macro_rules! impl_tuple {
     docsrs,
     doc = "This trait is implemented for tuples with up to 16 items."
 )]
-impl<Ctx, Tag, T> BitDecode<Ctx, Tag> for (T,)
+impl<E, Ctx, Tag, T> BitDecode<E, Ctx, Tag> for (T,)
 where
-    T: BitDecode<Ctx, Tag>,
+    E: Endianness,
+    T: BitDecode<E, Ctx, Tag>,
 {
-    fn decode<R, E>(read: &mut R, ctx: &mut Ctx, tag: Tag) -> Result<Self>
+    fn decode<R>(read: &mut R, ctx: &mut Ctx, tag: Tag) -> Result<Self>
     where
         R: BitRead + ?Sized,
-        E: Endianness,
     {
-        Ok((BitDecode::decode::<R, E>(read, ctx, tag)?,))
+        Ok((BitDecode::decode(read, ctx, tag)?,))
     }
 }
 
@@ -69,16 +69,16 @@ where
     doc = "This trait is implemented for tuples with up to 16 items."
 )]
 #[cfg_attr(docsrs, doc(fake_variadic))]
-impl<Ctx, Tag, T> BitEncode<Ctx, Tag> for (T,)
+impl<E, Ctx, Tag, T> BitEncode<E, Ctx, Tag> for (T,)
 where
-    T: BitEncode<Ctx, Tag> + ?Sized,
+    E: Endianness,
+    T: BitEncode<E, Ctx, Tag> + ?Sized,
 {
-    fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, tag: Tag) -> Result<()>
+    fn encode<W>(&self, write: &mut W, ctx: &mut Ctx, tag: Tag) -> Result<()>
     where
         W: BitWrite + ?Sized,
-        E: Endianness,
     {
-        self.0.encode::<W, E>(write, ctx, tag)
+        self.0.encode(write, ctx, tag)
     }
 }
 

@@ -101,14 +101,13 @@ fn impl_for_struct(
 
             (
                 quote!(
-                    fn decode<__R, __E>(
+                    fn decode<__R>(
                         __io_reader: &mut __R,
                         __ctx: &mut #ctx_ty,
                         __tag: (),
                     ) -> #crate_path::Result<Self>
                     where
                         __R: #crate_path::BitRead + ?::core::marker::Sized,
-                        __E: #crate_path::Endianness,
                     {
                         #pad_before
                         #magic
@@ -148,7 +147,7 @@ fn impl_for_struct(
 
             (
                 quote!(
-                    fn encode<__W, __E>(
+                    fn encode<__W>(
                         &self,
                         __io_writer: &mut __W,
                         __ctx: &mut #ctx_ty,
@@ -156,7 +155,6 @@ fn impl_for_struct(
                     ) -> #crate_path::Result<()>
                     where
                         __W: #crate_path::BitWrite + ?::core::marker::Sized,
-                        __E: #crate_path::Endianness,
                     {
                         let Self {
                             #(#binds),*
@@ -209,14 +207,13 @@ fn impl_for_enum(
         Operation::Decode => {
             let decode_variant = codegen::enums::decode_variant_fields(&plan)?;
             let impl_body = quote!(
-                fn decode<__R, __E>(
+                fn decode<__R>(
                     __io_reader: &mut __R,
                     __ctx: &mut #ctx_ty,
                     __tag: #crate_path::Tag<__Tag>,
                 ) -> #crate_path::Result<Self>
                 where
                     __R: #crate_path::BitRead + ?::core::marker::Sized,
-                    __E: #crate_path::Endianness,
                 {
                     ::core::result::Result::Ok(#decode_variant)
                 }
@@ -230,17 +227,16 @@ fn impl_for_enum(
 
             let decode_discriminant = decode_discriminant(&attrs);
             let impl_body = quote!(
-                fn decode<__R, __E>(
+                fn decode<__R>(
                     __io_reader: &mut __R,
                     __ctx: &mut #ctx_ty,
                     __tag: (),
                 ) -> #crate_path::Result<Self>
                 where
                     __R: #crate_path::BitRead + ?::core::marker::Sized,
-                    __E: #crate_path::Endianness,
                 {
                     let __tag: #discriminant_ty = #decode_discriminant?;
-                    <Self as #crate_path::BitDecode<_, #crate_path::Tag<#discriminant_ty>>>::decode::<_, __E>(
+                    <Self as #crate_path::BitDecode<__E, _, #crate_path::Tag<#discriminant_ty>>>::decode(
                         __io_reader,
                         __ctx,
                         #crate_path::Tag(__tag)
@@ -265,7 +261,7 @@ fn impl_for_enum(
                 .as_ref()
                 .map(|pad| encode_pad(&crate_path, pad));
             let impl_body = quote!(
-                fn encode<__W, __E>(
+                fn encode<__W>(
                     &self,
                     __io_writer: &mut __W,
                     __ctx: &mut #ctx_ty,
@@ -273,7 +269,6 @@ fn impl_for_enum(
                 ) -> #crate_path::Result<()>
                 where
                     __W: #crate_path::BitWrite + ?::core::marker::Sized,
-                    __E: #crate_path::Endianness,
                 {
                     #pad_before
                     #encode_variant
@@ -297,7 +292,7 @@ fn impl_for_enum(
 
             let encode_discriminant = encode_discriminant(&attrs);
             let impl_body = quote!(
-                fn encode<__W, __E>(
+                fn encode<__W>(
                     &self,
                     __io_writer: &mut __W,
                     __ctx: &mut #ctx_ty,
@@ -305,11 +300,10 @@ fn impl_for_enum(
                 ) -> #crate_path::Result<()>
                 where
                     __W: #crate_path::BitWrite + ?::core::marker::Sized,
-                    __E: #crate_path::Endianness,
                 {
                     #pad_before
                     #encode_discriminant
-                    let res = <Self as #crate_path::BitEncode<_, _>>::encode::<_, __E>(
+                    let res = <Self as #crate_path::BitEncode<__E, _, _>>::encode(
                         self,
                         __io_writer,
                         __ctx,

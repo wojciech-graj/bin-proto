@@ -1,8 +1,8 @@
 all_features = true
 exclude_re = [
-  "<impl BitDecode<Ctx> for PhantomData<T>>::decode",
-  "<impl BitDecode<Ctx> for PhantomPinned>::decode",
-  "<impl BitDecode<Ctx> for \\(\\)>::decode",
+  "<impl BitDecode<E, Ctx> for PhantomData<T>>::decode",
+  "<impl BitDecode<E, Ctx> for PhantomPinned>::decode",
+  "<impl BitDecode<E, Ctx> for \\(\\)>::decode",
   "BitEncodeExt::encode_bytes_buf",
   "impl fmt::Display",
 ]

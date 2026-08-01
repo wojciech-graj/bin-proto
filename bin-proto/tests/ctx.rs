@@ -52,22 +52,26 @@ where
 #[derive(Debug)]
 struct CtxCheck;
 
-impl<Ctx: CtxTrait> BitDecode<Ctx> for CtxCheck {
-    fn decode<R, E>(_: &mut R, ctx: &mut Ctx, _: ()) -> Result<Self, bin_proto::Error>
+impl<E, Ctx: CtxTrait> BitDecode<E, Ctx> for CtxCheck
+where
+    E: Endianness,
+{
+    fn decode<R>(_: &mut R, ctx: &mut Ctx, _: ()) -> Result<Self, bin_proto::Error>
     where
         R: BitRead + ?Sized,
-        E: Endianness,
     {
         ctx.call();
         Ok(Self)
     }
 }
 
-impl<Ctx: CtxTrait> BitEncode<Ctx> for CtxCheck {
-    fn encode<W, E>(&self, _: &mut W, ctx: &mut Ctx, (): ()) -> Result<(), bin_proto::Error>
+impl<E, Ctx: CtxTrait> BitEncode<E, Ctx> for CtxCheck
+where
+    E: Endianness,
+{
+    fn encode<W>(&self, _: &mut W, ctx: &mut Ctx, (): ()) -> Result<(), bin_proto::Error>
     where
         W: BitWrite + ?Sized,
-        E: Endianness,
     {
         ctx.call();
         Ok(())

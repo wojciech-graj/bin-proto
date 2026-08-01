@@ -4,11 +4,13 @@ use bitstream_io::{BitWrite, Endianness};
 
 use crate::{util, BitEncode, Result};
 
-impl<Ctx> BitEncode<Ctx> for CStr {
-    fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, (): ()) -> Result<()>
+impl<E, Ctx> BitEncode<E, Ctx> for CStr
+where
+    E: Endianness,
+{
+    fn encode<W>(&self, write: &mut W, ctx: &mut Ctx, (): ()) -> Result<()>
     where
         W: BitWrite + ?Sized,
-        E: Endianness,
     {
         util::encode_items::<_, _, E, _, _>(self.to_bytes_with_nul().iter(), write, ctx)
     }
@@ -24,13 +26,15 @@ mod decode {
 
     use super::*;
 
-    impl<Ctx> BitDecode<Ctx> for Box<CStr> {
-        fn decode<R, E>(read: &mut R, ctx: &mut Ctx, tag: ()) -> Result<Self>
+    impl<E, Ctx> BitDecode<E, Ctx> for Box<CStr>
+    where
+        E: Endianness,
+    {
+        fn decode<R>(read: &mut R, ctx: &mut Ctx, tag: ()) -> Result<Self>
         where
             R: BitRead + ?Sized,
-            E: Endianness,
         {
-            CString::decode::<_, E>(read, ctx, tag).map(Into::into)
+            <CString as BitDecode<E, _>>::decode(read, ctx, tag).map(Into::into)
         }
     }
 

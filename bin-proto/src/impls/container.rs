@@ -3,11 +3,12 @@ macro_rules! impl_container_write {
         $ty:ident<$($a:lifetime,)? T $(: ?$tbound0:ident $(+ $tbound1:ident + $tbound2:lifetime)?)?>
         $(=> $f:ident)?
     ) => {
-        impl<$($a,)? Ctx, Tag, T> $crate::BitEncode<Ctx, Tag> for $ty<$($a,)? T>
+        impl<$($a,)? E, Ctx, Tag, T> $crate::BitEncode<E, Ctx, Tag> for $ty<$($a,)? T>
         where
-            T: $crate::BitEncode<Ctx, Tag> $(+ ?$tbound0 $(+ $tbound1 + $tbound2)?)?,
+            E: ::bitstream_io::Endianness,
+            T: $crate::BitEncode<E, Ctx, Tag> $(+ ?$tbound0 $(+ $tbound1 + $tbound2)?)?,
         {
-            fn encode<W, E>(
+            fn encode<W>(
                 &self,
                 write: &mut W,
                 ctx: &mut Ctx,
@@ -15,11 +16,10 @@ macro_rules! impl_container_write {
             ) -> $crate::Result<()>
             where
                 W: ::bitstream_io::BitWrite + ?Sized,
-                E: ::bitstream_io::Endianness,
             {
                 use core::ops::Deref;
 
-                $crate::BitEncode::encode::<_, E>(
+                $crate::BitEncode::encode(
                     self $(.$f()?)? .deref(),
                     write,
                     ctx,
@@ -33,16 +33,16 @@ macro_rules! impl_container_write {
 #[allow(unused)]
 macro_rules! impl_container_read {
     ($ty:ident<T $(: ?$tbound:ident)?>) => {
-        impl<Ctx, Tag, T> $crate::BitDecode<Ctx, Tag> for $ty<T>
+        impl<E, Ctx, Tag, T> $crate::BitDecode<E, Ctx, Tag> for $ty<T>
         where
-            T: $crate::BitDecode<Ctx, Tag> $(+ ?$tbound)?,
+            E: ::bitstream_io::Endianness,
+            T: $crate::BitDecode<E, Ctx, Tag> $(+ ?$tbound)?,
         {
-            fn decode<R, E>(read: &mut R, ctx: &mut Ctx, tag: Tag) -> $crate::Result<Self>
+            fn decode<R>(read: &mut R, ctx: &mut Ctx, tag: Tag) -> $crate::Result<Self>
             where
                 R: ::bitstream_io::BitRead + ?Sized,
-                E: ::bitstream_io::Endianness,
             {
-                Ok($ty::new($crate::BitDecode::decode::<_, E>(read, ctx, tag)?))
+                Ok($ty::new($crate::BitDecode::decode(read, ctx, tag)?))
             }
         }
     };
@@ -93,16 +93,17 @@ mod cell {
 
     use crate::{BitEncode, Result};
 
-    impl<Ctx, Tag, T> BitEncode<Ctx, Tag> for Cell<T>
+    impl<E, Ctx, Tag, T> BitEncode<E, Ctx, Tag> for Cell<T>
     where
-        T: BitEncode<Ctx, Tag> + Copy,
+        E: Endianness,
+        T: BitEncode<E, Ctx, Tag> + Copy,
     {
-        fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, tag: Tag) -> Result<()>
+        fn encode<W>(&self, write: &mut W, ctx: &mut Ctx, tag: Tag) -> Result<()>
         where
             W: BitWrite + ?Sized,
             E: Endianness,
         {
-            self.get().encode::<_, E>(write, ctx, tag)
+            self.get().encode(write, ctx, tag)
         }
     }
 
@@ -128,7 +129,7 @@ mod rwlock {
         #[test]
         fn encode() {
             let mut buffer: Vec<u8> = Vec::new();
-            BitEncode::encode::<_, BigEndian>(
+            BitEncode::<BigEndian>::encode(
                 &RwLock::new(1u8),
                 &mut BitWriter::endian(&mut buffer, BigEndian),
                 &mut (),

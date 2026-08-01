@@ -5,13 +5,13 @@ use syn::{parse_quote, Error, Result};
 pub fn decode_discriminant(attrs: &Attrs) -> TokenStream {
     let crate_path = attrs.crate_path();
     if let Some(bits) = &attrs.bits {
-        quote!(#crate_path::BitDecode::decode::<_, __E>(
+        quote!(#crate_path::BitDecode::<__E, _, _>::decode(
             __io_reader,
             __ctx,
             #crate_path::Bits::<#bits>,
         ))
     } else {
-        quote!(#crate_path::BitDecode::decode::<_, __E>(
+        quote!(#crate_path::BitDecode::<__E, _, _>::decode(
             __io_reader,
             __ctx,
             (),
@@ -22,14 +22,14 @@ pub fn decode_discriminant(attrs: &Attrs) -> TokenStream {
 pub fn encode_discriminant(attrs: &Attrs) -> TokenStream {
     let crate_path = attrs.crate_path();
     let encode_tag = if let Some(bits) = &attrs.bits {
-        quote!(#crate_path::BitEncode::encode::<_, __E>(
+        quote!(#crate_path::BitEncode::<__E, _, _>::encode(
             &__tag,
             __io_writer,
             __ctx,
             #crate_path::Bits::<#bits>,
         ))
     } else {
-        quote!(#crate_path::BitEncode::encode::<_, __E>(
+        quote!(#crate_path::BitEncode::<__E, _, _>::encode(
             &__tag,
             __io_writer,
             __ctx,

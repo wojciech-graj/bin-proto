@@ -8,7 +8,7 @@ use bitstream_io::BigEndian;
 #[derive(Debug, BitDecode, BitEncode, PartialEq)]
 #[bin_proto(discriminant_type = u8)]
 #[bin_proto(ctx = ())]
-pub enum Enum<'a, T: BitDecode + BitEncode> {
+pub enum Enum<'a, T: PartialEq> {
     #[bin_proto(discriminant = 1)]
     Variant1 {
         a: T,

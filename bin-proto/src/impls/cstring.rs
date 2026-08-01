@@ -5,15 +5,17 @@ use bitstream_io::{BitRead, BitWrite, Endianness};
 
 use crate::{util, BitDecode, BitEncode, Result};
 
-impl<Ctx> BitDecode<Ctx> for CString {
-    fn decode<R, E>(read: &mut R, ctx: &mut Ctx, (): ()) -> Result<Self>
+impl<E, Ctx> BitDecode<E, Ctx> for CString
+where
+    E: Endianness,
+{
+    fn decode<R>(read: &mut R, ctx: &mut Ctx, (): ()) -> Result<Self>
     where
         R: BitRead + ?Sized,
-        E: Endianness,
     {
         let mut result = Vec::new();
         loop {
-            let c: u8 = BitDecode::decode::<_, E>(read, ctx, ())?;
+            let c: u8 = BitDecode::<E, _>::decode(read, ctx, ())?;
             if c == 0x00 {
                 return Ok(Self::new(result)?);
             }
@@ -22,11 +24,13 @@ impl<Ctx> BitDecode<Ctx> for CString {
     }
 }
 
-impl<Ctx> BitEncode<Ctx> for CString {
-    fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, (): ()) -> Result<()>
+impl<E, Ctx> BitEncode<E, Ctx> for CString
+where
+    E: Endianness,
+{
+    fn encode<W>(&self, write: &mut W, ctx: &mut Ctx, (): ()) -> Result<()>
     where
         W: BitWrite + ?Sized,
-        E: Endianness,
     {
         util::encode_items::<_, _, E, _, _>(self.to_bytes_with_nul().iter(), write, ctx)
     }

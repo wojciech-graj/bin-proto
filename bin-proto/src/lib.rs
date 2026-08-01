@@ -367,23 +367,28 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 ///
 /// struct NeedsCtx;
 ///
-/// impl BitDecode<Ctx> for NeedsCtx {
-///     fn decode<R, E>(
+/// impl<E> BitDecode<E, Ctx> for NeedsCtx
+/// where
+///     E: bin_proto::Endianness
+/// {
+///     fn decode<R>(
 ///         _read: &mut R,
 ///         _ctx: &mut Ctx,
 ///         _tag: (),
 ///     ) -> bin_proto::Result<Self>
 ///     where
 ///         R: bin_proto::BitRead + ?Sized,
-///         E: bin_proto::Endianness,
 ///     {
 ///         // Use ctx here
 ///         Ok(Self)
 ///     }
 /// }
 ///
-/// impl BitEncode<Ctx> for NeedsCtx {
-///     fn encode<W, E>(
+/// impl<E> BitEncode<E, Ctx> for NeedsCtx
+/// where
+///     E: bin_proto::Endianness
+/// {
+///     fn encode<W>(
 ///         &self,
 ///         _write: &mut W,
 ///         _ctx: &mut Ctx,
@@ -391,7 +396,6 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 ///     ) -> bin_proto::Result<()>
 ///     where
 ///         W: bin_proto::BitWrite + ?Sized,
-///         E: bin_proto::Endianness,
 ///     {
 ///         // Use ctx here
 ///         Ok(())
@@ -413,7 +417,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// # use std::marker::PhantomData;
 /// #[derive(BitDecode, BitEncode)]
 /// #[bin_proto(ctx = Ctx)]
-/// struct NestedCodec<Ctx, A: BitDecode<Ctx> + BitEncode<Ctx>>(A, PhantomData<Ctx>);
+/// struct NestedCodec<Ctx, A>(A, PhantomData<Ctx>);
 /// ```
 ///
 /// ```
@@ -439,23 +443,28 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 ///
 /// struct NeedsCtx;
 ///
-/// impl<Ctx: CtxTrait> BitDecode<Ctx> for NeedsCtx {
-///     fn decode<R, E>(
+/// impl<E, Ctx: CtxTrait> BitDecode<E, Ctx> for NeedsCtx
+/// where
+///     E: bin_proto::Endianness,
+/// {
+///     fn decode<R>(
 ///         _read: &mut R,
 ///         _ctx: &mut Ctx,
 ///         _tag: (),
 ///     ) -> bin_proto::Result<Self>
 ///     where
 ///         R: bin_proto::BitRead + ?Sized,
-///         E: bin_proto::Endianness,
 ///     {
 ///         // Use ctx here
 ///         Ok(Self)
 ///     }
 ///}
 ///
-/// impl<Ctx: CtxTrait> BitEncode<Ctx> for NeedsCtx {
-///     fn encode<W, E>(
+/// impl<E, Ctx: CtxTrait> BitEncode<E, Ctx> for NeedsCtx
+/// where
+///     E: bin_proto::Endianness,
+/// {
+///     fn encode<W>(
 ///         &self,
 ///         _write: &mut W,
 ///         _ctx: &mut Ctx,
@@ -463,7 +472,6 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 ///     ) -> bin_proto::Result<()>
 ///     where
 ///         W: bin_proto::BitWrite + ?Sized,
-///         E: bin_proto::Endianness,
 ///     {
 ///         // Use ctx here
 ///         Ok(())

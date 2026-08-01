@@ -13,10 +13,10 @@ where
     I: IntoIterator<Item = T>,
     W: BitWrite + ?Sized,
     E: Endianness,
-    T: BitEncode<Ctx>,
+    T: BitEncode<E, Ctx>,
 {
     for item in items {
-        item.encode::<_, E>(write, ctx, ())?;
+        item.encode(write, ctx, ())?;
     }
     Ok(())
 }
@@ -29,9 +29,9 @@ pub fn decode_items_to_eof<'a, R, E, Ctx, T>(
 where
     R: BitRead + ?Sized,
     E: Endianness,
-    T: BitDecode<Ctx>,
+    T: BitDecode<E, Ctx>,
 {
-    iter::from_fn(|| match T::decode::<_, E>(read, ctx, ()) {
+    iter::from_fn(|| match T::decode(read, ctx, ()) {
         Err(e) if e.kind() == ErrorKind::Io(io::ErrorKind::UnexpectedEof) => None,
         other => Some(other),
     })
@@ -48,11 +48,13 @@ mod tests {
     #[derive(Debug)]
     struct CannotDecode;
 
-    impl<Ctx> BitDecode<Ctx> for CannotDecode {
-        fn decode<R, E>(_: &mut R, _: &mut Ctx, (): ()) -> Result<Self>
+    impl<E, Ctx> BitDecode<E, Ctx> for CannotDecode
+    where
+        E: Endianness,
+    {
+        fn decode<R>(_: &mut R, _: &mut Ctx, (): ()) -> Result<Self>
         where
             R: BitRead + ?Sized,
-            E: Endianness,
         {
             Err(Error::msg(""))
         }

@@ -4,23 +4,27 @@ use bitstream_io::{BitRead, BitWrite, Endianness};
 
 use crate::{BitDecode, BitEncode, Result};
 
-impl<Ctx> BitDecode<Ctx> for Ipv6Addr {
-    fn decode<R, E>(read: &mut R, ctx: &mut Ctx, (): ()) -> Result<Self>
+impl<E, Ctx> BitDecode<E, Ctx> for Ipv6Addr
+where
+    E: Endianness,
+{
+    fn decode<R>(read: &mut R, ctx: &mut Ctx, (): ()) -> Result<Self>
     where
         R: BitRead + ?Sized,
-        E: Endianness,
     {
-        u128::decode::<_, E>(read, ctx, ()).map(Self::from_bits)
+        <u128 as BitDecode<E, _>>::decode(read, ctx, ()).map(Self::from_bits)
     }
 }
 
-impl<Ctx> BitEncode<Ctx> for Ipv6Addr {
-    fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, (): ()) -> Result<()>
+impl<E, Ctx> BitEncode<E, Ctx> for Ipv6Addr
+where
+    E: Endianness,
+{
+    fn encode<W>(&self, write: &mut W, ctx: &mut Ctx, (): ()) -> Result<()>
     where
         W: BitWrite + ?Sized,
-        E: Endianness,
     {
-        self.to_bits().encode::<_, E>(write, ctx, ())
+        BitEncode::<E, _>::encode(&self.to_bits(), write, ctx, ())
     }
 }
 

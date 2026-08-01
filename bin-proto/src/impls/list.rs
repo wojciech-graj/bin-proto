@@ -6,66 +6,66 @@ macro_rules! impl_read_list {
         |$item_count:ident| $new:expr,
         $push:ident
     ) => {
-        impl<Tag, Ctx, T, $($h)?> $crate::BitDecode<Ctx, $crate::Tag<Tag>> for $ty<T, $($h)?>
+        impl<E, Tag, Ctx, T, $($h)?> $crate::BitDecode<E, Ctx, $crate::Tag<Tag>> for $ty<T, $($h)?>
         where
-            T: $crate::BitDecode<Ctx> $(+ $tbound0 $(+ $tbound1)?)?,
+            E: ::bitstream_io::Endianness,
+            T: $crate::BitDecode<E, Ctx> $(+ $tbound0 $(+ $tbound1)?)?,
             Tag: ::core::convert::TryInto<usize>,
             $($h: $hbound0 + $hbound1)?
         {
-            fn decode<R, E>(
+            fn decode<R>(
                 read: &mut R,
                 ctx: &mut Ctx,
                 tag: $crate::Tag<Tag>,
             ) -> $crate::Result<Self>
             where
                 R: ::bitstream_io::BitRead + ?Sized,
-                E: ::bitstream_io::Endianness,
             {
                 let $item_count = ::core::convert::TryInto::try_into(tag.0)
                     .map_err(|_| $crate::Error::from_inner($crate::error::ErrorCause::TagConvert))?;
                 let mut this = $new;
                 for _ in 0..$item_count {
-                    this.$push($crate::BitDecode::<_, _>::decode::<_, E>(read, ctx, ())?);
+                    this.$push($crate::BitDecode::<_, _, _>::decode(read, ctx, ())?);
                 }
                 ::core::result::Result::Ok(this)
             }
         }
 
-        impl<Ctx, T, $($h)?> $crate::BitDecode<Ctx, $crate::Untagged> for $ty<T, $($h)?>
+        impl<E, Ctx, T, $($h)?> $crate::BitDecode<E, Ctx, $crate::Untagged> for $ty<T, $($h)?>
         where
-            T: $crate::BitDecode<Ctx> $(+ $tbound0 $(+ $tbound1)?)?,
+            E: ::bitstream_io::Endianness,
+            T: $crate::BitDecode<E, Ctx> $(+ $tbound0 $(+ $tbound1)?)?,
             $($h: $hbound0 + $hbound1)?
         {
-            fn decode<R, E>(
+            fn decode<R>(
                 read: &mut R,
                 ctx: &mut Ctx,
                 _: $crate::Untagged,
             ) -> $crate::Result<Self>
             where
                 R: ::bitstream_io::BitRead + ?Sized,
-                E: ::bitstream_io::Endianness,
             {
                 $crate::util::decode_items_to_eof::<_, E, _, _>(read, ctx).collect()
             }
         }
 
         #[cfg(feature = "prepend-tags")]
-        impl<Ctx, T, $($h)?> $crate::BitDecode<Ctx> for $ty<T, $($h)?>
+        impl<E, Ctx, T, $($h)?> $crate::BitDecode<E, Ctx> for $ty<T, $($h)?>
         where
-            T: $crate::BitDecode<Ctx> $(+ $tbound0 $(+ $tbound1)?)?,
+            E: ::bitstream_io::Endianness,
+            T: $crate::BitDecode<E, Ctx> $(+ $tbound0 $(+ $tbound1)?)?,
             $($h: $hbound0 + $hbound1)?
         {
-            fn decode<R, E>(
+            fn decode<R>(
                 read: &mut R,
                 ctx: &mut Ctx,
                 (): (),
             ) -> $crate::Result<Self>
             where
                 R: ::bitstream_io::BitRead + ?Sized,
-                E: ::bitstream_io::Endianness,
             {
-                let tag: usize = $crate::BitDecode::decode::<_, E>(read, ctx, ())?;
-                $crate::BitDecode::decode::<_, E>(read, ctx, $crate::Tag(tag))
+                let tag: usize = $crate::BitDecode::<E, _, _>::decode(read, ctx, ())?;
+                $crate::BitDecode::<E, _, _>::decode(read, ctx, $crate::Tag(tag))
             }
         }
     }
@@ -74,39 +74,39 @@ macro_rules! impl_read_list {
 #[allow(unused)]
 macro_rules! impl_write_list {
     ($ty:ident<T $(: $tbound0:ident $(+ $tbound1:ident)?)? $(, $h:ident)?> ) => {
-        impl<Ctx, T, $($h)?> $crate::BitEncode<Ctx, $crate::Untagged> for $ty<T, $($h)?>
+        impl<E, Ctx, T, $($h)?> $crate::BitEncode<E, Ctx, $crate::Untagged> for $ty<T, $($h)?>
         where
-            T: $crate::BitEncode<Ctx> $(+ $tbound0 $(+ $tbound1)?)?
+            E: ::bitstream_io::Endianness,
+            T: $crate::BitEncode<E, Ctx> $(+ $tbound0 $(+ $tbound1)?)?
         {
-            fn encode<W, E>(&self,
+            fn encode<W>(&self,
                 write: &mut W,
                 ctx: &mut Ctx,
                 _: $crate::Untagged,
             ) -> $crate::Result<()>
             where
                 W: ::bitstream_io::BitWrite + ?Sized,
-                E: ::bitstream_io::Endianness,
             {
                 $crate::util::encode_items::<_, _, E, _, _>(self.iter(), write,  ctx)
             }
         }
 
         #[cfg(feature = "prepend-tags")]
-        impl<Ctx, T, $($h)?> $crate::BitEncode<Ctx> for $ty<T, $($h)?>
+        impl<E, Ctx, T, $($h)?> $crate::BitEncode<E, Ctx> for $ty<T, $($h)?>
         where
-            T: $crate::BitEncode<Ctx> $(+ $tbound0 $(+ $tbound1)?)?
+            E: ::bitstream_io::Endianness,
+            T: $crate::BitEncode<E, Ctx> $(+ $tbound0 $(+ $tbound1)?)?
         {
-            fn encode<W, E>(&self,
+            fn encode<W>(&self,
                 write: &mut W,
                 ctx: &mut Ctx,
                 (): (),
             ) -> $crate::Result<()>
             where
                 W: ::bitstream_io::BitWrite + ?Sized,
-                E: ::bitstream_io::Endianness,
             {
-                $crate::BitEncode::encode::<_, E>(&self.len(), write, ctx, ())?;
-                $crate::BitEncode::encode::<_, E>(self, write, ctx, $crate::Untagged)
+                $crate::BitEncode::<E, _, _>::encode(&self.len(), write, ctx, ())?;
+                $crate::BitEncode::<E, _, _>::encode(self, write, ctx, $crate::Untagged)
             }
         }
     }
@@ -249,7 +249,7 @@ mod binary_heap {
         fn decode() {
             let bytes: &[u8] = &[0x01];
             let exp: BinaryHeap<u8> = [1].into();
-            let read: BinaryHeap<u8> = BitDecode::decode::<_, BigEndian>(
+            let read: BinaryHeap<u8> = BitDecode::<BigEndian, _, _>::decode(
                 &mut BitReader::endian(bytes, BigEndian),
                 &mut (),
                 Tag(1),

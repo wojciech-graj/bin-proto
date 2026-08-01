@@ -16,14 +16,14 @@ impl<T> Drop for PartialGuard<T> {
     }
 }
 
-impl<Ctx, T, const N: usize> BitDecode<Ctx> for [T; N]
+impl<E, Ctx, T, const N: usize> BitDecode<E, Ctx> for [T; N]
 where
-    T: BitDecode<Ctx>,
+    E: Endianness,
+    T: BitDecode<E, Ctx>,
 {
-    fn decode<R, E>(read: &mut R, ctx: &mut Ctx, (): ()) -> Result<Self>
+    fn decode<R>(read: &mut R, ctx: &mut Ctx, (): ()) -> Result<Self>
     where
         R: BitRead + ?Sized,
-        E: Endianness,
     {
         let mut array: MaybeUninit<[T; N]> = MaybeUninit::uninit();
         let mut guard = PartialGuard {
@@ -31,7 +31,7 @@ where
             len: 0,
         };
         while guard.len < N {
-            let item = T::decode::<_, E>(read, ctx, ())?;
+            let item = T::decode(read, ctx, ())?;
             unsafe {
                 guard.ptr.add(guard.len).write(item);
             }
@@ -42,14 +42,14 @@ where
     }
 }
 
-impl<Ctx, T, const N: usize> BitEncode<Ctx> for [T; N]
+impl<E, Ctx, T, const N: usize> BitEncode<E, Ctx> for [T; N]
 where
-    T: BitEncode<Ctx>,
+    E: Endianness,
+    T: BitEncode<E, Ctx>,
 {
-    fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, (): ()) -> Result<()>
+    fn encode<W>(&self, write: &mut W, ctx: &mut Ctx, (): ()) -> Result<()>
     where
         W: BitWrite + ?Sized,
-        E: Endianness,
     {
         util::encode_items::<_, _, E, _, _>(self.iter(), write, ctx)
     }
@@ -84,11 +84,13 @@ mod test {
         }
     }
 
-    impl<'a> BitDecode<Ctx<'a>> for MustDrop<'a> {
-        fn decode<R, E>(_: &mut R, ctx: &mut Ctx<'a>, (): ()) -> Result<Self>
+    impl<'a, E> BitDecode<E, Ctx<'a>> for MustDrop<'a>
+    where
+        E: Endianness,
+    {
+        fn decode<R>(_: &mut R, ctx: &mut Ctx<'a>, (): ()) -> Result<Self>
         where
             R: BitRead + ?Sized,
-            E: Endianness,
         {
             let mut state = ctx.0.borrow_mut();
             if state.decoded {

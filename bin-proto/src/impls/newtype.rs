@@ -1,27 +1,28 @@
 macro_rules! impl_newtype {
     ($ty:ident) => {
-        impl<Ctx, Tag, T> $crate::BitDecode<Ctx, Tag> for $ty<T>
+        impl<E, Ctx, Tag, T> $crate::BitDecode<E, Ctx, Tag> for $ty<T>
         where
-            T: $crate::BitDecode<Ctx, Tag>,
+            E: ::bitstream_io::Endianness,
+            T: $crate::BitDecode<E, Ctx, Tag>,
         {
-            fn decode<R, E>(
+            fn decode<R>(
                 read: &mut R,
                 ctx: &mut Ctx,
                 tag: Tag,
             ) -> $crate::Result<Self>
             where
                 R: ::bitstream_io::BitRead + ?Sized,
-                E: ::bitstream_io::Endianness,
             {
-                Ok(Self($crate::BitDecode::decode::<_, E>(read,  ctx, tag)?))
+                Ok(Self($crate::BitDecode::<E, _, _>::decode(read, ctx, tag)?))
             }
         }
 
-        impl<Ctx, Tag, T> $crate::BitEncode<Ctx, Tag> for $ty<T>
+        impl<E, Ctx, Tag, T> $crate::BitEncode<E, Ctx, Tag> for $ty<T>
         where
-            T: $crate::BitEncode<Ctx, Tag>,
+            E: ::bitstream_io::Endianness,
+            T: $crate::BitEncode<E, Ctx, Tag>,
         {
-            fn encode<W, E>(
+            fn encode<W>(
                 &self,
                 write: &mut W,
                 ctx: &mut Ctx,
@@ -29,9 +30,8 @@ macro_rules! impl_newtype {
             ) -> $crate::Result<()>
             where
                 W: ::bitstream_io::BitWrite + ?Sized,
-                E: ::bitstream_io::Endianness,
             {
-                $crate::BitEncode::encode::<_, E>(&self.0, write,  ctx, tag)
+                $crate::BitEncode::<E, _, _>::encode(&self.0, write, ctx, tag)
             }
         }
 

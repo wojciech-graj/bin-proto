@@ -7,11 +7,13 @@ use bitstream_io::{BitRead, BitWrite, Endianness};
 
 use crate::{BitDecode, BitEncode, Bits, Result};
 
-impl<Ctx, const C: u32> BitDecode<Ctx, Bits<C>> for bool {
-    fn decode<R, E>(read: &mut R, _: &mut Ctx, _: Bits<C>) -> Result<Self>
+impl<E, Ctx, const C: u32> BitDecode<E, Ctx, Bits<C>> for bool
+where
+    E: Endianness,
+{
+    fn decode<R>(read: &mut R, _: &mut Ctx, _: Bits<C>) -> Result<Self>
     where
         R: BitRead + ?Sized,
-        E: Endianness,
     {
         if read.read::<C, u8>()? == 0 {
             Ok(false)
@@ -21,22 +23,26 @@ impl<Ctx, const C: u32> BitDecode<Ctx, Bits<C>> for bool {
     }
 }
 
-impl<Ctx, const C: u32> BitEncode<Ctx, Bits<C>> for bool {
-    fn encode<W, E>(&self, write: &mut W, _: &mut Ctx, _: Bits<C>) -> Result<()>
+impl<E, Ctx, const C: u32> BitEncode<E, Ctx, Bits<C>> for bool
+where
+    E: Endianness,
+{
+    fn encode<W>(&self, write: &mut W, _: &mut Ctx, _: Bits<C>) -> Result<()>
     where
         W: BitWrite + ?Sized,
-        E: Endianness,
     {
         write.write::<C, u8>((*self).into())?;
         Ok(())
     }
 }
 
-impl<Ctx> BitDecode<Ctx> for bool {
-    fn decode<R, E>(read: &mut R, _: &mut Ctx, (): ()) -> Result<Self>
+impl<E, Ctx> BitDecode<E, Ctx> for bool
+where
+    E: Endianness,
+{
+    fn decode<R>(read: &mut R, _: &mut Ctx, (): ()) -> Result<Self>
     where
         R: BitRead + ?Sized,
-        E: Endianness,
     {
         if read.read_as_to::<E, u8>()? == 0 {
             Ok(false)
@@ -46,11 +52,13 @@ impl<Ctx> BitDecode<Ctx> for bool {
     }
 }
 
-impl<Ctx> BitEncode<Ctx> for bool {
-    fn encode<W, E>(&self, write: &mut W, _: &mut Ctx, (): ()) -> Result<()>
+impl<E, Ctx> BitEncode<E, Ctx> for bool
+where
+    E: Endianness,
+{
+    fn encode<W>(&self, write: &mut W, _: &mut Ctx, (): ()) -> Result<()>
     where
         W: BitWrite + ?Sized,
-        E: Endianness,
     {
         write.write_as_from::<E, _>(u8::from(*self))?;
         Ok(())
@@ -59,11 +67,13 @@ impl<Ctx> BitEncode<Ctx> for bool {
 
 macro_rules! impl_codec_for_numeric_unordered {
     ($ty:ty => $data_ty:ty) => {
-        impl<Ctx> $crate::BitDecode<Ctx> for $ty {
-            fn decode<R, E>(read: &mut R, _: &mut Ctx, (): ()) -> $crate::Result<Self>
+        impl<E, Ctx> $crate::BitDecode<E, Ctx> for $ty
+        where
+            E: ::bitstream_io::Endianness,
+        {
+            fn decode<R>(read: &mut R, _: &mut Ctx, (): ()) -> $crate::Result<Self>
             where
                 R: ::bitstream_io::BitRead + ?Sized,
-                E: ::bitstream_io::Endianness,
             {
                 Ok(::core::convert::TryInto::try_into(
                     ::bitstream_io::BitRead::read_as_to::<E, $data_ty>(read)?,
@@ -71,11 +81,13 @@ macro_rules! impl_codec_for_numeric_unordered {
             }
         }
 
-        impl<Ctx> $crate::BitEncode<Ctx> for $ty {
-            fn encode<W, E>(&self, write: &mut W, _: &mut Ctx, (): ()) -> $crate::Result<()>
+        impl<E, Ctx> $crate::BitEncode<E, Ctx> for $ty
+        where
+            E: ::bitstream_io::Endianness,
+        {
+            fn encode<W>(&self, write: &mut W, _: &mut Ctx, (): ()) -> $crate::Result<()>
             where
                 W: ::bitstream_io::BitWrite + ?Sized,
-                E: ::bitstream_io::Endianness,
             {
                 ::bitstream_io::BitWrite::write_as_from::<E, $data_ty>(
                     write,
@@ -89,15 +101,17 @@ macro_rules! impl_codec_for_numeric_unordered {
 
 macro_rules! impl_codec_for_numeric {
     ($ty:ty $(: $thru:ident $fallible:tt)? => $data_ty:ty) => {
-        impl<Ctx> $crate::BitDecode<Ctx> for $ty {
-            fn decode<R, E>(
+        impl<E, Ctx> $crate::BitDecode<E, Ctx> for $ty
+        where
+            E: ::bitstream_io::Endianness,
+        {
+            fn decode<R>(
                 read: &mut R,
                 _: &mut Ctx,
                 (): (),
             ) -> $crate::Result<Self>
             where
                 R: ::bitstream_io::BitRead + ?Sized,
-                E: ::bitstream_io::Endianness,
             {
                 Ok(::core::convert::TryInto::try_into(
                     $(::core::convert::TryInto::<$thru>::try_into)?(
@@ -107,8 +121,11 @@ macro_rules! impl_codec_for_numeric {
             }
         }
 
-        impl<Ctx> $crate::BitEncode<Ctx> for $ty {
-            fn encode<W, E>(
+        impl<E, Ctx> $crate::BitEncode<E, Ctx> for $ty
+        where
+            E: ::bitstream_io::Endianness,
+        {
+            fn encode<W>(
                 &self,
                 write: &mut W,
                 _: &mut Ctx,
@@ -116,7 +133,6 @@ macro_rules! impl_codec_for_numeric {
             ) -> $crate::Result<()>
             where
                 W: ::bitstream_io::BitWrite + ?Sized,
-                E: ::bitstream_io::Endianness
             {
                 ::bitstream_io::BitWrite::write_as_from::<E, $data_ty>(
                     write,
@@ -132,15 +148,17 @@ macro_rules! impl_codec_for_numeric {
 
 macro_rules! impl_bitfield_for_numeric {
     ($ty:ty $(: $thru:ident $fallible:tt)? => $data_ty:ty) => {
-        impl<Ctx, const C: u32> $crate::BitDecode<Ctx, $crate::Bits<C>> for $ty {
-            fn decode<R, E>(
+        impl<E, Ctx, const C: u32> $crate::BitDecode<E, Ctx, $crate::Bits<C>> for $ty
+        where
+            E: ::bitstream_io::Endianness,
+        {
+            fn decode<R>(
                 read: &mut R,
                 _: &mut Ctx,
                 _: $crate::Bits<C>,
             ) -> $crate::Result<Self>
             where
                 R: ::bitstream_io::BitRead + ?Sized,
-                E: ::bitstream_io::Endianness,
             {
                 Ok(::core::convert::TryInto::try_into(
                     $(::core::convert::TryInto::<$thru>::try_into)?(::bitstream_io::BitRead::read::<C, $data_ty>(
@@ -150,8 +168,11 @@ macro_rules! impl_bitfield_for_numeric {
             }
         }
 
-        impl<Ctx, const C: u32> $crate::BitEncode<Ctx, $crate::Bits<C>> for $ty {
-            fn encode<W, E>(
+        impl<E, Ctx, const C: u32> $crate::BitEncode<E, Ctx, $crate::Bits<C>> for $ty
+        where
+            E: ::bitstream_io::Endianness
+        {
+            fn encode<W>(
                 &self,
                 write: &mut W,
                 _: &mut Ctx,
@@ -159,7 +180,6 @@ macro_rules! impl_bitfield_for_numeric {
             ) -> $crate::Result<()>
             where
                 W: ::bitstream_io::BitWrite + ?Sized,
-                E: ::bitstream_io::Endianness
             {
                 ::bitstream_io::BitWrite::write::<C, $data_ty>(
                     write,

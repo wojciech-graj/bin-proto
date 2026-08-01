@@ -100,7 +100,7 @@ impl<'a> FieldBounds<'a> {
         };
 
         self.predicates
-            .push(parse_quote!(#ty: #crate_path::#trait_name<#ctx_ty, #tag_ty>));
+            .push(parse_quote!(#ty: #crate_path::#trait_name<__E, #ctx_ty, #tag_ty>));
     }
 
     pub fn into_predicates(self) -> Vec<syn::WherePredicate> {

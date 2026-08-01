@@ -5,14 +5,14 @@ use crate::{error::ErrorCause, util, BitDecode, BitEncode, Error, Result, Untagg
 use alloc::{string::String, vec::Vec};
 use bitstream_io::{BitRead, BitWrite, Endianness};
 
-impl<Tag, Ctx> BitDecode<Ctx, crate::Tag<Tag>> for String
+impl<E, Tag, Ctx> BitDecode<E, Ctx, crate::Tag<Tag>> for String
 where
+    E: Endianness,
     Tag: TryInto<usize>,
 {
-    fn decode<R, E>(read: &mut R, ctx: &mut Ctx, tag: crate::Tag<Tag>) -> Result<Self>
+    fn decode<R>(read: &mut R, ctx: &mut Ctx, tag: crate::Tag<Tag>) -> Result<Self>
     where
         R: BitRead + ?Sized,
-        E: Endianness,
     {
         let item_count = tag
             .0
@@ -21,27 +21,31 @@ where
         let mut bytes = Vec::new();
         bytes.try_reserve_exact(item_count)?;
         for _ in 0..item_count {
-            bytes.push(u8::decode::<_, E>(read, ctx, ())?);
+            bytes.push(<u8 as BitDecode<E, _>>::decode(read, ctx, ())?);
         }
         Ok(Self::from_utf8(bytes)?)
     }
 }
 
-impl<Ctx> BitEncode<Ctx, Untagged> for String {
-    fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, _: Untagged) -> Result<()>
+impl<E, Ctx> BitEncode<E, Ctx, Untagged> for String
+where
+    E: Endianness,
+{
+    fn encode<W>(&self, write: &mut W, ctx: &mut Ctx, _: Untagged) -> Result<()>
     where
         W: BitWrite + ?Sized,
-        E: Endianness,
     {
         util::encode_items::<_, _, E, _, _>(self.as_bytes(), write, ctx)
     }
 }
 
-impl<Ctx> BitDecode<Ctx, Untagged> for String {
-    fn decode<R, E>(read: &mut R, ctx: &mut Ctx, _: Untagged) -> Result<Self>
+impl<E, Ctx> BitDecode<E, Ctx, Untagged> for String
+where
+    E: Endianness,
+{
+    fn decode<R>(read: &mut R, ctx: &mut Ctx, _: Untagged) -> Result<Self>
     where
         R: BitRead + ?Sized,
-        E: Endianness,
     {
         let bytes = util::decode_items_to_eof::<_, E, _, _>(read, ctx).collect::<Result<_>>()?;
         Ok(Self::from_utf8(bytes)?)
@@ -49,26 +53,30 @@ impl<Ctx> BitDecode<Ctx, Untagged> for String {
 }
 
 #[cfg(feature = "prepend-tags")]
-impl<Ctx> BitEncode<Ctx> for String {
-    fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, (): ()) -> Result<()>
+impl<E, Ctx> BitEncode<E, Ctx> for String
+where
+    E: Endianness,
+{
+    fn encode<W>(&self, write: &mut W, ctx: &mut Ctx, (): ()) -> Result<()>
     where
         W: BitWrite + ?Sized,
-        E: Endianness,
     {
-        self.len().encode::<_, E>(write, ctx, ())?;
-        self.encode::<_, E>(write, ctx, Untagged)
+        BitEncode::<E, _>::encode(&self.len(), write, ctx, ())?;
+        BitEncode::<E, _, _>::encode(self, write, ctx, Untagged)
     }
 }
 
 #[cfg(feature = "prepend-tags")]
-impl<Ctx> BitDecode<Ctx> for String {
-    fn decode<R, E>(read: &mut R, ctx: &mut Ctx, (): ()) -> Result<Self>
+impl<E, Ctx> BitDecode<E, Ctx> for String
+where
+    E: Endianness,
+{
+    fn decode<R>(read: &mut R, ctx: &mut Ctx, (): ()) -> Result<Self>
     where
         R: BitRead + ?Sized,
-        E: Endianness,
     {
-        let tag = usize::decode::<_, E>(read, ctx, ())?;
-        Self::decode::<_, E>(read, ctx, crate::Tag(tag))
+        let tag: usize = BitDecode::<E, _>::decode(read, ctx, ())?;
+        BitDecode::<E, _, _>::decode(read, ctx, crate::Tag(tag))
     }
 }
 
