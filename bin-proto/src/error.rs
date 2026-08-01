@@ -151,30 +151,30 @@ impl fmt::Display for Error {
 impl fmt::Display for ErrorCause {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Io(e) => write!(f, "{e}"),
+            Self::Io(e) => e.fmt(f),
             #[cfg(feature = "alloc")]
-            Self::FromUtf8(e) => write!(f, "{e}"),
+            Self::FromUtf8(e) => e.fmt(f),
             #[cfg(feature = "alloc")]
-            Self::Nul(e) => write!(f, "{e}"),
-            Self::TryFromInt(e) => write!(f, "{e}"),
-            Self::Borrow(e) => write!(f, "{e}"),
-            Self::Discriminant => write!(f, "unknown enum discriminant"),
-            Self::TagConvert => write!(f, "failed to convert tag"),
+            Self::Nul(e) => e.fmt(f),
+            Self::TryFromInt(e) => e.fmt(f),
+            Self::Borrow(e) => e.fmt(f),
+            Self::Discriminant => "unknown enum discriminant".fmt(f),
+            Self::TagConvert => "failed to convert tag".fmt(f),
             #[cfg(feature = "std")]
-            Self::Poison => write!(f, "poisoned lock"),
-            Self::Magic => write!(f, "magic mismatch"),
+            Self::Poison => "poisoned lock".fmt(f),
+            Self::Magic => "magic mismatch".fmt(f),
             Self::Underrun {
                 read_bits: read,
                 available_bits: available,
             } => {
                 write!(f, "buffer underrun: read {read} of {available} bits")
             }
-            Self::EncodeSkipped => write!(f, "attempted to encode skipped enum variant"),
+            Self::EncodeSkipped => "attempted to encode skipped enum variant".fmt(f),
             #[cfg(feature = "alloc")]
-            Self::TryReserve(e) => write!(f, "{e}"),
+            Self::TryReserve(e) => e.fmt(f),
             Self::Assert(e) => write!(f, "assertion failed: {e}"),
             #[cfg(feature = "alloc")]
-            Self::Boxed(e) => write!(f, "{e}"),
+            Self::Boxed(e) => e.fmt(f),
             Self::Other(e) => write!(f, "other: {e}"),
         }
     }
