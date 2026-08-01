@@ -161,23 +161,23 @@ pub use self::error::{Error, Result};
 /// | Attribute | Scope | Applicability |
 /// |-|-|-|
 /// | [`assert`](#assert) | field | rw |
-/// | [`discriminant_type`](#discriminant_type) | enum | rw |
-/// | [`discriminant`](#discriminant) | variant | rw |
-/// | [`other`](#other) | variant | r |
 /// | [`bits`](#bits) | field, enum | rw |
-/// | [`untagged`](#untagged) | field | rw |
-/// | [`tag`](#tag) | field | rw |
-/// | [`tag_type`](#tag_type) | field | rw |
-/// | [`write_value`](#write_value) | field | w |
+/// | [`crate`](#crate) | struct, enum | rw |
 /// | [`ctx`](#ctx) | container | rw |
 /// | [`ctx_bounds`](#ctx_bounds) | container | rw |
-/// | [`skip_encode`](#skip_encode) | field, variant | w |
-/// | [`skip_decode`](#skip_decode) | field, variant | r |
-/// | [`skip`](#skip) | field, variant | rw |
-/// | [`pad_before`](#pad_before) | field, struct | rw |
-/// | [`pad_after`](#pad_after) | field, struct | rw |
+/// | [`discriminant`](#discriminant) | variant | rw |
+/// | [`discriminant_type`](#discriminant_type) | enum | rw |
 /// | [`magic`](#magic) | field, struct | rw |
-/// | [`crate`](#crate) | struct, enum | rw |
+/// | [`other`](#other) | variant | r |
+/// | [`pad_after`](#pad_after) | field, struct | rw |
+/// | [`pad_before`](#pad_before) | field, struct | rw |
+/// | [`skip`](#skip) | field, variant | rw |
+/// | [`skip_decode`](#skip_decode) | field, variant | r |
+/// | [`skip_encode`](#skip_encode) | field, variant | w |
+/// | [`tag`](#tag) | field | rw |
+/// | [`tag_type`](#tag_type) | field | rw |
+/// | [`untagged`](#untagged) | field | rw |
+/// | [`write_value`](#write_value) | field | w |
 ///
 /// ## `assert`
 /// `#[bin_proto(assert = <expr>)]`
@@ -190,70 +190,6 @@ pub use self::error::{Error, Result};
 /// struct S {
 ///     #[bin_proto(assert = *a == 1)]
 ///     a: u8,
-/// }
-/// ```
-///
-/// ## `discriminant_type`
-/// `#[bin_proto(discriminant_type = <type>)]`
-/// - `<type>`: an arbitrary type that implements [`BitDecode`] or [`BitEncode`]
-///
-/// Specify if enum variant should be determined by a string or interger representation of its
-/// discriminant.
-///
-/// Falls back to the type specified in `#[repr(...)]` if not present.
-///
-/// ```
-/// # use bin_proto::{BitDecode, BitEncode};
-/// #[derive(BitDecode, BitEncode)]
-/// #[bin_proto(discriminant_type = u8)]
-/// enum Example {
-///     Variant1 = 1,
-///     Variant5 = 5,
-/// }
-/// ```
-///
-/// ```
-/// # use bin_proto::{BitDecode, BitEncode};
-/// #[derive(BitDecode, BitEncode)]
-/// #[repr(u8)]
-/// enum Example {
-///     Variant1 = 1,
-///     Variant5 = 5,
-/// }
-/// ```
-///
-/// ## `discriminant`
-/// `#[bin_proto(discriminant = <value>)]`
-/// - `<value>`: unique value of the discriminant's type
-///
-/// Specify the discriminant for a variant.
-///
-/// ```
-/// # use bin_proto::{BitDecode, BitEncode};
-/// #[derive(BitDecode, BitEncode)]
-/// #[bin_proto(discriminant_type = u8)]
-/// enum Example {
-///     #[bin_proto(discriminant = 1)]
-///     Variant1,
-///     Variant5 = 5,
-/// }
-/// ```
-///
-/// ## `other`
-/// `#[bin_proto(other)]`
-///
-/// Decode the specified variant if the discriminant doesn't match any other variants. A
-/// discriminant value can still be provided for the variant, and will be used when encoding.
-///
-/// ```
-/// # use bin_proto::{BitDecode, BitEncode};
-/// #[derive(BitDecode, BitEncode)]
-/// #[bin_proto(discriminant_type = u8)]
-/// enum Example {
-///     #[bin_proto(discriminant = 1)]
-///     Variant1,
-///     #[bin_proto(discriminant = 2, other)]
-///     CatchAll,
 /// }
 /// ```
 ///
@@ -272,82 +208,19 @@ pub use self::error::{Error, Result};
 /// struct Nibble(#[bin_proto(bits = 4)] u8);
 /// ```
 ///
-/// ## `untagged`
-/// `#[bin_proto(untagged)]`
+/// ## `crate`
+/// `#[bin_proto(crate = <path>)]`
 ///
-/// Variable-length field is final field in container, hence lacks a length prefix and should be
-/// read until eof.
+/// Specify the path to the `bin-proto` crate to be used in generated code. This is typically
+/// only applicable when invoking re-exported derives from a public macro in a different crate.
 ///
 /// ```
-/// # #[cfg(feature = "alloc")]
-/// # {
 /// # use bin_proto::{BitDecode, BitEncode};
+/// use bin_proto as renamed;
+///
 /// #[derive(BitDecode, BitEncode)]
-/// struct ReadToEnd(#[bin_proto(untagged)] Vec<u8>);
-/// # }
-/// ```
-///
-/// ## `tag`
-/// `#[bin_proto(tag = <expr>)]`
-/// - `<expr>`: arbitrary expression.
-///
-/// Specify tag of field. The tag represents a length prefix for variable-length fields, and a
-/// boolean for [`Option`].
-///
-/// ```
-/// # #[cfg(feature = "alloc")]
-/// # {
-/// # use bin_proto::{BitDecode, BitEncode};
-/// #[derive(BitDecode, BitEncode)]
-/// struct WithElementsLength {
-///     count: u32,
-///     foo: bool,
-///     #[bin_proto(tag = *count as usize)]
-///     data: Vec<u32>,
-/// }
-/// # }
-/// ```
-///
-/// ## `tag_type`
-/// `#[bin_proto(tag_type = <type>[, tag_value = <expr>]?[, tag_bits = <expr>]?)]`
-/// - `<type>`: tag's type.
-/// - `<expr>`: arbitrary expression.
-///
-/// Specify tag of field. The tag represents a length prefix for variable-length fields, and a
-/// boolean for [`Option`]. The tag is placed directly before the field. The `tag_value` only has
-/// to be specified when deriving [`BitEncode`].
-///
-/// ```
-/// # #[cfg(feature = "alloc")]
-/// # {
-/// # use bin_proto::{BitDecode, BitEncode};
-/// #[derive(BitDecode, BitEncode)]
-/// struct WithElementsLength {
-///     #[bin_proto(tag_type = u16, tag_value = data.len() as u16, tag_bits = 13)]
-///     data: Vec<u32>,
-/// }
-/// # }
-/// ```
-///
-/// ## `write_value`
-/// `#[bin_proto(write_value = <expr>)]`
-/// - `<expr>`: An expression that can be coerced to the field type.
-///
-/// Specify an expression that should be used as the field's value for writing.
-///
-/// ```
-/// # #[cfg(feature = "alloc")]
-/// # {
-/// # use bin_proto::{BitDecode, BitEncode};
-/// #[derive(BitDecode, BitEncode)]
-/// struct WithElementsLengthAuto {
-///     #[bin_proto(write_value = data.len() as u32)]
-///     count: u32,
-///     foo: bool,
-///     #[bin_proto(tag = *count as usize)]
-///     data: Vec<u32>,
-/// }
-/// # }
+/// #[bin_proto(crate = renamed)]
+/// struct Struct;
 /// ```
 ///
 /// ## `ctx`
@@ -489,24 +362,122 @@ pub use self::error::{Error, Result};
 /// struct WithCtx;
 /// ```
 ///
-/// ## `skip_encode`
-/// `#[bin_proto(skip_encode)]`
+/// ## `discriminant`
+/// `#[bin_proto(discriminant = <value>)]`
+/// - `<value>`: unique value of the discriminant's type
 ///
-/// If applied to a field, skip the field when encoding. If applied to an enum variant, return an
-/// Error if the variant is attempted to be encoded.
+/// Specify the discriminant for a variant.
 ///
 /// ```
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
-/// struct Struct(#[bin_proto(skip_encode)] u8);
+/// #[bin_proto(discriminant_type = u8)]
+/// enum Example {
+///     #[bin_proto(discriminant = 1)]
+///     Variant1,
+///     Variant5 = 5,
+/// }
+/// ```
+///
+/// ## `discriminant_type`
+/// `#[bin_proto(discriminant_type = <type>)]`
+/// - `<type>`: an arbitrary type that implements [`BitDecode`] or [`BitEncode`]
+///
+/// Specify if enum variant should be determined by a string or interger representation of its
+/// discriminant.
+///
+/// Falls back to the type specified in `#[repr(...)]` if not present.
+///
+/// ```
+/// # use bin_proto::{BitDecode, BitEncode};
+/// #[derive(BitDecode, BitEncode)]
+/// #[bin_proto(discriminant_type = u8)]
+/// enum Example {
+///     Variant1 = 1,
+///     Variant5 = 5,
+/// }
 /// ```
 ///
 /// ```
-/// # use bin_proto::BitEncode;
-/// #[derive(BitEncode)]
+/// # use bin_proto::{BitDecode, BitEncode};
+/// #[derive(BitDecode, BitEncode)]
+/// #[repr(u8)]
+/// enum Example {
+///     Variant1 = 1,
+///     Variant5 = 5,
+/// }
+/// ```
+///
+/// ## `magic`
+/// `#[bin_proto(magic = <expr>)]`
+/// - `<expr>`: Must evaluate to `&[u8; _]`
+///
+/// Indicates that the value must be present immediately preceding the field or struct.
+///
+/// ```
+/// # use bin_proto::{BitDecode, BitEncode};
+/// #[derive(BitDecode, BitEncode)]
+/// #[bin_proto(magic = &[0x01, 0x02, 0x03])]
+/// struct Magic(#[bin_proto(magic = b"123")] u8);
+/// ```
+///
+/// ## `other`
+/// `#[bin_proto(other)]`
+///
+/// Decode the specified variant if the discriminant doesn't match any other variants. A
+/// discriminant value can still be provided for the variant, and will be used when encoding.
+///
+/// ```
+/// # use bin_proto::{BitDecode, BitEncode};
+/// #[derive(BitDecode, BitEncode)]
+/// #[bin_proto(discriminant_type = u8)]
+/// enum Example {
+///     #[bin_proto(discriminant = 1)]
+///     Variant1,
+///     #[bin_proto(discriminant = 2, other)]
+///     CatchAll,
+/// }
+/// ```
+///
+/// ## `pad_after`
+/// `#[bin_proto(pad_after = <expr>)]`
+///
+/// Insert 0 bits when writing and skip bits when reading, after processing the field.
+///
+/// ```
+/// # use bin_proto::{BitDecode, BitEncode};
+/// #[derive(BitDecode, BitEncode)]
+/// struct Struct(#[bin_proto(pad_after = 3)] u8);
+/// ```
+///
+/// ## `pad_before`
+/// `#[bin_proto(pad_before = <expr>)]`
+///
+/// Insert 0 bits when writing and skip bits when reading, prior to processing the field.
+///
+/// ```
+/// # use bin_proto::{BitDecode, BitEncode};
+/// #[derive(BitDecode, BitEncode)]
+/// struct Struct(#[bin_proto(pad_before = 3)] u8);
+/// ```
+///
+/// ## `skip`
+/// `#[bin_proto(skip)]`
+///
+/// Equivalent to combining [`skip_encode`](#skip_encode) and [`skip_decode`](#skip_decode).
+///
+/// ```
+/// # use bin_proto::{BitDecode, BitEncode};
+/// #[derive(BitDecode, BitEncode)]
+/// struct Struct(#[bin_proto(skip)] u8);
+/// ```
+///
+/// ```
+/// # use bin_proto::{BitDecode, BitEncode};
+/// #[derive(BitDecode, BitEncode)]
 /// #[bin_proto(discriminant_type = u8)]
 /// enum Enum {
-///     #[bin_proto(skip_encode)]
+///     #[bin_proto(skip)]
 ///     Skip
 /// }
 /// ```
@@ -533,75 +504,104 @@ pub use self::error::{Error, Result};
 /// }
 /// ```
 ///
-/// ## `skip`
-/// `#[bin_proto(skip)]`
+/// ## `skip_encode`
+/// `#[bin_proto(skip_encode)]`
 ///
-/// Equivalent to combining [`skip_encode`](#skip_encode) and [`skip_decode`](#skip_decode).
-///
-/// ```
-/// # use bin_proto::{BitDecode, BitEncode};
-/// #[derive(BitDecode, BitEncode)]
-/// struct Struct(#[bin_proto(skip)] u8);
-/// ```
+/// If applied to a field, skip the field when encoding. If applied to an enum variant, return an
+/// Error if the variant is attempted to be encoded.
 ///
 /// ```
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
+/// struct Struct(#[bin_proto(skip_encode)] u8);
+/// ```
+///
+/// ```
+/// # use bin_proto::BitEncode;
+/// #[derive(BitEncode)]
 /// #[bin_proto(discriminant_type = u8)]
 /// enum Enum {
-///     #[bin_proto(skip)]
+///     #[bin_proto(skip_encode)]
 ///     Skip
 /// }
 /// ```
 ///
-/// ## `pad_before`
-/// `#[bin_proto(pad_before = <expr>)]`
+/// ## `tag`
+/// `#[bin_proto(tag = <expr>)]`
+/// - `<expr>`: arbitrary expression.
 ///
-/// Insert 0 bits when writing and skip bits when reading, prior to processing the field.
+/// Specify tag of field. The tag represents a length prefix for variable-length fields, and a
+/// boolean for [`Option`].
 ///
 /// ```
+/// # #[cfg(feature = "alloc")]
+/// # {
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
-/// struct Struct(#[bin_proto(pad_before = 3)] u8);
+/// struct WithElementsLength {
+///     count: u32,
+///     foo: bool,
+///     #[bin_proto(tag = *count as usize)]
+///     data: Vec<u32>,
+/// }
+/// # }
 /// ```
 ///
-/// ## `pad_after`
-/// `#[bin_proto(pad_after = <expr>)]`
+/// ## `tag_type`
+/// `#[bin_proto(tag_type = <type>[, tag_value = <expr>]?[, tag_bits = <expr>]?)]`
+/// - `<type>`: tag's type.
+/// - `<expr>`: arbitrary expression.
 ///
-/// Insert 0 bits when writing and skip bits when reading, after processing the field.
+/// Specify tag of field. The tag represents a length prefix for variable-length fields, and a
+/// boolean for [`Option`]. The tag is placed directly before the field. The `tag_value` only has
+/// to be specified when deriving [`BitEncode`].
 ///
 /// ```
+/// # #[cfg(feature = "alloc")]
+/// # {
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
-/// struct Struct(#[bin_proto(pad_after = 3)] u8);
+/// struct WithElementsLength {
+///     #[bin_proto(tag_type = u16, tag_value = data.len() as u16, tag_bits = 13)]
+///     data: Vec<u32>,
+/// }
+/// # }
 /// ```
 ///
-/// ## `magic`
-/// `#[bin_proto(magic = <expr>)]`
-/// - `<expr>`: Must evaluate to `&[u8; _]`
+/// ## `untagged`
+/// `#[bin_proto(untagged)]`
 ///
-/// Indicates that the value must be present immediately preceding the field or struct.
+/// Variable-length field is final field in container, hence lacks a length prefix and should be
+/// read until eof.
 ///
 /// ```
+/// # #[cfg(feature = "alloc")]
+/// # {
 /// # use bin_proto::{BitDecode, BitEncode};
 /// #[derive(BitDecode, BitEncode)]
-/// #[bin_proto(magic = &[0x01, 0x02, 0x03])]
-/// struct Magic(#[bin_proto(magic = b"123")] u8);
+/// struct ReadToEnd(#[bin_proto(untagged)] Vec<u8>);
+/// # }
 /// ```
 ///
-/// ## `crate`
-/// `#[bin_proto(crate = <path>)]`
+/// ## `write_value`
+/// `#[bin_proto(write_value = <expr>)]`
+/// - `<expr>`: An expression that can be coerced to the field type.
 ///
-/// Specify the path to the `bin-proto` crate to be used in generated code. This is typically
-/// only applicable when invoking re-exported derives from a public macro in a different crate.
+/// Specify an expression that should be used as the field's value for writing.
 ///
 /// ```
+/// # #[cfg(feature = "alloc")]
+/// # {
 /// # use bin_proto::{BitDecode, BitEncode};
-/// use bin_proto as renamed;
-///
 /// #[derive(BitDecode, BitEncode)]
-/// #[bin_proto(crate = renamed)]
-/// struct Struct;
+/// struct WithElementsLengthAuto {
+///     #[bin_proto(write_value = data.len() as u32)]
+///     count: u32,
+///     foo: bool,
+///     #[bin_proto(tag = *count as usize)]
+///     data: Vec<u32>,
+/// }
+/// # }
 /// ```
 #[cfg(feature = "derive")]
 pub use bin_proto_derive::{BitDecode, BitEncode};
