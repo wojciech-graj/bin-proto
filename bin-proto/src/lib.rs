@@ -108,9 +108,8 @@ extern crate std;
 
 pub use self::codec::{BitDecode, BitDecodeExt, BitEncode, BitEncodeExt};
 pub use self::discriminable::Discriminable;
+#[doc(inline)]
 pub use self::error::{Error, Result};
-pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
-
 /// Derive the [`BitDecode`] and [`BitEncode`] traits.
 ///
 /// # Scopes
@@ -606,6 +605,8 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// ```
 #[cfg(feature = "derive")]
 pub use bin_proto_derive::{BitDecode, BitEncode};
+pub use bitstream_io;
+pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 #[cfg(not(feature = "std"))]
 pub(crate) use no_std_io2::io;
 #[cfg(feature = "std")]
@@ -618,8 +619,6 @@ mod discriminable;
 pub mod error;
 mod impls;
 pub mod util;
-
-pub extern crate bitstream_io;
 
 /// A marker for [`BitEncode`] implementors that don't prepend their tag, and [`BitDecode`]
 /// implementors that usually have a tag, but can be read to EOF
