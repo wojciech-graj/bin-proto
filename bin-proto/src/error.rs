@@ -1,3 +1,5 @@
+//! Errors for when codec goes wrong.
+
 #[cfg(feature = "alloc")]
 use alloc::boxed::Box;
 use core::{convert::Infallible, fmt};
@@ -77,6 +79,7 @@ impl Error {
 }
 
 impl From<ErrorCause> for Error {
+    #[inline]
     fn from(inner: ErrorCause) -> Self {
         Self { inner }
     }
@@ -84,7 +87,6 @@ impl From<ErrorCause> for Error {
 
 #[derive(Debug)]
 #[doc(hidden)]
-#[allow(missing_docs)]
 pub enum ErrorCause {
     Io(io::Error),
     #[cfg(feature = "alloc")]
