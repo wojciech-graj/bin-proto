@@ -1,5 +1,5 @@
 #[allow(unused)]
-macro_rules! impl_read_list {
+macro_rules! impl_list_decode {
     (
         $ty:ident<T $(: $tbound0:ident $(+ $tbound1:ident)?)?
         $(, $h:ident: $hbound0:ident + $hbound1:ident)?>,
@@ -72,7 +72,7 @@ macro_rules! impl_read_list {
 }
 
 #[allow(unused)]
-macro_rules! impl_write_list {
+macro_rules! impl_list_encode {
     ($ty:ident<T $(: $tbound0:ident $(+ $tbound1:ident)?)? $(, $h:ident)?> ) => {
         impl<E, Ctx, T, $($h)?> $crate::BitEncode<E, Ctx, $crate::Untagged> for $ty<T, $($h)?>
         where
@@ -116,7 +116,7 @@ macro_rules! impl_write_list {
 mod vec {
     use alloc::vec::Vec;
 
-    impl_read_list!(
+    impl_list_decode!(
         Vec<T>,
         |n| {
             let mut this = Self::new();
@@ -125,7 +125,7 @@ mod vec {
         },
         push
     );
-    impl_write_list!(Vec<T>);
+    impl_list_encode!(Vec<T>);
 
     #[cfg(test)]
     mod tests {
@@ -148,8 +148,8 @@ mod vec {
 mod linked_list {
     use alloc::collections::linked_list::LinkedList;
 
-    impl_read_list!(LinkedList<T>, |n| Self::new(), push_back);
-    impl_write_list!(LinkedList<T>);
+    impl_list_decode!(LinkedList<T>, |n| Self::new(), push_back);
+    impl_list_encode!(LinkedList<T>);
 
     #[cfg(test)]
     mod tests {
@@ -170,7 +170,7 @@ mod linked_list {
 mod vec_deque {
     use alloc::collections::vec_deque::VecDeque;
 
-    impl_read_list!(
+    impl_list_decode!(
         VecDeque<T>,
         |n| {
             let mut this = Self::new();
@@ -179,7 +179,7 @@ mod vec_deque {
         },
         push_back
     );
-    impl_write_list!(VecDeque<T>);
+    impl_list_encode!(VecDeque<T>);
 
     #[cfg(test)]
     mod tests {
@@ -202,8 +202,8 @@ mod vec_deque {
 mod b_tree_set {
     use alloc::collections::btree_set::BTreeSet;
 
-    impl_read_list!(BTreeSet<T: Ord>, |n| Self::new(), insert);
-    impl_write_list!(BTreeSet<T: Ord>);
+    impl_list_decode!(BTreeSet<T: Ord>, |n| Self::new(), insert);
+    impl_list_encode!(BTreeSet<T: Ord>);
 
     #[cfg(test)]
     mod tests {
@@ -224,7 +224,7 @@ mod b_tree_set {
 mod binary_heap {
     use alloc::collections::binary_heap::BinaryHeap;
 
-    impl_read_list!(
+    impl_list_decode!(
         BinaryHeap<T: Ord>,
         |n| {
             let mut this = Self::new();
@@ -233,7 +233,7 @@ mod binary_heap {
         },
         push
     );
-    impl_write_list!(BinaryHeap<T: Ord>);
+    impl_list_encode!(BinaryHeap<T: Ord>);
 
     #[cfg(test)]
     mod tests {
@@ -272,7 +272,7 @@ mod hash_set {
     use core::hash::{BuildHasher, Hash};
     use std::collections::HashSet;
 
-    impl_read_list!(
+    impl_list_decode!(
         HashSet<T: Hash + Eq, H: BuildHasher + Default>,
         |n| {
             let mut this = Self::with_hasher(H::default());
@@ -281,7 +281,7 @@ mod hash_set {
         },
         insert
     );
-    impl_write_list!(HashSet<T: Hash + Eq, H>);
+    impl_list_encode!(HashSet<T: Hash + Eq, H>);
 
     #[cfg(test)]
     mod tests {
