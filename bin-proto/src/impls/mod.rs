@@ -1,5 +1,3 @@
-//! Implementations
-
 mod array;
 mod container;
 mod cstr;

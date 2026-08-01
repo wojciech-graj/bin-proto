@@ -7,7 +7,7 @@
 - Add `Error::TryReserve` variant
 - Return error instead of panicking if allocating a collection would cause an OOM
 - Allow not prefixing fields with `self` in `#[bin_proto(tag = ..., tag_type = ..., write_value = ...)]` expressions
-- Add `#[bin_proto(assert)]` attribute
+- Add `#[bin_proto(assert = ..)]` attribute
 - Simplify `util::encode_items` signature
 # v0.12.8
 - Add `#[bin_proto(crate = ...)]` attribute (https://github.com/wojciech-graj/bin-proto/pull/9)

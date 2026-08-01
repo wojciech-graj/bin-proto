@@ -62,17 +62,18 @@
 //!
 //! The [`macro@BitDecode`] and [`macro@BitEncode`] derive macros support the most common use-cases,
 //! but it may sometimes be necessary to manually implement [`BitEncode`] or [`BitDecode`]. Both
-//! traits have two generic parameters:
-//! - `Ctx`: A mutable variable passed recursively down the codec chain
-//! - `Tag`: A tag for specifying additional behavior
+//! traits have three generic parameters:
+//! - `E`: The endianness. In most cases, you want to implement for all `E: Endianness`.
+//! - `Ctx`: A mutable variable passed recursively down the codec chain.
+//! - `Tag`: A tag for specifying additional behavior.
 //!
 //! `Tag` can have any type. The following are used throughout `bin-proto` and ensure
 //! interoperability:
 //! - [`Tag`]: Specifies that an additional tag is required during decoding, such as a length prefix
-//!   for a [`Vec`](::alloc::vec::Vec), or a discriminant of an `enum`
+//!   for a [`Vec`](::alloc::vec::Vec), or a discriminant of an `enum`.
 //! - [`Untagged`]: Specifies that the type has a tag used during decoding, but this tag is not
-//!   written during encoding
-//! - [`Bits`]: Specified that the type is a bitfield, and can have a variable number of bits
+//!   written during encoding.
+//! - [`Bits`]: Specified that the type is a bitfield, and can have a variable number of bits.
 //!
 //! # Features
 //!
@@ -156,6 +157,17 @@ pub use self::error::{Error, Result};
 /// # }
 /// ```
 ///
+/// # Unnamed fields
+///
+/// Unnamed fields can be accessed as `field_{i}` in any attribute macro's `<expr>`, for example in
+/// [`tag`](#tag).
+///
+/// ```
+/// # use bin_proto::{BitDecode, BitEncode};
+/// #[derive(BitDecode, BitEncode)]
+/// struct Optional(bool, #[bin_proto(tag = *field_0)] Option<i32>);
+/// ```
+///
 /// # Attributes
 ///
 /// | Attribute | Scope | Applicability |
@@ -194,7 +206,7 @@ pub use self::error::{Error, Result};
 /// ```
 ///
 /// ## `bits`
-/// `#[bin_proto(bits = <width>)]`
+/// `#[bin_proto(bits = <const u32>)]`
 ///
 /// Determine width of field in bits.
 ///
@@ -381,7 +393,6 @@ pub use self::error::{Error, Result};
 ///
 /// ## `discriminant_type`
 /// `#[bin_proto(discriminant_type = <type>)]`
-/// - `<type>`: an arbitrary type that implements [`BitDecode`] or [`BitEncode`]
 ///
 /// Specify if enum variant should be determined by a string or interger representation of its
 /// discriminant.
@@ -409,8 +420,7 @@ pub use self::error::{Error, Result};
 /// ```
 ///
 /// ## `magic`
-/// `#[bin_proto(magic = <expr>)]`
-/// - `<expr>`: Must evaluate to `&[u8; _]`
+/// `#[bin_proto(magic = <&[u8] expr>)]`
 ///
 /// Indicates that the value must be present immediately preceding the field or struct.
 ///
@@ -440,7 +450,7 @@ pub use self::error::{Error, Result};
 /// ```
 ///
 /// ## `pad_after`
-/// `#[bin_proto(pad_after = <expr>)]`
+/// `#[bin_proto(pad_after = <u32 expr>)]`
 ///
 /// Insert 0 bits when writing and skip bits when reading, after processing the field.
 ///
@@ -451,7 +461,7 @@ pub use self::error::{Error, Result};
 /// ```
 ///
 /// ## `pad_before`
-/// `#[bin_proto(pad_before = <expr>)]`
+/// `#[bin_proto(pad_before = <u32 expr>)]`
 ///
 /// Insert 0 bits when writing and skip bits when reading, prior to processing the field.
 ///
@@ -528,7 +538,6 @@ pub use self::error::{Error, Result};
 ///
 /// ## `tag`
 /// `#[bin_proto(tag = <expr>)]`
-/// - `<expr>`: arbitrary expression.
 ///
 /// Specify tag of field. The tag represents a length prefix for variable-length fields, and a
 /// boolean for [`Option`].
@@ -585,7 +594,6 @@ pub use self::error::{Error, Result};
 ///
 /// ## `write_value`
 /// `#[bin_proto(write_value = <expr>)]`
-/// - `<expr>`: An expression that can be coerced to the field type.
 ///
 /// Specify an expression that should be used as the field's value for writing.
 ///
@@ -621,7 +629,7 @@ mod impls;
 pub mod util;
 
 /// A marker for [`BitEncode`] implementors that don't prepend their tag, and [`BitDecode`]
-/// implementors that usually have a tag, but can be read to EOF
+/// implementors that usually have a tag, but can be read to EOF.
 pub struct Untagged;
 
 /// A marker for [`BitDecode`] implementors that require a tag.
