@@ -8,7 +8,7 @@ where
 {
     fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, tag: Tag) -> Result<()>
     where
-        W: BitWrite,
+        W: BitWrite + ?Sized,
         E: Endianness,
     {
         (**self).encode::<_, E>(write, ctx, tag)

@@ -5,7 +5,7 @@ use bitstream_io::{BitWrite, Endianness};
 impl<Ctx> BitEncode<Ctx, Untagged> for str {
     fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, _: Untagged) -> Result<()>
     where
-        W: BitWrite,
+        W: BitWrite + ?Sized,
         E: Endianness,
     {
         util::encode_items::<_, _, E, _, _>(self.as_bytes(), write, ctx)
@@ -16,7 +16,7 @@ impl<Ctx> BitEncode<Ctx, Untagged> for str {
 impl<Ctx> BitEncode<Ctx> for str {
     fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, (): ()) -> Result<()>
     where
-        W: BitWrite,
+        W: BitWrite + ?Sized,
         E: Endianness,
     {
         self.len().encode::<_, E>(write, ctx, ())?;
@@ -37,7 +37,7 @@ mod decode {
     impl<Ctx> BitDecode<Ctx, Untagged> for Box<str> {
         fn decode<R, E>(read: &mut R, ctx: &mut Ctx, tag: Untagged) -> Result<Self>
         where
-            R: BitRead,
+            R: BitRead + ?Sized,
             E: Endianness,
         {
             String::decode::<_, E>(read, ctx, tag).map(Into::into)
@@ -50,7 +50,7 @@ mod decode {
     {
         fn decode<R, E>(read: &mut R, ctx: &mut Ctx, tag: crate::Tag<Tag>) -> Result<Self>
         where
-            R: BitRead,
+            R: BitRead + ?Sized,
             E: Endianness,
         {
             String::decode::<_, E>(read, ctx, tag).map(Into::into)
@@ -61,7 +61,7 @@ mod decode {
     impl<Ctx> BitDecode<Ctx> for Box<str> {
         fn decode<R, E>(read: &mut R, ctx: &mut Ctx, (): ()) -> Result<Self>
         where
-            R: BitRead,
+            R: BitRead + ?Sized,
             E: Endianness,
         {
             String::decode::<_, E>(read, ctx, ()).map(Into::into)

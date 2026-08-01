@@ -7,7 +7,7 @@ use crate::{BitDecode, BitEncode, Result};
 impl<Ctx> BitDecode<Ctx> for Ipv6Addr {
     fn decode<R, E>(read: &mut R, ctx: &mut Ctx, (): ()) -> Result<Self>
     where
-        R: BitRead,
+        R: BitRead + ?Sized,
         E: Endianness,
     {
         u128::decode::<_, E>(read, ctx, ()).map(Self::from_bits)
@@ -17,7 +17,7 @@ impl<Ctx> BitDecode<Ctx> for Ipv6Addr {
 impl<Ctx> BitEncode<Ctx> for Ipv6Addr {
     fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, (): ()) -> Result<()>
     where
-        W: BitWrite,
+        W: BitWrite + ?Sized,
         E: Endianness,
     {
         self.to_bits().encode::<_, E>(write, ctx, ())

@@ -10,7 +10,7 @@ macro_rules! impl_newtype {
                 tag: Tag,
             ) -> $crate::Result<Self>
             where
-                R: ::bitstream_io::BitRead,
+                R: ::bitstream_io::BitRead + ?Sized,
                 E: ::bitstream_io::Endianness,
             {
                 Ok(Self($crate::BitDecode::decode::<_, E>(read,  ctx, tag)?))
@@ -28,7 +28,7 @@ macro_rules! impl_newtype {
                 tag: Tag
             ) -> $crate::Result<()>
             where
-                W: ::bitstream_io::BitWrite,
+                W: ::bitstream_io::BitWrite + ?Sized,
                 E: ::bitstream_io::Endianness,
             {
                 $crate::BitEncode::encode::<_, E>(&self.0, write,  ctx, tag)

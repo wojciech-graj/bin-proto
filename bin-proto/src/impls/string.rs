@@ -11,7 +11,7 @@ where
 {
     fn decode<R, E>(read: &mut R, ctx: &mut Ctx, tag: crate::Tag<Tag>) -> Result<Self>
     where
-        R: BitRead,
+        R: BitRead + ?Sized,
         E: Endianness,
     {
         let item_count = tag
@@ -30,7 +30,7 @@ where
 impl<Ctx> BitEncode<Ctx, Untagged> for String {
     fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, _: Untagged) -> Result<()>
     where
-        W: BitWrite,
+        W: BitWrite + ?Sized,
         E: Endianness,
     {
         util::encode_items::<_, _, E, _, _>(self.as_bytes(), write, ctx)
@@ -40,7 +40,7 @@ impl<Ctx> BitEncode<Ctx, Untagged> for String {
 impl<Ctx> BitDecode<Ctx, Untagged> for String {
     fn decode<R, E>(read: &mut R, ctx: &mut Ctx, _: Untagged) -> Result<Self>
     where
-        R: BitRead,
+        R: BitRead + ?Sized,
         E: Endianness,
     {
         let bytes = util::decode_items_to_eof::<_, E, _, _>(read, ctx).collect::<Result<_>>()?;
@@ -52,7 +52,7 @@ impl<Ctx> BitDecode<Ctx, Untagged> for String {
 impl<Ctx> BitEncode<Ctx> for String {
     fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, (): ()) -> Result<()>
     where
-        W: BitWrite,
+        W: BitWrite + ?Sized,
         E: Endianness,
     {
         self.len().encode::<_, E>(write, ctx, ())?;
@@ -64,7 +64,7 @@ impl<Ctx> BitEncode<Ctx> for String {
 impl<Ctx> BitDecode<Ctx> for String {
     fn decode<R, E>(read: &mut R, ctx: &mut Ctx, (): ()) -> Result<Self>
     where
-        R: BitRead,
+        R: BitRead + ?Sized,
         E: Endianness,
     {
         let tag = usize::decode::<_, E>(read, ctx, ())?;

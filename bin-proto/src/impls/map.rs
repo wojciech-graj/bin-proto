@@ -18,7 +18,7 @@ macro_rules! impl_read_map {
                 tag: $crate::Tag<Tag>,
             ) -> $crate::Result<Self>
             where
-                R: ::bitstream_io::BitRead,
+                R: ::bitstream_io::BitRead + ?Sized,
                 E: ::bitstream_io::Endianness,
             {
                 let $item_count = ::core::convert::TryInto::try_into(tag.0)
@@ -46,7 +46,7 @@ macro_rules! impl_read_map {
                 _: $crate::Untagged,
             ) -> $crate::Result<Self>
             where
-                R: ::bitstream_io::BitRead,
+                R: ::bitstream_io::BitRead + ?Sized,
                 E: ::bitstream_io::Endianness,
             {
                 $crate::util::decode_items_to_eof::<_, E, _, _>(read,  ctx).collect()
@@ -66,7 +66,7 @@ macro_rules! impl_read_map {
                 (): (),
             ) -> $crate::Result<Self>
             where
-                R: ::bitstream_io::BitRead,
+                R: ::bitstream_io::BitRead + ?Sized,
                 E: ::bitstream_io::Endianness,
             {
                 let tag: usize = $crate::BitDecode::decode::<_, E>(read, ctx, ())?;
@@ -91,7 +91,7 @@ macro_rules! impl_write_map {
                 _: $crate::Untagged,
             ) -> $crate::Result<()>
             where
-                W: ::bitstream_io::BitWrite,
+                W: ::bitstream_io::BitWrite + ?Sized,
                 E: ::bitstream_io::Endianness,
             {
                 for (key, value) in self.iter() {
@@ -116,7 +116,7 @@ macro_rules! impl_write_map {
                 (): (),
             ) -> $crate::Result<()>
             where
-                W: ::bitstream_io::BitWrite,
+                W: ::bitstream_io::BitWrite + ?Sized,
                 E: ::bitstream_io::Endianness,
             {
                 $crate::BitEncode::encode::<_, E>(&self.len(), write, ctx, ())?;

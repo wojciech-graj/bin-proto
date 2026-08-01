@@ -7,7 +7,7 @@ use crate::{util, BitEncode, Result};
 impl<Ctx> BitEncode<Ctx> for CStr {
     fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, (): ()) -> Result<()>
     where
-        W: BitWrite,
+        W: BitWrite + ?Sized,
         E: Endianness,
     {
         util::encode_items::<_, _, E, _, _>(self.to_bytes_with_nul().iter(), write, ctx)
@@ -27,7 +27,7 @@ mod decode {
     impl<Ctx> BitDecode<Ctx> for Box<CStr> {
         fn decode<R, E>(read: &mut R, ctx: &mut Ctx, tag: ()) -> Result<Self>
         where
-            R: BitRead,
+            R: BitRead + ?Sized,
             E: Endianness,
         {
             CString::decode::<_, E>(read, ctx, tag).map(Into::into)

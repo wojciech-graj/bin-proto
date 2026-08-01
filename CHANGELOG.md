@@ -1,4 +1,5 @@
 # v1.0.0
+- Relax `Sized` bounds on most generics
 - Remove `Endianness` argument from functions
 - Split `BitCodec` trait into `BitEncodeExt` and `BitDecodeExt`
 - Convert `Error` into opaque type

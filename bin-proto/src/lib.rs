@@ -374,7 +374,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 ///         _tag: (),
 ///     ) -> bin_proto::Result<Self>
 ///     where
-///         R: bin_proto::BitRead,
+///         R: bin_proto::BitRead + ?Sized,
 ///         E: bin_proto::Endianness,
 ///     {
 ///         // Use ctx here
@@ -390,7 +390,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 ///         _tag: (),
 ///     ) -> bin_proto::Result<()>
 ///     where
-///         W: bin_proto::BitWrite,
+///         W: bin_proto::BitWrite + ?Sized,
 ///         E: bin_proto::Endianness,
 ///     {
 ///         // Use ctx here
@@ -446,7 +446,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 ///         _tag: (),
 ///     ) -> bin_proto::Result<Self>
 ///     where
-///         R: bin_proto::BitRead,
+///         R: bin_proto::BitRead + ?Sized,
 ///         E: bin_proto::Endianness,
 ///     {
 ///         // Use ctx here
@@ -462,7 +462,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 ///         _tag: (),
 ///     ) -> bin_proto::Result<()>
 ///     where
-///         W: bin_proto::BitWrite,
+///         W: bin_proto::BitWrite + ?Sized,
 ///         E: bin_proto::Endianness,
 ///     {
 ///         // Use ctx here

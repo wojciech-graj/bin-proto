@@ -11,7 +11,7 @@ use crate::{error::ErrorKind, io, BitDecode, BitEncode, Result};
 pub fn encode_items<I, W, E, Ctx, T>(items: I, write: &mut W, ctx: &mut Ctx) -> Result<()>
 where
     I: IntoIterator<Item = T>,
-    W: BitWrite,
+    W: BitWrite + ?Sized,
     E: Endianness,
     T: BitEncode<Ctx>,
 {
@@ -27,7 +27,7 @@ pub fn decode_items_to_eof<'a, R, E, Ctx, T>(
     ctx: &'a mut Ctx,
 ) -> impl Iterator<Item = Result<T>> + use<'a, R, E, Ctx, T>
 where
-    R: BitRead,
+    R: BitRead + ?Sized,
     E: Endianness,
     T: BitDecode<Ctx>,
 {
@@ -51,7 +51,7 @@ mod tests {
     impl<Ctx> BitDecode<Ctx> for CannotDecode {
         fn decode<R, E>(_: &mut R, _: &mut Ctx, (): ()) -> Result<Self>
         where
-            R: BitRead,
+            R: BitRead + ?Sized,
             E: Endianness,
         {
             Err(Error::msg(""))

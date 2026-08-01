@@ -10,7 +10,7 @@ struct CustomCtx;
 struct CtxSensitive;
 
 impl BitEncode<()> for CtxSensitive {
-    fn encode<W: BitWrite, E: Endianness>(
+    fn encode<W: BitWrite + ?Sized, E: Endianness>(
         &self,
         w: &mut W,
         _: &mut (),
@@ -21,7 +21,7 @@ impl BitEncode<()> for CtxSensitive {
 }
 
 impl BitEncode<CustomCtx> for CtxSensitive {
-    fn encode<W: BitWrite, E: Endianness>(
+    fn encode<W: BitWrite + ?Sized, E: Endianness>(
         &self,
         w: &mut W,
         _: &mut CustomCtx,
@@ -32,7 +32,7 @@ impl BitEncode<CustomCtx> for CtxSensitive {
 }
 
 impl BitDecode<()> for CtxSensitive {
-    fn decode<R: BitRead, E: Endianness>(
+    fn decode<R: BitRead + ?Sized, E: Endianness>(
         _: &mut R,
         _: &mut (),
         (): (),
@@ -42,7 +42,7 @@ impl BitDecode<()> for CtxSensitive {
 }
 
 impl BitDecode<CustomCtx> for CtxSensitive {
-    fn decode<R: BitRead, E: Endianness>(
+    fn decode<R: BitRead + ?Sized, E: Endianness>(
         _: &mut R,
         _: &mut CustomCtx,
         (): (),

@@ -15,7 +15,7 @@ macro_rules! impl_tuple {
                 (): (),
             ) -> $crate::Result<Self>
             where
-                R: ::bitstream_io::BitRead,
+                R: ::bitstream_io::BitRead + ?Sized,
                 E: ::bitstream_io::Endianness,
             {
                 Ok(($(<$t as $crate::BitDecode<Ctx>>::decode::<_, E>(read,  ctx, ())?,)*))
@@ -34,7 +34,7 @@ macro_rules! impl_tuple {
                 (): ()
             ) -> $crate::Result<()>
             where
-                W: ::bitstream_io::BitWrite,
+                W: ::bitstream_io::BitWrite + ?Sized,
                 E: ::bitstream_io::Endianness,
             {
                 $(
@@ -57,7 +57,7 @@ where
 {
     fn decode<R, E>(read: &mut R, ctx: &mut Ctx, tag: Tag) -> Result<Self>
     where
-        R: BitRead,
+        R: BitRead + ?Sized,
         E: Endianness,
     {
         Ok((BitDecode::decode::<R, E>(read, ctx, tag)?,))
@@ -71,11 +71,11 @@ where
 #[cfg_attr(docsrs, doc(fake_variadic))]
 impl<Ctx, Tag, T> BitEncode<Ctx, Tag> for (T,)
 where
-    T: BitEncode<Ctx, Tag>,
+    T: BitEncode<Ctx, Tag> + ?Sized,
 {
     fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, tag: Tag) -> Result<()>
     where
-        W: BitWrite,
+        W: BitWrite + ?Sized,
         E: Endianness,
     {
         self.0.encode::<W, E>(write, ctx, tag)

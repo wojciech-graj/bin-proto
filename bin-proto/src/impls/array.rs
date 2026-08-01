@@ -22,7 +22,7 @@ where
 {
     fn decode<R, E>(read: &mut R, ctx: &mut Ctx, (): ()) -> Result<Self>
     where
-        R: BitRead,
+        R: BitRead + ?Sized,
         E: Endianness,
     {
         let mut array: MaybeUninit<[T; N]> = MaybeUninit::uninit();
@@ -44,11 +44,11 @@ where
 
 impl<Ctx, T, const N: usize> BitEncode<Ctx> for [T; N]
 where
-    T: BitEncode<Ctx> + Sized,
+    T: BitEncode<Ctx>,
 {
     fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, (): ()) -> Result<()>
     where
-        W: BitWrite,
+        W: BitWrite + ?Sized,
         E: Endianness,
     {
         util::encode_items::<_, _, E, _, _>(self.iter(), write, ctx)
@@ -87,7 +87,7 @@ mod test {
     impl<'a> BitDecode<Ctx<'a>> for MustDrop<'a> {
         fn decode<R, E>(_: &mut R, ctx: &mut Ctx<'a>, (): ()) -> Result<Self>
         where
-            R: BitRead,
+            R: BitRead + ?Sized,
             E: Endianness,
         {
             let mut state = ctx.0.borrow_mut();

@@ -5,7 +5,7 @@ use crate::{BitDecode, BitEncode, Result};
 impl<Ctx> BitDecode<Ctx> for () {
     fn decode<R, E>(_: &mut R, _: &mut Ctx, (): ()) -> Result<Self>
     where
-        R: BitRead,
+        R: BitRead + ?Sized,
         E: Endianness,
     {
         Ok(())
@@ -15,7 +15,7 @@ impl<Ctx> BitDecode<Ctx> for () {
 impl<Ctx> BitEncode<Ctx> for () {
     fn encode<W, E>(&self, _: &mut W, _: &mut Ctx, (): ()) -> Result<()>
     where
-        W: BitWrite,
+        W: BitWrite + ?Sized,
         E: Endianness,
     {
         Ok(())

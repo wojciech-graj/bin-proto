@@ -6,7 +6,7 @@ use core::marker::PhantomPinned;
 impl<Ctx> BitDecode<Ctx> for PhantomPinned {
     fn decode<R, E>(_: &mut R, _: &mut Ctx, (): ()) -> Result<Self>
     where
-        R: BitRead,
+        R: BitRead + ?Sized,
         E: Endianness,
     {
         Ok(Self)
@@ -16,7 +16,7 @@ impl<Ctx> BitDecode<Ctx> for PhantomPinned {
 impl<Ctx> BitEncode<Ctx> for PhantomPinned {
     fn encode<W, E>(&self, _: &mut W, _: &mut Ctx, (): ()) -> Result<()>
     where
-        W: BitWrite,
+        W: BitWrite + ?Sized,
         E: Endianness,
     {
         Ok(())

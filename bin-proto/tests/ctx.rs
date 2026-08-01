@@ -55,7 +55,7 @@ struct CtxCheck;
 impl<Ctx: CtxTrait> BitDecode<Ctx> for CtxCheck {
     fn decode<R, E>(_: &mut R, ctx: &mut Ctx, _: ()) -> Result<Self, bin_proto::Error>
     where
-        R: BitRead,
+        R: BitRead + ?Sized,
         E: Endianness,
     {
         ctx.call();
@@ -66,7 +66,7 @@ impl<Ctx: CtxTrait> BitDecode<Ctx> for CtxCheck {
 impl<Ctx: CtxTrait> BitEncode<Ctx> for CtxCheck {
     fn encode<W, E>(&self, _: &mut W, ctx: &mut Ctx, (): ()) -> Result<(), bin_proto::Error>
     where
-        W: BitWrite,
+        W: BitWrite + ?Sized,
         E: Endianness,
     {
         ctx.call();

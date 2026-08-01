@@ -8,7 +8,7 @@ where
 {
     fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, _: Untagged) -> Result<()>
     where
-        W: BitWrite,
+        W: BitWrite + ?Sized,
         E: Endianness,
     {
         util::encode_items::<_, _, E, _, _>(self.iter(), write, ctx)
@@ -22,7 +22,7 @@ where
 {
     fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, (): ()) -> Result<()>
     where
-        W: BitWrite,
+        W: BitWrite + ?Sized,
         E: Endianness,
     {
         self.len().encode::<_, E>(write, ctx, ())?;
@@ -46,7 +46,7 @@ mod decode {
     {
         fn decode<R, E>(read: &mut R, ctx: &mut Ctx, tag: Untagged) -> Result<Self>
         where
-            R: BitRead,
+            R: BitRead + ?Sized,
             E: Endianness,
         {
             Vec::decode::<_, E>(read, ctx, tag).map(Into::into)
@@ -60,7 +60,7 @@ mod decode {
     {
         fn decode<R, E>(read: &mut R, ctx: &mut Ctx, tag: crate::Tag<Tag>) -> Result<Self>
         where
-            R: BitRead,
+            R: BitRead + ?Sized,
             E: Endianness,
         {
             Vec::decode::<_, E>(read, ctx, tag).map(Into::into)
@@ -74,7 +74,7 @@ mod decode {
     {
         fn decode<R, E>(read: &mut R, ctx: &mut Ctx, (): ()) -> Result<Self>
         where
-            R: BitRead,
+            R: BitRead + ?Sized,
             E: Endianness,
         {
             Vec::decode::<_, E>(read, ctx, ()).map(Into::into)

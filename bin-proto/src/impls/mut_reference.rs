@@ -4,11 +4,11 @@ use crate::{BitEncode, Result};
 
 impl<Ctx, Tag, T> BitEncode<Ctx, Tag> for &mut T
 where
-    T: BitEncode<Ctx, Tag>,
+    T: BitEncode<Ctx, Tag> + ?Sized,
 {
     fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, tag: Tag) -> Result<()>
     where
-        W: BitWrite,
+        W: BitWrite + ?Sized,
         E: Endianness,
     {
         (**self).encode::<_, E>(write, ctx, tag)

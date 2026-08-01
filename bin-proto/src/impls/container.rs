@@ -14,7 +14,7 @@ macro_rules! impl_container_write {
                 tag: Tag,
             ) -> $crate::Result<()>
             where
-                W: ::bitstream_io::BitWrite,
+                W: ::bitstream_io::BitWrite + ?Sized,
                 E: ::bitstream_io::Endianness,
             {
                 use core::ops::Deref;
@@ -39,7 +39,7 @@ macro_rules! impl_container_read {
         {
             fn decode<R, E>(read: &mut R, ctx: &mut Ctx, tag: Tag) -> $crate::Result<Self>
             where
-                R: ::bitstream_io::BitRead,
+                R: ::bitstream_io::BitRead + ?Sized,
                 E: ::bitstream_io::Endianness,
             {
                 Ok($ty::new($crate::BitDecode::decode::<_, E>(read, ctx, tag)?))
@@ -53,7 +53,7 @@ mod box_ {
     use alloc::boxed::Box;
 
     impl_container_write!(Box<T: ?Sized>);
-    impl_container_read!(Box<T: ?Sized>);
+    impl_container_read!(Box<T>);
     test_codec!(Box<u8>; Box::new(1) => [0x01]);
     test_roundtrip!(Box<u8>);
 }
@@ -63,7 +63,7 @@ mod rc {
     use alloc::rc::Rc;
 
     impl_container_write!(Rc<T: ?Sized>);
-    impl_container_read!(Rc<T: ?Sized>);
+    impl_container_read!(Rc<T>);
     test_codec!(Rc<u8>; Rc::new(1) => [0x01]);
     test_roundtrip!(Rc<u8>);
 }
@@ -73,7 +73,7 @@ mod arc {
     use alloc::sync::Arc;
 
     impl_container_write!(Arc<T: ?Sized>);
-    impl_container_read!(Arc<T: ?Sized>);
+    impl_container_read!(Arc<T>);
     test_codec!(Arc<u8>; Arc::new(1) => [0x01]);
     test_roundtrip!(Arc<u8>);
 }
@@ -99,7 +99,7 @@ mod cell {
     {
         fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, tag: Tag) -> Result<()>
         where
-            W: BitWrite,
+            W: BitWrite + ?Sized,
             E: Endianness,
         {
             self.get().encode::<_, E>(write, ctx, tag)

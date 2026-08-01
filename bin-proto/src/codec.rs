@@ -14,7 +14,7 @@ pub trait BitDecode<Ctx = (), Tag = ()>: Sized {
     /// Reads self from a stream.
     fn decode<R, E>(read: &mut R, ctx: &mut Ctx, tag: Tag) -> Result<Self>
     where
-        R: BitRead,
+        R: BitRead + ?Sized,
         E: Endianness;
 }
 
@@ -80,7 +80,7 @@ pub trait BitEncode<Ctx = (), Tag = ()> {
     /// Writes a value to a stream.
     fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, tag: Tag) -> Result<()>
     where
-        W: BitWrite,
+        W: BitWrite + ?Sized,
         E: Endianness;
 }
 
@@ -184,19 +184,16 @@ macro_rules! test_encode {
         #[cfg(test)]
         #[test]
         fn encode() {
-            use $crate::BitEncodeExt;
-
             let exp: &[u8] = &$exp;
             let value: $ty = $value;
 
             let mut buffer = [0u8; 16];
-            value
-                .encode_bytes_ctx_buf::<::bitstream_io::BigEndian, _, _>(
-                    &mut buffer,
-                    &mut (),
-                    ($($tag)?),
-                )
-                .unwrap();
+            $crate::BitEncodeExt::encode_bytes_ctx_buf::<::bitstream_io::BigEndian, _, _>(
+                &value,
+                &mut buffer,
+                &mut (),
+                ($($tag)?),
+            ).unwrap();
             assert_eq!(exp, &buffer[..exp.len()]);
             assert!(::core::iter::Iterator::all(
                 &mut ::core::iter::IntoIterator::into_iter(&buffer[exp.len()..]),

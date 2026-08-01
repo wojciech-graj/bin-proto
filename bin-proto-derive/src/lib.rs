@@ -107,7 +107,7 @@ fn impl_for_struct(
                         __tag: (),
                     ) -> #crate_path::Result<Self>
                     where
-                        __R: #crate_path::BitRead,
+                        __R: #crate_path::BitRead + ?::core::marker::Sized,
                         __E: #crate_path::Endianness,
                     {
                         #pad_before
@@ -155,7 +155,7 @@ fn impl_for_struct(
                         (): (),
                     ) -> #crate_path::Result<()>
                     where
-                        __W: #crate_path::BitWrite,
+                        __W: #crate_path::BitWrite + ?::core::marker::Sized,
                         __E: #crate_path::Endianness,
                     {
                         let Self {
@@ -215,7 +215,7 @@ fn impl_for_enum(
                     __tag: #crate_path::Tag<__Tag>,
                 ) -> #crate_path::Result<Self>
                 where
-                    __R: #crate_path::BitRead,
+                    __R: #crate_path::BitRead + ?::core::marker::Sized,
                     __E: #crate_path::Endianness,
                 {
                     ::core::result::Result::Ok(#decode_variant)
@@ -236,7 +236,7 @@ fn impl_for_enum(
                     __tag: (),
                 ) -> #crate_path::Result<Self>
                 where
-                    __R: #crate_path::BitRead,
+                    __R: #crate_path::BitRead + ?::core::marker::Sized,
                     __E: #crate_path::Endianness,
                 {
                     let __tag: #discriminant_ty = #decode_discriminant?;
@@ -272,7 +272,7 @@ fn impl_for_enum(
                     __tag: #crate_path::Untagged,
                 ) -> #crate_path::Result<()>
                 where
-                    __W: #crate_path::BitWrite,
+                    __W: #crate_path::BitWrite + ?::core::marker::Sized,
                     __E: #crate_path::Endianness,
                 {
                     #pad_before
@@ -304,7 +304,7 @@ fn impl_for_enum(
                     (): (),
                 ) -> #crate_path::Result<()>
                 where
-                    __W: #crate_path::BitWrite,
+                    __W: #crate_path::BitWrite + ?::core::marker::Sized,
                     __E: #crate_path::Endianness,
                 {
                     #pad_before

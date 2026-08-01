@@ -9,7 +9,7 @@ where
 {
     fn decode<R, E>(read: &mut R, ctx: &mut Ctx, tag: crate::Tag<Tag>) -> Result<Self>
     where
-        R: BitRead,
+        R: BitRead + ?Sized,
         E: Endianness,
     {
         if tag
@@ -31,7 +31,7 @@ where
 {
     fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, _: Untagged) -> Result<()>
     where
-        W: BitWrite,
+        W: BitWrite + ?Sized,
         E: Endianness,
     {
         if let Some(ref value) = *self {
@@ -48,7 +48,7 @@ where
 {
     fn encode<W, E>(&self, write: &mut W, ctx: &mut Ctx, (): ()) -> Result<()>
     where
-        W: BitWrite,
+        W: BitWrite + ?Sized,
         E: Endianness,
     {
         self.is_some().encode::<_, E>(write, ctx, ())?;
@@ -63,7 +63,7 @@ where
 {
     fn decode<R, E>(read: &mut R, ctx: &mut Ctx, (): ()) -> Result<Self>
     where
-        R: BitRead,
+        R: BitRead + ?Sized,
         E: Endianness,
     {
         let tag = bool::decode::<_, E>(read, ctx, ())?;
