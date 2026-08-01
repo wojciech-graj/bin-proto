@@ -103,7 +103,10 @@ mod test {
     #[test]
     fn partial_result_dropped() {
         let state = RefCell::new(MustDropState::default());
-        assert!(<[MustDrop; 2]>::decode_bytes_ctx(&[], BigEndian, &mut Ctx(&state), ()).is_err());
+        assert!(
+            <[MustDrop; 2]>::decode_bytes_ctx::<BigEndian, _, _>(&[], &mut Ctx(&state), ())
+                .is_err()
+        );
         assert!(state.borrow().dropped);
     }
 }

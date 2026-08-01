@@ -13,20 +13,25 @@ struct Assert {
 fn assert_true_decode() {
     assert_eq!(
         (Assert { a: 1 }, 8),
-        Assert::decode_bytes(&[0x01], BigEndian).unwrap()
+        Assert::decode_bytes::<BigEndian>(&[0x01]).unwrap()
     );
 }
 
 #[test]
 fn assert_true_encode() {
-    assert_eq!(vec![0x01], Assert { a: 1 }.encode_bytes(BigEndian).unwrap());
+    assert_eq!(
+        vec![0x01],
+        Assert { a: 1 }.encode_bytes::<BigEndian>().unwrap()
+    );
 }
 
 #[test]
 fn assert_false_decode() {
     assert_eq!(
         ErrorKind::Assert,
-        Assert::decode_bytes(&[0x02], BigEndian).unwrap_err().kind()
+        Assert::decode_bytes::<BigEndian>(&[0x02])
+            .unwrap_err()
+            .kind()
     );
 }
 
@@ -34,6 +39,9 @@ fn assert_false_decode() {
 fn assert_false_encode() {
     assert_eq!(
         ErrorKind::Assert,
-        Assert { a: 2 }.encode_bytes(BigEndian).unwrap_err().kind()
+        Assert { a: 2 }
+            .encode_bytes::<BigEndian>()
+            .unwrap_err()
+            .kind()
     );
 }

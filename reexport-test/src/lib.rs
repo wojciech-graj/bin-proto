@@ -32,7 +32,7 @@ fn decode_reexported_enum_variant() {
             },
             64
         ),
-        Enum::decode_bytes(&[1, 64, 65, 66, 67, 2, 1, 2], BigEndian).unwrap()
+        Enum::decode_bytes::<BigEndian>(&[1, 64, 65, 66, 67, 2, 1, 2],).unwrap()
     );
 }
 
@@ -40,7 +40,7 @@ fn decode_reexported_enum_variant() {
 fn encode_reexported_enum_variant() {
     assert_eq!(
         Enum::Variant2::<u32>(20, true, PhantomData)
-            .encode_bytes(BigEndian)
+            .encode_bytes::<BigEndian>()
             .unwrap(),
         vec![2, 0, 0, 0, 20, 1]
     );

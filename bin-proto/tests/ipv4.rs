@@ -86,6 +86,9 @@ fn can_encode_decode_ipv4() {
         source_address: [2, 1, 1, 1],
         destination_address: [2, 1, 1, 2],
     };
-    assert_eq!((parsed, 160), IPv4::decode_bytes(&raw, BigEndian).unwrap());
-    assert_eq!(raw, parsed.encode_bytes(BigEndian).unwrap().as_slice())
+    assert_eq!(
+        (parsed, 160),
+        IPv4::decode_bytes::<BigEndian>(&raw).unwrap()
+    );
+    assert_eq!(raw, parsed.encode_bytes::<BigEndian>().unwrap().as_slice())
 }

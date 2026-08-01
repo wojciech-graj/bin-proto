@@ -58,19 +58,19 @@ enum SkipEnum {
 #[test]
 fn skip_encode_struct() {
     let s = SkipEncode { a: 10, b: 20 };
-    let bytes = s.encode_bytes(BigEndian).unwrap();
+    let bytes = s.encode_bytes::<BigEndian>().unwrap();
     assert_eq!(bytes, vec![20]);
 
-    assert!(SkipEncode::decode_bytes(&bytes, BigEndian).is_err());
+    assert!(SkipEncode::decode_bytes::<BigEndian>(&bytes).is_err());
 }
 
 #[test]
 fn skip_decode_struct() {
     let s = SkipDecode { a: 10, b: 20 };
-    let bytes = s.encode_bytes(BigEndian).unwrap();
+    let bytes = s.encode_bytes::<BigEndian>().unwrap();
     assert_eq!(bytes, vec![10, 20]);
 
-    let (decoded, len) = SkipDecode::decode_bytes(&bytes, BigEndian).unwrap();
+    let (decoded, len) = SkipDecode::decode_bytes::<BigEndian>(&bytes).unwrap();
 
     assert_eq!(decoded, SkipDecode { a: 0, b: 10 });
     assert_eq!(len, 8);
@@ -79,10 +79,10 @@ fn skip_decode_struct() {
 #[test]
 fn skip_struct() {
     let s = Skip { a: 10, b: 20 };
-    let bytes = s.encode_bytes(BigEndian).unwrap();
+    let bytes = s.encode_bytes::<BigEndian>().unwrap();
     assert_eq!(bytes, vec![20]);
 
-    let (decoded, len) = Skip::decode_bytes(&bytes, BigEndian).unwrap();
+    let (decoded, len) = Skip::decode_bytes::<BigEndian>(&bytes).unwrap();
 
     assert_eq!(decoded, Skip { a: 0, b: 20 });
     assert_eq!(len, 8);
@@ -91,19 +91,19 @@ fn skip_struct() {
 #[test]
 fn skip_encode_enum() {
     let a = SkipEncodeEnum::A;
-    assert_eq!(a.encode_bytes(BigEndian).unwrap(), vec![1]);
+    assert_eq!(a.encode_bytes::<BigEndian>().unwrap(), vec![1]);
 
     let b = SkipEncodeEnum::B;
-    assert!(b.encode_bytes(BigEndian).is_err());
+    assert!(b.encode_bytes::<BigEndian>().is_err());
 }
 
 #[test]
 fn skip_decode_enum() {
-    let (decoded, _) = SkipDecodeEnum::decode_bytes(&[1], BigEndian).unwrap();
+    let (decoded, _) = SkipDecodeEnum::decode_bytes::<BigEndian>(&[1]).unwrap();
     assert_eq!(decoded, SkipDecodeEnum::A);
     assert_eq!(
         ErrorKind::Discriminant,
-        SkipDecodeEnum::decode_bytes(&[2], BigEndian)
+        SkipDecodeEnum::decode_bytes::<BigEndian>(&[2])
             .unwrap_err()
             .kind()
     );
@@ -111,9 +111,11 @@ fn skip_decode_enum() {
 
 #[test]
 fn skip_enum() {
-    assert!(SkipEnum::B.encode_bytes(BigEndian).is_err());
+    assert!(SkipEnum::B.encode_bytes::<BigEndian>().is_err());
     assert_eq!(
         ErrorKind::Discriminant,
-        SkipEnum::decode_bytes(&[2], BigEndian).unwrap_err().kind()
+        SkipEnum::decode_bytes::<BigEndian>(&[2])
+            .unwrap_err()
+            .kind()
     );
 }

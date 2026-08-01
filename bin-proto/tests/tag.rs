@@ -67,16 +67,13 @@ fn can_decode_length_prefix_3_elements() {
             },
             136
         ),
-        WithElementsLength::decode_bytes(
-            &[
-                0, 0, 0, 3, // disjoint length prefix
-                1, // boolean true
-                0, 0, 0, 1, // 1
-                0, 0, 0, 2, // 2
-                0, 0, 0, 3 // 3
-            ],
-            BigEndian,
-        )
+        WithElementsLength::decode_bytes::<BigEndian>(&[
+            0, 0, 0, 3, // disjoint length prefix
+            1, // boolean true
+            0, 0, 0, 1, // 1
+            0, 0, 0, 2, // 2
+            0, 0, 0, 3 // 3
+        ],)
         .unwrap()
     );
 }
@@ -89,7 +86,7 @@ fn can_encode_auto_length_prefix_3_elements_enum() {
             foo: true,
             data: vec![1, 2, 3],
         }
-        .encode_bytes(BigEndian)
+        .encode_bytes::<BigEndian>()
         .unwrap(),
         vec![
             0, 0, 0, 3, // disjoint length prefix
@@ -112,17 +109,14 @@ fn can_decode_length_prefix_3_elements_enum() {
             },
             144
         ),
-        WithElementsLengthAutoEnum::decode_bytes(
-            &[
-                1, // Discriminant
-                0, 0, 0, 3, // disjoint length prefix
-                1, // boolean true
-                0, 0, 0, 1, // 1
-                0, 0, 0, 2, // 2
-                0, 0, 0, 3 // 3
-            ],
-            BigEndian,
-        )
+        WithElementsLengthAutoEnum::decode_bytes::<BigEndian>(&[
+            1, // Discriminant
+            0, 0, 0, 3, // disjoint length prefix
+            1, // boolean true
+            0, 0, 0, 1, // 1
+            0, 0, 0, 2, // 2
+            0, 0, 0, 3 // 3
+        ])
         .unwrap()
     );
 }
@@ -135,7 +129,7 @@ fn can_encode_auto_length_prefix_3_elements() {
             foo: true,
             data: vec![1, 2, 3],
         }
-        .encode_bytes(BigEndian)
+        .encode_bytes::<BigEndian>()
         .unwrap(),
         vec![
             1, // Discriminant
@@ -157,15 +151,12 @@ fn can_decode_prepended_length_prefix_3_elements() {
             },
             128
         ),
-        Prepended::decode_bytes(
-            &[
-                0, 0, 0, 3, // length prefix
-                0, 0, 0, 1, // 1
-                0, 0, 0, 2, // 2
-                0, 0, 0, 3 // 3
-            ],
-            BigEndian,
-        )
+        Prepended::decode_bytes::<BigEndian>(&[
+            0, 0, 0, 3, // length prefix
+            0, 0, 0, 1, // 1
+            0, 0, 0, 2, // 2
+            0, 0, 0, 3 // 3
+        ])
         .unwrap()
     );
 }
@@ -176,7 +167,7 @@ fn can_encode_prepended_length_prefix_3_elements() {
         Prepended {
             data: vec![1, 2, 3],
         }
-        .encode_bytes(BigEndian)
+        .encode_bytes::<BigEndian>()
         .unwrap(),
         vec![
             0, 0, 0, 3, // disjoint length prefix
@@ -196,7 +187,7 @@ fn can_decode_prepended_length_prefix_bits() {
             },
             99
         ),
-        PrependedBits::decode_bytes(&[96, 0, 0, 0, 32, 0, 0, 0, 64, 0, 0, 0, 96], BigEndian,)
+        PrependedBits::decode_bytes::<BigEndian>(&[96, 0, 0, 0, 32, 0, 0, 0, 64, 0, 0, 0, 96])
             .unwrap()
     );
 }
@@ -207,7 +198,7 @@ fn can_encode_prepended_length_prefix_bits() {
         PrependedBits {
             data: vec![1, 2, 3],
         }
-        .encode_bytes(BigEndian)
+        .encode_bytes::<BigEndian>()
         .unwrap(),
         vec![96, 0, 0, 0, 32, 0, 0, 0, 64, 0, 0, 0, 96],
     );

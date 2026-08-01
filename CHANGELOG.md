@@ -1,4 +1,5 @@
 # v1.0.0
+- Remove `Endianness` argument from functions
 - Split `BitCodec` trait into `BitEncodeExt` and `BitDecodeExt`
 - Convert `Error` into opaque type
 - Add `Error::TryReserve` variant

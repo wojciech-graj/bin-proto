@@ -81,7 +81,7 @@ fn decode_enum_variant() {
             },
             40
         ),
-        Enum::decode_bytes(&[1, 64, 2, 1, 2], BigEndian).unwrap()
+        Enum::decode_bytes::<BigEndian>(&[1, 64, 2, 1, 2]).unwrap()
     );
 }
 
@@ -89,7 +89,7 @@ fn decode_enum_variant() {
 fn encode_enum_variant() {
     assert_eq!(
         Enum::Variant2::<u32>(20, true, PhantomData)
-            .encode_bytes(BigEndian)
+            .encode_bytes::<BigEndian>()
             .unwrap(),
         vec![2, 0, 0, 0, 20, 1]
     );
@@ -104,7 +104,7 @@ fn decode_enum_variant_in_container() {
             },
             10
         ),
-        EnumContainer::decode_bytes(&[64, 128], BigEndian).unwrap()
+        EnumContainer::decode_bytes::<BigEndian>(&[64, 128]).unwrap()
     );
 }
 
@@ -114,7 +114,7 @@ fn encode_enum_variant_in_container() {
         EnumContainer {
             e: Enum2::Variant2(511)
         }
-        .encode_bytes(BigEndian)
+        .encode_bytes::<BigEndian>()
         .unwrap(),
         vec![128, 127, 192]
     );
@@ -129,7 +129,7 @@ fn decode_enum_variant_in_container_tagged() {
             },
             24
         ),
-        TaggedEnumContainer::decode_bytes(&[0, 1, 2], BigEndian).unwrap()
+        TaggedEnumContainer::decode_bytes::<BigEndian>(&[0, 1, 2]).unwrap()
     );
 }
 
@@ -139,7 +139,7 @@ fn encode_enum_variant_in_container_tagged() {
         TaggedEnumContainer {
             e: Enum2::Variant2(511)
         }
-        .encode_bytes(BigEndian)
+        .encode_bytes::<BigEndian>()
         .unwrap(),
         vec![0, 2, 1, 255,]
     );
@@ -155,7 +155,7 @@ fn decode_enum_variant_in_container_tagged_bitfield() {
             },
             11
         ),
-        BitFieldTaggedEnumContainer::decode_bytes(&[32, 64], BigEndian).unwrap()
+        BitFieldTaggedEnumContainer::decode_bytes::<BigEndian>(&[32, 64]).unwrap()
     );
 }
 
@@ -166,7 +166,7 @@ fn encode_enum_variant_in_container_tagged_bitfield() {
             discriminant: 2,
             e: Enum2::Variant2(511)
         }
-        .encode_bytes(BigEndian)
+        .encode_bytes::<BigEndian>()
         .unwrap(),
         vec![64, 63, 224]
     );
@@ -175,7 +175,7 @@ fn encode_enum_variant_in_container_tagged_bitfield() {
 #[test]
 fn encode_enum_variant_catch_all() {
     assert_eq!(
-        Enum2::CatchAll(8).encode_bytes(BigEndian).unwrap(),
+        Enum2::CatchAll(8).encode_bytes::<BigEndian>().unwrap(),
         vec![194, 0]
     );
 }
@@ -184,7 +184,7 @@ fn encode_enum_variant_catch_all() {
 fn decode_enum_variant_catch_all_discriminant() {
     assert_eq!(
         (Enum2::CatchAll(8), 10),
-        Enum2::decode_bytes(&[194, 0], BigEndian).unwrap()
+        Enum2::decode_bytes::<BigEndian>(&[194, 0]).unwrap()
     );
 }
 
@@ -192,7 +192,7 @@ fn decode_enum_variant_catch_all_discriminant() {
 fn decode_enum_variant_catch_all() {
     assert_eq!(
         (Enum2::CatchAll(8), 10),
-        Enum2::decode_bytes(&[2, 0], BigEndian).unwrap()
+        Enum2::decode_bytes::<BigEndian>(&[2, 0]).unwrap()
     );
 }
 
@@ -200,26 +200,26 @@ fn decode_enum_variant_catch_all() {
 fn decode_enum_repr() {
     assert_eq!(
         (Repr::VariantA, 8),
-        Repr::decode_bytes(&[1], BigEndian).unwrap()
+        Repr::decode_bytes::<BigEndian>(&[1]).unwrap()
     );
 }
 
 #[test]
 fn encode_enum_repr() {
-    assert_eq!(Repr::VariantB.encode_bytes(BigEndian).unwrap(), vec![2]);
+    assert_eq!(Repr::VariantB.encode_bytes::<BigEndian>().unwrap(), vec![2]);
 }
 
 #[test]
 fn generic_enum_roundtrips() {
     let value = GenericEnumNoExplicitCtx::Value(0x1234u16);
-    let bytes = value.encode_bytes(BigEndian).unwrap();
+    let bytes = value.encode_bytes::<BigEndian>().unwrap();
     assert_eq!(vec![1, 0x12, 0x34], bytes);
     assert_eq!(
         (value, 24),
-        GenericEnumNoExplicitCtx::decode_bytes(&bytes, BigEndian).unwrap()
+        GenericEnumNoExplicitCtx::decode_bytes::<BigEndian>(&bytes).unwrap()
     );
     assert_eq!(
         (GenericEnumNoExplicitCtx::<u16>::Empty, 8),
-        GenericEnumNoExplicitCtx::decode_bytes(&[2], BigEndian).unwrap()
+        GenericEnumNoExplicitCtx::decode_bytes::<BigEndian>(&[2]).unwrap()
     );
 }

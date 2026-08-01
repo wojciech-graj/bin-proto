@@ -63,7 +63,7 @@ fn generic_impl_uses_generic_ctx_not_unit_ctx() {
     let bytes = Pre {
         field: CtxSensitive,
     }
-    .encode_bytes_ctx(BigEndian, &mut CustomCtx, ())
+    .encode_bytes_ctx::<BigEndian, _, _>(&mut CustomCtx, ())
     .unwrap();
     assert_eq!(vec![0xBB], bytes);
 
@@ -71,9 +71,10 @@ fn generic_impl_uses_generic_ctx_not_unit_ctx() {
     let bytes = Pre {
         field: CtxSensitive,
     }
-    .encode_bytes_ctx(BigEndian, &mut (), ())
+    .encode_bytes_ctx::<BigEndian, _, _>(&mut (), ())
     .unwrap();
     assert_eq!(vec![0xAA], bytes);
 
-    let _ = Pre::<CtxSensitive>::decode_bytes_ctx(&[0xBB], BigEndian, &mut CustomCtx, ()).unwrap();
+    let _ = Pre::<CtxSensitive>::decode_bytes_ctx::<BigEndian, _, _>(&[0xBB], &mut CustomCtx, ())
+        .unwrap();
 }

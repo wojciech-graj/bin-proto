@@ -133,7 +133,7 @@ fn named_fields_are_correctly_written() {
             b: '2' as u8,
             c: 1,
         }
-        .encode_bytes(BigEndian)
+        .encode_bytes::<BigEndian>()
         .unwrap()
     );
 }
@@ -149,7 +149,7 @@ fn named_fields_are_correctly_decoded() {
             },
             24
         ),
-        Foobar::decode_bytes(&[3, '2' as u8, 1], BigEndian).unwrap()
+        Foobar::decode_bytes::<BigEndian>(&[3, '2' as u8, 1]).unwrap()
     );
 }
 
@@ -157,7 +157,7 @@ fn named_fields_are_correctly_decoded() {
 fn unnamed_fields_are_correctly_written() {
     assert_eq!(
         vec![6, 1, 9],
-        BizBong(6, 1, 9).encode_bytes(BigEndian).unwrap()
+        BizBong(6, 1, 9).encode_bytes::<BigEndian>().unwrap()
     );
 }
 
@@ -165,20 +165,20 @@ fn unnamed_fields_are_correctly_written() {
 fn unnamed_fields_are_correctly_decoded() {
     assert_eq!(
         (BizBong(3, 1, 7), 24),
-        BizBong::decode_bytes(&[3, 1, 7], BigEndian).unwrap()
+        BizBong::decode_bytes::<BigEndian>(&[3, 1, 7]).unwrap()
     );
 }
 
 #[test]
 fn unit_structs_are_correctly_written() {
-    assert_eq!(PartyInTheFront.encode_bytes(BigEndian).unwrap(), &[]);
+    assert_eq!(PartyInTheFront.encode_bytes::<BigEndian>().unwrap(), &[]);
 }
 
 #[test]
 fn unit_structs_are_correctly_decoded() {
     assert_eq!(
         (PartyInTheFront, 0),
-        PartyInTheFront::decode_bytes(&[], BigEndian).unwrap()
+        PartyInTheFront::decode_bytes::<BigEndian>(&[]).unwrap()
     );
 }
 
@@ -186,7 +186,9 @@ fn unit_structs_are_correctly_decoded() {
 fn default_written_correctly() {
     assert_eq!(
         vec![1, 2],
-        WithDefault { a: 1, b: 2 }.encode_bytes(BigEndian).unwrap()
+        WithDefault { a: 1, b: 2 }
+            .encode_bytes::<BigEndian>()
+            .unwrap()
     )
 }
 
@@ -200,7 +202,7 @@ fn default_read_correctly() {
             },
             8
         ),
-        WithDefault::decode_bytes(&[1], BigEndian).unwrap()
+        WithDefault::decode_bytes::<BigEndian>(&[1]).unwrap()
     )
 }
 
@@ -208,7 +210,9 @@ fn default_read_correctly() {
 fn pad_written_correctly() {
     assert_eq!(
         vec![0, 128, 16, 0, 24, 0, 0],
-        Padded { a: 1, b: 2, c: 3 }.encode_bytes(BigEndian).unwrap()
+        Padded { a: 1, b: 2, c: 3 }
+            .encode_bytes::<BigEndian>()
+            .unwrap()
     )
 }
 
@@ -216,7 +220,7 @@ fn pad_written_correctly() {
 fn pad_read_correctly() {
     assert_eq!(
         (Padded { a: 1, b: 2, c: 3 }, 49),
-        Padded::decode_bytes(&[0, 128, 16, 0, 24, 0, 0], BigEndian).unwrap()
+        Padded::decode_bytes::<BigEndian>(&[0, 128, 16, 0, 24, 0, 0]).unwrap()
     )
 }
 
@@ -224,7 +228,7 @@ fn pad_read_correctly() {
 fn magic_written_correctly() {
     assert_eq!(
         vec![9, 4, 1, 2, 3, 5],
-        Magic { a: 4, b: 5 }.encode_bytes(BigEndian).unwrap()
+        Magic { a: 4, b: 5 }.encode_bytes::<BigEndian>().unwrap()
     )
 }
 
@@ -232,7 +236,7 @@ fn magic_written_correctly() {
 fn magic_read_correctly() {
     assert_eq!(
         (Magic { a: 4, b: 5 }, 48),
-        Magic::decode_bytes(&[9, 4, 1, 2, 3, 5], BigEndian).unwrap()
+        Magic::decode_bytes::<BigEndian>(&[9, 4, 1, 2, 3, 5]).unwrap()
     )
 }
 
@@ -240,7 +244,7 @@ fn magic_read_correctly() {
 fn incorrect_magic_fails() {
     assert_eq!(
         ErrorKind::Magic,
-        Magic::decode_bytes(&[10, 4, 1, 2, 3, 5], BigEndian)
+        Magic::decode_bytes::<BigEndian>(&[10, 4, 1, 2, 3, 5])
             .unwrap_err()
             .kind()
     );
@@ -248,14 +252,14 @@ fn incorrect_magic_fails() {
 
 #[test]
 fn magic_unit_written_correctly() {
-    assert_eq!(vec![0x11], Magic2.encode_bytes(BigEndian).unwrap())
+    assert_eq!(vec![0x11], Magic2.encode_bytes::<BigEndian>().unwrap())
 }
 
 #[test]
 fn magic_unit_read_correctly() {
     assert_eq!(
         (Magic2, 8),
-        Magic2::decode_bytes(&[0x11], BigEndian).unwrap()
+        Magic2::decode_bytes::<BigEndian>(&[0x11]).unwrap()
     )
 }
 
@@ -263,18 +267,20 @@ fn magic_unit_read_correctly() {
 fn incorrect_magic_unit_fails() {
     assert_eq!(
         ErrorKind::Magic,
-        Magic2::decode_bytes(&[0x12], BigEndian).unwrap_err().kind()
+        Magic2::decode_bytes::<BigEndian>(&[0x12])
+            .unwrap_err()
+            .kind()
     );
 }
 
 #[test]
 fn generic_struct_roundtrips() {
     let value = GenericStructNoExplicitCtx { field: 0x42u16 };
-    let bytes = value.encode_bytes(BigEndian).unwrap();
+    let bytes = value.encode_bytes::<BigEndian>().unwrap();
     assert_eq!(vec![0x00, 0x42], bytes);
     assert_eq!(
         (value, 16),
-        GenericStructNoExplicitCtx::decode_bytes(&bytes, BigEndian).unwrap()
+        GenericStructNoExplicitCtx::decode_bytes::<BigEndian>(&bytes).unwrap()
     );
 }
 
@@ -286,11 +292,11 @@ fn generic_struct_nested_field_roundtrips() {
         boxed: Box::new(7u8),
         marker: PhantomData,
     };
-    let bytes = value.encode_bytes(BigEndian).unwrap();
+    let bytes = value.encode_bytes::<BigEndian>().unwrap();
     assert_eq!(vec![3, 3, 1, 2, 3, 7], bytes);
     assert_eq!(
         (value, 48),
-        GenericStructNestedField::decode_bytes(&bytes, BigEndian).unwrap()
+        GenericStructNestedField::decode_bytes::<BigEndian>(&bytes).unwrap()
     );
 }
 
@@ -302,18 +308,18 @@ fn generic_struct_skipped_field_roundtrips() {
         used: 5,
         unused: None,
     };
-    let bytes = value.encode_bytes(BigEndian).unwrap();
+    let bytes = value.encode_bytes::<BigEndian>().unwrap();
     assert_eq!(vec![5], bytes);
 }
 
 #[test]
 fn generic_struct_bitfield_roundtrips() {
     let value = GenericStructBitField { field: 0x0Fu8 };
-    let bytes = value.encode_bytes(BigEndian).unwrap();
+    let bytes = value.encode_bytes::<BigEndian>().unwrap();
     assert_eq!(vec![0xF0], bytes);
     assert_eq!(
         (value, 4),
-        GenericStructBitField::decode_bytes(&bytes, BigEndian).unwrap()
+        GenericStructBitField::decode_bytes::<BigEndian>(&bytes).unwrap()
     );
 }
 
@@ -326,7 +332,7 @@ fn ipv4() {
     }
 
     assert_eq!(
-        IPv4Header::decode_bytes(&[0x45], BigEndian).unwrap(),
+        IPv4Header::decode_bytes::<BigEndian>(&[0x45]).unwrap(),
         (IPv4Header { version: 4 }, 4)
     )
 }

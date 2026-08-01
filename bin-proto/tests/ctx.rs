@@ -105,14 +105,16 @@ struct CtxCheckTraitWrapper(CtxCheck);
 #[test]
 fn decode_ctx_passed() {
     let mut ctx = CtxStruct(false);
-    CtxCheck::decode_bytes_ctx(&[], BigEndian, &mut ctx, ()).unwrap();
+    CtxCheck::decode_bytes_ctx::<BigEndian, _, _>(&[], &mut ctx, ()).unwrap();
     assert!(ctx.0);
 }
 
 #[test]
 fn encode_ctx_passed() {
     let mut ctx = CtxStruct(false);
-    CtxCheck.encode_bytes_ctx(BigEndian, &mut ctx, ()).unwrap();
+    CtxCheck
+        .encode_bytes_ctx::<BigEndian, _, _>(&mut ctx, ())
+        .unwrap();
     assert!(ctx.0);
 }
 
@@ -120,7 +122,7 @@ fn encode_ctx_passed() {
 fn decode_ctx_passed_recur_struct() {
     let mut ctx = CtxStruct(false);
     CtxCheckStructWrapper(CtxCheck)
-        .encode_bytes_ctx(BigEndian, &mut ctx, ())
+        .encode_bytes_ctx::<BigEndian, _, _>(&mut ctx, ())
         .unwrap();
     assert!(ctx.0);
 }
@@ -129,7 +131,7 @@ fn decode_ctx_passed_recur_struct() {
 fn encode_ctx_passed_recur_struct() {
     let mut ctx = CtxStruct(false);
     CtxCheckStructWrapper(CtxCheck)
-        .encode_bytes_ctx(BigEndian, &mut ctx, ())
+        .encode_bytes_ctx::<BigEndian, _, _>(&mut ctx, ())
         .unwrap();
     assert!(ctx.0);
 }
@@ -138,7 +140,7 @@ fn encode_ctx_passed_recur_struct() {
 fn decode_ctx_passed_recur_trait() {
     let mut ctx = CtxStruct(false);
     CtxCheckTraitWrapper(CtxCheck)
-        .encode_bytes_ctx(BigEndian, &mut ctx, ())
+        .encode_bytes_ctx::<BigEndian, _, _>(&mut ctx, ())
         .unwrap();
     assert!(ctx.0);
 }
@@ -147,7 +149,7 @@ fn decode_ctx_passed_recur_trait() {
 fn encode_ctx_passed_recur_trait() {
     let mut ctx = CtxStruct(false);
     CtxCheckTraitWrapper(CtxCheck)
-        .encode_bytes_ctx(BigEndian, &mut ctx, ())
+        .encode_bytes_ctx::<BigEndian, _, _>(&mut ctx, ())
         .unwrap();
     assert!(ctx.0);
 }

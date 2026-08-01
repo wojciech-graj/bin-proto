@@ -9,7 +9,7 @@ struct WithFlexibleArrayMember(#[bin_proto(untagged)] Vec<u8>);
 #[test]
 fn decode_untagged() {
     assert_eq!(
-        WithFlexibleArrayMember::decode_bytes(&[1, 2, 3], BigEndian).unwrap(),
+        WithFlexibleArrayMember::decode_bytes::<BigEndian>(&[1, 2, 3]).unwrap(),
         (WithFlexibleArrayMember(vec![1, 2, 3]), 24)
     );
 }
@@ -18,7 +18,7 @@ fn decode_untagged() {
 fn encodes_untagged() {
     assert_eq!(
         WithFlexibleArrayMember(vec![1, 2, 3])
-            .encode_bytes(BigEndian)
+            .encode_bytes::<BigEndian>()
             .unwrap(),
         vec![1, 2, 3]
     );

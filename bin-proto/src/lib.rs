@@ -36,7 +36,7 @@
 //! }
 //!
 //! assert_eq!(
-//!     S::decode_bytes(&[
+//!     S::decode_bytes::<bin_proto::BigEndian>(&[
 //!         0b1000_0000 // bitflag: true (1)
 //!        | 0b101_0000 // bitfield: 5 (101)
 //!            | 0b0001, // enum_: V1 (0001)
@@ -44,7 +44,7 @@
 //!         0x21, 0x37, // arr: [0x21, 0x37]
 //!         0x00, 0x01, 0x33, // prefixed_arr: [0x33]
 //!         0x01, 0x02, 0x03, // read_to_end: [0x01, 0x02, 0x03]
-//!     ], bin_proto::BigEndian).unwrap().0,
+//!     ]).unwrap().0,
 //!     S {
 //!         bitflag: true,
 //!         bitfield: 5,
@@ -403,7 +403,7 @@ pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
 /// struct WithCtx(NeedsCtx);
 ///
 /// WithCtx(NeedsCtx)
-///     .encode_bytes_ctx(bin_proto::BigEndian, &mut Ctx, ())
+///     .encode_bytes_ctx::<bin_proto::BigEndian, _, _>(&mut Ctx, ())
 ///     .unwrap();
 /// # }
 /// ```
