@@ -1,6 +1,6 @@
 #![cfg(all(feature = "derive", feature = "alloc"))]
 
-use std::marker::PhantomData;
+use core::marker::PhantomData;
 
 use bin_proto::{error::ErrorKind, BitDecode, BitDecodeExt, BitEncode, BitEncodeExt};
 use bitstream_io::BigEndian;
@@ -36,7 +36,7 @@ pub struct UnnamedFieldsWithGenerics<
 #[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
 #[bin_proto(ctx = ())]
 pub struct StructWithExistingBoundedGenerics<
-    A: ::std::fmt::Display + ::std::fmt::Debug + BitDecode + BitEncode,
+    A: ::core::fmt::Display + ::core::fmt::Debug + BitDecode + BitEncode,
 > {
     foo: A,
 }

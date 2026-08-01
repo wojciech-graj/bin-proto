@@ -1,6 +1,6 @@
 #![cfg(all(feature = "derive", feature = "alloc"))]
 
-use std::marker::PhantomData;
+use core::marker::PhantomData;
 
 use bin_proto::{BitDecode, BitDecodeExt, BitEncode, BitEncodeExt};
 use bitstream_io::BigEndian;
