@@ -1,6 +1,6 @@
 #![cfg(all(feature = "derive", feature = "alloc"))]
 
-use bin_proto::{error::ErrorKind, BitCodec, BitDecode, BitEncode};
+use bin_proto::{error::ErrorKind, BitDecode, BitDecodeExt, BitEncode, BitEncodeExt};
 use bitstream_io::BigEndian;
 
 #[derive(Debug, BitDecode, BitEncode, PartialEq, Eq)]

@@ -19,19 +19,18 @@ pub trait BitDecode<Ctx = (), Tag = ()>: Sized {
 }
 
 /// Utility functionality for bit-level decoding.
-pub trait BitDecodeExt<Ctx = (), Tag = ()>:
-    BitDecode<Ctx, Tag> + bit_decode::Sealed<Ctx, Tag>
-{
+pub trait BitDecodeExt {
     /// Parses a new value from its raw byte representation with provided context and tag.
     ///
     /// Returns a tuple of the parsed value and the number of bits read.
-    fn decode_bytes_ctx<E>(
+    fn decode_bytes_ctx<E, Ctx, Tag>(
         bytes: &[u8],
         byte_order: E,
         ctx: &mut Ctx,
         tag: Tag,
     ) -> Result<(Self, u64)>
     where
+        Self: BitDecode<Ctx, Tag>,
         E: Endianness,
     {
         let mut buffer = BitReader::endian(io::Cursor::new(bytes), byte_order);
@@ -41,8 +40,14 @@ pub trait BitDecodeExt<Ctx = (), Tag = ()>:
 
     /// Parses a new value from its raw byte representation with provided context and tag, consuming
     /// entire buffer.
-    fn decode_all_bytes_ctx<E>(bytes: &[u8], byte_order: E, ctx: &mut Ctx, tag: Tag) -> Result<Self>
+    fn decode_all_bytes_ctx<E, Ctx, Tag>(
+        bytes: &[u8],
+        byte_order: E,
+        ctx: &mut Ctx,
+        tag: Tag,
+    ) -> Result<Self>
     where
+        Self: BitDecode<Ctx, Tag>,
         E: Endianness,
     {
         let (decoded, read_bits) = Self::decode_bytes_ctx(bytes, byte_order, ctx, tag)?;
@@ -56,12 +61,29 @@ pub trait BitDecodeExt<Ctx = (), Tag = ()>:
             }))
         }
     }
+
+    /// Parses a new value from its raw byte representation.
+    ///
+    /// Returns a tuple of the parsed value and the number of bits read.
+    fn decode_bytes<E>(bytes: &[u8], byte_order: E) -> Result<(Self, u64)>
+    where
+        Self: BitDecode,
+        E: Endianness,
+    {
+        Self::decode_bytes_ctx(bytes, byte_order, &mut (), ())
+    }
+
+    /// Parses a new value from its raw byte representation, consuming entire buffer.
+    fn decode_all_bytes<E>(bytes: &[u8], byte_order: E) -> Result<Self>
+    where
+        Self: BitDecode,
+        E: Endianness,
+    {
+        Self::decode_all_bytes_ctx(bytes, byte_order, &mut (), ())
+    }
 }
 
-impl<T, Ctx, Tag> BitDecodeExt<Ctx, Tag> for T where
-    T: BitDecode<Ctx, Tag> + bit_decode::Sealed<Ctx, Tag>
-{
-}
+impl<T> BitDecodeExt for T {}
 
 /// A trait for bit-level encoding.
 pub trait BitEncode<Ctx = (), Tag = ()> {
@@ -73,13 +95,17 @@ pub trait BitEncode<Ctx = (), Tag = ()> {
 }
 
 /// Utility functionality for bit-level encoding.
-pub trait BitEncodeExt<Ctx = (), Tag = ()>:
-    BitEncode<Ctx, Tag> + bit_encode::Sealed<Ctx, Tag>
-{
+pub trait BitEncodeExt {
     /// Gets the raw bytes of this type with provided context and tag.
     #[cfg(feature = "alloc")]
-    fn encode_bytes_ctx<E>(&self, byte_order: E, ctx: &mut Ctx, tag: Tag) -> Result<Vec<u8>>
+    fn encode_bytes_ctx<E, Ctx, Tag>(
+        &self,
+        byte_order: E,
+        ctx: &mut Ctx,
+        tag: Tag,
+    ) -> Result<Vec<u8>>
     where
+        Self: BitEncode<Ctx, Tag>,
         E: Endianness,
     {
         let mut data = Vec::new();
@@ -93,14 +119,15 @@ pub trait BitEncodeExt<Ctx = (), Tag = ()>:
     /// Fills the buffer with the raw bytes of this type with provided context and tag.
     ///
     /// Returns the number of bytes written.
-    fn encode_bytes_ctx_buf<E>(
+    fn encode_bytes_ctx_buf<E, Ctx, Tag>(
         &self,
+        buf: &mut [u8],
         byte_order: E,
         ctx: &mut Ctx,
         tag: Tag,
-        buf: &mut [u8],
     ) -> Result<u64>
     where
+        Self: BitEncode<Ctx, Tag>,
         E: Endianness,
     {
         let mut cursor = Cursor::new(buf);
@@ -110,37 +137,12 @@ pub trait BitEncodeExt<Ctx = (), Tag = ()>:
 
         Ok(cursor.position())
     }
-}
-
-impl<T, Ctx, Tag> BitEncodeExt<Ctx, Tag> for T where
-    T: BitEncode<Ctx, Tag> + bit_encode::Sealed<Ctx, Tag>
-{
-}
-
-/// A trait with helper functions for simple codecs.
-pub trait BitCodec: BitDecode + BitEncode + bit_codec::Sealed {
-    /// Parses a new value from its raw byte representation.
-    ///
-    /// Returns a tuple of the parsed value and the number of bits read.
-    fn decode_bytes<E>(bytes: &[u8], byte_order: E) -> Result<(Self, u64)>
-    where
-        E: Endianness,
-    {
-        Self::decode_bytes_ctx(bytes, byte_order, &mut (), ())
-    }
-
-    /// Parses a new value from its raw byte representation, consuming entire buffer.
-    fn decode_all_bytes<E>(bytes: &[u8], byte_order: E) -> Result<Self>
-    where
-        E: Endianness,
-    {
-        Self::decode_all_bytes_ctx(bytes, byte_order, &mut (), ())
-    }
 
     /// Gets the raw bytes of this type.
     #[cfg(feature = "alloc")]
     fn encode_bytes<E>(&self, byte_order: E) -> Result<Vec<u8>>
     where
+        Self: BitEncode,
         E: Endianness,
     {
         self.encode_bytes_ctx(byte_order, &mut (), ())
@@ -151,37 +153,14 @@ pub trait BitCodec: BitDecode + BitEncode + bit_codec::Sealed {
     /// Returns the number of bytes written.
     fn encode_bytes_buf<E>(&self, byte_order: E, buf: &mut [u8]) -> Result<u64>
     where
+        Self: BitEncode,
         E: Endianness,
     {
-        self.encode_bytes_ctx_buf(byte_order, &mut (), (), buf)
+        self.encode_bytes_ctx_buf(buf, byte_order, &mut (), ())
     }
 }
 
-impl<T> BitCodec for T where T: BitDecode + BitEncode + bit_codec::Sealed {}
-
-mod bit_encode {
-    use super::BitEncode;
-
-    pub trait Sealed<Ctx, Tag> {}
-
-    impl<Ctx, Tag, T> Sealed<Ctx, Tag> for T where T: BitEncode<Ctx, Tag> {}
-}
-
-mod bit_decode {
-    use super::BitDecode;
-
-    pub trait Sealed<Ctx, Tag> {}
-
-    impl<Ctx, Tag, T> Sealed<Ctx, Tag> for T where T: BitDecode<Ctx, Tag> {}
-}
-
-mod bit_codec {
-    use super::{BitDecode, BitEncode};
-
-    pub trait Sealed {}
-
-    impl<T> Sealed for T where T: BitDecode + BitEncode {}
-}
+impl<T> BitEncodeExt for T {}
 
 macro_rules! test_decode {
     ($ty:ty | $tag:expr; $bytes:expr => $exp:expr) => {

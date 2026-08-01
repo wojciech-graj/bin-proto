@@ -8,7 +8,7 @@
 //! ```
 //! # #[cfg(all(feature = "derive", feature = "alloc"))]
 //! # {
-//! # use bin_proto::{BitDecode, BitEncode, BitCodec};
+//! # use bin_proto::{BitDecode, BitEncode, BitEncodeExt, BitDecodeExt};
 //! #[derive(Debug, BitDecode, BitEncode, PartialEq)]
 //! #[bin_proto(discriminant_type = u8)]
 //! #[bin_proto(bits = 4)]
@@ -106,7 +106,6 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
-pub use self::codec::BitCodec;
 pub use self::codec::{BitDecode, BitDecodeExt, BitEncode, BitEncodeExt};
 pub use self::discriminable::Discriminable;
 pub use self::error::{Error, Result};

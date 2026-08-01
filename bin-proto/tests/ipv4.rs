@@ -1,6 +1,6 @@
 #![cfg(all(feature = "derive", feature = "alloc"))]
 
-use bin_proto::{BitCodec, BitDecode, BitEncode};
+use bin_proto::{BitDecode, BitDecodeExt, BitEncode, BitEncodeExt};
 use bitstream_io::BigEndian;
 
 #[derive(Debug, Copy, Clone, BitDecode, BitEncode, PartialEq)]

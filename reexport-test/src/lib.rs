@@ -2,7 +2,7 @@
 
 use std::marker::PhantomData;
 
-use reexport::{BigEndian, BitCodec, BitDecode, BitEncode};
+use reexport::{BigEndian, BitDecode, BitDecodeExt, BitEncode, BitEncodeExt};
 
 #[derive(Debug, BitDecode, BitEncode, PartialEq)]
 #[bin_proto(discriminant_type = u8)]

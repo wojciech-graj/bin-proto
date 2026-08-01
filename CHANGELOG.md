@@ -1,4 +1,5 @@
 # v1.0.0
+- Split `BitCodec` trait into `BitEncodeExt` and `BitDecodeExt`
 - Convert `Error` into opaque type
 - Add `Error::TryReserve` variant
 - Return error instead of panicking if allocating a collection would cause an OOM

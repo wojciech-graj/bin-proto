@@ -2,7 +2,7 @@
 
 use std::marker::PhantomData;
 
-use bin_proto::{error::ErrorKind, BitCodec, BitDecode, BitEncode};
+use bin_proto::{error::ErrorKind, BitDecode, BitDecodeExt, BitEncode, BitEncodeExt};
 use bitstream_io::BigEndian;
 
 #[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]
