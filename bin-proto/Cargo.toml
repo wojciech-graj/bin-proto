@@ -1,6 +1,6 @@
 [package]
 name = "bin-proto"
-version = "0.12.8"
+version = "0.12.9"
 edition = "2021"
 rust-version = "1.84.0"
 
