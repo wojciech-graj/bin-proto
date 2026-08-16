@@ -3,6 +3,8 @@
 #[cfg(feature = "alloc")]
 use alloc::boxed::Box;
 use core::{convert::Infallible, fmt};
+#[cfg(feature = "defmt-1")]
+use defmt::{Debug2Format, Display2Format, Format};
 
 use crate::io;
 
@@ -166,9 +168,7 @@ impl fmt::Display for ErrorCause {
             Self::Underrun {
                 read_bits: read,
                 available_bits: available,
-            } => {
-                write!(f, "buffer underrun: read {read} of {available} bits")
-            }
+            } => write!(f, "buffer underrun: read {read} of {available} bits"),
             Self::EncodeSkipped => "attempted to encode skipped enum variant".fmt(f),
             #[cfg(feature = "alloc")]
             Self::TryReserve(e) => e.fmt(f),
@@ -176,6 +176,70 @@ impl fmt::Display for ErrorCause {
             #[cfg(feature = "alloc")]
             Self::Boxed(e) => e.fmt(f),
             Self::Other(e) => write!(f, "other: {e}"),
+        }
+    }
+}
+
+#[cfg(feature = "defmt-1")]
+impl Format for Error {
+    fn format(&self, fmt: defmt::Formatter) {
+        self.inner.format(fmt);
+    }
+}
+
+#[cfg(feature = "defmt-1")]
+impl Format for ErrorCause {
+    fn format(&self, fmt: defmt::Formatter) {
+        match self {
+            Self::Io(e) => Display2Format(e).format(fmt),
+            #[cfg(feature = "alloc")]
+            Self::FromUtf8(e) => Display2Format(e).format(fmt),
+            #[cfg(feature = "alloc")]
+            Self::Nul(e) => Display2Format(e).format(fmt),
+            Self::TryFromInt(e) => e.format(fmt),
+            Self::Borrow(e) => e.format(fmt),
+            Self::Discriminant => "unknown enum discriminant".format(fmt),
+            Self::TagConvert => "failed to convert tag".format(fmt),
+            #[cfg(feature = "std")]
+            Self::Poison => "poisoned lock".format(fmt),
+            Self::Magic => "magic mismatch".format(fmt),
+            Self::Underrun {
+                read_bits: read,
+                available_bits: available,
+            } => defmt::write!(fmt, "buffer underrun: read {} of {} bits", read, available),
+            Self::EncodeSkipped => "attempted to encode skipped enum variant".format(fmt),
+            #[cfg(feature = "alloc")]
+            Self::TryReserve(e) => Display2Format(e).format(fmt),
+            Self::Assert(e) => defmt::write!(fmt, "assertion failed: {}", e),
+            #[cfg(feature = "alloc")]
+            Self::Boxed(e) => Display2Format(e).format(fmt),
+            Self::Other(e) => defmt::write!(fmt, "other: {}", e),
+        }
+    }
+}
+
+#[cfg(feature = "defmt-1")]
+impl Format for ErrorKind {
+    fn format(&self, fmt: defmt::Formatter) {
+        match self {
+            Self::Io(kind) => Debug2Format(kind).format(fmt),
+            #[cfg(feature = "alloc")]
+            Self::FromUtf8 => "from utf8".format(fmt),
+            #[cfg(feature = "alloc")]
+            Self::Nul => "nul".format(fmt),
+            Self::TryFromInt => "try from int".format(fmt),
+            Self::Borrow => "borrow".format(fmt),
+            Self::Discriminant => "discriminant".format(fmt),
+            Self::TagConvert => "tag convert".format(fmt),
+            #[cfg(feature = "std")]
+            Self::Poison => "posion".format(fmt),
+            Self::Underrun => "underrun".format(fmt),
+            Self::EncodeSkipped => "encode skipped".format(fmt),
+            Self::Magic => "magic".format(fmt),
+            #[cfg(feature = "alloc")]
+            Self::TryReserve => "try reserve".format(fmt),
+            Self::Assert => "assert".format(fmt),
+            Self::Other => "other".format(fmt),
         }
     }
 }

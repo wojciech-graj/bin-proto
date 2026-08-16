@@ -4,6 +4,7 @@ exclude_re = [
   "<impl BitDecode<E, Ctx> for PhantomPinned>::decode",
   "<impl BitDecode<E, Ctx> for \\(\\)>::decode",
   "BitEncodeExt::encode_bytes_buf",
+  "impl Format",
   "impl fmt::Display",
 ]
 test_workspace = true
