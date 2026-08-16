@@ -1,3 +1,5 @@
+# v0.12.9
+- Implement `Format` from defmt on `Error`
 # v0.12.8
 - Add `#[bin_proto(crate = ...)]` attribute (https://github.com/wojciech-graj/bin-proto/pull/9)
 # v0.12.7

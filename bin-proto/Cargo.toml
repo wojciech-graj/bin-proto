@@ -19,6 +19,7 @@ rustdoc-args = ["--cfg", "docsrs"]
 [dependencies]
 bin-proto-derive = { path = "../bin-proto-derive", version = "0.12.3", optional = true }
 bitstream-io = { version = "4.10.0", default-features = false }
+defmt = { version = "1", optional = true }
 no_std_io2 = { version = "0.9", default-features = false }
 
 [dev-dependencies]
@@ -26,7 +27,8 @@ proptest = "1.8.0"
 
 [features]
 default = ["alloc", "derive", "std"]
-alloc = ["bitstream-io/alloc", "no_std_io2/alloc"]
+alloc = ["bitstream-io/alloc", "defmt?/alloc", "no_std_io2/alloc"]
+defmt-1 = ["dep:defmt"]
 derive = ["dep:bin-proto-derive"]
 prepend-tags = []
 std = ["alloc", "bitstream-io/std", "no_std_io2/std"]
