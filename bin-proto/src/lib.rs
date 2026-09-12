@@ -630,12 +630,18 @@ pub mod util;
 
 /// A marker for [`BitEncode`] implementors that don't prepend their tag, and [`BitDecode`]
 /// implementors that usually have a tag, but can be read to EOF.
+#[derive(Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[cfg_attr(feature = "defmt-1", derive(defmt::Format))]
 pub struct Untagged;
 
 /// A marker for [`BitDecode`] implementors that require a tag.
+#[derive(Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[cfg_attr(feature = "defmt-1", derive(defmt::Format))]
 pub struct Tag<T>(pub T);
 
 /// A marker for [`BitDecode`] and [`BitEncode`] implementors that support bitfield operations.
+#[derive(Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[cfg_attr(feature = "defmt-1", derive(defmt::Format))]
 pub struct Bits<const C: u32>;
 
 /// ```compile_fail
