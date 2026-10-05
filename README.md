@@ -23,7 +23,7 @@ See [rust_serialization_benchmark](https://github.com/djkoloski/rust_serializati
 Define a type with the `#[derive(bin_proto::BitDecode, bin_proto::BitEncode)]` attributes.
 
 ```rust
-use bin_proto::{BitDecode, BitEncode, BitCodec};
+use bin_proto::{BitDecode, BitEncode, BitEncodeExt, BitDecodeExt};
 
 #[derive(Debug, BitDecode, BitEncode, PartialEq)]
 #[bin_proto(discriminant_type = u8)]
@@ -52,7 +52,7 @@ struct S {
 }
 
 assert_eq!(
-    S::decode_bytes(&[
+    S::decode_bytes::<bin_proto::BigEndian>(&[
         0b1000_0000 // bitflag: true (1)
        | 0b101_0000 // bitfield: 5 (101)
            | 0b0001, // enum_: V1 (0001)
@@ -60,7 +60,7 @@ assert_eq!(
         0x21, 0x37, // arr: [0x21, 0x37]
         0x00, 0x01, 0x33, // prefixed_arr: [0x33]
         0x01, 0x02, 0x03, // read_to_end: [0x01, 0x02, 0x03]
-    ], bin_proto::BigEndian).unwrap().0,
+    ]).unwrap().0,
     S {
         bitflag: true,
         bitfield: 5,
@@ -76,37 +76,41 @@ assert_eq!(
 You can implement `BitEncode` and `BitDecode` on your own types, and parse with context:
 
 ```rust
-use bin_proto::{BitDecode, BitEncode};
+use bin_proto::{BitDecode, BitEncode, BitEncodeExt};
 
-pub struct Ctx;
+struct Ctx;
 
-pub struct NeedsCtx;
+struct NeedsCtx;
 
-impl BitDecode<Ctx> for NeedsCtx {
-    fn decode<R, E>(
+impl<E> BitDecode<E, Ctx> for NeedsCtx
+where
+    E: bin_proto::Endianness
+{
+    fn decode<R>(
         _read: &mut R,
         _ctx: &mut Ctx,
         _tag: (),
     ) -> bin_proto::Result<Self>
     where
-        R: bin_proto::BitRead,
-        E: bin_proto::Endianness,
+        R: bin_proto::BitRead + ?Sized,
     {
         // Use ctx here
         Ok(Self)
     }
 }
 
-impl BitEncode<Ctx> for NeedsCtx {
-    fn encode<W, E>(
+impl<E> BitEncode<E, Ctx> for NeedsCtx
+where
+    E: bin_proto::Endianness
+{
+    fn encode<W>(
         &self,
         _write: &mut W,
         _ctx: &mut Ctx,
         _tag: (),
     ) -> bin_proto::Result<()>
     where
-        W: bin_proto::BitWrite,
-        E: bin_proto::Endianness,
+        W: bin_proto::BitWrite + ?Sized,
     {
         // Use ctx here
         Ok(())
@@ -115,9 +119,9 @@ impl BitEncode<Ctx> for NeedsCtx {
 
 #[derive(BitDecode, BitEncode)]
 #[bin_proto(ctx = Ctx)]
-pub struct WithCtx(NeedsCtx);
+struct WithCtx(NeedsCtx);
 
 WithCtx(NeedsCtx)
-    .encode_bytes_ctx(bin_proto::BigEndian, &mut Ctx, ())
+    .encode_bytes_ctx::<bin_proto::BigEndian, _, _>(&mut Ctx, ())
     .unwrap();
 ```
