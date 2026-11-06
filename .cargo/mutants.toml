@@ -3,6 +3,8 @@ exclude_re = [
   "<impl BitDecode<E, Ctx> for PhantomData<T>>::decode",
   "<impl BitDecode<E, Ctx> for PhantomPinned>::decode",
   "<impl BitDecode<E, Ctx> for \\(\\)>::decode",
+  "<impl HasOwned<Global> for T>::get_owned -> Global",
+  "<impl HasOwned<System> for T>::get_owned -> System",
   "BitEncodeExt::encode_bytes_buf",
   "impl Format",
   "impl fmt::Display",

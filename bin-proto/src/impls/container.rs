@@ -1,12 +1,13 @@
 macro_rules! impl_container_encode {
     (
-        $ty:ident<$($a:lifetime,)? T $(: $tbound0:ident + $tbound1:lifetime)?>
+        $ty:ident<$($a:lifetime,)? T $(: $tbound0:ident + $tbound1:lifetime)? $(, $allocator:ident)?>
         $(=> $f:ident)?
     ) => {
-        impl<$($a,)? E, Ctx, Tag, T> $crate::BitEncode<E, Ctx, Tag> for $ty<$($a,)? T>
+        impl<$($a,)? E, Ctx, Tag, T, $($allocator,)?> $crate::BitEncode<E, Ctx, Tag> for $ty<$($a,)? T, $($allocator,)?>
         where
             E: ::bitstream_io::Endianness,
             T: $crate::BitEncode<E, Ctx, Tag> + ?Sized $(+ $tbound0 + $tbound1)?,
+            $($allocator: ::core::alloc::Allocator,)?
         {
             fn encode<W>(
                 &self,
@@ -32,19 +33,27 @@ macro_rules! impl_container_encode {
 
 #[allow(unused)]
 macro_rules! impl_container_decode {
-    ($ty:ident<T $(: ?$tbound:ident)?>) => {
-        impl<E, Ctx, Tag, T> $crate::BitDecode<E, Ctx, Tag> for $ty<T>
+    ($ty:ident<T $(: ?$tbound:ident)? $(, $allocator:ident)?>, |$inner:ident, $ctx:ident| $new:expr) => {
+        impl<E, Ctx, Tag, T, $($allocator,)?> $crate::BitDecode<E, Ctx, Tag> for $ty<T, $($allocator,)?>
         where
             E: ::bitstream_io::Endianness,
             T: $crate::BitDecode<E, Ctx, Tag> $(+ ?$tbound)?,
+            $(
+                $allocator: ::core::alloc::Allocator,
+                Ctx: $crate::HasOwned<$allocator>,
+            )?
         {
-            fn decode<R>(read: &mut R, ctx: &mut Ctx, tag: Tag) -> $crate::Result<Self>
+            fn decode<R>(read: &mut R, $ctx: &mut Ctx, tag: Tag) -> $crate::Result<Self>
             where
                 R: ::bitstream_io::BitRead + ?Sized,
             {
-                Ok($ty::new($crate::BitDecode::decode(read, ctx, tag)?))
+                let $inner = $crate::BitDecode::decode(read, $ctx, tag)?;
+                Ok($new)
             }
         }
+    };
+    ($ty:ident<T $(: ?$tbound:ident)?>) => {
+        impl_container_decode!($ty<T $(: ?$tbound)?>, |inner, ctx| $ty::new(inner));
     };
 }
 
@@ -52,10 +61,19 @@ macro_rules! impl_container_decode {
 mod box_ {
     use alloc::boxed::Box;
 
-    impl_container_encode!(Box<T>);
-    impl_container_decode!(Box<T>);
+    impl_container_encode!(Box<T, A>);
+    impl_container_decode!(Box<T, A>, |inner, ctx| Box::new_in(inner, ctx.get_owned()));
     test_codec!(Box<u8>; Box::new(1) => [0x01]);
     test_roundtrip!(Box<u8>);
+
+    #[cfg(all(test, feature = "std"))]
+    mod allocator {
+        use std::alloc::System;
+
+        use super::*;
+
+        test_codec!(Box<u8, System>; Box::new_in(1, System) => [0x01]);
+    }
 }
 
 #[cfg(feature = "alloc")]
