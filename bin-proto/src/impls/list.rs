@@ -2,20 +2,27 @@
 macro_rules! impl_list_decode {
     (
         $ty:ident<T $(: $tbound0:ident $(+ $tbound1:ident)?)?
-        $(, $h:ident: $hbound0:ident + $hbound1:ident)?>,
-        |$item_count:ident| $new:expr,
-        $push:ident
+        $(, hash = $h:ident: $hbound0:ident + $hbound1:ident)?
+        $(, allocator = $allocator:ident)?>,
+        |$item_count:ident, $ctx:ident| $new:expr,
+        $push:ident,
+        |$ctx_empty:ident| $empty:expr,
+        |$iter:ident, $iter_this:ident| $iter_fill:expr
     ) => {
-        impl<E, Tag, Ctx, T, $($h)?> $crate::BitDecode<E, Ctx, $crate::Tag<Tag>> for $ty<T, $($h)?>
+        impl<E, Tag, Ctx, T, $($h,)? $($allocator,)?> $crate::BitDecode<E, Ctx, $crate::Tag<Tag>> for $ty<T, $($h,)? $($allocator,)?>
         where
             E: ::bitstream_io::Endianness,
             T: $crate::BitDecode<E, Ctx> $(+ $tbound0 $(+ $tbound1)?)?,
             Tag: ::core::convert::TryInto<usize>,
-            $($h: $hbound0 + $hbound1)?
+            $($h: $hbound0 + $hbound1,)?
+            $(
+                $allocator: ::core::alloc::Allocator,
+                Ctx: $crate::HasOwned<$allocator>,
+            )?
         {
             fn decode<R>(
                 read: &mut R,
-                ctx: &mut Ctx,
+                $ctx: &mut Ctx,
                 tag: $crate::Tag<Tag>,
             ) -> $crate::Result<Self>
             where
@@ -25,36 +32,47 @@ macro_rules! impl_list_decode {
                     .map_err(|_| $crate::Error::from_inner($crate::error::ErrorCause::TagConvert))?;
                 let mut this = $new;
                 for _ in 0..$item_count {
-                    this.$push($crate::BitDecode::<_, _, _>::decode(read, ctx, ())?);
+                    this.$push($crate::BitDecode::<_, _, _>::decode(read, $ctx, ())?);
                 }
                 ::core::result::Result::Ok(this)
             }
         }
 
-        impl<E, Ctx, T, $($h)?> $crate::BitDecode<E, Ctx, $crate::Untagged> for $ty<T, $($h)?>
+        impl<E, Ctx, T, $($h,)? $($allocator,)?> $crate::BitDecode<E, Ctx, $crate::Untagged> for $ty<T, $($h,)? $($allocator,)?>
         where
             E: ::bitstream_io::Endianness,
             T: $crate::BitDecode<E, Ctx> $(+ $tbound0 $(+ $tbound1)?)?,
-            $($h: $hbound0 + $hbound1)?
+            $($h: $hbound0 + $hbound1,)?
+            $(
+                $allocator: ::core::alloc::Allocator,
+                Ctx: $crate::HasOwned<$allocator>,
+            )?
         {
             fn decode<R>(
                 read: &mut R,
-                ctx: &mut Ctx,
+                $ctx_empty: &mut Ctx,
                 _: $crate::Untagged,
             ) -> $crate::Result<Self>
             where
                 R: ::bitstream_io::BitRead + ?Sized,
             {
-                $crate::util::decode_items_to_eof::<_, E, _, _>(read, ctx).collect()
+                #[allow(unused_variables)]
+                let $iter_this = $empty;
+                let $iter = $crate::util::decode_items_to_eof::<_, E, _, _>(read, $ctx_empty);
+                $iter_fill
             }
         }
 
         #[cfg(feature = "prepend-tags")]
-        impl<E, Ctx, T, $($h)?> $crate::BitDecode<E, Ctx> for $ty<T, $($h)?>
+        impl<E, Ctx, T, $($h,)? $($allocator,)?> $crate::BitDecode<E, Ctx> for $ty<T, $($h,)? $($allocator,)?>
         where
             E: ::bitstream_io::Endianness,
             T: $crate::BitDecode<E, Ctx> $(+ $tbound0 $(+ $tbound1)?)?,
-            $($h: $hbound0 + $hbound1)?
+            $($h: $hbound0 + $hbound1,)?
+            $(
+                $allocator: ::core::alloc::Allocator,
+                Ctx: $crate::HasOwned<$allocator>,
+            )?
         {
             fn decode<R>(
                 read: &mut R,
@@ -68,16 +86,34 @@ macro_rules! impl_list_decode {
                 $crate::BitDecode::<E, _, _>::decode(read, ctx, $crate::Tag(tag))
             }
         }
-    }
+    };
+    (
+        $ty:ident<T $(: $tbound0:ident $(+ $tbound1:ident)?)?
+        $(, hash = $h:ident: $hbound0:ident + $hbound1:ident)?
+        $(, allocator = $allocator:ident)?>,
+        |$item_count:ident, $ctx:ident| $new:expr,
+        $push:ident
+    ) => {
+        impl_list_decode!(
+            $ty<T $(: $tbound0 $(+ $tbound1)?)?
+            $(, hash = $h: $hbound0 + $hbound1)?
+            $(, allocator = $allocator)?>,
+            |$item_count, $ctx| $new,
+            $push,
+            |ctx| (),
+            |iter, this| iter.collect()
+        );
+    };
 }
 
 #[allow(unused)]
 macro_rules! impl_list_encode {
-    ($ty:ident<T $(: $tbound0:ident $(+ $tbound1:ident)?)? $(, $h:ident)?> ) => {
-        impl<E, Ctx, T, $($h)?> $crate::BitEncode<E, Ctx, $crate::Untagged> for $ty<T, $($h)?>
+    ($ty:ident<T $(: $tbound0:ident $(+ $tbound1:ident)?)? $(, hash = $h:ident)? $(, allocator = $allocator:ident)?> ) => {
+        impl<E, Ctx, T, $($h,)? $($allocator,)?> $crate::BitEncode<E, Ctx, $crate::Untagged> for $ty<T, $($h,)? $($allocator,)?>
         where
             E: ::bitstream_io::Endianness,
-            T: $crate::BitEncode<E, Ctx> $(+ $tbound0 $(+ $tbound1)?)?
+            T: $crate::BitEncode<E, Ctx> $(+ $tbound0 $(+ $tbound1)?)?,
+            $($allocator: ::core::alloc::Allocator,)?
         {
             fn encode<W>(&self,
                 write: &mut W,
@@ -92,10 +128,11 @@ macro_rules! impl_list_encode {
         }
 
         #[cfg(feature = "prepend-tags")]
-        impl<E, Ctx, T, $($h)?> $crate::BitEncode<E, Ctx> for $ty<T, $($h)?>
+        impl<E, Ctx, T, $($h,)? $($allocator,)?> $crate::BitEncode<E, Ctx> for $ty<T, $($h,)? $($allocator,)?>
         where
             E: ::bitstream_io::Endianness,
-            T: $crate::BitEncode<E, Ctx> $(+ $tbound0 $(+ $tbound1)?)?
+            T: $crate::BitEncode<E, Ctx> $(+ $tbound0 $(+ $tbound1)?)?,
+            $($allocator: ::core::alloc::Allocator,)?
         {
             fn encode<W>(&self,
                 write: &mut W,
@@ -117,15 +154,23 @@ mod vec {
     use alloc::vec::Vec;
 
     impl_list_decode!(
-        Vec<T>,
-        |n| {
-            let mut this = Self::new();
+        Vec<T, allocator = A>,
+        |n, ctx| {
+            let mut this = Self::new_in(ctx.get_owned());
             this.try_reserve_exact(n)?;
             this
         },
-        push
+        push,
+        |ctx| Self::new_in(ctx.get_owned()),
+        |iter, this| {
+            let mut this = this;
+            for item in iter {
+                this.push(item?);
+            }
+            Ok(this)
+        }
     );
-    impl_list_encode!(Vec<T>);
+    impl_list_encode!(Vec<T, allocator = A>);
 
     #[cfg(test)]
     mod tests {
@@ -148,7 +193,7 @@ mod vec {
 mod linked_list {
     use alloc::collections::linked_list::LinkedList;
 
-    impl_list_decode!(LinkedList<T>, |n| Self::new(), push_back);
+    impl_list_decode!(LinkedList<T>, |n, ctx| Self::new(), push_back);
     impl_list_encode!(LinkedList<T>);
 
     #[cfg(test)]
@@ -172,7 +217,7 @@ mod vec_deque {
 
     impl_list_decode!(
         VecDeque<T>,
-        |n| {
+        |n, ctx| {
             let mut this = Self::new();
             this.try_reserve_exact(n)?;
             this
@@ -202,7 +247,7 @@ mod vec_deque {
 mod b_tree_set {
     use alloc::collections::btree_set::BTreeSet;
 
-    impl_list_decode!(BTreeSet<T: Ord>, |n| Self::new(), insert);
+    impl_list_decode!(BTreeSet<T: Ord>, |n, ctx| Self::new(), insert);
     impl_list_encode!(BTreeSet<T: Ord>);
 
     #[cfg(test)]
@@ -226,7 +271,7 @@ mod binary_heap {
 
     impl_list_decode!(
         BinaryHeap<T: Ord>,
-        |n| {
+        |n, ctx| {
             let mut this = Self::new();
             this.try_reserve_exact(n)?;
             this
@@ -273,15 +318,15 @@ mod hash_set {
     use std::collections::HashSet;
 
     impl_list_decode!(
-        HashSet<T: Hash + Eq, H: BuildHasher + Default>,
-        |n| {
+        HashSet<T: Hash + Eq, hash = H: BuildHasher + Default>,
+        |n, ctx| {
             let mut this = Self::with_hasher(H::default());
             this.try_reserve(n)?;
             this
         },
         insert
     );
-    impl_list_encode!(HashSet<T: Hash + Eq, H>);
+    impl_list_encode!(HashSet<T: Hash + Eq, hash = H>);
 
     #[cfg(test)]
     mod tests {

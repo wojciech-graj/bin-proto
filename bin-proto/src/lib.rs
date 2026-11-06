@@ -615,6 +615,7 @@ pub use self::error::{Error, Result};
 pub use bin_proto_derive::{BitDecode, BitEncode};
 pub use bitstream_io;
 pub use bitstream_io::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
+pub use has::HasOwned;
 #[cfg(not(feature = "std"))]
 pub(crate) use no_std_io2::io;
 #[cfg(feature = "std")]
@@ -625,6 +626,7 @@ mod codec;
 
 mod discriminable;
 pub mod error;
+mod has;
 mod impls;
 pub mod util;
 
