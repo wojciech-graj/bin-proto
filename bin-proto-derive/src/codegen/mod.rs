@@ -3,13 +3,13 @@ pub mod enums;
 pub mod trait_impl;
 
 use crate::{
+    TemporalDirection,
     attr::{AttrKind, Attrs, Tag},
     field::{Field, FieldsExt},
-    TemporalDirection,
 };
 use proc_macro2::TokenStream;
 use quote::ToTokens;
-use syn::{spanned::Spanned, Error, Result};
+use syn::{Error, Result, spanned::Spanned};
 
 pub fn decodes(parent_attrs: &Attrs, fields: &syn::Fields) -> Result<(TokenStream, TokenStream)> {
     let decodes = fields

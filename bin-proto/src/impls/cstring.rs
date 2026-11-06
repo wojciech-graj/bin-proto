@@ -3,7 +3,7 @@
 use alloc::{ffi::CString, vec::Vec};
 use bitstream_io::{BitRead, BitWrite, Endianness};
 
-use crate::{util, BitDecode, BitEncode, Result};
+use crate::{BitDecode, BitEncode, Result, util};
 
 impl<E, Ctx> BitDecode<E, Ctx> for CString
 where

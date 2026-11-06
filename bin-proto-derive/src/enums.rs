@@ -1,4 +1,4 @@
-use syn::{spanned::Spanned, Error, Result};
+use syn::{Error, Result, spanned::Spanned};
 
 use crate::attr::{AttrKind, Attrs};
 

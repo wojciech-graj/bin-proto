@@ -1,6 +1,6 @@
 use bitstream_io::{BitRead, BitWrite, Endianness};
 
-use crate::{util, BitDecode, BitEncode, Result};
+use crate::{BitDecode, BitEncode, Result, util};
 use core::mem::MaybeUninit;
 
 struct PartialGuard<T> {
@@ -64,7 +64,7 @@ mod test {
 
     use bitstream_io::BigEndian;
 
-    use crate::{error::ErrorCause, BitDecodeExt, Error};
+    use crate::{BitDecodeExt, Error, error::ErrorCause};
 
     use super::*;
 

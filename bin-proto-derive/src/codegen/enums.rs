@@ -1,6 +1,6 @@
 use crate::{attr::Attrs, codegen, enums};
 use proc_macro2::TokenStream;
-use syn::{parse_quote, Error, Result};
+use syn::{Error, Result, parse_quote};
 
 use crate::field::FieldsExt;
 

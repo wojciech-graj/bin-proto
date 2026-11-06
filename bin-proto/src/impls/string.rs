@@ -1,6 +1,6 @@
 #![cfg(feature = "alloc")]
 
-use crate::{error::ErrorCause, util, BitDecode, BitEncode, Error, Result, Untagged};
+use crate::{BitDecode, BitEncode, Error, Result, Untagged, error::ErrorCause, util};
 
 use alloc::{string::String, vec::Vec};
 use bitstream_io::{BitRead, BitWrite, Endianness};

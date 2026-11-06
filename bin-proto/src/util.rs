@@ -3,7 +3,7 @@
 use bitstream_io::{BitRead, BitWrite, Endianness};
 use core::iter;
 
-use crate::{error::ErrorKind, io, BitDecode, BitEncode, Result};
+use crate::{BitDecode, BitEncode, Result, error::ErrorKind, io};
 
 /// [`BitEncode`]s an iterator.
 ///

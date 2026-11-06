@@ -1,8 +1,8 @@
-use syn::{parse_quote, spanned::Spanned, Result, Type};
+use syn::{Result, Type, parse_quote, spanned::Spanned};
 
 use crate::{
-    attr::{AttrKind, Attrs, Tag},
     Operation,
+    attr::{AttrKind, Attrs, Tag},
 };
 
 /// Computes the `where`-clause predicates required for a derived impl to

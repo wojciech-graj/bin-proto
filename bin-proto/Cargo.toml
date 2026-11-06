@@ -1,8 +1,8 @@
 [package]
 name = "bin-proto"
-version = "1.0.0"
-edition = "2021"
-rust-version = "1.84.0"
+version = "1.1.0"
+edition = "2024"
+rust-version = "1.100.0"
 
 description = "Conversion to/from binary for arbitrary types"
 documentation = "https://docs.rs/bin-proto"
@@ -16,15 +16,6 @@ categories = ["encoding", "no-std::no-alloc", "parsing"]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
-[dependencies]
-bin-proto-derive = { path = "../bin-proto-derive", version = "~1.0", optional = true }
-bitstream-io = { version = "4.10", default-features = false }
-defmt = { version = "1.2", optional = true }
-no_std_io2 = { version = "0.9", default-features = false }
-
-[dev-dependencies]
-proptest = "1.8.0"
-
 [features]
 default = ["alloc", "derive", "std"]
 alloc = ["bitstream-io/alloc", "defmt?/alloc", "no_std_io2/alloc"]
@@ -32,3 +23,12 @@ defmt-1 = ["dep:defmt"]
 derive = ["dep:bin-proto-derive"]
 prepend-tags = []
 std = ["alloc", "bitstream-io/std", "no_std_io2/std"]
+
+[dependencies]
+bin-proto-derive = { path = "../bin-proto-derive", version = "~1.1", optional = true }
+bitstream-io = { version = "4.10", default-features = false }
+defmt = { version = "1.2", optional = true }
+no_std_io2 = { version = "0.9", default-features = false }
+
+[dev-dependencies]
+proptest = "1.8.0"

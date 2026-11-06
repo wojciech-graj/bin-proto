@@ -2,7 +2,7 @@
 
 use core::marker::PhantomData;
 
-use bin_proto::{error::ErrorKind, BitDecode, BitDecodeExt, BitEncode, BitEncodeExt};
+use bin_proto::{BitDecode, BitDecodeExt, BitEncode, BitEncodeExt, error::ErrorKind};
 use bitstream_io::BigEndian;
 
 #[derive(BitDecode, BitEncode, Debug, PartialEq, Eq)]

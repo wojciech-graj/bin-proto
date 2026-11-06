@@ -2,7 +2,7 @@ use core::ffi::CStr;
 
 use bitstream_io::{BitWrite, Endianness};
 
-use crate::{util, BitEncode, Result};
+use crate::{BitEncode, Result, util};
 
 impl<E, Ctx> BitEncode<E, Ctx> for CStr
 where

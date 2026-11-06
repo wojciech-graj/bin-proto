@@ -1,6 +1,6 @@
 use bitstream_io::{BitRead, BitWrite, Endianness};
 
-use crate::{error::ErrorCause, BitDecode, BitEncode, Error, Result, Untagged};
+use crate::{BitDecode, BitEncode, Error, Result, Untagged, error::ErrorCause};
 
 impl<E, Tag, Ctx, T> BitDecode<E, Ctx, crate::Tag<Tag>> for Option<T>
 where

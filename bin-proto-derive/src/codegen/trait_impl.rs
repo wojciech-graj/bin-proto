@@ -1,7 +1,7 @@
 use crate::attr::{Attrs, Ctx};
 
 use proc_macro2::{Span, TokenStream};
-use syn::{parse_quote, punctuated::Punctuated, spanned::Spanned, Result, Token};
+use syn::{Result, Token, parse_quote, punctuated::Punctuated, spanned::Spanned};
 
 #[allow(clippy::large_enum_variant)]
 pub enum TraitImplType {

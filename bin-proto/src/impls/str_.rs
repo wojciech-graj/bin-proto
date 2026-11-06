@@ -1,4 +1,4 @@
-use crate::{util, BitEncode, Result, Untagged};
+use crate::{BitEncode, Result, Untagged, util};
 
 use bitstream_io::{BitWrite, Endianness};
 

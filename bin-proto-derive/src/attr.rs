@@ -1,7 +1,7 @@
 use proc_macro2::{Span, TokenStream};
 use quote::ToTokens;
 use std::fmt;
-use syn::{parenthesized, punctuated::Punctuated, Error, Result, Token};
+use syn::{Error, Result, Token, parenthesized, punctuated::Punctuated};
 
 #[allow(clippy::struct_excessive_bools)]
 #[derive(Default)]
@@ -68,14 +68,14 @@ impl fmt::Display for AttrKind {
 
 macro_rules! expect_attr_kind {
     ($pat:pat, $kind:expr, $meta:expr) => {
-        if let Some(kind) = $kind {
-            if !matches!(kind, $pat) {
-                return Err($meta.error(format!(
-                    "attribute '{}' cannot be applied to {}",
-                    $meta.path.require_ident()?,
-                    kind
-                )));
-            }
+        if let Some(kind) = $kind
+            && !matches!(kind, $pat)
+        {
+            return Err($meta.error(format!(
+                "attribute '{}' cannot be applied to {}",
+                $meta.path.require_ident()?,
+                kind
+            )));
         }
     };
 }

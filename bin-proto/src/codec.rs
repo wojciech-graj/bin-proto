@@ -4,9 +4,9 @@ use alloc::vec::Vec;
 use bitstream_io::{BitRead, BitReader, BitWrite, BitWriter, Endianness};
 
 use crate::{
+    Error, Result,
     error::ErrorCause,
     io::{self, Cursor},
-    Error, Result,
 };
 
 /// A trait for bit-level decoding.

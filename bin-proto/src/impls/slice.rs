@@ -1,6 +1,6 @@
 use bitstream_io::{BitWrite, Endianness};
 
-use crate::{util, BitEncode, Result, Untagged};
+use crate::{BitEncode, Result, Untagged, util};
 
 impl<E, Ctx, T> BitEncode<E, Ctx, Untagged> for [T]
 where

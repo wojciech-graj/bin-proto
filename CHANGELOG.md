@@ -1,3 +1,5 @@
+# v1.1.0
+- Increase MSRV to 1.100
 # v1.0.0
 - Move `Endianness` from `BitEncode`/`BitDecode` trait functions onto traits
 - Relax `Sized` bounds on most generics

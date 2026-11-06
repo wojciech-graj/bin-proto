@@ -23,11 +23,11 @@ mod field;
 use attr::{AttrKind, Attrs, TemporalDirection};
 use codegen::{
     bounds::FieldBounds,
-    trait_impl::{impl_trait_for, TraitImplType},
+    trait_impl::{TraitImplType, impl_trait_for},
 };
 use field::FieldsExt;
 use proc_macro2::TokenStream;
-use syn::{parse_macro_input, parse_quote, spanned::Spanned, Error, Result};
+use syn::{Error, Result, parse_macro_input, parse_quote, spanned::Spanned};
 
 use crate::codegen::enums::variant_discriminant;
 
