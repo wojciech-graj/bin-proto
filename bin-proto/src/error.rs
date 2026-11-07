@@ -193,9 +193,9 @@ impl Format for ErrorCause {
         match self {
             Self::Io(e) => Display2Format(e).format(fmt),
             #[cfg(feature = "alloc")]
-            Self::FromUtf8(e) => Display2Format(e).format(fmt),
+            Self::FromUtf8(e) => e.format(fmt),
             #[cfg(feature = "alloc")]
-            Self::Nul(e) => Display2Format(e).format(fmt),
+            Self::Nul(e) => e.format(fmt),
             Self::TryFromInt(e) => e.format(fmt),
             Self::Borrow(e) => e.format(fmt),
             Self::Discriminant => "unknown enum discriminant".format(fmt),
